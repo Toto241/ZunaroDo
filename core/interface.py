@@ -29,20 +29,23 @@ class Capability:
     'parameters' folgt einem leichten JSON-Schema-Stil: jeder Eintrag ist
     ein Dict mit 'type' (string|integer|number|boolean|array|object),
     optional 'description' und optional dem Marker '_required'.
+
+    'destructive' kennzeichnet Faehigkeiten, die Daten dauerhaft veraendern
+    oder Aktionen mit Aussenwirkung anstossen. Der Assistent fragt vor
+    solchen Aufrufen ueber den ConfirmCallback nach.
     """
     name: str
     description: str
     parameters: dict
     handler: Callable[..., dict]
-    module_id: str = ""                 # wird bei der Registrierung gesetzt
+    module_id: str = ""
+    destructive: bool = False
 
     def required_params(self) -> list[str]:
-        """Liste der Pflichtparameter (markiert mit '_required': True)."""
         return [n for n, spec in self.parameters.items()
                 if isinstance(spec, dict) and spec.get("_required")]
 
-    def to_tool_schema(self) -> dict:
-        """Ergibt das Tool-Use-Schema fuer die Anthropic-API."""
+    def _properties(self) -> dict:
         properties: dict = {}
         for n, spec in self.parameters.items():
             if not isinstance(spec, dict):
@@ -50,12 +53,28 @@ class Capability:
             entry = {k: v for k, v in spec.items() if not k.startswith("_")}
             entry.setdefault("type", "string")
             properties[n] = entry
+        return properties
+
+    def to_tool_schema(self) -> dict:
+        """Tool-Use-Schema fuer die Anthropic-API."""
         return {
             "name": self.name,
             "description": self.description,
             "input_schema": {
                 "type": "object",
-                "properties": properties,
+                "properties": self._properties(),
+                "required": self.required_params(),
+            },
+        }
+
+    def to_provider_neutral_schema(self) -> dict:
+        """OpenAPI-Stil-Schema (von Gemini/OpenAI direkt nutzbar)."""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "parameters": {
+                "type": "object",
+                "properties": self._properties(),
                 "required": self.required_params(),
             },
         }
@@ -140,6 +159,10 @@ class ModuleRegistry:
     def __init__(self) -> None:
         self._modules: dict[str, ModuleInterface] = {}
         self._capabilities: dict[str, Capability] = {}
+        # Modul-IDs, die fuer Aufrufe deaktiviert sind. Datenschicht bleibt
+        # bestehen, nur dispatch() und Dashboard liefern fuer diese Module
+        # nichts mehr aus.
+        self._disabled: set[str] = set()
 
     # ---- Registrierung ------------------------------------------------
     def register(self, module: ModuleInterface) -> None:
@@ -156,6 +179,28 @@ class ModuleRegistry:
         # Modul ueber seinen Context informieren (Modul-zu-Modul-Bruecke)
         module.on_register(ModuleContext(self, mid))
 
+    def set_module_enabled(self, module_id: str, enabled: bool) -> None:
+        """Aktiviert oder deaktiviert ein Modul zur Laufzeit."""
+        if module_id not in self._modules:
+            raise ValueError(f"Modul '{module_id}' unbekannt")
+        if enabled:
+            self._disabled.discard(module_id)
+        else:
+            self._disabled.add(module_id)
+
+    def is_module_enabled(self, module_id: str) -> bool:
+        return module_id in self._modules and module_id not in self._disabled
+
+    def module_states(self) -> list[dict]:
+        """Zustand aller Module fuer die GUI-Modulverwaltung."""
+        return [{"module_id": mid,
+                  "display_name": m.display_name,
+                  "enabled": mid not in self._disabled,
+                  "capabilities":
+                      [c.name for c in self._capabilities.values()
+                       if c.module_id == mid]}
+                for mid, m in self._modules.items()]
+
     # ---- Schnittstelle 1: dispatch -----------------------------------
     def dispatch(self, capability_name: str,
                  args: Optional[dict] = None) -> dict:
@@ -166,6 +211,9 @@ class ModuleRegistry:
         if capability_name not in self._capabilities:
             return {"error": f"Capability '{capability_name}' nicht gefunden"}
         cap = self._capabilities[capability_name]
+        if cap.module_id in self._disabled:
+            return {"error": f"Modul '{cap.module_id}' ist deaktiviert",
+                    "module_disabled": True}
         kwargs = dict(args or {})
         # fehlende Pflichtparameter freundlich abfangen
         missing = [p for p in cap.required_params() if p not in kwargs]
@@ -183,40 +231,51 @@ class ModuleRegistry:
         return capability_name in self._capabilities
 
     # ---- Auflistung / Schemata ---------------------------------------
-    def all_capabilities(self) -> list[Capability]:
-        return list(self._capabilities.values())
+    def all_capabilities(self,
+                          include_disabled: bool = False) -> list[Capability]:
+        if include_disabled:
+            return list(self._capabilities.values())
+        return [c for c in self._capabilities.values()
+                if c.module_id not in self._disabled]
 
     def modules(self) -> list[ModuleInterface]:
         return list(self._modules.values())
 
     def tool_schemas(self) -> list[dict]:
-        """Tool-Use-Schemata aller Capabilities (fuer das LLM)."""
-        return [c.to_tool_schema() for c in self._capabilities.values()]
+        """Tool-Use-Schemata im Anthropic-Stil (nur aktive Module)."""
+        return [c.to_tool_schema() for c in self.all_capabilities()]
+
+    def gemini_tool_specs(self) -> list[dict]:
+        """Tool-Schemata im provider-neutralen Stil (Gemini/OpenAI)."""
+        return [c.to_provider_neutral_schema()
+                for c in self.all_capabilities()]
+
+    def destructive_capability_names(self) -> set[str]:
+        return {c.name for c in self.all_capabilities() if c.destructive}
 
     # ---- Sidebar / Kontext-Ueberblick --------------------------------
     def context_overview(self) -> str:
-        """Kurzfassung des Modulstatus - genau das, was die GUI-Sidebar zeigt."""
         if not self._modules:
             return "Keine Module registriert."
         lines: list[str] = []
-        for module in self._modules.values():
-            summary = module.get_context_summary() or "(keine Daten)"
-            lines.append(f"[{module.display_name}]")
+        for mid, module in self._modules.items():
+            tag = " (deaktiviert)" if mid in self._disabled else ""
+            summary = (module.get_context_summary() or "(keine Daten)"
+                        if mid not in self._disabled else "(deaktiviert)")
+            lines.append(f"[{module.display_name}{tag}]")
             lines.append(f"  {summary}")
             lines.append("")
         return "\n".join(lines).rstrip()
 
     # ---- Schnittstelle 3: Dashboard ----------------------------------
     def collect_events(self, horizon_days: int = 90) -> list[Event]:
-        """
-        Fragt jedes Modul nach Ereignissen und gibt sie chronologisch
-        sortiert zurueck. Module ohne 'get_events' liefern einfach nichts.
-        """
         events: list[Event] = []
-        for module in self._modules.values():
+        for mid, module in self._modules.items():
+            if mid in self._disabled:
+                continue
             try:
                 events.extend(module.get_events(horizon_days))
             except Exception:                          # noqa: BLE001
-                continue                               # ein Modul darf andere nicht abschiessen
+                continue
         events.sort(key=lambda e: e.due_date)
         return events

@@ -22,12 +22,16 @@ from typing import Callable
 
 import customtkinter as ctk
 
+from pathlib import Path
+
 from assistant import Assistant
 from core.interface import ModuleRegistry
 from database import AssistantLogRepository, Database
 from main import build_registry
+from services.gemini import GeminiClient
 from services.output import OutputService
 from services.scheduler import ProactiveScheduler
+from services.sync import FileSyncProvider, install_sync_hook
 
 SAMPLE_MAIL = (
     "Betreff: Information zu Ihrem Netflix-Abo\n\n"
@@ -83,13 +87,20 @@ def _seed_if_empty(registry: ModuleRegistry) -> None:
                          "cadence_days": 14})
 
 
-def bootstrap() -> tuple[Database, ModuleRegistry, Assistant]:
+def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, object]:
     db = Database("alltagshelfer_gui.db")
     output = OutputService("ausgaben")
-    registry = build_registry(db, output)
+    llm = GeminiClient()
+    active_llm = llm if llm.is_available else None
+    registry = build_registry(db, output, llm=active_llm)
     _seed_if_empty(registry)
-    assistant = Assistant(registry, log=AssistantLogRepository(db))
-    return db, registry, assistant
+    assistant = Assistant(registry, llm=active_llm,
+                           log=AssistantLogRepository(db))
+
+    sync = FileSyncProvider.from_env(Path(".alltagshelfer-state"))
+    if sync is not None:
+        install_sync_hook(registry, sync).apply_remote()
+    return db, registry, assistant, sync
 
 
 # ---------------------------------------------------------------------
@@ -140,9 +151,13 @@ class AlltagshelferGUI(ctk.CTk):
             "Sozial": self._build_social,
             "Posteingang": self._build_inbox,
             "Assistent": self._build_chat,
+            "Module": self._build_module_admin,
         }
         for name, builder in self.tab_builders.items():
             builder(self.tabs.add(name))
+
+        # Assistant bei destruktiven Aufrufen den Nutzer fragen lassen
+        self.assistant.set_confirm_callback(self._confirm_destructive)
 
         self._refresh_all()
         self._append_chat("Assistent",
@@ -931,6 +946,7 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_calendar()
         self._refresh_social()
         self._refresh_inbox()
+        self._refresh_module_admin()
 
     def _dispatch_and_refresh(self, capability: str, args: dict) -> None:
         self.registry.dispatch(capability, args)
@@ -967,6 +983,73 @@ class AlltagshelferGUI(ctk.CTk):
                             result.get("status") or result.get("error", ""))
 
     # ================================================================
+    #  Modul-Verwaltung (Tab "Module")
+    # ================================================================
+    def _build_module_admin(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
+
+        ctk.CTkLabel(parent, text="Module ein-/ausschalten",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 8))
+        ctk.CTkLabel(parent,
+                     text=("Deaktivierte Module liefern weder Capabilities "
+                            "noch Dashboard-Eintraege. Die Daten bleiben "
+                            "in der DB erhalten."),
+                     text_color="gray", wraplength=720, justify="left"
+                     ).grid(row=0, column=0, sticky="sw", pady=(0, 6))
+
+        self.module_admin_list = ctk.CTkScrollableFrame(
+            parent, fg_color="transparent")
+        self.module_admin_list.grid(row=1, column=0, sticky="nsew")
+
+    def _refresh_module_admin(self) -> None:
+        if not hasattr(self, "module_admin_list"):
+            return
+        _clear(self.module_admin_list)
+        for state in self.registry.module_states():
+            card = ctk.CTkFrame(self.module_admin_list)
+            card.pack(fill="x", padx=2, pady=4)
+            body = ctk.CTkFrame(card, fg_color="transparent")
+            body.pack(fill="x", padx=12, pady=8)
+
+            top = ctk.CTkFrame(body, fg_color="transparent")
+            top.pack(fill="x")
+            ctk.CTkLabel(
+                top,
+                text=f"{state['display_name']} ({state['module_id']})",
+                font=ctk.CTkFont(size=14, weight="bold")
+            ).pack(side="left")
+            switch_var = ctk.BooleanVar(value=state["enabled"])
+            ctk.CTkSwitch(top, text="aktiv", variable=switch_var,
+                           command=lambda mid=state["module_id"],
+                           var=switch_var: self._toggle_module(mid, var)
+                           ).pack(side="right")
+
+            ctk.CTkLabel(
+                body,
+                text=f"{len(state['capabilities'])} Capabilities: "
+                      + ", ".join(state["capabilities"]),
+                text_color="gray", font=ctk.CTkFont(size=11),
+                wraplength=720, justify="left"
+            ).pack(anchor="w", pady=(4, 0))
+
+    def _toggle_module(self, module_id: str, var) -> None:
+        self.registry.set_module_enabled(module_id, bool(var.get()))
+        self._refresh_all()
+
+    # ================================================================
+    #  Destruktiv-Bestaetigung (vom Assistant aufgerufen)
+    # ================================================================
+    def _confirm_destructive(self, tool_call) -> bool:
+        # Tkinter ist nicht thread-safe; der Assistent laeuft im
+        # Hintergrundthread - daher messagebox aus tkinter nutzen.
+        from tkinter import messagebox
+        text = (f"Der Assistent moechte '{tool_call.name}' ausfuehren.\n\n"
+                f"Argumente: {tool_call.args}\n\nZulassen?")
+        return messagebox.askyesno("Aktion bestaetigen", text)
+
+    # ================================================================
     #  Scheduler
     # ================================================================
     def _check_notifications(self) -> None:
@@ -979,7 +1062,7 @@ class AlltagshelferGUI(ctk.CTk):
 def main() -> None:
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
-    db, registry, assistant = bootstrap()
+    db, registry, assistant, sync = bootstrap()
     app = AlltagshelferGUI(registry, assistant)
     # Scheduler im Hintergrund - meldet sich, wenn etwas akut wird
     app.scheduler.start()

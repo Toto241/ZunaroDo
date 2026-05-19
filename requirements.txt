@@ -8,12 +8,12 @@ APScheduler>=3.10.0
 # Optional: Desktop-Notifikationen (faellt sanft auf print zurueck)
 plyer>=2.1.0
 
-# Optional: echtes LLM (nur im API-Modus erforderlich)
-# anthropic>=0.40.0
+# Optional: Google Gemini als KI-Backend
+# google-generativeai>=0.7.0
 
 # Optional: OCR fuer Kassenbons
 # pytesseract>=0.3.10
 # Pillow>=10.0.0
 
-# Optional: verschluesselte DB
-# pysqlcipher3>=1.2.0  (auf Windows haeufig Build noetig)
+# Optional: verschluesselte DB (ALLTAGSHELFER_DB_KEY setzen, um sie zu nutzen)
+# sqlcipher3-binary>=0.5.0

@@ -64,28 +64,26 @@ class CalendarModule(ModuleInterface):
         result: list[Event] = []
 
         # 1) explizite Kalender-Eintraege
-        for ev in self.repo.list_upcoming(horizon_days):
-            days = (ev.due_date - today).days
-            detail = ev.description
-            if ev.person_name:
-                detail = (f"Betrifft: {ev.person_name}. " + detail).strip()
+        for cal_ev in self.repo.list_upcoming(horizon_days):
+            days = (cal_ev.due_date - today).days
+            detail = cal_ev.description
+            if cal_ev.person_name:
+                detail = (f"Betrifft: {cal_ev.person_name}. " + detail).strip()
             result.append(Event(
-                title=f"{self._category_label(ev.category)}: {ev.title}",
-                due_date=ev.due_date,
+                title=f"{self._category_label(cal_ev.category)}: {cal_ev.title}",
+                due_date=cal_ev.due_date,
                 module_id=self.module_id,
                 module_name=self.display_name,
-                category=ev.category,
+                category=cal_ev.category,
                 detail=detail,
                 days_remaining=days,
             ))
 
         # 2) Geburtstage der Haushaltsmitglieder
-        for ev in self._birthday_events(horizon_days):
-            result.append(ev)
+        result.extend(self._birthday_events(horizon_days))
 
         # 3) gesetzliche Standard-Steuerfristen
-        for ev in self._steuerfristen(horizon_days):
-            result.append(ev)
+        result.extend(self._steuerfristen(horizon_days))
 
         return result
 
@@ -137,6 +135,7 @@ class CalendarModule(ModuleInterface):
                                  "description": "ID des Termins"},
                 },
                 handler=self._cap_delete,
+                destructive=True,
             ),
         ]
 

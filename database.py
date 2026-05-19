@@ -1,17 +1,22 @@
 """
-Datenschicht - SQLite.
+Datenschicht - SQLite, optional verschluesselt mit SQLCipher.
 
 Diese Schicht kennt nur Speicherung. Sie weiss nichts vom KI-Assistenten.
 Der Zugriff laeuft ueber das Repository, das Domaenenobjekte zurueckgibt.
 
-Hinweis Datenschutz: In Produktion sollte die DB mit SQLCipher
-verschluesselt werden - dafuer 'pysqlcipher3' statt 'sqlite3' nutzen.
-Da pysqlcipher3 auf Windows oft Build-Schritte braucht, ist es hier
-ein optionales Upgrade, kein Default.
+Verschluesselung (Datenschutz-Leitprinzip):
+  - Wird ALLTAGSHELFER_DB_KEY gesetzt UND ist 'sqlcipher3' installiert,
+    nutzt Database SQLCipher. Daraus folgt: ohne den Schluessel ist die
+    Datei nicht mehr lesbar.
+  - Ist der Key gesetzt, sqlcipher3 aber NICHT installiert, weigert sich
+    Database zu starten - es waere unsicher, transparent unverschluesselt
+    weiterzulaufen.
+  - Ohne Key bleibt der bisherige Klartext-Modus aktiv.
 """
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -171,12 +176,51 @@ def _ensure_column(conn: sqlite3.Connection, table: str,
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}")
 
 
+def _open_connection(path: str,
+                     encryption_key: Optional[str]) -> tuple[sqlite3.Connection, str]:
+    """
+    Oeffnet die DB-Verbindung. Wenn ein Schluessel uebergeben wurde, wird
+    SQLCipher verwendet - sonst Klartext-SQLite.
+
+    Rueckgabe: (Verbindung, Modus) - 'sqlcipher' oder 'plain'.
+    """
+    if not encryption_key:
+        return sqlite3.connect(path), "plain"
+    try:
+        import sqlcipher3 as cipher                       # type: ignore[import-not-found]
+    except Exception as exc:
+        raise RuntimeError(
+            "ALLTAGSHELFER_DB_KEY ist gesetzt, aber 'sqlcipher3' ist nicht "
+            "installiert. Entweder Paket installieren (pip install "
+            "sqlcipher3-binary) oder den Key entfernen, um unverschluesselt "
+            "weiterzuarbeiten."
+        ) from exc
+    conn = cipher.connect(path)                            # type: ignore[attr-defined]
+    # Schluessel SETZEN, bevor irgendetwas anderes passiert
+    safe_key = encryption_key.replace("'", "''")
+    conn.execute(f"PRAGMA key = '{safe_key}'")
+    # Schluessel testen: SQLCipher faellt erst beim ersten echten Zugriff um
+    try:
+        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+    except Exception as exc:
+        conn.close()
+        raise RuntimeError(
+            "DB konnte nicht entschluesselt werden - falscher "
+            "ALLTAGSHELFER_DB_KEY oder DB ist nicht SQLCipher.") from exc
+    return conn, "sqlcipher"
+
+
 class Database:
     """Duenne Wrapper-Klasse um die SQLite-Verbindung."""
 
-    def __init__(self, path: str = "alltagshelfer.db"):
+    def __init__(self, path: str = "alltagshelfer.db",
+                 encryption_key: Optional[str] = None):
         self.path = path
-        self.conn = sqlite3.connect(path)
+        # Schluessel wahlweise als Parameter oder per Umgebungsvariable
+        key = encryption_key or os.environ.get("ALLTAGSHELFER_DB_KEY")
+        conn, mode = _open_connection(path, key)
+        self.conn = conn
+        self.encryption_mode = mode
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.executescript(SCHEMA)

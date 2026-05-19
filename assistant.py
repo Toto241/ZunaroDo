@@ -1,217 +1,231 @@
 """
-Der KI-Assistent.
+Der KI-Assistent (Provider-agnostisch, Default: Google Gemini).
 
 Er kennt KEIN einziges Fachmodul direkt. Er kennt nur die Registry
-und damit die Schnittstelle. Dadurch funktioniert er mit jedem Modul,
-das ModuleInterface erfuellt.
+und einen LLMClient. Dadurch funktioniert er mit jedem Modul, das
+ModuleInterface erfuellt, und mit jedem Provider, der die kleine
+LLMClient-Schnittstelle umsetzt.
 
-Zwei Betriebsarten:
-  1) API-Modus  - echtes LLM (Anthropic), nutzt Tool-Use.
-                  Aktiv, wenn die Umgebungsvariable ANTHROPIC_API_KEY
-                  gesetzt ist und das Paket 'anthropic' installiert ist.
-  2) Offline-Modus - regelbasierter Router. Braucht kein Netz, keine
-                  Schluessel. Demonstriert dieselbe Schnittstelle.
+Drei Betriebsarten:
+  1) Gemini (API)  - echtes LLM mit Funktionsaufrufen
+                     Aktiv, wenn GOOGLE_API_KEY/GEMINI_API_KEY gesetzt
+                     ist und 'google-generativeai' installiert.
+  2) Offline       - regelbasierter Router (auch ohne Netz/Key nutzbar)
 
-Beide Modi rufen Faehigkeiten ausschliesslich ueber registry.dispatch()
-auf - die Schnittstelle bleibt identisch.
+Erweiterungen gegenueber der frueheren Anthropic-Anbindung:
+  - Konversationsverlauf pro Session
+  - konfigurierbare Iterations- und Token-Limits
+  - Token-Verbrauch wird protokolliert
+  - destruktive Capabilities erfordern einen ConfirmCallback
+  - stabiler Teil des System-Prompts ist von der dynamischen Lage getrennt
+  - LLM-Antwort und Tool-Aufrufe landen im assistant_log
 """
 from __future__ import annotations
 
 import json
-import os
+from typing import Callable, Optional
 
 from core.interface import ModuleRegistry
 from database import AssistantLogRepository
+from services.gemini import GeminiClient
+from services.llm import ConfirmCallback, LLMAnswer, LLMClient, TokenUsage
 
-SYSTEM_PROMPT = (
+
+SYSTEM_PROMPT_STATIC = (
     "Du bist der Alltagshelfer, ein freundlicher deutschsprachiger "
-    "Assistent. Du hilfst beim Verwalten von Vertraegen, Fristen und "
-    "Finanzen. Nutze die bereitgestellten Werkzeuge, um echte Daten "
-    "abzurufen, statt zu raten. Antworte knapp und konkret auf Deutsch."
+    "Assistent. Du hilfst beim Verwalten von Vertraegen, Fristen, "
+    "Finanzen, Haushalt, Terminen und Kontakten. Nutze konsequent die "
+    "bereitgestellten Werkzeuge, um echte Daten abzurufen, statt zu "
+    "raten. Bei Werkzeugen mit dauerhaften Aenderungen (z.B. Daten "
+    "aendern oder Aktionen ausloesen) bestaetige sicherheitshalber kurz, "
+    "was du gleich tust. Antworte knapp und konkret auf Deutsch."
 )
+
+
+def _allow_all(_call) -> bool:
+    """Default-Confirm: erlaubt alles. GUI/CLI ueberschreibt das."""
+    return True
 
 
 class Assistant:
     """Orchestriert Nutzeranfragen ueber die Modul-Schnittstelle."""
 
     def __init__(self, registry: ModuleRegistry,
-                 model: str = "claude-sonnet-4-5",
-                 log: AssistantLogRepository | None = None):
+                 llm: Optional[LLMClient] = None,
+                 log: Optional[AssistantLogRepository] = None,
+                 max_iterations: int = 12,
+                 max_output_tokens: int = 2048):
         self.registry = registry
-        self.model = model
         self.log = log
-        self._client = self._try_init_client()
+        self.max_iterations = max_iterations
+        self.max_output_tokens = max_output_tokens
+
+        # Provider-Wahl: explizit uebergeben > Gemini-Default > Offline
+        if llm is not None:
+            self.llm: Optional[LLMClient] = llm
+        else:
+            candidate = GeminiClient()
+            self.llm = candidate if candidate.is_available else None
+
+        # Konversationsverlauf pro Session (Liste von genai.Content-Objekten
+        # oder Dictionaries; Provider-spezifisch). Der LLMClient ist
+        # zustaendig, das passende Format zu interpretieren.
+        self._history: list = []
+        # Aufgelaufener Token-Verbrauch
+        self._usage = TokenUsage()
+        # Confirm-Callback fuer destruktive Aufrufe
+        self._confirm: ConfirmCallback = _allow_all
 
     # ------------------------------------------------------------------
-    @staticmethod
-    def _try_init_client():
-        """Versucht den Anthropic-Client zu laden - sonst None (Offline)."""
-        if not os.environ.get("ANTHROPIC_API_KEY"):
-            return None
-        try:
-            import anthropic
-            return anthropic.Anthropic()
-        except Exception:
-            return None
-
     @property
     def mode(self) -> str:
-        return "API" if self._client else "Offline"
+        if self.llm is None:
+            return "Offline"
+        return f"API ({self.llm.name})"
+
+    @property
+    def token_usage(self) -> TokenUsage:
+        return self._usage
+
+    def set_confirm_callback(self,
+                              callback: Optional[ConfirmCallback]) -> None:
+        """Vor destruktiven Aufrufen wird dieser Callback gefragt."""
+        self._confirm = callback if callback is not None else _allow_all
+
+    def reset_history(self) -> None:
+        self._history = []
 
     # ------------------------------------------------------------------
-    def ask(self, user_message: str) -> str:
-        """Eine Nutzeranfrage beantworten."""
+    def ask(self, user_message: str,
+            stream_callback: Optional[Callable[[str], None]] = None) -> str:
         if self.log is not None:
             self.log.append("user", user_message)
-        answer = (self._ask_api(user_message) if self._client
-                  else self._ask_offline(user_message))
+        if self.llm is None:
+            answer = self._ask_offline(user_message)
+        else:
+            answer = self._ask_api(user_message, stream_callback)
         if self.log is not None:
             self.log.append("assistant", answer)
         return answer
 
     # ---- API-Modus -----------------------------------------------------
-    def _ask_api(self, user_message: str) -> str:
-        """Echte LLM-Schleife mit Tool-Use ueber die Schnittstelle."""
-        tools = self.registry.tool_schemas()
+    def _ask_api(self, user_message: str,
+                  stream_callback: Optional[Callable[[str], None]]) -> str:
+        assert self.llm is not None    # in ask() bereits geprueft
         agenda = self.registry.collect_events()
         agenda_txt = "\n".join(
-            f"- {e.due_date}: {e.title} (in {e.days_remaining} Tagen)"
-            for e in agenda) or "keine"
-        system = (SYSTEM_PROMPT
-                  + "\n\nAktueller Stand:\n" + self.registry.context_overview()
-                  + "\n\nAnstehende Ereignisse:\n" + agenda_txt)
-        messages = [{"role": "user", "content": user_message}]
+            f"- {e.due_date}: {e.title} (in {e.days_remaining} Tagen, "
+            f"{e.module_name})"
+            for e in agenda[:20]) or "keine"
+        dynamic = ("Aktueller Stand:\n"
+                    + self.registry.context_overview()
+                    + "\n\nAnstehende Ereignisse:\n" + agenda_txt)
 
-        # Schleife: solange das Modell Werkzeuge aufruft, weiter
-        for _ in range(8):  # Sicherheitslimit gegen Endlosschleifen
-            response = self._client.messages.create(
-                model=self.model,
-                max_tokens=1024,
-                system=system,
-                tools=tools,
-                messages=messages,
-            )
-            if response.stop_reason != "tool_use":
-                return "".join(b.text for b in response.content
-                               if b.type == "text")
-
-            # Tool-Aufrufe ausfuehren - ueber die Registry-Schnittstelle
-            messages.append({"role": "assistant", "content": response.content})
-            tool_results = []
-            for block in response.content:
-                if block.type != "tool_use":
-                    continue
-                result = self.registry.dispatch(block.name, block.input)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": json.dumps(result, ensure_ascii=False),
-                })
-            messages.append({"role": "user", "content": tool_results})
-
-        return "Abbruch: zu viele Werkzeugaufrufe."
+        result: LLMAnswer = self.llm.ask_with_tools(
+            user_message=user_message,
+            system_prompt_static=SYSTEM_PROMPT_STATIC,
+            system_prompt_dynamic=dynamic,
+            tool_specs=self.registry.gemini_tool_specs(),
+            destructive_tool_names=self.registry.destructive_capability_names(),
+            dispatcher=lambda name, args: self.registry.dispatch(name, args),
+            history=self._history,
+            max_iterations=self.max_iterations,
+            max_output_tokens=self.max_output_tokens,
+            confirm=self._confirm,
+            stream_callback=stream_callback,
+        )
+        self._usage.add(result.usage)
+        if self.log is not None:
+            self.log.append(
+                "meta",
+                json.dumps({"tokens": result.usage.to_dict(),
+                             "tool_calls": result.tool_calls_done,
+                             "truncated": result.truncated}))
+        return result.text
 
     # ---- Offline-Modus -------------------------------------------------
     def _ask_offline(self, user_message: str) -> str:
-        """
-        Regelbasierter Router. Er bildet die LLM-Logik nach: erkennt
-        eine Absicht, ruft die passende Capability ueber dieselbe
-        Schnittstelle (registry.dispatch) auf und formuliert die Antwort.
-        """
         msg = user_message.lower()
 
-        # Absicht: Kuendigungsschreiben erstellen (Modul A)
         if any(w in msg for w in ("kündigungsschreiben", "kuendigungsschreiben",
                                   "kündigung schreiben", "schreiben erstell")):
             return ("Ein Kuendigungsschreiben erstelle ich ueber "
-                    "'contracts.generate_cancellation'. Nenne mir den Vertrag "
-                    "(im API-Modus waehle ich ihn automatisch), dann erzeuge "
-                    "ich PDF und Mail-Entwurf.")
+                    "'contracts.generate_cancellation'. Im API-Modus waehle ich "
+                    "den Vertrag automatisch und erzeuge PDF + Mail-Entwurf.")
 
-        # Absicht: anstehende Fristen (Modul A)
         if any(w in msg for w in ("frist", "kuend", "künd", "auslauf", "ablauf")):
             within = 30 if any(w in msg for w in
-                               ("monat", "30", "bald", "demn", "nächst", "naechst")) else None
+                               ("monat", "30", "bald", "demn", "nächst",
+                                "naechst")) else None
             args = {"within_days": within} if within else {}
-            data = self.registry.dispatch("contracts.upcoming_deadlines", args)
-            return self._format_deadlines(data)
+            return self._format_deadlines(
+                self.registry.dispatch("contracts.upcoming_deadlines", args))
 
-        # Absicht: Einkaufsliste (Modul D) - VOR dem "was steht"-Catch-all
         if any(w in msg for w in ("einkauf", "einkaufsliste", "einkaufen",
                                   "supermarkt")):
-            data = self.registry.dispatch("family.shopping_list", {})
-            return self._format_shopping(data)
+            return self._format_shopping(
+                self.registry.dispatch("family.shopping_list", {}))
 
-        # Absicht: Soziale Pflege (Modul E) - vor dem Catch-all
         if any(w in msg for w in ("kontakt", "melden", "freund", "anrufen",
-                                  "anruf", "kümmer", "kuemmer", "anruf")):
-            data = self.registry.dispatch("social.contacts", {})
-            return self._format_social(data)
+                                  "anruf", "kümmer", "kuemmer")):
+            return self._format_social(
+                self.registry.dispatch("social.contacts", {}))
 
-        # Absicht: Termine / Kalender (Modul C)
         if any(w in msg for w in ("termin", "kalender", "garantie", "tuev",
                                   "tüv", "steuer", "geburtstag")):
-            data = self.registry.dispatch("calendar.upcoming",
-                                            {"horizon_days": 90})
-            return self._format_calendar(data)
+            return self._format_calendar(self.registry.dispatch(
+                "calendar.upcoming", {"horizon_days": 90}))
 
-        # Absicht: Dashboard / anstehende Ereignisse (modul-uebergreifend)
         if any(w in msg for w in ("agenda", "dashboard", "ereignis",
                                   "was steht", "was kommt", "ueberblick",
                                   "überblick", "anstehend")):
-            events = self.registry.collect_events()
-            return self._format_agenda(events)
+            return self._format_agenda(self.registry.collect_events())
 
-        # Absicht: Posteingang / Vorschlaege pruefen
         if any(w in msg for w in ("vorschlag", "vorschläge", "vorschlaege",
                                   "posteingang", "offene mail")):
-            data = self.registry.dispatch("inbox.proposals", {})
-            return self._format_proposals(data)
+            return self._format_proposals(
+                self.registry.dispatch("inbox.proposals", {}))
 
-        # Absicht: Auftraege (einmalig) - Modul D
         if any(w in msg for w in ("auftrag", "aufträge", "auftraege")):
-            data = self.registry.dispatch("family.orders", {})
-            return self._format_orders(data)
+            return self._format_orders(
+                self.registry.dispatch("family.orders", {}))
 
-        # Absicht: Familie / Haushalt / wiederkehrende Aufgaben (Modul D)
         if any(w in msg for w in ("familie", "haushalt", "aufgabe", "putzplan",
                                   "wer ist dran", "mitglied", "zustaendig",
                                   "zuständig", "chore")):
-            data = self.registry.dispatch("family.tasks", {})
-            return self._format_family_tasks(data)
+            return self._format_family_tasks(
+                self.registry.dispatch("family.tasks", {}))
 
-        # Absicht: Finanzen / Budget / monatliche Belastung (Modul B)
-        if any(w in msg for w in ("finanz", "budget", "belast", "monatlich", "ausgab")):
+        if any(w in msg for w in ("finanz", "budget", "belast", "monatlich",
+                                  "ausgab")):
             if any(w in msg for w in ("liste", "auflist", "einzeln")):
-                data = self.registry.dispatch("finance.list_expenses", {})
-                return self._format_expense_list(data)
-            data = self.registry.dispatch("finance.monthly_overview", {})
-            return self._format_finance(data)
+                return self._format_expense_list(
+                    self.registry.dispatch("finance.list_expenses", {}))
+            return self._format_finance(
+                self.registry.dispatch("finance.monthly_overview", {}))
 
-        # Absicht: Preis-Gedaechtnis (Modul B)
         if "preisgedächtnis" in msg or "preis gedächtnis" in msg or \
            "preisgedaechtnis" in msg:
-            data = self.registry.dispatch("finance.price_memory", {})
-            return self._format_price_memory(data)
+            return self._format_price_memory(
+                self.registry.dispatch("finance.price_memory", {}))
 
-        # Absicht: Vertragsuebersicht (Modul A)
-        if any(w in msg for w in ("vertrag", "übersicht", "uebersicht", "kosten")):
-            data = self.registry.dispatch("contracts.list", {})
-            return self._format_contracts(data)
+        if any(w in msg for w in ("vertrag", "übersicht", "uebersicht",
+                                  "kosten")):
+            return self._format_contracts(
+                self.registry.dispatch("contracts.list", {}))
 
-        # Absicht: Preisaenderung melden
         if "preis" in msg:
             return ("Bitte nenne mir Vertrag und neuen Preis - im API-Modus "
-                    "loese ich das automatisch ueber 'contracts.report_price_change'.")
+                    "loese ich das automatisch ueber "
+                    "'contracts.report_price_change'.")
 
-        # Fallback: zeige, was der Assistent ueberhaupt kann
         caps = ", ".join(c.name for c in self.registry.all_capabilities())
         return ("Das habe ich nicht verstanden. Ueber die Schnittstelle "
                 f"verfuegbar sind:\n  {caps}\n"
                 "Frag mich z.B. nach 'anstehenden Fristen', einer "
                 "'Vertragsuebersicht' oder deiner 'monatlichen Belastung'.")
 
-    # ---- Antworten huebsch formatieren --------------------------------
+    # ---- Formatter -----------------------------------------------------
     @staticmethod
     def _format_contracts(data: dict) -> str:
         if data.get("count", 0) == 0:
@@ -219,8 +233,9 @@ class Assistant:
         lines = [f"Du hast {data['count']} aktive Vertraege "
                  f"({data['total_monthly_cost']:.2f} EUR/Monat):"]
         for c in data["contracts"]:
-            lines.append(f"  - {c['name']} ({c['provider']}): "
-                         f"{c['monthly_cost']:.2f} EUR/Monat")
+            owner = f" - {c['owner']}" if c.get("owner") else ""
+            lines.append(f"  - {c['name']} ({c.get('provider') or '-'}): "
+                         f"{c['monthly_cost']:.2f} EUR/Monat{owner}")
         return "\n".join(lines)
 
     @staticmethod
@@ -240,8 +255,10 @@ class Assistant:
         return (
             f"Monatliche Belastung fuer {data['month']}:\n"
             f"  - Wiederkehrende Vertraege: {data['recurring_contracts']:.2f} EUR "
-            f"({data['contract_count']} Vertraege, Quelle: {data['contract_costs_source']})\n"
-            f"  - Einmalige Ausgaben diesen Monat: {data['one_time_this_month']:.2f} EUR "
+            f"({data['contract_count']} Vertraege, Quelle: "
+            f"{data['contract_costs_source']})\n"
+            f"  - Einmalige Ausgaben diesen Monat: "
+            f"{data['one_time_this_month']:.2f} EUR "
             f"({data['expense_count']} Posten)\n"
             f"  => Gesamt: {data['total_monthly']:.2f} EUR"
         )
@@ -252,8 +269,9 @@ class Assistant:
             return "Es sind noch keine Ausgaben erfasst."
         lines = [f"Erfasste Ausgaben ({data['total']:.2f} EUR gesamt):"]
         for e in data["expenses"]:
+            owner = f"  -  {e['owner']}" if e.get("owner") else ""
             lines.append(f"  - {e['spent_on']}  {e['description']}: "
-                          f"{e['amount']:.2f} EUR [{e['category']}]")
+                          f"{e['amount']:.2f} EUR [{e['category']}]{owner}")
         return "\n".join(lines)
 
     @staticmethod
@@ -292,6 +310,18 @@ class Assistant:
             faellig = f", faellig {o['due_date']}" if o["due_date"] else ""
             lines.append(f"  {status} {o['title']} -> "
                           f"{o['assignee'] or 'niemand'}{faellig}")
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_proposals(data: dict) -> str:
+        if data.get("count", 0) == 0:
+            return "Es liegen keine offenen Vorschlaege vor."
+        lines = ["Offene Vorschlaege (warten auf Pruefung):"]
+        for p in data["proposals"]:
+            lines.append(f"  #{p['id']}  {p['summary']}")
+            lines.append(f"        Ziel: {p['target_capability']}")
+        lines.append("Uebernehmen mit 'inbox.accept_proposal', "
+                      "ablehnen mit 'inbox.reject_proposal'.")
         return "\n".join(lines)
 
     @staticmethod
@@ -339,16 +369,4 @@ class Assistant:
         for p in data["products"]:
             seen = f" (zuletzt {p['last_seen']})" if p.get("last_seen") else ""
             lines.append(f"  - {p['product']}: {p['last_price']:.2f} EUR{seen}")
-        return "\n".join(lines)
-
-    @staticmethod
-    def _format_proposals(data: dict) -> str:
-        if data.get("count", 0) == 0:
-            return "Es liegen keine offenen Vorschlaege vor."
-        lines = ["Offene Vorschlaege (warten auf Pruefung):"]
-        for p in data["proposals"]:
-            lines.append(f"  #{p['id']}  {p['summary']}")
-            lines.append(f"        Ziel: {p['target_capability']}")
-        lines.append("Uebernehmen mit 'inbox.accept_proposal', "
-                      "ablehnen mit 'inbox.reject_proposal'.")
         return "\n".join(lines)

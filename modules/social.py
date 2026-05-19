@@ -30,8 +30,9 @@ _MESSAGE_TEMPLATES = {
 class SocialModule(ModuleInterface):
     """Modul E als steckbares Fachmodul."""
 
-    def __init__(self, repo: SocialRepository):
+    def __init__(self, repo: SocialRepository, llm=None):
         self.repo = repo
+        self.llm = llm
         self._ctx: ModuleContext | None = None
 
     @property
@@ -120,6 +121,9 @@ class SocialModule(ModuleInterface):
                                    "description": "ID des Kontakts"},
                     "template": {"type": "string",
                                  "description": "kurz, treffen, geburtstag"},
+                    "anlass": {"type": "string",
+                                "description": "Optional: konkreter Anlass, "
+                                               "den das LLM aufgreifen soll"},
                 },
                 handler=self._cap_draft_message,
             ),
@@ -152,15 +156,40 @@ class SocialModule(ModuleInterface):
                 "next_due_in_days": c.cadence_days}
 
     def _cap_draft_message(self, contact_id: int,
-                           template: str = "kurz") -> dict:
+                           template: str = "kurz",
+                           anlass: str = "") -> dict:
         c = self.repo.get(contact_id)
         if c is None:
             return {"error": f"Kontakt {contact_id} nicht gefunden"}
+        # Wenn ein LLM verfuegbar ist, einen persoenlicheren Entwurf bauen
+        if self.llm is not None and getattr(self.llm, "is_available", False):
+            try:
+                message = self._draft_with_llm(c, template, anlass)
+                if message:
+                    return {"status": "Entwurf (LLM)",
+                            "to": c.name,
+                            "message": message,
+                            "template": template}
+            except Exception:                              # pragma: no cover
+                pass
         tpl = _MESSAGE_TEMPLATES.get(template, _MESSAGE_TEMPLATES["kurz"])
         return {"status": "Entwurf",
                 "to": c.name,
                 "message": tpl.format(name=c.name),
                 "template": template}
+
+    def _draft_with_llm(self, contact: SocialContact, template: str,
+                         anlass: str) -> str:
+        instruction = (
+            "Du formulierst eine kurze, herzliche, persoenliche Nachricht "
+            "auf Deutsch (1-3 Saetze). Schreibe direkt im Du, ohne Anrede "
+            "wie 'Hallo,'. Keine Emojis, kein Marketing-Ton. Liefer nur den "
+            "Text der Nachricht, keine zusaetzliche Erklaerung. Vorlage-"
+            f"Charakter: '{template}'. Empfaenger: {contact.name}, "
+            f"Beziehung: {contact.relation or 'persoenlich'}. "
+            f"Anlass: {anlass or 'einfach mal melden'}.")
+        text, _ = self.llm.analyze_text(instruction, "")
+        return text.strip()
 
     # ---- intern --------------------------------------------------------
     def _next_due(self, c: SocialContact) -> date:

@@ -76,8 +76,10 @@ def _guess_category(text: str) -> str:
 class InboxModule(ModuleInterface):
     """Modul fuer Mail-Analyse und die zentrale Vorschlags-Ablage."""
 
-    def __init__(self, repo: ProposalRepository):
+    def __init__(self, repo: ProposalRepository,
+                 llm=None):                              # LLMClient | None
         self.repo = repo
+        self.llm = llm
         self._ctx: ModuleContext | None = None
 
     @property
@@ -126,6 +128,7 @@ class InboxModule(ModuleInterface):
                                     "description": "ID des Vorschlags"},
                 },
                 handler=self._cap_accept_proposal,
+                destructive=True,
             ),
             Capability(
                 name="inbox.reject_proposal",
@@ -135,6 +138,7 @@ class InboxModule(ModuleInterface):
                                     "description": "ID des Vorschlags"},
                 },
                 handler=self._cap_reject_proposal,
+                destructive=True,
             ),
             Capability(
                 name="inbox.import_eml",
@@ -162,7 +166,25 @@ class InboxModule(ModuleInterface):
 
     # ---- Handler -------------------------------------------------------
     def _cap_analyze_mail(self, mail_text: str) -> dict:
+        # 1) regelbasierte Erkennung (deterministisch, schnell, kostenlos)
         proposals = self._analyze(mail_text)
+
+        # 2) zusaetzlich: LLM-Erkennung, wenn verfuegbar
+        if self.llm is not None and getattr(self.llm, "is_available", False):
+            llm_proposals = self._analyze_with_llm(mail_text)
+            # Doppelte (gleiche Capability + gleiche zentrale Payload-Felder)
+            # vermeiden
+            seen = {(p.target_capability,
+                      p.payload.get("contract_id"),
+                      p.payload.get("name")) for p in proposals}
+            for p in llm_proposals:
+                key = (p.target_capability,
+                        p.payload.get("contract_id"),
+                        p.payload.get("name"))
+                if key not in seen:
+                    proposals.append(p)
+                    seen.add(key)
+
         for p in proposals:
             self.repo.add(p)
         if not proposals:
@@ -173,6 +195,63 @@ class InboxModule(ModuleInterface):
         return {"status": "analysiert",
                 "found": len(proposals),
                 "proposals": [p.to_dict() for p in proposals]}
+
+    # ---- LLM-basierte Analyse (Gemini) ---------------------------------
+    def _analyze_with_llm(self, mail_text: str) -> list[Proposal]:
+        """Bittet das LLM, strukturierte Vorschlaege im JSON-Format zu liefern."""
+        cap_names = []
+        if self._ctx is not None:
+            for cap in ("contracts.add", "contracts.report_price_change",
+                         "family.add_order", "calendar.add_event"):
+                if self._ctx.has_capability(cap):
+                    cap_names.append(cap)
+        instruction = (
+            "Du analysierst eine eingegangene E-Mail. Erkenne, ob darin "
+            "eine konkrete Aktion fuer den Alltagshelfer steckt - "
+            "z.B. ein neuer Vertrag, eine Preisaenderung zu einem "
+            "bestehenden Vertrag, ein konkreter Termin oder ein Auftrag. "
+            "Antworte AUSSCHLIESSLICH mit gueltigem JSON, ohne weitere "
+            "Erklaerung, im Schema "
+            '{"proposals": [{"target_capability": "<eine der: '
+            f"{', '.join(cap_names) or 'contracts.add, family.add_order'}>"
+            '", "summary": "<kurz>", "payload": {<Argumente fuer die '
+            'Capability>}}]}. Wenn nichts Konkretes erkennbar ist, '
+            'gib {"proposals": []} zurueck.')
+        try:
+            raw, _ = self.llm.analyze_text(instruction, mail_text)
+        except Exception:                                  # pragma: no cover
+            return []
+        return self._parse_llm_proposals(raw)
+
+    @staticmethod
+    def _parse_llm_proposals(raw: str) -> list[Proposal]:
+        import json
+        # Modelle umrahmen JSON oft mit ```json ... ``` - tolerieren
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            if cleaned.startswith("json"):
+                cleaned = cleaned[4:]
+        try:
+            data = json.loads(cleaned)
+        except Exception:
+            return []
+        result: list[Proposal] = []
+        for item in data.get("proposals", []):
+            if not isinstance(item, dict):
+                continue
+            target = item.get("target_capability")
+            summary = item.get("summary") or "(ohne Beschreibung)"
+            payload = item.get("payload") or {}
+            if not target or not isinstance(payload, dict):
+                continue
+            result.append(Proposal(
+                source="mail-llm",
+                summary=summary,
+                target_capability=target,
+                payload=payload,
+            ))
+        return result
 
     def _cap_proposals(self) -> dict:
         offen = self.repo.list(status="offen")
@@ -241,7 +320,8 @@ class InboxModule(ModuleInterface):
             found = 0
             for mid in ids:
                 _typ, msg_data = client.fetch(mid, "(RFC822)")
-                msg = email.message_from_bytes(msg_data[0][1])
+                raw_bytes = msg_data[0][1]              # type: ignore[index]
+                msg = email.message_from_bytes(raw_bytes)
                 res = self._cap_analyze_mail(self._extract_text(msg))
                 found += res.get("found", 0)
             client.logout()
@@ -291,7 +371,7 @@ class InboxModule(ModuleInterface):
                                   "neuer vertrag")):
             amount = _extract_euro(mail_text)
             provider = self._guess_provider(mail_text)
-            payload = {
+            payload: dict = {
                 "name": f"Vertrag {provider}" if provider else "Neuer Vertrag",
                 "category": _guess_category(mail_text),
                 "provider": provider,

@@ -185,6 +185,7 @@ class ContractModule(ModuleInterface):
                                  "description": "ID der Person (0 = keine)"},
                 },
                 handler=self._cap_set_owner,
+                destructive=True,
             ),
             Capability(
                 name="contracts.upcoming_deadlines",
@@ -208,6 +209,7 @@ class ContractModule(ModuleInterface):
                                  "description": "Neuer Monatspreis in EUR"},
                 },
                 handler=self._cap_price_change,
+                destructive=True,
             ),
             Capability(
                 name="contracts.generate_cancellation",

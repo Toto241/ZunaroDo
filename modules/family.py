@@ -167,6 +167,7 @@ class FamilyModule(ModuleInterface):
                                 "description": "ID der Aufgabe"},
                 },
                 handler=self._cap_complete_task,
+                destructive=True,
             ),
             Capability(
                 name="family.add_order",
@@ -199,6 +200,7 @@ class FamilyModule(ModuleInterface):
                                  "description": "ID des Auftrags"},
                 },
                 handler=self._cap_complete_order,
+                destructive=True,
             ),
             Capability(
                 name="family.shopping_add",
@@ -303,7 +305,10 @@ class FamilyModule(ModuleInterface):
             rotation=rotation,
         )
         saved = self.repo.add_task(task)
-        result = {"status": "angelegt", "task": self.repo.get_task(saved.id).to_dict()}
+        assert saved.id is not None
+        reloaded = self.repo.get_task(saved.id)
+        assert reloaded is not None
+        result = {"status": "angelegt", "task": reloaded.to_dict()}
         if unknown:
             result["warnung"] = f"Unbekannte Namen ignoriert: {', '.join(unknown)}"
         return result

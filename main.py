@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from pathlib import Path
+
 from assistant import Assistant
 from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, CalendarRepository,
@@ -30,8 +32,10 @@ from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
 from modules.social import SocialModule
+from services.gemini import GeminiClient
 from services.output import OutputService
 from services.scheduler import ProactiveScheduler
+from services.sync import FileSyncProvider, install_sync_hook
 
 SAMPLE_MAIL = """Betreff: Wichtige Information zu Ihrem Netflix-Abo
 
@@ -50,7 +54,8 @@ def trenner(titel: str) -> None:
     print(f"\n{'=' * 64}\n  {titel}\n{'=' * 64}")
 
 
-def build_registry(db: Database, output: OutputService) -> ModuleRegistry:
+def build_registry(db: Database, output: OutputService,
+                    llm=None) -> ModuleRegistry:
     """Steckt alle Module ein - dieselbe Funktion nutzt auch die GUI."""
     registry = ModuleRegistry()
     registry.register(ContractModule(ContractRepository(db), output))
@@ -59,20 +64,35 @@ def build_registry(db: Database, output: OutputService) -> ModuleRegistry:
     registry.register(FamilyModule(FamilyRepository(db),
                                     ShoppingRepository(db)))
     registry.register(CalendarModule(CalendarRepository(db)))
-    registry.register(SocialModule(SocialRepository(db)))
+    registry.register(SocialModule(SocialRepository(db), llm=llm))
     registry.register(DayStructureModule())
-    registry.register(InboxModule(ProposalRepository(db)))
+    registry.register(InboxModule(ProposalRepository(db), llm=llm))
     return registry
 
 
 def main() -> None:
     db = Database("alltagshelfer_demo.db")
     output = OutputService("ausgaben")
-    registry = build_registry(db, output)
-    assistant = Assistant(registry, log=AssistantLogRepository(db))
+    llm = GeminiClient()
+    registry = build_registry(db, output, llm=llm if llm.is_available else None)
+    assistant = Assistant(registry, llm=llm if llm.is_available else None,
+                           log=AssistantLogRepository(db))
+
+    # Mehrgeraete-Sync - aktiv, sobald ALLTAGSHELFER_SYNC_DIR gesetzt ist
+    sync = FileSyncProvider.from_env(Path(".alltagshelfer-state"))
+    synced = None
+    if sync is not None:
+        synced = install_sync_hook(registry, sync)
+        applied = synced.apply_remote()
+        if applied:
+            print(f"Sync: {applied} Fremd-Event(s) angewendet.")
 
     trenner("System gestartet")
     print(f"Assistent-Modus: {assistant.mode}")
+    print(f"DB-Modus:        {db.encryption_mode}")
+    if sync is not None:
+        print(f"Sync-Modus:      Datei-basiert ({sync.sync_dir})")
+        print(f"Geraete-ID:      {sync.device_id}")
     print(f"Module: {len(registry.modules())}, "
           f"Capabilities: {len(registry.all_capabilities())}")
 
