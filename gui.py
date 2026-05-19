@@ -250,15 +250,19 @@ class AlltagshelferGUI(ctk.CTk):
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(1, weight=1)
 
+        t = self.i18n.t
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 8))
-        ctk.CTkLabel(header, text="Naechste Ereignisse",
+        ctk.CTkLabel(header, text=t("dashboard.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).pack(side="left")
         self.horizon = ctk.CTkSegmentedButton(
-            header, values=["30 Tage", "90 Tage", "Alle"],
+            header,
+            values=[t("dashboard.horizon.30"),
+                     t("dashboard.horizon.90"),
+                     t("dashboard.horizon.all")],
             command=lambda _v: self._refresh_dashboard())
-        self.horizon.set("90 Tage")
+        self.horizon.set(t("dashboard.horizon.90"))
         self.horizon.pack(side="right")
 
         self.dash_list = ctk.CTkScrollableFrame(parent, fg_color="transparent")
@@ -266,10 +270,15 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _refresh_dashboard(self) -> None:
         _clear(self.dash_list)
-        horizon = {"30 Tage": 30, "90 Tage": 90, "Alle": 3650}[self.horizon.get()]
+        t = self.i18n.t
+        horizon = {
+            t("dashboard.horizon.30"): 30,
+            t("dashboard.horizon.90"): 90,
+            t("dashboard.horizon.all"): 3650,
+        }[self.horizon.get()]
         events = self.registry.collect_events(horizon)
         if not events:
-            ctk.CTkLabel(self.dash_list, text="Keine anstehenden Ereignisse.",
+            ctk.CTkLabel(self.dash_list, text=t("dashboard.none"),
                          text_color="gray").pack(pady=30)
             return
         for event in events:
@@ -311,31 +320,36 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_contracts(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(2, weight=1)
+        t = self.i18n.t
 
-        ctk.CTkLabel(parent, text="Vertraege",
+        ctk.CTkLabel(parent, text=t("tab.contracts"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
         form = ctk.CTkFrame(parent)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.contract_inputs = {
-            "name": _labeled_entry(form, "Name", "z.B. Stromvertrag"),
-            "provider": _labeled_entry(form, "Anbieter", "z.B. Stadtwerke"),
-            "category": _labeled_entry(form, "Kategorie",
-                                         "mobilfunk / streaming / strom / "
-                                         "versicherung / sonstiges"),
-            "monthly_cost": _labeled_entry(form, "Monatspreis (EUR)", "0.00"),
-            "start_date": _labeled_entry(form, "Start (YYYY-MM-DD)",
-                                            date.today().isoformat()),
-            "minimum_term_months": _labeled_entry(form, "Mindestlaufzeit (Mon.)",
+            "name": _labeled_entry(form, t("form.name"), "z.B. Stromvertrag"),
+            "provider": _labeled_entry(form, t("form.provider"),
+                                          "z.B. Stadtwerke"),
+            "category": _labeled_entry(form, t("form.category"),
+                                          "mobilfunk / streaming / strom / "
+                                          "versicherung / sonstiges"),
+            "monthly_cost": _labeled_entry(form, t("form.monthly_cost"),
+                                              "0.00"),
+            "start_date": _labeled_entry(form, t("form.start_date"),
+                                             date.today().isoformat()),
+            "minimum_term_months": _labeled_entry(form, t("form.min_term"),
                                                      "12"),
-            "notice_period_months": _labeled_entry(form, "Kuendigungsfrist (Mon.)",
-                                                     "3"),
-            "auto_renew_months": _labeled_entry(form, "Verlaengerung (Mon.)",
+            "notice_period_months": _labeled_entry(form,
+                                                      t("form.notice_period"),
+                                                      "3"),
+            "auto_renew_months": _labeled_entry(form, t("form.auto_renew"),
                                                   "12"),
-            "owner_name": _labeled_entry(form, "Person", "(leer = ohne)"),
+            "owner_name": _labeled_entry(form, t("form.person"),
+                                            t("form.empty_no_person")),
         }
-        ctk.CTkButton(form, text="Vertrag anlegen",
+        ctk.CTkButton(form, text=t("action.create_contract"),
                       command=self._on_contract_add).pack(pady=8)
 
         self.contract_list = ctk.CTkScrollableFrame(parent,
@@ -400,7 +414,7 @@ class AlltagshelferGUI(ctk.CTk):
 
         btns = ctk.CTkFrame(body, fg_color="transparent")
         btns.pack(anchor="w", pady=(6, 0))
-        ctk.CTkButton(btns, text="Kuendigungsschreiben",
+        ctk.CTkButton(btns, text=self.i18n.t("action.cancellation_letter"),
                       width=170,
                       command=lambda i=c["id"], n=c["name"]:
                       self._on_generate_cancellation(i, n)
@@ -427,24 +441,26 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_family(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(1, weight=1)
+        t = self.i18n.t
 
         sub = ctk.CTkTabview(parent)
         sub.grid(row=0, column=0, sticky="nsew", rowspan=2)
-        self._build_family_members(sub.add("Mitglieder"))
-        self._build_family_tasks(sub.add("Aufgaben"))
-        self._build_family_orders(sub.add("Auftraege"))
-        self._build_family_shopping(sub.add("Einkaufsliste"))
+        self._build_family_members(sub.add(t("family.sub.members")))
+        self._build_family_tasks(sub.add(t("family.sub.tasks")))
+        self._build_family_orders(sub.add(t("family.sub.orders")))
+        self._build_family_shopping(sub.add(t("family.sub.shopping")))
 
     def _build_family_members(self, parent) -> None:
+        t = self.i18n.t
         form = ctk.CTkFrame(parent)
         form.pack(fill="x", pady=(6, 8))
         self.member_inputs = {
-            "name": _labeled_entry(form, "Name"),
-            "role": _labeled_entry(form, "Rolle",
+            "name": _labeled_entry(form, t("form.name")),
+            "role": _labeled_entry(form, t("form.role"),
                                     "erwachsen / kind / sonstiges"),
-            "birthday": _labeled_entry(form, "Geburtstag (YYYY-MM-DD)"),
+            "birthday": _labeled_entry(form, t("form.birthday")),
         }
-        ctk.CTkButton(form, text="Hinzufuegen",
+        ctk.CTkButton(form, text=t("common.add"),
                       command=self._on_member_add).pack(pady=6)
         self.member_list = ctk.CTkScrollableFrame(parent,
                                                     fg_color="transparent")
@@ -472,17 +488,19 @@ class AlltagshelferGUI(ctk.CTk):
                          anchor="w").pack(fill="x", padx=12, pady=2)
 
     def _build_family_tasks(self, parent) -> None:
+        t = self.i18n.t
         form = ctk.CTkFrame(parent)
         form.pack(fill="x", pady=(6, 8))
         self.task_inputs = {
-            "title": _labeled_entry(form, "Titel"),
-            "interval_days": _labeled_entry(form, "Intervall (Tage)", "7"),
-            "assignees": _labeled_entry(form, "Rotation (Komma)",
+            "title": _labeled_entry(form, t("form.title")),
+            "interval_days": _labeled_entry(form, t("form.interval_days"),
+                                                "7"),
+            "assignees": _labeled_entry(form, t("form.rotation"),
                                           "Anna, Bernd"),
-            "first_due": _labeled_entry(form, "Erstmals (YYYY-MM-DD)",
+            "first_due": _labeled_entry(form, t("form.first_due"),
                                            date.today().isoformat()),
         }
-        ctk.CTkButton(form, text="Aufgabe anlegen",
+        ctk.CTkButton(form, text=t("action.add_task"),
                       command=self._on_task_add).pack(pady=6)
         self.task_list = ctk.CTkScrollableFrame(parent,
                                                   fg_color="transparent")
@@ -521,15 +539,16 @@ class AlltagshelferGUI(ctk.CTk):
                           ).pack(side="right")
 
     def _build_family_orders(self, parent) -> None:
+        t = self.i18n.t
         form = ctk.CTkFrame(parent)
         form.pack(fill="x", pady=(6, 8))
         self.order_inputs = {
-            "title": _labeled_entry(form, "Titel"),
-            "assignee": _labeled_entry(form, "Wer", "Name"),
-            "due_date": _labeled_entry(form, "Bis wann (YYYY-MM-DD)"),
-            "description": _labeled_entry(form, "Notiz"),
+            "title": _labeled_entry(form, t("form.title")),
+            "assignee": _labeled_entry(form, t("form.who"), t("form.name")),
+            "due_date": _labeled_entry(form, t("form.due_date")),
+            "description": _labeled_entry(form, t("form.note")),
         }
-        ctk.CTkButton(form, text="Auftrag anlegen",
+        ctk.CTkButton(form, text=t("action.add_order"),
                       command=self._on_order_add).pack(pady=6)
         self.order_list = ctk.CTkScrollableFrame(parent,
                                                    fg_color="transparent")
@@ -568,14 +587,16 @@ class AlltagshelferGUI(ctk.CTk):
                               ).pack(side="right")
 
     def _build_family_shopping(self, parent) -> None:
+        t = self.i18n.t
         form = ctk.CTkFrame(parent)
         form.pack(fill="x", pady=(6, 8))
         self.shopping_inputs = {
-            "name": _labeled_entry(form, "Was"),
-            "quantity": _labeled_entry(form, "Menge", "z.B. 1 kg"),
-            "added_by": _labeled_entry(form, "Von", "Name"),
+            "name": _labeled_entry(form, t("form.what")),
+            "quantity": _labeled_entry(form, t("form.quantity"),
+                                          "z.B. 1 kg"),
+            "added_by": _labeled_entry(form, t("form.from"), t("form.name")),
         }
-        ctk.CTkButton(form, text="Auf die Liste",
+        ctk.CTkButton(form, text=t("action.shopping_add"),
                       command=self._on_shopping_add).pack(pady=6)
         self.shopping_list = ctk.CTkScrollableFrame(parent,
                                                        fg_color="transparent")
@@ -618,10 +639,11 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_finance(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(2, weight=1)
+        t = self.i18n.t
 
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
-        ctk.CTkLabel(header, text="Finanzen",
+        ctk.CTkLabel(header, text=t("tab.finance"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).pack(side="left")
         self.finance_summary = ctk.CTkLabel(header, text="", text_color="gray")
@@ -630,15 +652,17 @@ class AlltagshelferGUI(ctk.CTk):
         form = ctk.CTkFrame(parent)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.expense_inputs = {
-            "description": _labeled_entry(form, "Wofuer", "z.B. Wocheneinkauf"),
-            "amount": _labeled_entry(form, "Betrag (EUR)", "0.00"),
-            "category": _labeled_entry(form, "Kategorie",
-                                         "lebensmittel / freizeit / sonstiges"),
-            "spent_on": _labeled_entry(form, "Datum (YYYY-MM-DD)",
-                                           date.today().isoformat()),
-            "owner_name": _labeled_entry(form, "Person", "(leer = ohne)"),
+            "description": _labeled_entry(form, t("form.description"),
+                                              "z.B. Wocheneinkauf"),
+            "amount": _labeled_entry(form, t("form.amount"), "0.00"),
+            "category": _labeled_entry(form, t("form.category"),
+                                          "lebensmittel / freizeit / sonstiges"),
+            "spent_on": _labeled_entry(form, t("form.date"),
+                                          date.today().isoformat()),
+            "owner_name": _labeled_entry(form, t("form.person"),
+                                            t("form.empty_no_person")),
         }
-        ctk.CTkButton(form, text="Ausgabe erfassen",
+        ctk.CTkButton(form, text=t("action.add_expense"),
                       command=self._on_expense_add).pack(pady=8)
 
         self.expense_list = ctk.CTkScrollableFrame(parent,

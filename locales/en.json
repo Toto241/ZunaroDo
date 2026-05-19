@@ -67,6 +67,11 @@
   "settings.saved": "{count} values saved. Restart required for some fields.",
   "settings.reset_done": "Reset to defaults.",
 
+  "family.sub.members": "Members",
+  "family.sub.tasks": "Tasks",
+  "family.sub.orders": "Orders",
+  "family.sub.shopping": "Shopping list",
+
   "inbox.analyze": "Analyze",
   "inbox.fetch_imap": "Fetch IMAP",
   "inbox.accept": "Accept",

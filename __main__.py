@@ -13,6 +13,8 @@ Subcommands:
   --list-backups [verz]     listet vorhandene Backups
   --export [verz]           exportiert alle Entitaeten als CSV
                              (Default: ausgaben/export-<datum>/)
+  --import <verz>           importiert CSV-Dateien aus einem Verzeichnis
+                             (Spiegel des Exports)
 """
 from __future__ import annotations
 
@@ -72,6 +74,33 @@ def _cmd_list_backups(directory: str | None) -> int:
     return 0
 
 
+def _cmd_import(directory: str) -> int:
+    from database import (CalendarRepository, ContractRepository, Database,
+                            ExpenseRepository, FamilyRepository,
+                            SocialRepository)
+    from services.import_csv import import_all
+    src = Path(directory)
+    if not src.is_dir():
+        print(f"Quellverzeichnis '{src}' existiert nicht.")
+        return 1
+    db = Database(str(DEFAULT_DB))
+    try:
+        counts = import_all(
+            src,
+            ContractRepository(db), ExpenseRepository(db),
+            CalendarRepository(db), SocialRepository(db),
+            FamilyRepository(db))
+    finally:
+        db.close()
+    if not counts:
+        print(f"Keine bekannten CSV-Dateien in {src} gefunden.")
+        return 1
+    print(f"Import aus {src}:")
+    for name, count in counts.items():
+        print(f"  {name:18s} {count} Zeile(n)")
+    return 0
+
+
 def _cmd_export(directory: str | None) -> int:
     from database import (CalendarRepository, ContractRepository, Database,
                             ExpenseRepository, FamilyRepository,
@@ -127,6 +156,11 @@ def main() -> int:
         return _cmd_list_backups(args[1] if len(args) > 1 else None)
     if args[0] == "--export":
         return _cmd_export(args[1] if len(args) > 1 else None)
+    if args[0] == "--import":
+        if len(args) < 2:
+            print("Fehler: --import <verz> wird benoetigt.")
+            return 2
+        return _cmd_import(args[1])
     print(__doc__)
     return 2
 

@@ -26,6 +26,7 @@ from modules.finance import FinanceModule
 from modules.inbox import InboxModule
 from modules.search import SearchModule
 from modules.social import SocialModule
+from modules.statistics import StatisticsModule
 from services.config import AppConfig, load_config
 from services.gemini import GeminiClient
 from services.output import OutputService, SmtpConfig
@@ -82,6 +83,7 @@ def build_registry(db: Database, output: OutputService,
     registry.register(SearchModule(
         contracts_repo, expense_repo, calendar_repo,
         family_repo, social_repo, proposal_repo))
+    registry.register(StatisticsModule(expense_repo, contracts_repo))
     return registry
 
 

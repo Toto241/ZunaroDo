@@ -35,6 +35,7 @@ from modules.finance import FinanceModule
 from modules.inbox import InboxModule
 from modules.search import SearchModule
 from modules.social import SocialModule
+from modules.statistics import StatisticsModule
 from services.config import DEFAULTS, load_config, save_value
 from services.llm import LLMAnswer, ToolCall, TokenUsage
 from services.output import OutputService
@@ -87,6 +88,7 @@ def _build_system(llm=None) -> tuple[Database, ModuleRegistry, Assistant, str]:
     registry.register(SearchModule(
         contracts_repo, expense_repo, calendar_repo,
         family_repo, social_repo, proposal_repo))
+    registry.register(StatisticsModule(expense_repo, contracts_repo))
     return db, registry, Assistant(registry, llm=llm), tmp.name
 
 
@@ -1422,6 +1424,176 @@ class TestSyncServerTls(unittest.TestCase):
                        keyfile="/does/not/exist.key")
         finally:
             shutil.rmtree(tmp)
+
+
+class TestCsvImportRoundTrip(unittest.TestCase):
+    """Export -> Import -> dieselben Eintraege erscheinen wieder."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_import_"))
+        # Beispieldaten
+        self.registry.dispatch("contracts.add", dict(
+            name="Streaming", category="streaming", provider="Netflix",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=13.99))
+        self.registry.dispatch("finance.add_expense", dict(
+            description="Wocheneinkauf", amount=42.00,
+            category="lebensmittel"))
+        self.registry.dispatch("calendar.add_event", dict(
+            title="TUEV", due_date="2026-09-01", category="tuev"))
+        self.registry.dispatch("social.add_contact",
+                                {"name": "Oma", "relation": "Familie"})
+        self.registry.dispatch("family.add_member",
+                                {"name": "Anna", "role": "erwachsen"})
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_export_then_import_reproduces_data(self) -> None:
+        from services.export import export_all
+        from services.import_csv import import_all
+        # Export
+        export_all(
+            self.tmp,
+            ContractRepository(self.db),
+            ExpenseRepository(self.db),
+            CalendarRepository(self.db),
+            SocialRepository(self.db),
+            FamilyRepository(self.db))
+        # Import in eine frische DB
+        tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp_db.close()
+        try:
+            fresh = Database(tmp_db.name)
+            try:
+                counts = import_all(
+                    self.tmp,
+                    ContractRepository(fresh),
+                    ExpenseRepository(fresh),
+                    CalendarRepository(fresh),
+                    SocialRepository(fresh),
+                    FamilyRepository(fresh))
+                self.assertEqual(counts["contracts.csv"], 1)
+                self.assertEqual(counts["expenses.csv"], 1)
+                self.assertEqual(counts["calendar.csv"], 1)
+                self.assertEqual(counts["social.csv"], 1)
+                self.assertEqual(counts["family.csv"], 1)
+                # Stichprobe: Streaming-Vertrag uebernommen
+                contracts = ContractRepository(fresh).list_all(
+                    only_active=False)
+                self.assertEqual(len(contracts), 1)
+                self.assertEqual(contracts[0].name, "Streaming")
+                self.assertAlmostEqual(contracts[0].monthly_cost, 13.99)
+            finally:
+                fresh.close()
+        finally:
+            os.unlink(tmp_db.name)
+
+    def test_missing_csv_files_are_skipped(self) -> None:
+        from services.import_csv import import_all
+        # Nur eine Datei - die anderen werden uebersprungen
+        (self.tmp / "contracts.csv").write_text(
+            "id;name;kategorie;anbieter;kundennummer;start;monatspreis;"
+            "kuendigungsfrist_monate;verlaengerung_monate;person;status\n"
+            "1;Solo;sonstiges;Niemand;;;0.00;3;12;;active\n",
+            encoding="utf-8-sig")
+        counts = import_all(
+            self.tmp,
+            ContractRepository(self.db),
+            ExpenseRepository(self.db),
+            CalendarRepository(self.db),
+            SocialRepository(self.db),
+            FamilyRepository(self.db))
+        self.assertEqual(counts, {"contracts.csv": 1})
+
+    def test_invalid_dates_dont_crash(self) -> None:
+        from services.import_csv import import_expenses
+        (self.tmp / "expenses.csv").write_text(
+            "id;datum;beschreibung;betrag;kategorie;person\n"
+            "1;nicht-iso;X;5.00;sonstiges;\n"
+            "2;2026-01-15;Y;3.50;lebensmittel;\n",
+            encoding="utf-8-sig")
+        count = import_expenses(
+            ExpenseRepository(self.db), self.tmp / "expenses.csv")
+        # Beide Zeilen werden importiert, das ungueltige Datum landet als None
+        self.assertEqual(count, 2)
+
+
+class TestStatistics(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        # Beispieldaten ueber das aktuelle Jahr verteilt
+        today = date.today()
+        for i, amount in enumerate([10.0, 20.5, 15.25, 30.0]):
+            d = today - timedelta(days=i * 7)
+            self.registry.dispatch("finance.add_expense", dict(
+                description=f"Posten {i}",
+                amount=amount,
+                category=("lebensmittel" if i % 2 == 0 else "freizeit"),
+                spent_on=d.isoformat()))
+        for v in [
+            dict(name="Strom", category="strom", provider="Stadtwerke",
+                 start_date="2025-01-01", minimum_term_months=1,
+                 notice_period_months=1, auto_renew_months=1,
+                 monthly_cost=80.0),
+            dict(name="Streaming", category="streaming", provider="Netflix",
+                 start_date="2025-01-01", minimum_term_months=1,
+                 notice_period_months=1, auto_renew_months=1,
+                 monthly_cost=13.99),
+            dict(name="Versicherung", category="versicherung",
+                 provider="HUK", start_date="2025-01-01",
+                 minimum_term_months=12, notice_period_months=3,
+                 auto_renew_months=12, monthly_cost=45.50),
+        ]:
+            self.registry.dispatch("contracts.add", v)
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_expenses_per_month_returns_buckets(self) -> None:
+        result = self.registry.dispatch(
+            "stats.expenses_per_month", {"months": 3})
+        self.assertEqual(result["months"], 3)
+        self.assertEqual(len(result["buckets"]), 3)
+        # Heute liegt in der letzten Bucket
+        today_bucket = date.today().strftime("%Y-%m")
+        keys = [b["month"] for b in result["buckets"]]
+        self.assertIn(today_bucket, keys)
+
+    def test_expenses_per_category_aggregates(self) -> None:
+        result = self.registry.dispatch(
+            "stats.expenses_per_category", {})
+        cats = {c["category"]: c["total"] for c in result["categories"]}
+        # 4 Posten: idx 0+2 lebensmittel (10.0 + 15.25), idx 1+3 freizeit (20.5 + 30.0)
+        self.assertAlmostEqual(cats.get("lebensmittel", 0), 25.25)
+        self.assertAlmostEqual(cats.get("freizeit", 0), 50.5)
+
+    def test_contracts_overview_top_3(self) -> None:
+        result = self.registry.dispatch("stats.contracts_overview", {})
+        self.assertEqual(result["count"], 3)
+        self.assertAlmostEqual(result["monthly_total"], 139.49)
+        # Strom muss an Position 1 stehen (80 EUR teuerster)
+        self.assertEqual(result["top_3"][0]["name"], "Strom")
+        self.assertAlmostEqual(result["top_3"][0]["monthly_cost"], 80.0)
+
+    def test_yearly_summary(self) -> None:
+        current_year = date.today().year
+        result = self.registry.dispatch(
+            "stats.yearly_summary", {"year": current_year})
+        self.assertEqual(result["year"], current_year)
+        self.assertEqual(result["expense_count"], 4)
+        self.assertAlmostEqual(result["expense_total"], 75.75)
+
+    def test_rejects_zero_months(self) -> None:
+        result = self.registry.dispatch(
+            "stats.expenses_per_month", {"months": 0})
+        self.assertIn("error", result)
 
 
 class TestProposalsFlow(unittest.TestCase):

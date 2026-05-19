@@ -67,6 +67,11 @@
   "settings.saved": "{count} Werte gespeichert. Neustart fuer einige Felder.",
   "settings.reset_done": "Auf Defaults zurueckgesetzt.",
 
+  "family.sub.members": "Mitglieder",
+  "family.sub.tasks": "Aufgaben",
+  "family.sub.orders": "Auftraege",
+  "family.sub.shopping": "Einkaufsliste",
+
   "inbox.analyze": "Analysieren",
   "inbox.fetch_imap": "IMAP abrufen",
   "inbox.accept": "Uebernehmen",

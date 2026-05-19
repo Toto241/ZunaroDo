@@ -25,6 +25,7 @@ python __main__.py --backup
 python __main__.py --list-backups
 python __main__.py --restore backups/alltagshelfer-20260519-185747.db
 python __main__.py --export
+python __main__.py --import ausgaben/export-20260519-185747
 python __main__.py --sync-server --port 5151
 ```
 
@@ -77,6 +78,7 @@ Tests: `python -m unittest discover tests` — 80+ Tests grün.
 | – | Tagesstruktur | Energie-Tagebuch (persistiert), einfache Empfehlung |
 | – | Posteingang | Mail-Analyse regelbasiert + LLM-basiert, `.eml`-Import, IMAP, zentrale Vorschlags-Ablage, **Inline-Editor** für Vorschläge |
 | – | Volltextsuche | `system.search` quer durch Verträge/Ausgaben/Termine/Familie/Aufträge/Kontakte/Vorschläge |
+| – | Statistiken & Trends | `stats.expenses_per_month`, `stats.expenses_per_category`, `stats.contracts_overview`, `stats.yearly_summary` |
 
 ## Die drei Schnittstellen
 
@@ -154,15 +156,27 @@ python __main__.py [keine Args]   Konsolen-Demo (main.py)
                   --restore <pfad> DB wiederherstellen (App muss aus sein)
                   --list-backups [verz]  Backups anzeigen
                   --export [verz] CSV-Export aller Entitäten
+                  --import <verz> CSV-Import aus einem Export-Verzeichnis
 ```
 
-## CSV-Export
+## CSV-Export und -Import
 
 [services/export.py](services/export.py) schreibt je eine CSV pro Entität (`contracts.csv`, `expenses.csv`, `calendar.csv`, `social.csv`, `family.csv`). Format: UTF-8-BOM + Strichpunkt → Excel-DE erkennt Spalten ohne Konfiguration. Datumsfelder im ISO-Format.
+
+[services/import_csv.py](services/import_csv.py) ist der Spiegel: liest dieselben CSV-Dateien aus einem Verzeichnis und legt die Einträge an. Die ID-Spalte wird ignoriert — alles bekommt neue IDs. Ungültige Datumsangaben landen als `NULL`, statt den Import abzubrechen. Für einen exakten 1:1-Round-Trip ist `--backup`/`--restore` der bessere Weg.
 
 ## Volltextsuche
 
 `system.search(query, limit=50)` durchsucht alle Repositories (Verträge, Ausgaben, Termine, Mitglieder, Aufträge, Kontakte, Vorschläge) und liefert vereinheitlichte Treffer mit `source`/`entity_id`/`title`/`detail`. Mindestlänge 2 Zeichen.
+
+## Statistiken & Trends
+
+[modules/statistics.py](modules/statistics.py) liefert einfache Aggregate, ohne eine Diagramm-Library zu brauchen:
+
+- `stats.expenses_per_month` — Summe pro Monat für die letzten N Monate
+- `stats.expenses_per_category` — Aggregat pro Kategorie für ein Jahr
+- `stats.contracts_overview` — Anzahl, Monats-/Jahressumme, Top-3-Kostentreiber
+- `stats.yearly_summary` — Jahresüberblick mit Top-Kategorien und Monatsdurchschnitt
 
 ## Internationalisierung
 
@@ -173,7 +187,7 @@ python __main__.py [keine Args]   Konsolen-Demo (main.py)
 
 Spracheinstellung über `i18n.language` in den App-Settings (Default `de`). Fallback-Kette: angeforderte Sprache → DE → Key selbst. Unbekannte Sprachen fallen auf DE zurück.
 
-Aktuell übersetzt: Tab-Labels, Sidebar, Dashboard, Suche, Verlauf, Chat-Bubbles, Settings-Texte, Proposal-Editor, Modul-Verwaltung, Inbox-Aktionen, sämtliche `common.*`-/`form.*`-/`action.*`-Buttons (über 80 Strings).
+Aktuell übersetzt: Tab-Labels, Sidebar, Dashboard, Suche, Verlauf, Chat-Bubbles, Settings-Texte, Proposal-Editor, Modul-Verwaltung, Inbox-Aktionen, **Verträge-Formular**, **Finanzen-Formular**, **Familie (alle vier Sub-Tabs inkl. Mitglieder, Aufgaben, Aufträge, Einkaufsliste)**, sämtliche `common.*`-/`form.*`-/`action.*`-Buttons (rund 100 Strings).
 
 ## Proaktive Benachrichtigungen
 
@@ -223,9 +237,10 @@ Bemerkenswerte Features:
 │   ├── scheduler.py            Proaktive Hintergrund-Checks
 │   ├── backup.py               Online-Backup (Plain + SQLCipher)
 │   ├── export.py               CSV-Export aller Entitäten
+│   ├── import_csv.py           CSV-Import (Spiegel zum Export)
 │   ├── config.py               Konfigurations-System
 │   └── i18n.py                 Lokalisierung
-├── locales/                    de.json, en.json
+├── locales/                    de.json, en.json (~100 Keys)
 ├── assistant.py                LLM-agnostisch
 ├── gui.py                      CustomTkinter-GUI mit zwölf Tabs
 ├── main.py                     Konsolen-Demo
