@@ -30,6 +30,7 @@ from modules.statistics import StatisticsModule
 from services.config import AppConfig, load_config
 from services.gemini import GeminiClient
 from services.output import OutputService, SmtpConfig
+from services.profile import db_path, resolve_profile, state_dir
 from services.scheduler import ProactiveScheduler
 from services.sync import (FileSyncProvider, HttpSyncProvider,
                             PeriodicSyncWorker, install_sync_hook)
@@ -107,7 +108,8 @@ def make_sync_provider(local_state_dir: Path):
 
 
 def main() -> None:
-    db = Database("alltagshelfer_demo.db")
+    profile = resolve_profile()
+    db = Database(db_path(profile, "alltagshelfer_demo.db"))
     settings = SettingsRepository(db)
     config: AppConfig = load_config(settings)
     output = OutputService("ausgaben", smtp=make_smtp_config(config))
@@ -127,9 +129,9 @@ def main() -> None:
         max_output_tokens=config.gemini_max_tokens,
     )
 
-    # Mehrgeraete-Sync
-    state_dir = Path(".alltagshelfer-state")
-    provider = make_sync_provider(state_dir) \
+    # Mehrgeraete-Sync - State-Verzeichnis profilabhaengig
+    state_path = state_dir(profile)
+    provider = make_sync_provider(state_path) \
         if config.sync_enabled != "false" else None
     synced = None
     if provider is not None:
@@ -145,6 +147,8 @@ def main() -> None:
     trenner("System gestartet")
     print(f"Assistent-Modus: {assistant.mode}")
     print(f"Gemini-Modell:   {config.gemini_model}")
+    print(f"Profil:          {profile or '(default)'}")
+    print(f"DB-Datei:        {db.path}")
     print(f"DB-Modus:        {db.encryption_mode}")
     print(f"Konfig-Quelle:   Defaults + DB ({len(settings.all())} Keys) + Env")
     if provider is not None:

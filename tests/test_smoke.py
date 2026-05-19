@@ -1596,6 +1596,126 @@ class TestStatistics(unittest.TestCase):
         self.assertIn("error", result)
 
 
+class TestUtcTimestampsInDb(unittest.TestCase):
+    """DST/Timezone-Audit: created_at-Felder enthalten jetzt UTC-Offset."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_contract_created_at_uses_utc(self) -> None:
+        self.registry.dispatch("contracts.add", dict(
+            name="X", category="streaming", provider="Y",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=1.0))
+        row = self.db.conn.execute(
+            "SELECT created_at FROM contracts").fetchone()
+        ts = row["created_at"]
+        # ISO-Format mit UTC-Marker
+        self.assertTrue(ts.endswith("+00:00") or ts.endswith("Z"),
+                         f"Timestamp {ts!r} ohne UTC-Marker")
+
+    def test_assistant_log_uses_utc(self) -> None:
+        from database import AssistantLogRepository
+        repo = AssistantLogRepository(self.db)
+        repo.append("user", "test")
+        row = self.db.conn.execute(
+            "SELECT created_at FROM assistant_log").fetchone()
+        ts = row["created_at"]
+        self.assertTrue(ts.endswith("+00:00") or ts.endswith("Z"))
+
+
+class TestProfile(unittest.TestCase):
+    """Multi-User-Profile: DB-Datei und State-Dir leiten sich vom Profil ab."""
+
+    def test_sanitize_profile(self) -> None:
+        from services.profile import sanitize_profile
+        self.assertEqual(sanitize_profile("anna"), "anna")
+        self.assertEqual(sanitize_profile("Anna_2"), "Anna_2")
+        self.assertEqual(sanitize_profile("a/n.a"), "ana")
+        self.assertEqual(sanitize_profile(""), "")
+        self.assertEqual(sanitize_profile(None), "")
+        # Sehr lange Namen werden gekuerzt
+        long_name = "x" * 100
+        self.assertEqual(len(sanitize_profile(long_name)), 32)
+
+    def test_db_path_default(self) -> None:
+        from services.profile import db_path
+        self.assertEqual(db_path("", "alltagshelfer_demo.db"),
+                          "alltagshelfer_demo.db")
+
+    def test_db_path_with_profile(self) -> None:
+        from services.profile import db_path
+        self.assertEqual(db_path("anna", "alltagshelfer_demo.db"),
+                          "alltagshelfer_demo_anna.db")
+
+    def test_state_dir_default_and_profile(self) -> None:
+        from services.profile import state_dir
+        self.assertEqual(str(state_dir("")), ".alltagshelfer-state")
+        self.assertEqual(str(state_dir("anna")),
+                          ".alltagshelfer-state-anna")
+
+    def test_resolve_profile_uses_env(self) -> None:
+        from services.profile import resolve_profile
+        old = os.environ.pop("ALLTAGSHELFER_PROFILE", None)
+        try:
+            os.environ["ALLTAGSHELFER_PROFILE"] = "bernd"
+            self.assertEqual(resolve_profile(), "bernd")
+            os.environ["ALLTAGSHELFER_PROFILE"] = ""
+            self.assertEqual(resolve_profile(), "")
+        finally:
+            if old is None:
+                os.environ.pop("ALLTAGSHELFER_PROFILE", None)
+            else:
+                os.environ["ALLTAGSHELFER_PROFILE"] = old
+
+    def test_explicit_overrides_env(self) -> None:
+        from services.profile import resolve_profile
+        old = os.environ.pop("ALLTAGSHELFER_PROFILE", None)
+        try:
+            os.environ["ALLTAGSHELFER_PROFILE"] = "env-anna"
+            self.assertEqual(resolve_profile("explicit-bob"),
+                              "explicit-bob")
+        finally:
+            if old is None:
+                os.environ.pop("ALLTAGSHELFER_PROFILE", None)
+            else:
+                os.environ["ALLTAGSHELFER_PROFILE"] = old
+
+    def test_two_profiles_use_separate_files(self) -> None:
+        """Konsistenz: bei zwei Profilen entstehen zwei Dateien."""
+        from services.profile import db_path
+        tmp = Path(tempfile.mkdtemp(prefix="ah_profiles_"))
+        try:
+            for profile in ("anna", "bernd"):
+                path = tmp / db_path(profile, "alltagshelfer_demo.db")
+                db = Database(str(path))
+                db.conn.execute(
+                    "INSERT INTO family_members (name, role, created_at)"
+                    " VALUES (?,?,?)", (profile.title(), "erwachsen",
+                                          "2026-01-01T00:00:00+00:00"))
+                db.conn.commit()
+                db.close()
+            anna_db = Database(str(tmp / "alltagshelfer_demo_anna.db"))
+            bernd_db = Database(str(tmp / "alltagshelfer_demo_bernd.db"))
+            try:
+                anna_row = anna_db.conn.execute(
+                    "SELECT name FROM family_members").fetchone()
+                bernd_row = bernd_db.conn.execute(
+                    "SELECT name FROM family_members").fetchone()
+                self.assertEqual(anna_row["name"], "Anna")
+                self.assertEqual(bernd_row["name"], "Bernd")
+            finally:
+                anna_db.close()
+                bernd_db.close()
+        finally:
+            shutil.rmtree(tmp)
+
+
 class TestProposalsFlow(unittest.TestCase):
 
     def setUp(self) -> None:

@@ -36,6 +36,7 @@ from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
 from services.gemini import GeminiClient
 from services.i18n import I18n
 from services.output import OutputService
+from services.profile import db_path, resolve_profile, state_dir
 from services.scheduler import ProactiveScheduler
 from services.sync import PeriodicSyncWorker, install_sync_hook
 
@@ -102,8 +103,10 @@ def _seed_if_empty(registry: ModuleRegistry) -> None:
 
 
 def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
-                          SettingsRepository, ModuleStateRepository, object]:
-    db = Database("alltagshelfer_gui.db")
+                          SettingsRepository, ModuleStateRepository, object,
+                          str]:
+    profile = resolve_profile()
+    db = Database(db_path(profile, "alltagshelfer_gui.db"))
     settings = SettingsRepository(db)
     config = load_config(settings)
 
@@ -123,7 +126,7 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
         max_output_tokens=config.gemini_max_tokens,
     )
 
-    provider = make_sync_provider(Path(".alltagshelfer-state")) \
+    provider = make_sync_provider(state_dir(profile)) \
         if config.sync_enabled != "false" else None
     synced = None
     if provider is not None:
@@ -133,7 +136,8 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
         except Exception:
             pass
         synced.apply_remote()
-    return db, registry, assistant, config, settings, module_states, synced
+    return (db, registry, assistant, config, settings, module_states,
+            synced, profile)
 
 
 # ---------------------------------------------------------------------
@@ -163,7 +167,8 @@ class AlltagshelferGUI(ctk.CTk):
                  config: AppConfig,
                  settings_repo: SettingsRepository,
                  module_states: ModuleStateRepository,
-                 synced=None):
+                 synced=None,
+                 profile: str = ""):
         super().__init__()
         self.registry = registry
         self.assistant = assistant
@@ -171,6 +176,7 @@ class AlltagshelferGUI(ctk.CTk):
         self.settings_repo = settings_repo
         self.module_states = module_states
         self.synced = synced
+        self.profile = profile
         self.i18n = I18n(language=config.i18n_language)
         self.scheduler = ProactiveScheduler(
             registry, warn_within_days=config.notify_warn_within_days)
@@ -199,6 +205,8 @@ class AlltagshelferGUI(ctk.CTk):
             t("tab.calendar"): self._build_calendar,
             t("tab.social"): self._build_social,
             t("tab.inbox"): self._build_inbox,
+            t("tab.statistics"): self._build_statistics,
+            t("tab.data"): self._build_data,
             t("tab.assistant"): self._build_chat,
             t("tab.search"): self._build_search,
             t("tab.history"): self._build_history,
@@ -229,6 +237,11 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkLabel(
             bar,
             text=f"{t('sidebar.assistant_mode')}: {self.assistant.mode}",
+            text_color="gray").pack(padx=20, pady=(0, 2))
+        ctk.CTkLabel(
+            bar,
+            text=f"{t('sidebar.profile')}: "
+                  f"{self.profile or t('sidebar.profile.default')}",
             text_color="gray").pack(padx=20, pady=(0, 14))
 
         ctk.CTkLabel(bar, text=t("sidebar.module_status"),
@@ -713,25 +726,27 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_calendar(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(2, weight=1)
+        t = self.i18n.t
 
-        ctk.CTkLabel(parent, text="Termine & Kalender",
+        ctk.CTkLabel(parent, text=t("calendar.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
         form = ctk.CTkFrame(parent)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.calendar_inputs = {
-            "title": _labeled_entry(form, "Titel"),
-            "due_date": _labeled_entry(form, "Datum (YYYY-MM-DD)",
+            "title": _labeled_entry(form, t("form.title")),
+            "due_date": _labeled_entry(form, t("form.calendar_date"),
                                           date.today().isoformat()),
-            "category": _labeled_entry(form, "Kategorie",
+            "category": _labeled_entry(form, t("form.category"),
                                           "termin / garantie / tuev / "
                                           "steuer / geburtstag / sonstiges"),
-            "description": _labeled_entry(form, "Notiz"),
-            "recurrence_days": _labeled_entry(form, "Wiederh. (Tage)",
+            "description": _labeled_entry(form, t("form.note")),
+            "recurrence_days": _labeled_entry(form,
+                                                  t("form.recurrence_days"),
                                                   "(leer = einmalig)"),
         }
-        ctk.CTkButton(form, text="Termin anlegen",
+        ctk.CTkButton(form, text=t("action.add_event"),
                       command=self._on_calendar_add).pack(pady=6)
 
         self.calendar_list = ctk.CTkScrollableFrame(parent,
@@ -760,24 +775,25 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _refresh_calendar(self) -> None:
         _clear(self.calendar_list)
-        # Eigene Termine + alle synthetischen Events fuer kompletten Blick
+        t = self.i18n.t
         events = self.registry.dispatch("calendar.list_events",
                                             {}).get("events", [])
         if not events:
-            ctk.CTkLabel(self.calendar_list, text="Noch keine Termine.",
+            ctk.CTkLabel(self.calendar_list, text=t("calendar.empty"),
                          text_color="gray").pack(pady=20)
             return
         for e in events:
             row = ctk.CTkFrame(self.calendar_list, fg_color="transparent")
             row.pack(fill="x", padx=12, pady=3)
             extra = f" - {e['person']}" if e.get("person") else ""
-            recur = (f", wiederkehrend alle {e['recurrence_days']} Tage"
+            recur = (t("calendar.recurring_suffix").format(
+                         days=e['recurrence_days'])
                      if e.get("recurrence_days") else "")
             ctk.CTkLabel(row,
                          text=(f"{e['due_date']}  [{e['category']}]  "
                                 f"{e['title']}{extra}{recur}"),
                          anchor="w").pack(side="left", fill="x", expand=True)
-            ctk.CTkButton(row, text="Loeschen", width=90,
+            ctk.CTkButton(row, text=t("common.delete"), width=90,
                           fg_color="transparent", border_width=1,
                           command=lambda i=e["id"]:
                           self._dispatch_and_refresh(
@@ -790,21 +806,23 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_social(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(2, weight=1)
+        t = self.i18n.t
 
-        ctk.CTkLabel(parent, text="Soziale Pflege",
+        ctk.CTkLabel(parent, text=t("social.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
         form = ctk.CTkFrame(parent)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.social_inputs = {
-            "name": _labeled_entry(form, "Name"),
-            "relation": _labeled_entry(form, "Beziehung",
+            "name": _labeled_entry(form, t("form.name")),
+            "relation": _labeled_entry(form, t("form.relation"),
                                           "Familie / Freund / Kollege ..."),
-            "cadence_days": _labeled_entry(form, "Rhythmus (Tage)", "30"),
-            "notes": _labeled_entry(form, "Notiz"),
+            "cadence_days": _labeled_entry(form, t("form.cadence_days"),
+                                              "30"),
+            "notes": _labeled_entry(form, t("form.note")),
         }
-        ctk.CTkButton(form, text="Kontakt hinzufuegen",
+        ctk.CTkButton(form, text=t("action.add_contact"),
                       command=self._on_social_add).pack(pady=6)
 
         self.social_list = ctk.CTkScrollableFrame(parent,
@@ -826,24 +844,32 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _refresh_social(self) -> None:
         _clear(self.social_list)
-        for c in self.registry.dispatch("social.contacts",
-                                           {}).get("contacts", []):
+        t = self.i18n.t
+        contacts = self.registry.dispatch("social.contacts",
+                                            {}).get("contacts", [])
+        if not contacts:
+            ctk.CTkLabel(self.social_list,
+                         text=t("social.no_contacts"),
+                         text_color="gray").pack(pady=20)
+            return
+        for c in contacts:
             row = ctk.CTkFrame(self.social_list, fg_color="transparent")
             row.pack(fill="x", padx=12, pady=3)
             days = c.get("days_until_due", 0)
-            when = (f"in {days} Tagen" if days > 0
-                    else "heute" if days == 0
-                    else f"{-days} Tage ueberfaellig")
+            when = (t("social.due_in").format(days=days) if days > 0
+                    else t("social.due_today") if days == 0
+                    else t("social.due_overdue").format(days=-days))
             relation = f" ({c['relation']})" if c.get("relation") else ""
-            ctk.CTkLabel(row,
-                         text=f"{c['name']}{relation}  -  naechstes Melden {when}",
-                         anchor="w").pack(side="left", fill="x", expand=True)
-            ctk.CTkButton(row, text="Kontaktiert", width=110,
+            label = (f"{c['name']}{relation}  -  "
+                     + t("social.next_due").format(when=when))
+            ctk.CTkLabel(row, text=label, anchor="w"
+                         ).pack(side="left", fill="x", expand=True)
+            ctk.CTkButton(row, text=t("action.contacted"), width=110,
                           command=lambda i=c["id"]:
                           self._dispatch_and_refresh(
                               "social.mark_contacted", {"contact_id": i})
                           ).pack(side="right", padx=(0, 4))
-            ctk.CTkButton(row, text="Entwurf", width=80,
+            ctk.CTkButton(row, text=t("action.draft"), width=80,
                           command=lambda i=c["id"], n=c["name"]:
                           self._show_message_draft(i, n)
                           ).pack(side="right", padx=(0, 4))
@@ -861,8 +887,9 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_inbox(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(3, weight=1)
+        t = self.i18n.t
 
-        ctk.CTkLabel(parent, text="Eingegangene Mail analysieren",
+        ctk.CTkLabel(parent, text=t("inbox.title"),
                      font=ctk.CTkFont(size=16, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
@@ -874,13 +901,13 @@ class AlltagshelferGUI(ctk.CTk):
         self.mail_box.insert("1.0", SAMPLE_MAIL)
         actions = ctk.CTkFrame(entry, fg_color="transparent")
         actions.grid(row=0, column=1, sticky="n")
-        ctk.CTkButton(actions, text="Analysieren", width=130,
+        ctk.CTkButton(actions, text=t("inbox.analyze"), width=130,
                       command=self._analyze_mail).pack(pady=2)
-        ctk.CTkButton(actions, text="IMAP abrufen", width=130,
+        ctk.CTkButton(actions, text=t("inbox.fetch_imap"), width=130,
                       command=self._fetch_imap).pack(pady=2)
 
         self.inbox_info = ctk.CTkLabel(
-            parent, text="Offene Vorschlaege",
+            parent, text=t("inbox.proposals_count").format(count=0),
             font=ctk.CTkFont(size=14, weight="bold"))
         self.inbox_info.grid(row=2, column=0, sticky="w", pady=(0, 4))
 
@@ -929,12 +956,14 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _refresh_inbox(self, keep_info: bool = False) -> None:
         _clear(self.proposal_list)
+        t = self.i18n.t
         data = self.registry.dispatch("inbox.proposals", {})
         count = data.get("count", 0)
         if not keep_info:
-            self.inbox_info.configure(text=f"Offene Vorschlaege ({count})")
+            self.inbox_info.configure(
+                text=t("inbox.proposals_count").format(count=count))
         if count == 0:
-            ctk.CTkLabel(self.proposal_list, text="Keine offenen Vorschlaege.",
+            ctk.CTkLabel(self.proposal_list, text=t("inbox.no_proposals"),
                          text_color="gray").pack(pady=24)
             return
         for proposal in data["proposals"]:
@@ -955,16 +984,17 @@ class AlltagshelferGUI(ctk.CTk):
                      font=ctk.CTkFont(size=10)).pack(anchor="w", pady=(2, 6))
         buttons = ctk.CTkFrame(body, fg_color="transparent")
         buttons.pack(anchor="w")
-        ctk.CTkButton(buttons, text="Uebernehmen", width=120,
+        t = self.i18n.t
+        ctk.CTkButton(buttons, text=t("inbox.accept"), width=120,
                       command=lambda i=p["id"]:
                       self._decide_proposal(i, True)
                       ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(buttons, text="Bearbeiten", width=110,
+        ctk.CTkButton(buttons, text=t("inbox.edit"), width=110,
                       fg_color="transparent", border_width=1,
                       command=lambda pp=p:
                       self._open_proposal_editor(pp)
                       ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(buttons, text="Ablehnen", width=100,
+        ctk.CTkButton(buttons, text=t("inbox.reject"), width=100,
                       fg_color="transparent", border_width=1,
                       command=lambda i=p["id"]:
                       self._decide_proposal(i, False)
@@ -1189,9 +1219,10 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_social()
         self._refresh_inbox()
         self._refresh_module_admin()
+        self._refresh_statistics()
         # Verlauf nur auf Anforderung aktualisieren - das Lesen von
         # assistant_log ist zwar billig, soll aber nicht jeden
-        # Refresh-Tick mitmachen.
+        # Refresh-Tick mitmachen. Der Daten-Tab ebenfalls statisch.
 
     def _dispatch_and_refresh(self, capability: str, args: dict) -> None:
         self.registry.dispatch(capability, args)
@@ -1228,19 +1259,276 @@ class AlltagshelferGUI(ctk.CTk):
                             result.get("status") or result.get("error", ""))
 
     # ================================================================
+    #  Statistiken (Tab "Statistiken")
+    # ================================================================
+    def _build_statistics(self, parent) -> None:
+        import tkinter
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
+        t = self.i18n.t
+
+        header = ctk.CTkFrame(parent, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", pady=(6, 6))
+        ctk.CTkLabel(header, text=t("stats.title"),
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).pack(side="left")
+        ctk.CTkButton(header, text=t("common.refresh"), width=120,
+                      command=self._refresh_statistics).pack(side="right")
+
+        self.stats_box = ctk.CTkScrollableFrame(
+            parent, fg_color="transparent")
+        self.stats_box.grid(row=1, column=0, sticky="nsew")
+
+    def _refresh_statistics(self) -> None:
+        if not hasattr(self, "stats_box"):
+            return
+        import tkinter as tk
+        _clear(self.stats_box)
+        t = self.i18n.t
+
+        # 1) Ausgaben pro Monat - Bar-Chart per Canvas
+        per_month = self.registry.dispatch(
+            "stats.expenses_per_month", {"months": 12}).get("buckets", [])
+        max_value = max((b["total"] for b in per_month), default=0.0)
+        if max_value <= 0 and not per_month:
+            ctk.CTkLabel(self.stats_box, text=t("stats.no_data"),
+                         text_color="gray").pack(pady=20)
+            return
+
+        ctk.CTkLabel(self.stats_box, text=t("stats.expenses_per_month"),
+                     font=ctk.CTkFont(size=14, weight="bold"),
+                     anchor="w").pack(fill="x", padx=12, pady=(8, 4))
+
+        chart_w = 720
+        chart_h = 180
+        canvas = tk.Canvas(self.stats_box, width=chart_w, height=chart_h,
+                            bg="#1a1a1a", highlightthickness=0)
+        canvas.pack(padx=12, pady=4)
+        n = max(1, len(per_month))
+        bar_w = (chart_w - 40) / n
+        for i, bucket in enumerate(per_month):
+            value = bucket["total"]
+            ratio = (value / max_value) if max_value > 0 else 0
+            bar_h = int((chart_h - 40) * ratio)
+            x0 = 20 + i * bar_w + 4
+            x1 = 20 + (i + 1) * bar_w - 4
+            y0 = chart_h - 20 - bar_h
+            y1 = chart_h - 20
+            canvas.create_rectangle(
+                x0, y0, x1, y1, fill="#5b9bd5", outline="")
+            canvas.create_text((x0 + x1) / 2, chart_h - 8,
+                                text=bucket["month"][-2:],     # nur Monat
+                                fill="#aaa",
+                                font=("Helvetica", 9))
+            if value > 0:
+                canvas.create_text((x0 + x1) / 2, y0 - 8,
+                                    text=f"{value:.0f}",
+                                    fill="#ddd",
+                                    font=("Helvetica", 9))
+
+        # 2) Vertraege-Ueberblick
+        overview = self.registry.dispatch("stats.contracts_overview", {})
+        ctk.CTkLabel(
+            self.stats_box,
+            text=t("stats.contracts_overview"),
+            font=ctk.CTkFont(size=14, weight="bold"), anchor="w"
+        ).pack(fill="x", padx=12, pady=(16, 4))
+        summary_text = (
+            t("stats.contracts_count").format(count=overview['count'])
+            + "  -  "
+            + t("stats.monthly_total").format(amount=overview['monthly_total'])
+            + "  -  "
+            + t("stats.yearly_total").format(amount=overview['yearly_total']))
+        ctk.CTkLabel(self.stats_box, text=summary_text,
+                     text_color="gray", anchor="w"
+                     ).pack(fill="x", padx=12, pady=(0, 4))
+        ctk.CTkLabel(self.stats_box, text=t("stats.top_3"),
+                     font=ctk.CTkFont(size=11, weight="bold"),
+                     text_color="gray", anchor="w"
+                     ).pack(fill="x", padx=12, pady=(4, 2))
+        for entry in overview.get("top_3", []):
+            ctk.CTkLabel(
+                self.stats_box,
+                text=(f"   {entry['name']} ({entry['provider'] or '-'}): "
+                       f"{entry['monthly_cost']:.2f} EUR/Monat"),
+                anchor="w"
+            ).pack(fill="x", padx=12)
+
+        # 3) Jahresueberblick
+        yearly = self.registry.dispatch("stats.yearly_summary", {})
+        ctk.CTkLabel(
+            self.stats_box,
+            text=f"{t('stats.yearly_summary')} ({yearly['year']})",
+            font=ctk.CTkFont(size=14, weight="bold"), anchor="w"
+        ).pack(fill="x", padx=12, pady=(16, 4))
+        ctk.CTkLabel(
+            self.stats_box,
+            text=(f"{yearly['expense_count']} Ausgaben, "
+                   f"{yearly['expense_total']:.2f} EUR. "
+                   + t("stats.average_per_month")
+                   + f": {yearly['average_per_month']:.2f} EUR."),
+            text_color="gray", anchor="w"
+        ).pack(fill="x", padx=12)
+
+    # ================================================================
+    #  Daten (Tab "Daten")
+    # ================================================================
+    def _build_data(self, parent) -> None:
+        from services.backup import list_backups
+        parent.grid_columnconfigure(0, weight=1)
+        t = self.i18n.t
+
+        ctk.CTkLabel(parent, text=t("data.title"),
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 6))
+
+        # Profil-Info
+        profile_row = ctk.CTkFrame(parent, fg_color="transparent")
+        profile_row.grid(row=1, column=0, sticky="ew", pady=(4, 12))
+        ctk.CTkLabel(profile_row, text=t("data.profile_label") + ":",
+                     anchor="w", width=160).pack(side="left")
+        ctk.CTkLabel(
+            profile_row,
+            text=(self.profile or t("data.profile_default")),
+            font=ctk.CTkFont(size=12, weight="bold"),
+            anchor="w").pack(side="left")
+
+        # Backup
+        backup_card = ctk.CTkFrame(parent)
+        backup_card.grid(row=2, column=0, sticky="ew", pady=4)
+        backup_body = ctk.CTkFrame(backup_card, fg_color="transparent")
+        backup_body.pack(fill="x", padx=14, pady=10)
+        ctk.CTkLabel(backup_body, text=t("data.backup_section"),
+                     font=ctk.CTkFont(size=13, weight="bold")
+                     ).pack(anchor="w")
+        backup_btn_row = ctk.CTkFrame(backup_body, fg_color="transparent")
+        backup_btn_row.pack(fill="x", pady=(4, 4))
+        ctk.CTkButton(backup_btn_row, text=t("data.backup_create"),
+                      command=self._do_backup
+                      ).pack(side="left", padx=(0, 8))
+        self.backup_info = ctk.CTkLabel(backup_btn_row, text="",
+                                          text_color="gray")
+        self.backup_info.pack(side="left")
+
+        # Letztes Backup anzeigen
+        backups = list_backups(Path("backups"))
+        last_label = ctk.CTkLabel(
+            backup_body,
+            text=(t("data.last_backup") + ": "
+                   + (backups[0].name if backups
+                       else t("data.backup_list_empty"))),
+            text_color="gray", anchor="w")
+        last_label.pack(anchor="w")
+
+        # Export
+        export_card = ctk.CTkFrame(parent)
+        export_card.grid(row=3, column=0, sticky="ew", pady=4)
+        export_body = ctk.CTkFrame(export_card, fg_color="transparent")
+        export_body.pack(fill="x", padx=14, pady=10)
+        ctk.CTkLabel(export_body, text=t("data.export_section"),
+                     font=ctk.CTkFont(size=13, weight="bold")
+                     ).pack(anchor="w")
+        export_row = ctk.CTkFrame(export_body, fg_color="transparent")
+        export_row.pack(fill="x", pady=(4, 4))
+        ctk.CTkButton(export_row, text=t("data.export_run"),
+                      command=self._do_export
+                      ).pack(side="left", padx=(0, 8))
+        self.export_info = ctk.CTkLabel(export_row, text="",
+                                          text_color="gray")
+        self.export_info.pack(side="left")
+
+        # Import
+        import_card = ctk.CTkFrame(parent)
+        import_card.grid(row=4, column=0, sticky="ew", pady=4)
+        import_body = ctk.CTkFrame(import_card, fg_color="transparent")
+        import_body.pack(fill="x", padx=14, pady=10)
+        ctk.CTkLabel(import_body, text=t("data.import_section"),
+                     font=ctk.CTkFont(size=13, weight="bold")
+                     ).pack(anchor="w")
+        ctk.CTkLabel(import_body, text=t("data.import_warning"),
+                     text_color="gray",
+                     font=ctk.CTkFont(size=11)).pack(anchor="w")
+        import_row = ctk.CTkFrame(import_body, fg_color="transparent")
+        import_row.pack(fill="x", pady=(4, 4))
+        ctk.CTkButton(import_row, text=t("data.import_pick_dir"),
+                      command=self._do_import
+                      ).pack(side="left", padx=(0, 8))
+        self.import_info = ctk.CTkLabel(import_row, text="",
+                                          text_color="gray")
+        self.import_info.pack(side="left")
+
+    def _do_backup(self) -> None:
+        from database import Database
+        from services.backup import default_backup_name, make_backup
+        from services.profile import db_path, resolve_profile
+        try:
+            db_file = db_path(resolve_profile(),
+                                str(self.assistant.log.db.path
+                                     if self.assistant.log else
+                                     "alltagshelfer_gui.db"))
+            db = Database(db_file)
+            try:
+                target = Path("backups") / default_backup_name()
+                make_backup(db, target)
+                self.backup_info.configure(text=str(target))
+            finally:
+                db.close()
+        except Exception as exc:                              # noqa: BLE001
+            self.backup_info.configure(text=f"Fehler: {exc}",
+                                          text_color="#d9534f")
+
+    def _do_export(self) -> None:
+        from database import (CalendarRepository, ContractRepository,
+                                ExpenseRepository, FamilyRepository,
+                                SocialRepository)
+        from services.export import export_all
+        from datetime import datetime
+        target = (Path("ausgaben")
+                   / f"export-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
+        # Wir koennen direkt die laufende DB benutzen - sie ist sowieso
+        # offen.
+        db = self.registry.modules()[0].repo.db                  # type: ignore[attr-defined]
+        counts = export_all(
+            target,
+            ContractRepository(db), ExpenseRepository(db),
+            CalendarRepository(db), SocialRepository(db),
+            FamilyRepository(db))
+        total = sum(counts.values())
+        self.export_info.configure(
+            text=f"{target} ({total} Zeilen)")
+
+    def _do_import(self) -> None:
+        from tkinter import filedialog
+        from database import (CalendarRepository, ContractRepository,
+                                ExpenseRepository, FamilyRepository,
+                                SocialRepository)
+        from services.import_csv import import_all
+        directory = filedialog.askdirectory(
+            title=self.i18n.t("data.import_pick_dir"))
+        if not directory:
+            return
+        db = self.registry.modules()[0].repo.db                  # type: ignore[attr-defined]
+        counts = import_all(
+            Path(directory),
+            ContractRepository(db), ExpenseRepository(db),
+            CalendarRepository(db), SocialRepository(db),
+            FamilyRepository(db))
+        total = sum(counts.values())
+        self.import_info.configure(text=f"{total} Zeilen importiert")
+        self._refresh_all()
+
+    # ================================================================
     #  Modul-Verwaltung (Tab "Module")
     # ================================================================
     def _build_module_admin(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(1, weight=1)
+        t = self.i18n.t
 
-        ctk.CTkLabel(parent, text="Module ein-/ausschalten",
+        ctk.CTkLabel(parent, text=t("modules.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 8))
-        ctk.CTkLabel(parent,
-                     text=("Deaktivierte Module liefern weder Capabilities "
-                            "noch Dashboard-Eintraege. Die Daten bleiben "
-                            "in der DB erhalten."),
+        ctk.CTkLabel(parent, text=t("modules.hint"),
                      text_color="gray", wraplength=720, justify="left"
                      ).grid(row=0, column=0, sticky="sw", pady=(0, 6))
 
@@ -1252,6 +1540,7 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "module_admin_list"):
             return
         _clear(self.module_admin_list)
+        t = self.i18n.t
         for state in self.registry.module_states():
             card = ctk.CTkFrame(self.module_admin_list)
             card.pack(fill="x", padx=2, pady=4)
@@ -1266,15 +1555,17 @@ class AlltagshelferGUI(ctk.CTk):
                 font=ctk.CTkFont(size=14, weight="bold")
             ).pack(side="left")
             switch_var = ctk.BooleanVar(value=state["enabled"])
-            ctk.CTkSwitch(top, text="aktiv", variable=switch_var,
+            ctk.CTkSwitch(top, text=t("modules.active"),
+                           variable=switch_var,
                            command=lambda mid=state["module_id"],
                            var=switch_var: self._toggle_module(mid, var)
                            ).pack(side="right")
 
             ctk.CTkLabel(
                 body,
-                text=f"{len(state['capabilities'])} Capabilities: "
-                      + ", ".join(state["capabilities"]),
+                text=t("modules.capabilities_label").format(
+                    n=len(state['capabilities']))
+                      + " " + ", ".join(state["capabilities"]),
                 text_color="gray", font=ctk.CTkFont(size=11),
                 wraplength=720, justify="left"
             ).pack(anchor="w", pady=(4, 0))
@@ -1437,16 +1728,13 @@ class AlltagshelferGUI(ctk.CTk):
     def _build_settings(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(1, weight=1)
+        t = self.i18n.t
 
-        ctk.CTkLabel(parent, text="Einstellungen",
+        ctk.CTkLabel(parent, text=t("settings.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 6))
 
-        info = ("Werte werden in der DB persistiert. Geheime Felder "
-                "(API-Schluessel, Passwoerter) liest die App ausschliesslich "
-                "aus Umgebungsvariablen, sie werden NICHT in der DB "
-                "gespeichert.")
-        ctk.CTkLabel(parent, text=info, text_color="gray",
+        ctk.CTkLabel(parent, text=t("settings.intro"), text_color="gray",
                      wraplength=720, justify="left"
                      ).grid(row=0, column=0, sticky="sw", pady=(0, 6))
 
@@ -1473,12 +1761,13 @@ class AlltagshelferGUI(ctk.CTk):
         secrets_info = ctk.CTkFrame(body, fg_color="transparent")
         secrets_info.pack(fill="x", pady=(20, 4))
         ctk.CTkLabel(
-            secrets_info, text="Geheimnisse (nur per Umgebungsvariable):",
+            secrets_info, text=t("settings.secrets_intro"),
             font=ctk.CTkFont(size=12, weight="bold")
         ).pack(anchor="w")
         for key in sorted(SECRET_KEYS):
             env = ENV_MAP.get(key, "(kein Env-Mapping)")
-            set_text = "gesetzt" if os.environ.get(env) else "nicht gesetzt"
+            set_text = (t("settings.secret_set") if os.environ.get(env)
+                         else t("settings.secret_unset"))
             ctk.CTkLabel(
                 secrets_info,
                 text=f"  {key}  ->  {env}   [{set_text}]",
@@ -1487,10 +1776,10 @@ class AlltagshelferGUI(ctk.CTk):
 
         actions = ctk.CTkFrame(parent, fg_color="transparent")
         actions.grid(row=2, column=0, sticky="ew", pady=8)
-        ctk.CTkButton(actions, text="Speichern (Neustart noetig)",
+        ctk.CTkButton(actions, text=t("settings.save"),
                       command=self._save_settings
                       ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(actions, text="Auf Default zuruecksetzen",
+        ctk.CTkButton(actions, text=t("settings.reset"),
                       fg_color="transparent", border_width=1,
                       command=self._reset_settings
                       ).pack(side="left")
@@ -1504,14 +1793,15 @@ class AlltagshelferGUI(ctk.CTk):
             save_value(self.settings_repo, key, value)
             saved += 1
         self.settings_status.configure(
-            text=f"{saved} Werte gespeichert. Neustart fuer einige Felder.")
+            text=self.i18n.t("settings.saved").format(count=saved))
 
     def _reset_settings(self) -> None:
         for key, entry in self.setting_inputs.items():
             entry.delete(0, "end")
             entry.insert(0, DEFAULTS.get(key, ""))
             save_value(self.settings_repo, key, DEFAULTS.get(key, ""))
-        self.settings_status.configure(text="Auf Defaults zurueckgesetzt.")
+        self.settings_status.configure(
+            text=self.i18n.t("settings.reset_done"))
 
     # ================================================================
     #  Destruktiv-Bestaetigung (vom Assistant aufgerufen)
@@ -1537,9 +1827,10 @@ class AlltagshelferGUI(ctk.CTk):
 def main() -> None:
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
-    db, registry, assistant, config, settings, module_states, synced = bootstrap()
+    (db, registry, assistant, config, settings, module_states,
+     synced, profile) = bootstrap()
     app = AlltagshelferGUI(registry, assistant, config,
-                             settings, module_states, synced)
+                             settings, module_states, synced, profile)
     # Hintergrund-Dienste starten
     app.scheduler.start()
     if app.sync_worker is not None:

@@ -1,6 +1,10 @@
 """
 Erlaubt `python -m alltagshelfer` als CLI-Einstieg.
 
+Globale Optionen:
+  --profile <name>          aktives Profil setzen (siehe services/profile.py).
+                             Default: leer = urspruengliche Dateinamen.
+
 Subcommands:
   (kein)                    startet die Konsolen-Demo (main.py)
   --diagnose                druckt einen Statusbericht
@@ -11,6 +15,7 @@ Subcommands:
   --restore <pfad>          stellt die DB aus einem Backup wieder her
                              (App muss vorher beendet sein)
   --list-backups [verz]     listet vorhandene Backups
+  --list-profiles           listet erkennbare Profile (anhand State-Dirs)
   --export [verz]           exportiert alle Entitaeten als CSV
                              (Default: ausgaben/export-<datum>/)
   --import <verz>           importiert CSV-Dateien aus einem Verzeichnis
@@ -18,6 +23,7 @@ Subcommands:
 """
 from __future__ import annotations
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -27,13 +33,20 @@ DEFAULT_BACKUP_DIR = Path("backups")
 DEFAULT_EXPORT_DIR = Path("ausgaben")
 
 
+def _profile_aware_db_path() -> Path:
+    """DB-Pfad fuer das aktuell aktive Profil (Env: ALLTAGSHELFER_PROFILE)."""
+    from services.profile import db_path, resolve_profile
+    return Path(db_path(resolve_profile(), str(DEFAULT_DB)))
+
+
 def _cmd_backup(target: str | None) -> int:
     from database import Database
     from services.backup import default_backup_name, make_backup
-    if not DEFAULT_DB.exists():
-        print(f"Keine DB '{DEFAULT_DB}' gefunden - nichts zu sichern.")
+    db_file = _profile_aware_db_path()
+    if not db_file.exists():
+        print(f"Keine DB '{db_file}' gefunden - nichts zu sichern.")
         return 1
-    db = Database(str(DEFAULT_DB))
+    db = Database(str(db_file))
     try:
         path = Path(target) if target else (
             DEFAULT_BACKUP_DIR / default_backup_name())
@@ -53,8 +66,25 @@ def _cmd_restore(source: str) -> int:
     if not src.exists():
         print(f"Backup '{src}' existiert nicht.")
         return 1
-    restore_database(src, DEFAULT_DB)
-    print(f"DB wiederhergestellt aus {src}")
+    target = _profile_aware_db_path()
+    restore_database(src, target)
+    print(f"DB wiederhergestellt aus {src} nach {target}")
+    return 0
+
+
+def _cmd_list_profiles() -> int:
+    from services.profile import list_profiles, resolve_profile
+    current = resolve_profile()
+    profiles = list_profiles()
+    if not profiles:
+        print("Keine Profile erkannt. (Profile entstehen, sobald ein "
+              "State-Verzeichnis angelegt wird.)")
+        return 0
+    print("Erkannte Profile (anhand State-Verzeichnisse):")
+    for p in profiles:
+        marker = " <-- aktiv" if p == current else ""
+        name = p or "(default)"
+        print(f"  {name}{marker}")
     return 0
 
 
@@ -83,7 +113,7 @@ def _cmd_import(directory: str) -> int:
     if not src.is_dir():
         print(f"Quellverzeichnis '{src}' existiert nicht.")
         return 1
-    db = Database(str(DEFAULT_DB))
+    db = Database(str(_profile_aware_db_path()))
     try:
         counts = import_all(
             src,
@@ -106,13 +136,14 @@ def _cmd_export(directory: str | None) -> int:
                             ExpenseRepository, FamilyRepository,
                             SocialRepository)
     from services.export import export_all
-    if not DEFAULT_DB.exists():
-        print(f"Keine DB '{DEFAULT_DB}' gefunden - nichts zu exportieren.")
+    db_file = _profile_aware_db_path()
+    if not db_file.exists():
+        print(f"Keine DB '{db_file}' gefunden - nichts zu exportieren.")
         return 1
     target = Path(directory) if directory else (
         DEFAULT_EXPORT_DIR
         / f"export-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
-    db = Database(str(DEFAULT_DB))
+    db = Database(str(db_file))
     try:
         counts = export_all(
             target,
@@ -129,6 +160,19 @@ def _cmd_export(directory: str | None) -> int:
 
 def main() -> int:
     args = sys.argv[1:]
+    # Globales --profile <name> aus der Argumentliste extrahieren und
+    # in die Umgebung schreiben - alle Subcommands lesen daraus.
+    new_args: list[str] = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--profile" and i + 1 < len(args):
+            from services.profile import sanitize_profile
+            os.environ["ALLTAGSHELFER_PROFILE"] = sanitize_profile(args[i + 1])
+            i += 2
+        else:
+            new_args.append(args[i])
+            i += 1
+    args = new_args
     if not args:
         from main import main as run_demo
         run_demo()
@@ -154,6 +198,8 @@ def main() -> int:
         return _cmd_restore(args[1])
     if args[0] == "--list-backups":
         return _cmd_list_backups(args[1] if len(args) > 1 else None)
+    if args[0] == "--list-profiles":
+        return _cmd_list_profiles()
     if args[0] == "--export":
         return _cmd_export(args[1] if len(args) > 1 else None)
     if args[0] == "--import":

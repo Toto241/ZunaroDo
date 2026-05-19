@@ -15,6 +15,11 @@ pip install -r requirements.txt
 # Konsolen-Demo (Offline-Modus, alles tut auch ohne Netz)
 python main.py
 
+# Mit alternativem Profil (eigene DB-Datei + State-Dir)
+ALLTAGSHELFER_PROFILE=anna python main.py
+# oder ueber den CLI-Wrapper
+python __main__.py --profile anna
+
 # GUI mit allen Tabs
 python gui.py
 
@@ -79,6 +84,8 @@ Tests: `python -m unittest discover tests` — 80+ Tests grün.
 | – | Posteingang | Mail-Analyse regelbasiert + LLM-basiert, `.eml`-Import, IMAP, zentrale Vorschlags-Ablage, **Inline-Editor** für Vorschläge |
 | – | Volltextsuche | `system.search` quer durch Verträge/Ausgaben/Termine/Familie/Aufträge/Kontakte/Vorschläge |
 | – | Statistiken & Trends | `stats.expenses_per_month`, `stats.expenses_per_category`, `stats.contracts_overview`, `stats.yearly_summary` |
+
+GUI hat dafür einen eigenen **Statistiken-Tab** mit Canvas-Bar-Chart über die letzten 12 Monate, Vertragsübersicht und Jahressumme.
 
 ## Die drei Schnittstellen
 
@@ -149,15 +156,32 @@ Der Schlüssel wird als Hex-Form `x'<hex>'` an `PRAGMA key` übergeben — keine
 
 ```text
 python __main__.py [keine Args]   Konsolen-Demo (main.py)
+                  --profile <n>   globales Flag - waehlt das aktive Profil
                   --gui           startet die GUI
                   --diagnose      Statusbericht (Plattform, Pakete, OCR-Engines)
                   --sync-server   HTTP/HTTPS-Sync-Server starten
                   --backup [pfad] DB online sichern
                   --restore <pfad> DB wiederherstellen (App muss aus sein)
                   --list-backups [verz]  Backups anzeigen
+                  --list-profiles erkennbare Profile auflisten
                   --export [verz] CSV-Export aller Entitäten
                   --import <verz> CSV-Import aus einem Export-Verzeichnis
 ```
+
+## Multi-User-Profile
+
+Pro Profil eine eigene DB-Datei + eigenes State-Verzeichnis ([services/profile.py](services/profile.py)). Familienmitglieder können auf demselben Rechner getrennte Daten halten.
+
+- Default: alle bisherigen Dateinamen bleiben (`alltagshelfer_demo.db`, `.alltagshelfer-state/`)
+- Profil `anna`: `alltagshelfer_demo_anna.db`, `.alltagshelfer-state-anna/`
+- Aktivierung per Umgebungsvariable (`ALLTAGSHELFER_PROFILE=anna`) oder CLI-Flag (`--profile anna`)
+- GUI zeigt das aktive Profil in der Sidebar an
+- `--list-profiles` listet erkennbare Profile (anhand vorhandener State-Verzeichnisse)
+- Profilnamen werden auf `[A-Za-z0-9_-]` reduziert und auf 32 Zeichen begrenzt
+
+## Zeitstempel & UTC
+
+Alle internen Zeitstempel (`created_at`, `updated_at`, `changed_at` etc.) werden seit Version 0.7 in UTC mit ISO-Format mit `+00:00`-Suffix gespeichert ([database.py:_now_utc_iso](database.py)). Sync-Events benutzen ebenfalls UTC — damit sind alle Timestamps zonenunabhängig vergleichbar und über Geräte hinweg sortierbar.
 
 ## CSV-Export und -Import
 
@@ -197,12 +221,15 @@ Aktuell übersetzt: Tab-Labels, Sidebar, Dashboard, Suche, Verlauf, Chat-Bubbles
 
 ```text
 Dashboard – Vertraege – Familie – Finanzen – Kalender – Sozial
-   – Posteingang – Assistent – Suche – Verlauf – Module – Einstellungen
+   – Posteingang – Statistiken – Daten – Assistent – Suche – Verlauf
+   – Module – Einstellungen
 ```
 
 Bemerkenswerte Features:
 
 - **Posteingang**: IMAP-Abruf im Worker-Thread (kein Einfrieren), Inline-Editor für Vorschläge mit form-generierten Feldern aus dem Capability-Schema
+- **Statistiken**: Bar-Chart der letzten 12 Monate über `tk.Canvas` (keine Diagramm-Library nötig), Vertragsübersicht, Jahressumme
+- **Daten**: Backup/Export/Import via Buttons, Anzeige des aktiven Profils, Datei-Picker für CSV-Import
 - **Module**: Switches pro Modul, persistiert in der DB
 - **Einstellungen**: alle nicht-geheimen Konfig-Werte editierbar; Geheimnisse (API-Keys etc.) ausschließlich per Env-Var
 - **Verlauf**: zeigt `assistant_log` (User vs. Assistent)

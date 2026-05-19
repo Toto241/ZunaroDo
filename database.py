@@ -19,9 +19,22 @@ import json
 import os
 import sqlite3
 import threading
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable, Optional
+
+
+def _now_utc_iso() -> str:
+    """
+    Aktueller Zeitpunkt als UTC-ISO-String. Wird fuer alle internen
+    Zeitstempel-Felder verwendet (created_at, updated_at, changed_at).
+
+    Hintergrund: Sync-Events nutzen bereits UTC; bei den DB-internen
+    Stempeln war es bisher gemischt (lokale Zeit). Mit dieser Funktion
+    sind alle Zeitstempel zonenunabhaengig und ueber Geraete hinweg
+    sortierbar.
+    """
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 from models import (AssistantLogEntry, CalendarEvent, Contract, DayEntry,
                     Expense, FamilyMember, HouseholdOrder, HouseholdTask,
@@ -339,7 +352,7 @@ class ContractRepository:
         self.db = db
 
     def add(self, c: Contract) -> Contract:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             """INSERT INTO contracts
                (name, category, provider, customer_number, start_date,
@@ -361,7 +374,7 @@ class ContractRepository:
         old = self.get(contract_id)
         if old is None:
             raise ValueError(f"Vertrag {contract_id} existiert nicht")
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         self.db.conn.execute(
             "INSERT INTO price_history (contract_id, old_cost, new_cost, changed_at)"
             " VALUES (?,?,?,?)",
@@ -376,15 +389,14 @@ class ContractRepository:
     def set_status(self, contract_id: int, status: str) -> None:
         self.db.conn.execute(
             "UPDATE contracts SET status=?, updated_at=? WHERE id=?",
-            (status, datetime.now().isoformat(timespec="seconds"), contract_id),
+            (status, _now_utc_iso(), contract_id),
         )
         self.db.conn.commit()
 
     def set_owner(self, contract_id: int, owner_id: Optional[int]) -> None:
         self.db.conn.execute(
             "UPDATE contracts SET owner_id=?, updated_at=? WHERE id=?",
-            (owner_id, datetime.now().isoformat(timespec="seconds"),
-             contract_id))
+            (owner_id, _now_utc_iso(), contract_id))
         self.db.conn.commit()
 
     def get(self, contract_id: int) -> Optional[Contract]:
@@ -447,7 +459,7 @@ class ExpenseRepository:
         self.db = db
 
     def add(self, e: Expense) -> Expense:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO expenses (description, amount, category, spent_on,"
             " owner_id, created_at) VALUES (?,?,?,?,?,?)",
@@ -505,7 +517,7 @@ class PriceMemoryRepository:
                  category: str = "sonstiges",
                  seen_on: Optional[date] = None) -> PriceMemory:
         seen = (seen_on or date.today()).isoformat()
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         self.db.conn.execute(
             "INSERT INTO price_memory (product, last_price, last_seen, "
             "category, created_at) VALUES (?,?,?,?,?) "
@@ -536,7 +548,7 @@ class FamilyRepository:
 
     # ---- Mitglieder ----------------------------------------------------
     def add_member(self, m: FamilyMember) -> FamilyMember:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO family_members (name, role, birthday, created_at)"
             " VALUES (?,?,?,?)",
@@ -584,7 +596,7 @@ class FamilyRepository:
 
     # ---- Wiederkehrende Aufgaben --------------------------------------
     def add_task(self, t: HouseholdTask) -> HouseholdTask:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO household_tasks (title, interval_days, next_due,"
             " current_index, created_at) VALUES (?,?,?,?,?)",
@@ -673,7 +685,7 @@ class FamilyRepository:
 
     # ---- Einmalige Auftraege ------------------------------------------
     def add_order(self, o: HouseholdOrder) -> HouseholdOrder:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO household_orders (title, assignee_id, due_date,"
             " description, status, created_at) VALUES (?,?,?,?,?,?)",
@@ -725,7 +737,7 @@ class ShoppingRepository:
         self.db = db
 
     def add(self, item: ShoppingItem) -> ShoppingItem:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO shopping_items (name, quantity, added_by_id,"
             " bought, created_at) VALUES (?,?,?,?,?)",
@@ -772,7 +784,7 @@ class ProposalRepository:
         self.db = db
 
     def add(self, p: Proposal) -> Proposal:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO proposals (source, summary, target_capability,"
             " payload, status, created_at) VALUES (?,?,?,?,?,?)",
@@ -841,7 +853,7 @@ class CalendarRepository:
         self.db = db
 
     def add(self, e: CalendarEvent) -> CalendarEvent:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO calendar_events (title, due_date, category,"
             " description, recurrence_days, person_id, created_at)"
@@ -917,7 +929,7 @@ class SocialRepository:
         self.db = db
 
     def add(self, c: SocialContact) -> SocialContact:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO social_contacts (name, relation, cadence_days,"
             " last_contacted, notes, created_at) VALUES (?,?,?,?,?,?)",
@@ -980,7 +992,7 @@ class AssistantLogRepository:
         self.max_entries = max_entries
 
     def append(self, role: str, content: str) -> AssistantLogEntry:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO assistant_log (role, content, created_at)"
             " VALUES (?,?,?)", (role, content, now))
@@ -1023,7 +1035,7 @@ class ModuleStateRepository:
         return {r["module_id"] for r in rows}
 
     def set_enabled(self, module_id: str, enabled: bool) -> None:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         self.db.conn.execute(
             "INSERT INTO module_states (module_id, enabled, updated_at)"
             " VALUES (?,?,?)"
@@ -1040,7 +1052,7 @@ class DayEntryRepository:
         self.db = db
 
     def upsert(self, entry: DayEntry) -> DayEntry:
-        now = datetime.now().isoformat(timespec="seconds")
+        now = _now_utc_iso()
         self.db.conn.execute(
             "INSERT INTO day_entries (day, level, note, created_at)"
             " VALUES (?,?,?,?)"
@@ -1083,7 +1095,7 @@ class SettingsRepository:
             self.db.conn.execute(
                 "DELETE FROM app_settings WHERE key=?", (key,))
         else:
-            now = datetime.now().isoformat(timespec="seconds")
+            now = _now_utc_iso()
             self.db.conn.execute(
                 "INSERT INTO app_settings (key, value, updated_at)"
                 " VALUES (?,?,?)"
