@@ -195,6 +195,8 @@ class AlltagshelferGUI(ctk.CTk):
             "Sozial": self._build_social,
             "Posteingang": self._build_inbox,
             "Assistent": self._build_chat,
+            "Suche": self._build_search,
+            "Verlauf": self._build_history,
             "Module": self._build_module_admin,
             "Einstellungen": self._build_settings,
         }
@@ -1009,6 +1011,9 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_social()
         self._refresh_inbox()
         self._refresh_module_admin()
+        # Verlauf nur auf Anforderung aktualisieren - das Lesen von
+        # assistant_log ist zwar billig, soll aber nicht jeden
+        # Refresh-Tick mitmachen.
 
     def _dispatch_and_refresh(self, capability: str, args: dict) -> None:
         self.registry.dispatch(capability, args)
@@ -1101,6 +1106,124 @@ class AlltagshelferGUI(ctk.CTk):
         self.registry.set_module_enabled(module_id, enabled)
         self.module_states.set_enabled(module_id, enabled)
         self._refresh_all()
+
+    # ================================================================
+    #  Suche
+    # ================================================================
+    def _build_search(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(2, weight=1)
+
+        ctk.CTkLabel(parent, text="Volltextsuche",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 6))
+
+        bar = ctk.CTkFrame(parent, fg_color="transparent")
+        bar.grid(row=1, column=0, sticky="ew", pady=(0, 8))
+        bar.grid_columnconfigure(0, weight=1)
+        self.search_entry = ctk.CTkEntry(
+            bar, placeholder_text="Mindestens 2 Zeichen ...")
+        self.search_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        self.search_entry.bind("<Return>", lambda _e: self._run_search())
+        ctk.CTkButton(bar, text="Suchen", width=110,
+                      command=self._run_search).grid(row=0, column=1)
+
+        self.search_results = ctk.CTkScrollableFrame(
+            parent, fg_color="transparent")
+        self.search_results.grid(row=2, column=0, sticky="nsew")
+
+    def _run_search(self) -> None:
+        query = self.search_entry.get().strip()
+        _clear(self.search_results)
+        if len(query) < 2:
+            ctk.CTkLabel(self.search_results,
+                         text="Bitte mindestens 2 Zeichen eingeben.",
+                         text_color="gray").pack(pady=20)
+            return
+        result = self.registry.dispatch(
+            "system.search", {"query": query, "limit": 100})
+        if "error" in result:
+            ctk.CTkLabel(self.search_results,
+                         text=result["error"], text_color="gray"
+                         ).pack(pady=20)
+            return
+        hits = result.get("hits", [])
+        if not hits:
+            ctk.CTkLabel(self.search_results,
+                         text="Keine Treffer.", text_color="gray"
+                         ).pack(pady=20)
+            return
+        ctk.CTkLabel(self.search_results,
+                     text=f"{result['count']} Treffer:",
+                     text_color="gray").pack(anchor="w", pady=(4, 8))
+        for hit in hits:
+            self._search_card(hit)
+
+    def _search_card(self, hit: dict) -> None:
+        card = ctk.CTkFrame(self.search_results)
+        card.pack(fill="x", pady=3, padx=2)
+        body = ctk.CTkFrame(card, fg_color="transparent")
+        body.pack(fill="x", padx=12, pady=8)
+        top = ctk.CTkFrame(body, fg_color="transparent")
+        top.pack(fill="x")
+        ctk.CTkLabel(top, text=f"[{hit['source']}]", height=18,
+                     font=ctk.CTkFont(size=10, weight="bold"),
+                     text_color="gray").pack(side="left")
+        ctk.CTkLabel(top, text=f"#{hit['entity_id']}", height=18,
+                     font=ctk.CTkFont(size=10), text_color="gray"
+                     ).pack(side="right")
+        ctk.CTkLabel(body, text=hit["title"],
+                     font=ctk.CTkFont(size=13, weight="bold"),
+                     anchor="w", justify="left", wraplength=620
+                     ).pack(fill="x", pady=(2, 0))
+        if hit.get("detail"):
+            ctk.CTkLabel(body, text=hit["detail"],
+                         font=ctk.CTkFont(size=11),
+                         text_color="gray", anchor="w", justify="left",
+                         wraplength=620).pack(fill="x")
+
+    # ================================================================
+    #  Verlauf (Chat-Historie aus assistant_log)
+    # ================================================================
+    def _build_history(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
+
+        header = ctk.CTkFrame(parent, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
+        ctk.CTkLabel(header, text="Assistenten-Verlauf",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).pack(side="left")
+        ctk.CTkButton(header, text="Aktualisieren", width=120,
+                      command=self._refresh_history).pack(side="right")
+
+        self.history_text = ctk.CTkTextbox(
+            parent, wrap="word", font=ctk.CTkFont(size=12))
+        self.history_text.grid(row=1, column=0, sticky="nsew")
+        self.history_text.configure(state="disabled")
+
+    def _refresh_history(self) -> None:
+        from database import AssistantLogRepository
+        repo = AssistantLogRepository(self.assistant.log.db
+                                        if self.assistant.log
+                                        else None)
+        try:
+            entries = repo.tail(limit=200)
+        except Exception:
+            entries = []
+        self.history_text.configure(state="normal")
+        self.history_text.delete("1.0", "end")
+        if not entries:
+            self.history_text.insert("1.0",
+                "Noch keine Eintraege - frage den Assistenten etwas.")
+        else:
+            for entry in entries:
+                who = ("Du" if entry.role == "user"
+                        else "Assistent" if entry.role == "assistant"
+                        else entry.role)
+                self.history_text.insert("end", f"{who}:\n{entry.content}\n\n")
+        self.history_text.configure(state="disabled")
+        self.history_text.see("end")
 
     # ================================================================
     #  Einstellungen

@@ -24,6 +24,7 @@ from modules.daystructure import DayStructureModule
 from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
+from modules.search import SearchModule
 from modules.social import SocialModule
 from services.config import AppConfig, load_config
 from services.gemini import GeminiClient
@@ -65,15 +66,22 @@ def build_registry(db: Database, output: OutputService,
                     llm=None) -> ModuleRegistry:
     """Steckt alle Module ein - dieselbe Funktion nutzt auch die GUI."""
     registry = ModuleRegistry()
-    registry.register(ContractModule(ContractRepository(db), output))
-    registry.register(FinanceModule(ExpenseRepository(db),
-                                     PriceMemoryRepository(db)))
-    registry.register(FamilyModule(FamilyRepository(db),
-                                    ShoppingRepository(db)))
-    registry.register(CalendarModule(CalendarRepository(db)))
-    registry.register(SocialModule(SocialRepository(db), llm=llm))
+    contracts_repo = ContractRepository(db)
+    expense_repo = ExpenseRepository(db)
+    family_repo = FamilyRepository(db)
+    calendar_repo = CalendarRepository(db)
+    social_repo = SocialRepository(db)
+    proposal_repo = ProposalRepository(db)
+    registry.register(ContractModule(contracts_repo, output))
+    registry.register(FinanceModule(expense_repo, PriceMemoryRepository(db)))
+    registry.register(FamilyModule(family_repo, ShoppingRepository(db)))
+    registry.register(CalendarModule(calendar_repo))
+    registry.register(SocialModule(social_repo, llm=llm))
     registry.register(DayStructureModule(DayEntryRepository(db)))
-    registry.register(InboxModule(ProposalRepository(db), llm=llm))
+    registry.register(InboxModule(proposal_repo, llm=llm))
+    registry.register(SearchModule(
+        contracts_repo, expense_repo, calendar_repo,
+        family_repo, social_repo, proposal_repo))
     return registry
 
 

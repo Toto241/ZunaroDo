@@ -33,6 +33,7 @@ from modules.daystructure import DayStructureModule
 from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
+from modules.search import SearchModule
 from modules.social import SocialModule
 from services.config import DEFAULTS, load_config, save_value
 from services.llm import LLMAnswer, ToolCall, TokenUsage
@@ -69,15 +70,23 @@ def _build_system(llm=None) -> tuple[Database, ModuleRegistry, Assistant, str]:
     db = Database(tmp.name)
     output = OutputService(tempfile.mkdtemp(prefix="ah_out_"))
     registry = ModuleRegistry()
-    registry.register(ContractModule(ContractRepository(db), output))
-    registry.register(FinanceModule(ExpenseRepository(db),
+    contracts_repo = ContractRepository(db)
+    expense_repo = ExpenseRepository(db)
+    family_repo = FamilyRepository(db)
+    calendar_repo = CalendarRepository(db)
+    social_repo = SocialRepository(db)
+    proposal_repo = ProposalRepository(db)
+    registry.register(ContractModule(contracts_repo, output))
+    registry.register(FinanceModule(expense_repo,
                                      PriceMemoryRepository(db)))
-    registry.register(FamilyModule(FamilyRepository(db),
-                                    ShoppingRepository(db)))
-    registry.register(CalendarModule(CalendarRepository(db)))
-    registry.register(SocialModule(SocialRepository(db), llm=llm))
+    registry.register(FamilyModule(family_repo, ShoppingRepository(db)))
+    registry.register(CalendarModule(calendar_repo))
+    registry.register(SocialModule(social_repo, llm=llm))
     registry.register(DayStructureModule(DayEntryRepository(db)))
-    registry.register(InboxModule(ProposalRepository(db), llm=llm))
+    registry.register(InboxModule(proposal_repo, llm=llm))
+    registry.register(SearchModule(
+        contracts_repo, expense_repo, calendar_repo,
+        family_repo, social_repo, proposal_repo))
     return db, registry, Assistant(registry, llm=llm), tmp.name
 
 
@@ -1060,6 +1069,166 @@ class TestDiagnose(unittest.TestCase):
         self.assertIn("google.generativeai", data["modules"])
         # Mindestens Modul + Capabilities zaehlen
         self.assertGreaterEqual(data["module_count"], 0)
+
+
+class TestBackupAndRestore(unittest.TestCase):
+    """Online-Backup + Restore-Round-Trip."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_backup_"))
+        self.db_path = self.tmp / "live.db"
+        self.db = Database(str(self.db_path))
+        # Etwas Inhalt anlegen, damit das Backup nicht leer ist
+        from modules.contracts import ContractModule
+        registry = ModuleRegistry()
+        registry.register(ContractModule(
+            ContractRepository(self.db), OutputService(str(self.tmp / "out"))))
+        registry.dispatch("contracts.add", dict(
+            name="X", category="streaming", provider="Y",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=9.99))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        shutil.rmtree(self.tmp)
+
+    def test_online_backup_creates_readable_copy(self) -> None:
+        from services.backup import make_backup
+        target = self.tmp / "snapshot.db"
+        result = make_backup(self.db, target)
+        self.assertTrue(result.exists())
+        self.assertGreater(result.stat().st_size, 0)
+        # Backup ist eigenstaendig oeffnenbar
+        backup_db = Database(str(target))
+        try:
+            count = ContractRepository(backup_db).list_all(
+                only_active=False)
+            self.assertEqual(len(count), 1)
+        finally:
+            backup_db.close()
+
+    def test_restore_overwrites_live_db(self) -> None:
+        from services.backup import make_backup, restore_database
+        target = self.tmp / "snapshot.db"
+        make_backup(self.db, target)
+        # Nach Backup: weiteren Vertrag anlegen
+        ContractRepository(self.db).add(self._extra_contract())
+        self.assertEqual(
+            len(ContractRepository(self.db).list_all(only_active=False)),
+            2)
+        # DB schliessen vor Restore
+        self.db.close()
+        restore_database(target, self.db_path)
+        # Neu oeffnen - sollte nur den urspruenglichen Vertrag enthalten
+        self.db = Database(str(self.db_path))
+        self.assertEqual(
+            len(ContractRepository(self.db).list_all(only_active=False)),
+            1)
+
+    def test_list_backups_sorted_newest_first(self) -> None:
+        from services.backup import list_backups, make_backup
+        first = make_backup(self.db, self.tmp / "a.db")
+        time.sleep(0.05)
+        second = make_backup(self.db, self.tmp / "b.db")
+        found = list_backups(self.tmp)
+        # Sortierung: neueste zuerst
+        self.assertEqual(found[0], second)
+        self.assertEqual(found[1], first)
+
+    @staticmethod
+    def _extra_contract():
+        from models import Contract
+        return Contract(
+            name="Y", category="strom", provider="Z",
+            start_date=date(2025, 1, 1), minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=5.0)
+
+
+class TestCsvExport(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        # Beispieldaten
+        self.registry.dispatch("contracts.add", dict(
+            name="Streaming", category="streaming", provider="Netflix",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=13.99))
+        self.registry.dispatch("finance.add_expense", dict(
+            description="Wocheneinkauf", amount=42.00,
+            category="lebensmittel"))
+        self.registry.dispatch("calendar.add_event", dict(
+            title="TUEV", due_date="2026-09-01", category="tuev"))
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_csv_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_export_contracts_writes_csv(self) -> None:
+        from services.export import export_contracts
+        out = self.tmp / "contracts.csv"
+        n = export_contracts(ContractRepository(self.db), out)
+        self.assertEqual(n, 1)
+        text = out.read_text(encoding="utf-8-sig")
+        self.assertIn("Streaming", text)
+        self.assertIn(";", text)         # Trennzeichen
+
+    def test_export_all_writes_five_files(self) -> None:
+        from services.export import export_all
+        counts = export_all(
+            self.tmp,
+            ContractRepository(self.db),
+            ExpenseRepository(self.db),
+            CalendarRepository(self.db),
+            SocialRepository(self.db),
+            FamilyRepository(self.db))
+        self.assertEqual(counts["contracts"], 1)
+        self.assertEqual(counts["expenses"], 1)
+        self.assertEqual(counts["calendar"], 1)
+        for name in counts:
+            self.assertTrue((self.tmp / f"{name}.csv").exists())
+
+
+class TestSearch(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.registry.dispatch("contracts.add", dict(
+            name="Telekom Mobilfunk", category="mobilfunk",
+            provider="Telekom", start_date="2025-01-01",
+            minimum_term_months=1, notice_period_months=1,
+            auto_renew_months=1, monthly_cost=29.99))
+        self.registry.dispatch("family.add_member",
+                                {"name": "Anna", "role": "erwachsen"})
+        self.registry.dispatch("social.add_contact",
+                                {"name": "Telekom Hotline",
+                                 "relation": "Service"})
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_search_finds_multiple_sources(self) -> None:
+        result = self.registry.dispatch(
+            "system.search", {"query": "telekom"})
+        self.assertGreaterEqual(result["count"], 2)
+        sources = {hit["source"] for hit in result["hits"]}
+        self.assertIn("contracts", sources)
+        self.assertIn("social", sources)
+
+    def test_short_query_rejected(self) -> None:
+        result = self.registry.dispatch(
+            "system.search", {"query": "a"})
+        self.assertIn("error", result)
+
+    def test_no_hit(self) -> None:
+        result = self.registry.dispatch(
+            "system.search", {"query": "zauberwort"})
+        self.assertEqual(result["count"], 0)
 
 
 class TestProposalsFlow(unittest.TestCase):
