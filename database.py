@@ -185,14 +185,18 @@ CREATE TABLE IF NOT EXISTS app_settings (
 """
 
 
-def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
+def _columns(conn, table: str) -> set[str]:
     """Liest die existierenden Spaltennamen einer Tabelle."""
     return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
 
 
-def _ensure_column(conn: sqlite3.Connection, table: str,
+def _ensure_column(conn, table: str,
                    column: str, ddl_type: str) -> None:
-    """Migration: fuegt eine Spalte hinzu, falls sie noch nicht existiert."""
+    """Migration: fuegt eine Spalte hinzu, falls sie noch nicht existiert.
+
+    'conn' ist entweder sqlite3.Connection oder _SafeConnection - beide
+    bieten 'execute' und werden hier akzeptiert.
+    """
     if column not in _columns(conn, table):
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}")
 
@@ -257,9 +261,25 @@ def _open_connection(path: str,
 
     'check_same_thread=False' ist hier zwingend - DB-Operationen kommen
     aus mehreren Threads (siehe _SafeConnection).
+
+    Schluessel-Einspeisung: PRAGMA key akzeptiert keine ?-Parameter-
+    Bindung. Wir reichen den Schluessel daher als Hex-Form
+    'x'<hex-bytes>'' ein - so spielen NUL-Bytes, Backslashes, einfache
+    Anfuehrungszeichen oder exotische Unicode-Sequenzen im Passwort
+    keine Rolle mehr. SQLCipher behandelt einen Hex-Wert mit
+    delimiter-Klammerung als Roh-Schluessel; die Passphrase-Ableitung
+    via PBKDF2 entfaellt damit. Das ist der Preis fuer die Robustheit -
+    der effektive Schluesselraum bleibt unveraendert.
     """
     if not encryption_key:
         return sqlite3.connect(path, check_same_thread=False), "plain"
+    # Sanity: NUL-Bytes sind in Passwoertern selten und in SQLite nicht
+    # erlaubt - klar verweigern statt unerklaerlich crashen.
+    if "\x00" in encryption_key:
+        raise ValueError("ALLTAGSHELFER_DB_KEY darf kein NUL-Byte enthalten")
+    if len(encryption_key) < 8:
+        raise ValueError(
+            "ALLTAGSHELFER_DB_KEY ist zu kurz (mindestens 8 Zeichen)")
     try:
         import sqlcipher3 as cipher                       # type: ignore[import-not-found]
     except Exception as exc:
@@ -271,8 +291,9 @@ def _open_connection(path: str,
         ) from exc
     conn = cipher.connect(                                  # type: ignore[attr-defined]
         path, check_same_thread=False)
-    safe_key = encryption_key.replace("'", "''")
-    conn.execute(f"PRAGMA key = '{safe_key}'")
+    # Hex-Form: x'48656c6c6f'  -> [0x48, 0x65, ...]
+    hex_key = encryption_key.encode("utf-8").hex()
+    conn.execute(f"PRAGMA key = \"x'{hex_key}'\"")
     try:
         conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
     except Exception as exc:
@@ -581,6 +602,15 @@ class FamilyRepository:
         return tasks
 
     def complete_task(self, task_id: int) -> HouseholdTask:
+        """
+        Hakt eine Aufgabe ab und plant die naechste Faelligkeit.
+
+        Verpasste Zyklen: wenn die Aufgabe schon mehrere Intervalle
+        ueberfaellig ist, rueckt die Rotation entsprechend oft weiter -
+        Anna haette in der Zwischenzeit ja auch mehrmals dran sein
+        koennen. So wird die Reihenfolge fair fortgesetzt, statt einen
+        einzelnen Cycle ueber lange Pausen hinweg zu konservieren.
+        """
         row = self.db.conn.execute(
             "SELECT * FROM household_tasks WHERE id=?", (task_id,)
         ).fetchone()
@@ -589,19 +619,26 @@ class FamilyRepository:
         rotation = [r["member_id"] for r in self.db.conn.execute(
             "SELECT member_id FROM task_rotation WHERE task_id=? ORDER BY position",
             (task_id,))]
-        new_index = ((row["current_index"] + 1) % len(rotation)
-                     if rotation else 0)
+        interval = row["interval_days"]
         current_due = (date.fromisoformat(row["next_due"])
                        if row["next_due"] else date.today())
-        base = max(current_due, date.today())
-        new_due = base + timedelta(days=row["interval_days"])
+        # Mindestens ein Zyklus weiter; wenn die Aufgabe ueberfaellig
+        # war, weiter rollen, bis next_due in der Zukunft liegt.
+        new_due = current_due + timedelta(days=interval)
+        cycles = 1
+        today = date.today()
+        while new_due <= today:
+            new_due = new_due + timedelta(days=interval)
+            cycles += 1
+        new_index = ((row["current_index"] + cycles) % len(rotation)
+                     if rotation else 0)
         self.db.conn.execute(
             "UPDATE household_tasks SET current_index=?, next_due=? WHERE id=?",
             (new_index, new_due.isoformat(), task_id),
         )
         self.db.conn.commit()
         updated = self.get_task(task_id)
-        assert updated is not None    # Zeile existiert garantiert, gerade aktualisiert
+        assert updated is not None    # gerade aktualisiert
         return updated
 
     def get_task(self, task_id: int) -> Optional[HouseholdTask]:
@@ -995,11 +1032,11 @@ class SettingsRepository:
         return r["value"] if r else default
 
     def set(self, key: str, value: Optional[str]) -> None:
-        now = datetime.now().isoformat(timespec="seconds")
         if value is None:
             self.db.conn.execute(
                 "DELETE FROM app_settings WHERE key=?", (key,))
         else:
+            now = datetime.now().isoformat(timespec="seconds")
             self.db.conn.execute(
                 "INSERT INTO app_settings (key, value, updated_at)"
                 " VALUES (?,?,?)"

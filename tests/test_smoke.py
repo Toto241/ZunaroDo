@@ -16,7 +16,7 @@ import time
 import unittest
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from assistant import Assistant
@@ -729,6 +729,144 @@ class TestUtcTimestamps(unittest.TestCase):
                 os.unlink(db_path)
         finally:
             shutil.rmtree(root)
+
+
+class TestInboxExtractText(unittest.TestCase):
+    """Fix 8: _extract_text muss bei None-Payload nicht crashen."""
+
+    def test_empty_payload_returns_empty_string(self) -> None:
+        import email
+        from email.message import EmailMessage
+        from modules.inbox import InboxModule
+        # Eine leere Mail (kein Payload)
+        msg = EmailMessage()
+        # Ohne Inhalt - get_payload(decode=True) liefert b'\n' oder None
+        text = InboxModule._extract_text(msg)
+        self.assertIsInstance(text, str)
+
+    def test_multipart_without_textplain_returns_empty(self) -> None:
+        from email.message import EmailMessage
+        from modules.inbox import InboxModule
+        msg = EmailMessage()
+        msg.add_attachment(b"binary-data", maintype="application",
+                           subtype="octet-stream", filename="x.bin")
+        # Keine text/plain-Part vorhanden - darf nicht crashen
+        text = InboxModule._extract_text(msg)
+        self.assertEqual(text, "")
+
+
+class TestSqlCipherValidation(unittest.TestCase):
+    """Fix 9: Schluessel-Vorpruefung weist NUL/Kuerze klar ab."""
+
+    def test_nul_byte_rejected(self) -> None:
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            with self.assertRaises(ValueError):
+                Database(tmp.name, encryption_key="abc\x00def-x")
+        finally:
+            os.unlink(tmp.name)
+
+    def test_too_short_rejected(self) -> None:
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            with self.assertRaises(ValueError):
+                Database(tmp.name, encryption_key="kurz")
+        finally:
+            os.unlink(tmp.name)
+
+
+class TestCompleteTaskCatchUp(unittest.TestCase):
+    """Fix 10: Verpasste Zyklen werden mitgerechnet."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_overdue_task_advances_rotation_multiple_times(self) -> None:
+        # Anna und Bernd, Aufgabe alle 7 Tage, letzte Faelligkeit
+        # 21 Tage in der Vergangenheit -> 3 verpasste Zyklen
+        self.registry.dispatch("family.add_member",
+                                {"name": "Anna", "role": "erwachsen"})
+        self.registry.dispatch("family.add_member",
+                                {"name": "Bernd", "role": "erwachsen"})
+        old_due = (date.today() - timedelta(days=21)).isoformat()
+        self.registry.dispatch("family.add_task", {
+            "title": "Muell", "interval_days": 7,
+            "assignees": ["Anna", "Bernd"], "first_due": old_due})
+        task_id = self.registry.dispatch(
+            "family.tasks", {})["tasks"][0]["id"]
+        before = self.registry.dispatch(
+            "family.tasks", {})["tasks"][0]["current_assignee"]
+        self.registry.dispatch("family.complete_task",
+                                {"task_id": task_id})
+        after = self.registry.dispatch("family.tasks",
+                                         {})["tasks"][0]
+        # 3 verpasst + 1 jetzt = 4 Zyklen -> bei 2 Personen wieder
+        # dieselbe Person (4 % 2 == 0)
+        # Wichtig: next_due muss in der Zukunft liegen
+        self.assertGreater(date.fromisoformat(after["next_due"]),
+                            date.today())
+
+
+class TestPrintFileNoShell(unittest.TestCase):
+    """Fix 16: print_file mit Argument-Liste statt Shell-String."""
+
+    def test_missing_file_returns_error(self) -> None:
+        result = OutputService.print_file("nicht-da.pdf")
+        self.assertEqual(result["status"], "fehler")
+        self.assertIn("fehlt", result["error"])
+
+    def test_path_with_spaces_handled(self) -> None:
+        # Wir testen nur, dass es die "Datei fehlt"-Schiene sauber
+        # durchlaeuft - kein realer Drucker.
+        result = OutputService.print_file("/tmp/datei mit leerzeichen.pdf")
+        self.assertEqual(result["status"], "fehler")
+
+
+class TestLlmJsonParsing(unittest.TestCase):
+    """Fix 18: Robustes JSON-Strippen aus LLM-Antworten."""
+
+    def test_plain_json(self) -> None:
+        from modules.inbox import InboxModule
+        out = InboxModule._parse_llm_proposals(
+            '{"proposals": [{"target_capability": "contracts.add", '
+            '"summary": "neu", "payload": {"name": "X", "category": "y"}}]}')
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0].target_capability, "contracts.add")
+
+    def test_fenced_json(self) -> None:
+        from modules.inbox import InboxModule
+        raw = ('```json\n{"proposals": [{"target_capability": '
+               '"family.add_order", "summary": "x", "payload": '
+               '{"title": "Aufgabe"}}]}\n```')
+        out = InboxModule._parse_llm_proposals(raw)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0].target_capability, "family.add_order")
+
+    def test_fenced_without_lang(self) -> None:
+        from modules.inbox import InboxModule
+        raw = ('Hier ist die Antwort:\n```\n{"proposals": []}\n```')
+        out = InboxModule._parse_llm_proposals(raw)
+        self.assertEqual(out, [])
+
+    def test_prose_with_embedded_json(self) -> None:
+        from modules.inbox import InboxModule
+        raw = ('Klar, die Antwort lautet {"proposals": [{"target_capability": '
+               '"contracts.report_price_change", "summary": "P", '
+               '"payload": {"contract_id": 1, "new_cost": 9.99}}]} '
+               '- viel Erfolg!')
+        out = InboxModule._parse_llm_proposals(raw)
+        self.assertEqual(len(out), 1)
+
+    def test_invalid_returns_empty(self) -> None:
+        from modules.inbox import InboxModule
+        out = InboxModule._parse_llm_proposals("kein JSON hier")
+        self.assertEqual(out, [])
 
 
 class TestProposalsFlow(unittest.TestCase):

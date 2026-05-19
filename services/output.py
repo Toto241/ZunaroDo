@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import re
 import smtplib
+import subprocess
 import sys
 from dataclasses import dataclass
 from email.message import EmailMessage
@@ -109,16 +110,30 @@ class OutputService:
     # ---- Drucken -------------------------------------------------------
     @staticmethod
     def print_file(path: str) -> dict:
-        """Schickt die Datei an den Standard-Drucker. OS-spezifisch."""
+        """
+        Schickt die Datei an den Standard-Drucker. OS-spezifisch.
+
+        Unter Unix laeuft das ueber subprocess.run mit Argument-Liste
+        (kein Shell) - so spielen Pfade mit Leerzeichen, Anfuehrungs-
+        zeichen oder anderen Sonderzeichen keine Rolle.
+        """
         if not Path(path).exists():
             return {"status": "fehler", "error": f"Datei '{path}' fehlt"}
         try:
             if sys.platform.startswith("win"):
                 os.startfile(path, "print")             # type: ignore[attr-defined]
-            elif sys.platform == "darwin":
-                os.system(f"lpr '{path}'")
             else:
-                os.system(f"lp '{path}'")
+                cmd = "lpr" if sys.platform == "darwin" else "lp"
+                result = subprocess.run(
+                    [cmd, path], check=False, capture_output=True,
+                    text=True)
+                if result.returncode != 0:
+                    return {"status": "fehler",
+                            "error": (result.stderr.strip()
+                                       or f"{cmd} -> Exit {result.returncode}")}
+        except FileNotFoundError:
+            return {"status": "fehler",
+                    "error": "Drucker-Hilfsprogramm 'lp'/'lpr' nicht gefunden"}
         except Exception as exc:                        # pragma: no cover
             return {"status": "fehler", "error": str(exc)}
         return {"status": "an Drucker geschickt", "path": path}

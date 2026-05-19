@@ -62,8 +62,16 @@ def _seed_if_empty(registry: ModuleRegistry) -> None:
     registry.dispatch("family.add_member",
                         {"name": "Mia", "role": "kind",
                          "birthday": "2018-11-22"})
-    anna_id = registry.dispatch(
-        "family.members", {})["members"][0]["id"]
+    # Anna explizit namentlich suchen statt blind ueber Index [0] zu
+    # greifen - so bricht der Seed-Pfad nicht, falls jemand die
+    # Reihenfolge oben veraendert oder die DB nicht ganz leer war.
+    members = registry.dispatch("family.members", {}).get("members", [])
+    anna_id = next(
+        (m["id"] for m in members if m["name"].lower() == "anna"),
+        members[0]["id"] if members else None,
+    )
+    if anna_id is None:
+        return
     for v in [
         dict(name="Handyvertrag", category="mobilfunk", provider="Telekom",
              customer_number="DE-4471180", start_date="2024-06-01",

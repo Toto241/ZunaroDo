@@ -323,7 +323,6 @@ def install_sync_hook(registry: ModuleRegistry,
         return synced_registry.dispatch(capability, dict(args or {}))
 
     registry.dispatch = hooked                              # type: ignore[assignment]
-    registry._dispatch_unhooked = original_dispatch          # type: ignore[attr-defined]
     return synced_registry
 
 
@@ -342,8 +341,13 @@ class HttpSyncProvider:
         self.seen_path = local_state_path or Path("sync_seen.json")
         self._lock = threading.Lock()
         self._seen: set[str] = self._load_seen()
-        self._since = 0
-        self._cache: list[SyncEvent] = []
+        # Bewusst keine Sequence-Indizierung mehr: der Server kompaktiert
+        # seinen Log und verschiebt damit Array-Indizes. Indexbasiertes
+        # 'since=' ist nach einer Kompaktierung falsch und liefert ein
+        # verschobenes Fenster. Stattdessen holen wir den vollstaendigen
+        # Log und filtern lokal ueber _seen (UUIDs sind kompaktierungs-
+        # stabil). Bei den im Familienbetrieb erwarteten Mengen ist das
+        # billig genug und bleibt immer korrekt.
 
     @classmethod
     def from_env(cls, local_data_dir: Path) -> Optional["HttpSyncProvider"]:
@@ -385,11 +389,10 @@ class HttpSyncProvider:
     def _fetch(self) -> list[SyncEvent]:
         import urllib.request
         req = urllib.request.Request(
-            f"{self.base_url}/events?since={self._since}",
+            f"{self.base_url}/events",
             headers=self._headers())
         with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))
-        self._since = data.get("total", self._since)
         return [SyncEvent.from_dict(e) for e in data.get("events", [])]
 
     def unseen_events(self) -> list[SyncEvent]:

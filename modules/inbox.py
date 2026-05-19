@@ -226,16 +226,25 @@ class InboxModule(ModuleInterface):
     @staticmethod
     def _parse_llm_proposals(raw: str) -> list[Proposal]:
         import json
-        # Modelle umrahmen JSON oft mit ```json ... ``` - tolerieren
+        # Modelle umrahmen JSON oft mit ```json ... ``` oder ```...```.
+        # Robust extrahieren: erst Code-Fence suchen, sonst Roh-Text.
         cleaned = raw.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.strip("`")
-            if cleaned.startswith("json"):
-                cleaned = cleaned[4:]
+        fence = re.search(
+            r"```(?:json)?\s*(?P<body>.*?)```",
+            cleaned, flags=re.DOTALL | re.IGNORECASE)
+        if fence is not None:
+            cleaned = fence.group("body").strip()
         try:
             data = json.loads(cleaned)
         except Exception:
-            return []
+            # Letzter Versuch: das erste JSON-Objekt im Text suchen.
+            match = re.search(r"\{[\s\S]*\}", cleaned)
+            if match is None:
+                return []
+            try:
+                data = json.loads(match.group(0))
+            except Exception:
+                return []
         result: list[Proposal] = []
         for item in data.get("proposals", []):
             if not isinstance(item, dict):
@@ -321,7 +330,7 @@ class InboxModule(ModuleInterface):
             for mid in ids:
                 _typ, msg_data = client.fetch(mid, "(RFC822)")
                 raw_bytes = msg_data[0][1]              # type: ignore[index]
-                msg = email.message_from_bytes(raw_bytes)
+                msg = email.message_from_bytes(raw_bytes)  # type: ignore[arg-type]
                 res = self._cap_analyze_mail(self._extract_text(msg))
                 found += res.get("found", 0)
             client.logout()
@@ -332,17 +341,36 @@ class InboxModule(ModuleInterface):
 
     @staticmethod
     def _extract_text(msg) -> str:
+        """
+        Liefert den Plain-Text einer Mail. Bewusst robust gegen
+        ungewoehnliche / kaputte Mails: get_payload(decode=True) kann
+        None liefern (z.B. bei content-transfer-encoding-Problemen) -
+        wir fangen das ab und liefern leeren Text statt zu crashen.
+        """
+        def _decode(part) -> str:
+            data = part.get_payload(decode=True)
+            if not data:
+                return ""
+            charset = part.get_content_charset() or "utf-8"
+            try:
+                return data.decode(charset, errors="replace")
+            except (LookupError, AttributeError):
+                # exotischer / unbekannter Charset
+                return data.decode("utf-8", errors="replace")
+
         if msg.is_multipart():
             for part in msg.walk():
                 if part.get_content_type() == "text/plain":
-                    return part.get_payload(decode=True).decode(
-                        part.get_content_charset() or "utf-8",
-                        errors="replace")
-        payload = msg.get_payload(decode=True)
-        if payload:
-            return payload.decode(msg.get_content_charset() or "utf-8",
-                                   errors="replace")
-        return str(msg.get_payload())
+                    text = _decode(part)
+                    if text:
+                        return text
+            return ""
+        text = _decode(msg)
+        if text:
+            return text
+        # Fallback: roher payload-Wert als String (z.B. unsigned 7bit)
+        raw = msg.get_payload()
+        return str(raw) if raw is not None else ""
 
     # ---- Mail-Analyse (regelbasiert) ----------------------------------
     def _analyze(self, mail_text: str) -> list[Proposal]:

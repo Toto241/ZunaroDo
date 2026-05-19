@@ -80,12 +80,15 @@ class ProactiveScheduler:
             from apscheduler.schedulers.background import BackgroundScheduler
         except Exception:
             return False
+        from datetime import datetime, timedelta
         sched = BackgroundScheduler(daemon=True)
+        # Reglaer alle 'interval_seconds' Sekunden; der erste Lauf
+        # erfolgt explizit in 2 Sekunden, damit das Verhalten ueber
+        # alle APScheduler-Versionen hinweg identisch ist.
+        first_run = datetime.now() + timedelta(seconds=2)
         sched.add_job(self.check_now, "interval",
                       seconds=self.interval_seconds,
-                      next_run_time=None)
-        # einmaliger Initial-Check nach 2s, damit Demo etwas sieht
-        sched.add_job(self.check_now, "date", run_date=None)
+                      next_run_time=first_run)
         sched.start()
         self._aps = sched
         return True
