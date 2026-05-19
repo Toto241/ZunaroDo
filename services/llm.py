@@ -53,6 +53,11 @@ class LLMAnswer:
     tool_calls_done: int = 0
     truncated: bool = False
     pending_confirmations: list[ToolCall] = field(default_factory=list)
+    # Aktualisierte Konversationshistorie nach dieser Runde. Format ist
+    # provider-spezifisch (z.B. eine Liste von genai.protos.Content).
+    # Der Assistant uebernimmt sie unveraendert und reicht sie beim
+    # naechsten Aufruf wieder ein.
+    updated_history: list = field(default_factory=list)
 
 
 # Dispatcher: bekommt einen Aufruf, fuehrt ihn aus, gibt Ergebnis zurueck

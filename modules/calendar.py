@@ -145,9 +145,20 @@ class CalendarModule(ModuleInterface):
                        description: str = "",
                        recurrence_days: int | None = None,
                        person_id: int | None = None) -> dict:
+        # 'recurrence_days' muss entweder fehlen (einmaliger Termin) oder
+        # positiv sein - 0 oder negative Werte sind unzulaessig, weil sie
+        # die Wiederholungs-Schleife endlos machen wuerden.
+        if recurrence_days is not None and recurrence_days <= 0:
+            return {"error": "recurrence_days muss positiv sein "
+                              "(oder leer lassen fuer einmalig)"}
+        try:
+            parsed = date.fromisoformat(due_date)
+        except (TypeError, ValueError):
+            return {"error": f"Ungueltiges Datum '{due_date}', "
+                              "erwartet YYYY-MM-DD"}
         ev = CalendarEvent(
             title=title,
-            due_date=date.fromisoformat(due_date),
+            due_date=parsed,
             category=category,
             description=description,
             recurrence_days=recurrence_days,

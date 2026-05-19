@@ -37,16 +37,38 @@ from pathlib import Path
 from typing import Optional
 
 
+DEFAULT_MAX_LOG_LINES = 5000
+
+
 class _State:
     """Gemeinsamer Zustand zwischen allen Requests."""
 
-    def __init__(self, log_path: Path, token: Optional[str]):
+    def __init__(self, log_path: Path, token: Optional[str],
+                 max_log_lines: int = DEFAULT_MAX_LOG_LINES):
         self.log_path = log_path
         self.token = token
+        self.max_log_lines = max_log_lines
         self.lock = threading.Lock()
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         if not self.log_path.exists():
             self.log_path.write_text("", encoding="utf-8")
+
+    def compact_if_needed(self) -> int:
+        """
+        Wirft die aeltesten Eintraege weg, sobald der Log ueber
+        max_log_lines Zeilen waechst. Liefert die Anzahl der entfernten
+        Zeilen zurueck.
+        """
+        # Lock-Aufrufer haelt den Lock bereits - kein erneutes Acquire.
+        text = self.log_path.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        if len(lines) <= self.max_log_lines:
+            return 0
+        keep = lines[-self.max_log_lines:]
+        tmp = self.log_path.with_suffix(".jsonl.tmp")
+        tmp.write_text("\n".join(keep) + "\n", encoding="utf-8")
+        tmp.replace(self.log_path)
+        return len(lines) - len(keep)
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -113,6 +135,12 @@ class _Handler(BaseHTTPRequestHandler):
         with self.state.lock:
             with self.state.log_path.open("a", encoding="utf-8") as fh:
                 fh.write(json.dumps(payload, ensure_ascii=False) + "\n")
+            # Periodische Kompaktierung - mindestens einmal pro 100 Events
+            # nachschauen, ob die weiche Obergrenze erreicht ist.
+            try:
+                self.state.compact_if_needed()
+            except Exception:                              # pragma: no cover
+                pass
         return self._send_json(201, {"status": "accepted"})
 
     # log-Meldungen unterdruecken
@@ -121,8 +149,9 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 def serve(log_path: Path, host: str, port: int,
-          token: Optional[str]) -> ThreadingHTTPServer:
-    _Handler.state = _State(log_path, token)
+          token: Optional[str],
+          max_log_lines: int = DEFAULT_MAX_LOG_LINES) -> ThreadingHTTPServer:
+    _Handler.state = _State(log_path, token, max_log_lines=max_log_lines)
     server = ThreadingHTTPServer((host, port), _Handler)
     return server
 
@@ -136,9 +165,14 @@ def main() -> None:
     parser.add_argument("--token",
                          default=os.environ.get("ALLTAGSHELFER_SYNC_TOKEN"),
                          help="Optionales Bearer-Token (Header X-Sync-Token)")
+    parser.add_argument("--max-log-lines", type=int,
+                         default=DEFAULT_MAX_LOG_LINES,
+                         help=("Weiche Obergrenze fuer Eintraege im Log; "
+                                "danach wird automatisch kompaktiert."))
     args = parser.parse_args()
 
-    server = serve(Path(args.log), args.host, args.port, args.token)
+    server = serve(Path(args.log), args.host, args.port, args.token,
+                    max_log_lines=args.max_log_lines)
     print(f"Sync-Server laeuft auf http://{args.host}:{args.port}")
     print(f"Log:    {args.log}")
     print(f"Token:  {'gesetzt' if args.token else '(keiner)'}")

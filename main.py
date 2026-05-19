@@ -27,10 +27,22 @@ from modules.inbox import InboxModule
 from modules.social import SocialModule
 from services.config import AppConfig, load_config
 from services.gemini import GeminiClient
-from services.output import OutputService
+from services.output import OutputService, SmtpConfig
 from services.scheduler import ProactiveScheduler
 from services.sync import (FileSyncProvider, HttpSyncProvider,
                             PeriodicSyncWorker, install_sync_hook)
+
+
+def make_smtp_config(config: AppConfig) -> SmtpConfig | None:
+    """Baut SmtpConfig nur wenn ein Host gesetzt ist."""
+    if not config.smtp_host:
+        return None
+    return SmtpConfig(
+        host=config.smtp_host, port=config.smtp_port,
+        username=config.smtp_user, password=config.smtp_pass,
+        sender=config.smtp_sender or config.smtp_user,
+        use_starttls=config.smtp_starttls,
+    )
 
 SAMPLE_MAIL = """Betreff: Wichtige Information zu Ihrem Netflix-Abo
 
@@ -88,7 +100,7 @@ def main() -> None:
     db = Database("alltagshelfer_demo.db")
     settings = SettingsRepository(db)
     config: AppConfig = load_config(settings)
-    output = OutputService("ausgaben")
+    output = OutputService("ausgaben", smtp=make_smtp_config(config))
 
     # Gemini-Client mit aufgeloester Konfiguration
     llm = GeminiClient(model=config.gemini_model,

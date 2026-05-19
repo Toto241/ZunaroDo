@@ -37,7 +37,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Protocol
 
@@ -121,6 +121,7 @@ class FileSyncProvider:
         self.device_id = device_id
         self.log_path = self.sync_dir / self.LOG_FILE_NAME
         self.seen_path = local_seen_path or self.sync_dir / self.SEEN_FILE_NAME
+        self._lock = threading.Lock()
         self._seen: set[str] = self._load_seen()
 
     # ---- Initial-Setup ------------------------------------------------
@@ -147,10 +148,11 @@ class FileSyncProvider:
 
     # ---- Lesen / Schreiben des Event-Logs -----------------------------
     def append(self, event: SyncEvent) -> None:
-        with self.log_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
-        self._seen.add(event.event_id)
-        self._save_seen()
+        with self._lock:
+            with self.log_path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
+            self._seen.add(event.event_id)
+            self._save_seen_unlocked()
 
     def read_all(self) -> list[SyncEvent]:
         if not self.log_path.exists():
@@ -176,8 +178,9 @@ class FileSyncProvider:
         return events
 
     def mark_seen(self, event_id: str) -> None:
-        self._seen.add(event_id)
-        self._save_seen()
+        with self._lock:
+            self._seen.add(event_id)
+            self._save_seen_unlocked()
 
     def compact_if_needed(self, max_lines: int = MAX_LOG_LINES) -> int:
         """
@@ -205,10 +208,13 @@ class FileSyncProvider:
         except Exception:
             return set()
 
-    def _save_seen(self) -> None:
+    def _save_seen_unlocked(self) -> None:
+        # Aufrufer haelt den Lock. Atomarer Write: erst in temp, dann
+        # replace - verhindert halbfertige JSON-Dateien bei Crash.
         self.seen_path.parent.mkdir(parents=True, exist_ok=True)
-        self.seen_path.write_text(
-            json.dumps(sorted(self._seen)), encoding="utf-8")
+        tmp = self.seen_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(sorted(self._seen)), encoding="utf-8")
+        tmp.replace(self.seen_path)
 
 
 class SyncedRegistry:
@@ -224,33 +230,59 @@ class SyncedRegistry:
     """
 
     def __init__(self, registry: ModuleRegistry,
-                 provider: FileSyncProvider,
+                 provider,
                  synced: Optional[set[str]] = None,
                  inner_dispatch=None):
         self.registry = registry
         self.provider = provider
         self.synced = synced or DEFAULT_SYNCED_CAPABILITIES
         self._replaying = False
-        # ueberbruecken den hook, indem wir den ORIGINAL-dispatch merken
+        # Thread-Local-Marker: True, wenn der aktuelle Thread bereits
+        # mitten in einem dispatch() steckt. Modul-zu-Modul-Aufrufe sind
+        # dadurch erkennbar - sie sollen NICHT als eigenes Event in den
+        # Sync-Log gehen (sonst wird derselbe Effekt beim Replay doppelt
+        # angewendet).
+        self._local = threading.local()
+        # ueberbruecken den Hook, indem wir den ORIGINAL-dispatch merken
         self._inner_dispatch = inner_dispatch or registry.dispatch
 
     def dispatch(self, capability: str, args: dict) -> dict:
-        result = self._inner_dispatch(capability, args)
-        if (not self._replaying
-                and capability in self.synced
-                and "error" not in result):
-            event = SyncEvent(
-                event_id=str(uuid.uuid4()),
-                device_id=self.provider.device_id,
-                timestamp=datetime.utcnow().isoformat(timespec="seconds"),
-                capability=capability,
-                args=args,
-            )
-            try:
-                self.provider.append(event)
-            except Exception:                              # pragma: no cover
-                pass
-        return result
+        # 'in_synced_outer' markiert, dass wir bereits innerhalb eines
+        # synchronisierten dispatch-Aufrufs stecken. Nested Aufrufe
+        # innerhalb eines bereits geloggten Events duerfen NICHT erneut
+        # ein eigenes Event schreiben - sonst wuerde der Effekt beim
+        # Replay doppelt angewendet.
+        #
+        # Wichtig dabei: wenn der AEUSSERE Aufruf nicht synchronisiert
+        # ist (z.B. inbox.accept_proposal), darf der nested Aufruf
+        # weiterhin loggen - denn ohne das Event wuerde der Effekt
+        # andere Geraete sonst nie erreichen.
+        is_synced = capability in self.synced
+        in_synced_outer = bool(getattr(self._local, "in_synced", False))
+        if is_synced:
+            self._local.in_synced = True
+        try:
+            result = self._inner_dispatch(capability, args)
+            if (is_synced
+                    and not in_synced_outer
+                    and not self._replaying
+                    and "error" not in result):
+                event = SyncEvent(
+                    event_id=str(uuid.uuid4()),
+                    device_id=self.provider.device_id,
+                    timestamp=datetime.now(timezone.utc).isoformat(
+                        timespec="seconds"),
+                    capability=capability,
+                    args=args,
+                )
+                try:
+                    self.provider.append(event)
+                except Exception:                          # pragma: no cover
+                    pass
+            return result
+        finally:
+            if is_synced:
+                self._local.in_synced = in_synced_outer
 
     def apply_remote(self) -> int:
         """Wendet alle ungesehenen Events anderer Geraete an. Liefert Anzahl."""
@@ -308,6 +340,7 @@ class HttpSyncProvider:
         self.device_id = device_id
         self.token = token
         self.seen_path = local_state_path or Path("sync_seen.json")
+        self._lock = threading.Lock()
         self._seen: set[str] = self._load_seen()
         self._since = 0
         self._cache: list[SyncEvent] = []
@@ -339,8 +372,9 @@ class HttpSyncProvider:
             data=body, headers=self._headers(), method="POST")
         try:
             urllib.request.urlopen(req, timeout=10).read()
-            self._seen.add(event.event_id)
-            self._save_seen()
+            with self._lock:
+                self._seen.add(event.event_id)
+                self._save_seen_unlocked()
         except urllib.error.URLError:
             # offline: das Event geht NICHT verloren, denn der Aufrufer
             # hat die Aktion lokal bereits ausgefuehrt. Allerdings kommt
@@ -367,8 +401,9 @@ class HttpSyncProvider:
         return events
 
     def mark_seen(self, event_id: str) -> None:
-        self._seen.add(event_id)
-        self._save_seen()
+        with self._lock:
+            self._seen.add(event_id)
+            self._save_seen_unlocked()
 
     def compact_if_needed(self, max_lines: int = MAX_LOG_LINES) -> int:
         # Kompaktierung uebernimmt der Server, nicht der Client.
@@ -382,10 +417,11 @@ class HttpSyncProvider:
         except Exception:
             return set()
 
-    def _save_seen(self) -> None:
+    def _save_seen_unlocked(self) -> None:
         self.seen_path.parent.mkdir(parents=True, exist_ok=True)
-        self.seen_path.write_text(
-            json.dumps(sorted(self._seen)), encoding="utf-8")
+        tmp = self.seen_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(sorted(self._seen)), encoding="utf-8")
+        tmp.replace(self.seen_path)
 
 
 class PeriodicSyncWorker:

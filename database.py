@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import threading
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Optional
@@ -196,16 +197,69 @@ def _ensure_column(conn: sqlite3.Connection, table: str,
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}")
 
 
+class _SafeConnection:
+    """
+    Thread-sicherer Wrapper um sqlite3.Connection.
+
+    Hintergrund: Die App ruft 'execute' aus mehreren Threads heraus
+    (APScheduler, PeriodicSyncWorker, GUI-Chat-Worker, IMAP-Worker).
+    sqlite3.Connection ist ohne 'check_same_thread=False' nicht
+    thread-safe; selbst mit dem Flag braucht es eine Sperre, sonst
+    koennen sich Cursor und Lastrowid mischen.
+
+    Der Wrapper haelt einen RLock und reicht alle Aufrufe weiter.
+    Multi-Statement-Transaktionen koennen ueber 'with db.lock' explizit
+    geklammert werden.
+    """
+
+    def __init__(self, conn: sqlite3.Connection, lock: threading.RLock):
+        self._conn = conn
+        self._lock = lock
+
+    def execute(self, *args, **kwargs):
+        with self._lock:
+            return self._conn.execute(*args, **kwargs)
+
+    def executescript(self, *args, **kwargs):
+        with self._lock:
+            return self._conn.executescript(*args, **kwargs)
+
+    def executemany(self, *args, **kwargs):
+        with self._lock:
+            return self._conn.executemany(*args, **kwargs)
+
+    def commit(self):
+        with self._lock:
+            return self._conn.commit()
+
+    def close(self):
+        with self._lock:
+            return self._conn.close()
+
+    @property
+    def row_factory(self):
+        return self._conn.row_factory
+
+    @row_factory.setter
+    def row_factory(self, value):
+        self._conn.row_factory = value
+
+    def __getattr__(self, name):
+        # Alles uebrige unveraendert durchreichen.
+        return getattr(self._conn, name)
+
+
 def _open_connection(path: str,
                      encryption_key: Optional[str]) -> tuple[sqlite3.Connection, str]:
     """
     Oeffnet die DB-Verbindung. Wenn ein Schluessel uebergeben wurde, wird
     SQLCipher verwendet - sonst Klartext-SQLite.
 
-    Rueckgabe: (Verbindung, Modus) - 'sqlcipher' oder 'plain'.
+    'check_same_thread=False' ist hier zwingend - DB-Operationen kommen
+    aus mehreren Threads (siehe _SafeConnection).
     """
     if not encryption_key:
-        return sqlite3.connect(path), "plain"
+        return sqlite3.connect(path, check_same_thread=False), "plain"
     try:
         import sqlcipher3 as cipher                       # type: ignore[import-not-found]
     except Exception as exc:
@@ -215,11 +269,10 @@ def _open_connection(path: str,
             "sqlcipher3-binary) oder den Key entfernen, um unverschluesselt "
             "weiterzuarbeiten."
         ) from exc
-    conn = cipher.connect(path)                            # type: ignore[attr-defined]
-    # Schluessel SETZEN, bevor irgendetwas anderes passiert
+    conn = cipher.connect(                                  # type: ignore[attr-defined]
+        path, check_same_thread=False)
     safe_key = encryption_key.replace("'", "''")
     conn.execute(f"PRAGMA key = '{safe_key}'")
-    # Schluessel testen: SQLCipher faellt erst beim ersten echten Zugriff um
     try:
         conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
     except Exception as exc:
@@ -236,12 +289,12 @@ class Database:
     def __init__(self, path: str = "alltagshelfer.db",
                  encryption_key: Optional[str] = None):
         self.path = path
-        # Schluessel wahlweise als Parameter oder per Umgebungsvariable
+        self.lock = threading.RLock()
         key = encryption_key or os.environ.get("ALLTAGSHELFER_DB_KEY")
-        conn, mode = _open_connection(path, key)
-        self.conn = conn
+        raw_conn, mode = _open_connection(path, key)
+        raw_conn.row_factory = sqlite3.Row
+        self.conn = _SafeConnection(raw_conn, self.lock)
         self.encryption_mode = mode
-        self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.executescript(SCHEMA)
         self._migrate()

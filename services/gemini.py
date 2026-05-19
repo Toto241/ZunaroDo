@@ -164,6 +164,7 @@ class GeminiClient:
                     tool_calls_done=tool_calls_done,
                     truncated=False,
                     pending_confirmations=pending_confirmations,
+                    updated_history=list(chat.history),
                 )
 
             # ---- Tool-Aufrufe ausfuehren ------------------------------
@@ -199,6 +200,7 @@ class GeminiClient:
             tool_calls_done=tool_calls_done,
             truncated=True,
             pending_confirmations=pending_confirmations,
+            updated_history=list(chat.history),
         )
 
     # ------------------------------------------------------------------

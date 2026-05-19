@@ -29,7 +29,8 @@ from assistant import Assistant
 from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, Database, ModuleStateRepository,
                       SettingsRepository)
-from main import apply_persisted_module_states, build_registry, make_sync_provider
+from main import (apply_persisted_module_states, build_registry,
+                    make_smtp_config, make_sync_provider)
 from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
                               load_config, save_value)
 from services.gemini import GeminiClient
@@ -97,7 +98,7 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
     settings = SettingsRepository(db)
     config = load_config(settings)
 
-    output = OutputService("ausgaben")
+    output = OutputService("ausgaben", smtp=make_smtp_config(config))
     llm = GeminiClient(model=config.gemini_model,
                        api_key=config.gemini_api_key or None)
     active_llm = llm if llm.is_available else None

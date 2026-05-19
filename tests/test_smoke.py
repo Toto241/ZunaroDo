@@ -450,6 +450,287 @@ class TestEncryption(unittest.TestCase):
             os.unlink(tmp.name)
 
 
+class TestThreadSafety(unittest.TestCase):
+    """Code-Review-Fix 1: dispatch aus mehreren Threads darf nicht crashen."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_concurrent_dispatch(self) -> None:
+        errors: list[str] = []
+
+        def worker(seed: int) -> None:
+            try:
+                for i in range(20):
+                    res = self.registry.dispatch(
+                        "family.add_member",
+                        {"name": f"P{seed}-{i}", "role": "erwachsen"})
+                    if "error" in res:
+                        errors.append(str(res))
+            except Exception as exc:                       # noqa: BLE001
+                errors.append(repr(exc))
+
+        threads = [threading.Thread(target=worker, args=(s,))
+                   for s in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=10)
+        self.assertEqual(errors, [], f"Fehler: {errors[:3]}")
+        members = self.registry.dispatch("family.members", {})["members"]
+        self.assertEqual(len(members), 100)
+
+
+class TestConversationHistory(unittest.TestCase):
+    """Code-Review-Fix 2: Assistant._history wird wirklich fortgeschrieben."""
+
+    def setUp(self) -> None:
+        self.stub = StubLLM()
+        # Stub mit "updated_history"-Behauptung: er gibt eine wachsende
+        # Liste zurueck. So koennen wir testen, dass der Assistant sie
+        # uebernimmt.
+        self.db, self.registry, self.assistant, self.path = _build_system(
+            llm=self.stub)
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_history_grows_across_calls(self) -> None:
+        # Stub liefert wachsende History
+        def make_answer(text: str, turn: int) -> LLMAnswer:
+            return LLMAnswer(text=text, usage=TokenUsage(5, 5),
+                              updated_history=["turn-" + str(i)
+                                                for i in range(turn)])
+        self.stub.text_answers = ["a", "b", "c"]
+        self.stub.ask_with_tools = lambda **k: make_answer(
+            self.stub.text_answers.pop(0), len(k.get("history", [])) + 2)
+        self.assistant.ask("Frage 1")
+        h1 = list(self.assistant._history)
+        self.assistant.ask("Frage 2")
+        h2 = list(self.assistant._history)
+        self.assertGreater(len(h2), len(h1))
+
+
+class TestSmtpWiring(unittest.TestCase):
+    """Code-Review-Fix 3: SMTP-Konfig wird durchgereicht."""
+
+    def test_smtp_config_from_app_config(self) -> None:
+        from services.config import AppConfig
+        from main import make_smtp_config
+        empty = AppConfig()
+        self.assertIsNone(make_smtp_config(empty))
+        with_host = AppConfig(smtp_host="smtp.example.com",
+                                smtp_user="me", smtp_pass="x",
+                                smtp_sender="me@example.com")
+        cfg = make_smtp_config(with_host)
+        self.assertIsNotNone(cfg)
+        self.assertEqual(cfg.host, "smtp.example.com")
+        self.assertEqual(cfg.sender, "me@example.com")
+
+
+class TestSyncReentry(unittest.TestCase):
+    """Code-Review-Fix 4: Modul-zu-Modul-Aufrufe werden nicht doppelt synchronisiert."""
+
+    def setUp(self) -> None:
+        self.root = Path(tempfile.mkdtemp(prefix="ah_reentry_"))
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.root)
+
+    def test_synced_outer_suppresses_synced_nested(self) -> None:
+        """Wenn ein bereits geloggter Aufruf intern weitere synced
+        Capabilities anstoesst, duerfen die NICHT doppelt geloggt werden."""
+        from core.interface import Capability
+
+        provider = FileSyncProvider(str(self.root / "shared"), "dev-r",
+                                      local_seen_path=self.root / "seen.json")
+        db, registry, _, db_path = _build_system()
+        try:
+            # Wir installieren ein winziges Hilfs-Modul mit einer synced
+            # Capability, die intern eine weitere synced Capability ruft.
+            from core.interface import ModuleInterface, ModuleContext
+
+            class _Wrapper(ModuleInterface):
+                @property
+                def module_id(self): return "wrap"
+
+                @property
+                def display_name(self): return "Wrapper"
+                def on_register(self, ctx: ModuleContext):
+                    self.ctx = ctx
+                def get_capabilities(self):
+                    return [Capability(
+                        name="wrap.add_two_members",
+                        description="Legt zwei Mitglieder an.",
+                        parameters={},
+                        handler=self._cap,
+                    )]
+                def _cap(self):
+                    self.ctx.call("family.add_member",
+                                    name="A", role="erwachsen")
+                    self.ctx.call("family.add_member",
+                                    name="B", role="erwachsen")
+                    return {"status": "ok"}
+
+            registry.register(_Wrapper())
+            install_sync_hook(
+                registry, provider,
+                synced=DEFAULT_SYNCED_CAPABILITIES | {"wrap.add_two_members"})
+            registry.dispatch("wrap.add_two_members", {})
+            caps = [e.capability for e in provider.read_all()]
+            # Nur der aeussere synced Aufruf wird geloggt - die beiden
+            # nested family.add_member NICHT (sonst Doppel-Replay).
+            self.assertEqual(caps, ["wrap.add_two_members"])
+        finally:
+            db.close()
+            os.unlink(db_path)
+
+    def test_non_synced_outer_lets_nested_log(self) -> None:
+        """inbox.accept_proposal ist nicht synced - aber das ausgeloeste
+        contracts.report_price_change schon. Genau das muss im Log
+        landen, sonst kaeme der Effekt nie bei anderen Geraeten an."""
+        provider = FileSyncProvider(str(self.root / "shared"), "dev-r2",
+                                      local_seen_path=self.root / "seen2.json")
+        db, registry, _, db_path = _build_system()
+        try:
+            install_sync_hook(registry, provider)
+            registry.dispatch("contracts.add", dict(
+                name="Streaming", category="streaming", provider="Netflix",
+                start_date="2025-01-01", minimum_term_months=1,
+                notice_period_months=1, auto_renew_months=1,
+                monthly_cost=10.0))
+            registry.dispatch("inbox.analyze_mail", {
+                "mail_text": ("Sehr geehrter Kunde, wir nehmen eine "
+                               "Preisanpassung vor. Ihr neuer monatlicher "
+                               "Preis betraegt 12,99 EUR. Netflix")})
+            offen = registry.dispatch("inbox.proposals",
+                                        {})["proposals"]
+            registry.dispatch("inbox.accept_proposal",
+                                {"proposal_id": offen[0]["id"]})
+            caps = [e.capability for e in provider.read_all()]
+            self.assertIn("contracts.add", caps)
+            # Nested contracts.report_price_change IST geloggt -
+            # aber inbox.accept_proposal nicht (kein synced-Cap).
+            self.assertIn("contracts.report_price_change", caps)
+            self.assertNotIn("inbox.accept_proposal", caps)
+        finally:
+            db.close()
+            os.unlink(db_path)
+
+
+class TestRecurrenceValidation(unittest.TestCase):
+    """Code-Review-Fix 5: recurrence_days <= 0 wird verweigert."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_zero_recurrence_rejected(self) -> None:
+        result = self.registry.dispatch("calendar.add_event", {
+            "title": "Bug-Test", "due_date": "2030-01-01",
+            "recurrence_days": 0})
+        self.assertIn("error", result)
+
+    def test_negative_recurrence_rejected(self) -> None:
+        result = self.registry.dispatch("calendar.add_event", {
+            "title": "Bug-Test", "due_date": "2030-01-01",
+            "recurrence_days": -5})
+        self.assertIn("error", result)
+
+    def test_none_recurrence_ok(self) -> None:
+        result = self.registry.dispatch("calendar.add_event", {
+            "title": "Einmalig", "due_date": "2030-01-01"})
+        self.assertEqual(result["status"], "angelegt")
+
+    def test_positive_recurrence_ok(self) -> None:
+        result = self.registry.dispatch("calendar.add_event", {
+            "title": "Jaehrlich", "due_date": "2030-01-01",
+            "recurrence_days": 365})
+        self.assertEqual(result["status"], "angelegt")
+
+    def test_invalid_date_rejected(self) -> None:
+        result = self.registry.dispatch("calendar.add_event", {
+            "title": "Krummes Datum", "due_date": "nicht-iso"})
+        self.assertIn("error", result)
+
+
+class TestSyncServerCompaction(unittest.TestCase):
+    """Code-Review-Fix 6: Server kompaktiert seinen Log selbst."""
+
+    def test_server_drops_oldest_when_over_limit(self) -> None:
+        from services.sync_server import serve
+        tmp = Path(tempfile.mkdtemp(prefix="ah_srv_compact_"))
+        try:
+            server = serve(tmp / "events.jsonl", "127.0.0.1", 0,
+                             token=None, max_log_lines=5)
+            port = server.server_address[1]
+            thread = threading.Thread(target=server.serve_forever,
+                                        daemon=True)
+            thread.start()
+            try:
+                # 10 Events posten -> nach dem letzten muessen nur noch
+                # 5 in der Datei stehen.
+                for i in range(10):
+                    body = json.dumps({
+                        "event_id": f"e{i}", "device_id": "dev",
+                        "timestamp": "2026-01-01T00:00:00",
+                        "capability": "family.add_member",
+                        "args": {"name": f"n{i}"},
+                    }).encode("utf-8")
+                    req = urllib.request.Request(
+                        f"http://127.0.0.1:{port}/events",
+                        data=body,
+                        headers={"Content-Type":
+                                  "application/json; charset=utf-8"},
+                        method="POST")
+                    urllib.request.urlopen(req, timeout=2).read()
+                lines = (tmp / "events.jsonl").read_text(
+                    encoding="utf-8").splitlines()
+                self.assertLessEqual(len(lines), 5)
+                # Aelteste sind weg
+                first = json.loads(lines[0])
+                self.assertEqual(first["event_id"], "e5")
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+        finally:
+            shutil.rmtree(tmp)
+
+
+class TestUtcTimestamps(unittest.TestCase):
+    """Code-Review-Fix 7: Sync-Events tragen UTC-Timestamps."""
+
+    def test_event_timestamp_has_utc_marker(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="ah_utc_"))
+        try:
+            provider = FileSyncProvider(str(root / "shared"), "dev-utc",
+                                          local_seen_path=root / "seen.json")
+            db, registry, _, db_path = _build_system()
+            try:
+                install_sync_hook(registry, provider)
+                registry.dispatch("family.add_member",
+                                    {"name": "Anna"})
+                events = provider.read_all()
+                self.assertEqual(len(events), 1)
+                ts = events[0].timestamp
+                # ISO mit UTC-Offset endet auf "+00:00" oder "Z"
+                self.assertTrue(ts.endswith("+00:00") or ts.endswith("Z"),
+                                f"Timestamp {ts!r} ohne UTC-Marker")
+            finally:
+                db.close()
+                os.unlink(db_path)
+        finally:
+            shutil.rmtree(root)
+
+
 class TestProposalsFlow(unittest.TestCase):
 
     def setUp(self) -> None:

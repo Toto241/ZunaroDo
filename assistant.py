@@ -141,6 +141,10 @@ class Assistant:
             return (f"Der KI-Aufruf an Gemini ist fehlgeschlagen: {exc}. "
                     "Versuch es erneut oder schalte zurueck in den "
                     "Offline-Modus, indem du GOOGLE_API_KEY entfernst.")
+        # Konversationsverlauf fortschreiben - so kann das Modell beim
+        # naechsten Aufruf auf den bisherigen Dialog zurueckgreifen.
+        if result.updated_history:
+            self._history = result.updated_history
         self._usage.add(result.usage)
         if self.log is not None:
             self.log.append(
