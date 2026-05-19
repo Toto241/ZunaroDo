@@ -365,27 +365,34 @@ class InboxModule(ModuleInterface):
         return {"status": "Vorschlag abgelehnt"}
 
     def _cap_bulk_reject_open(self) -> dict:
+        """
+        Lehnt alle offenen Vorschlaege ab. Geht ueber den ctx.call, damit
+        der Sync-Hook jede einzelne Aktion sieht und auf anderen Geraeten
+        nachgespielt werden kann (H6). Vorschlaege selbst sind zwar nicht
+        in DEFAULT_SYNCED_CAPABILITIES (sie sind lokal), aber dieser
+        Pfad bleibt sauber + erlaubt zukuenftige Sync-Erweiterung.
+        """
         open_proposals = self.repo.list(status="offen")
         count = 0
         for p in open_proposals:
             if p.id is None:
                 continue
-            self.repo.set_status(p.id, "abgelehnt")
-            count += 1
+            if self._ctx is not None:
+                result = self._ctx.call(
+                    "inbox.reject_proposal", proposal_id=p.id)
+                if "error" not in result:
+                    count += 1
+            else:
+                self.repo.set_status(p.id, "abgelehnt")
+                count += 1
         return {"status": "abgelehnt", "count": count}
 
     def _cap_bulk_delete_archived(self) -> dict:
+        """Loescht alle abgearbeiteten Vorschlaege ueber das Repository
+        statt mit Roh-SQL (N6)."""
         total = 0
         for status in ("uebernommen", "abgelehnt"):
-            entries = self.repo.list(status=status)
-            for p in entries:
-                if p.id is None:
-                    continue
-                # repo.delete koennte fehlen - direkt ueber die Connection.
-                self.repo.db.conn.execute(
-                    "DELETE FROM proposals WHERE id=?", (p.id,))
-                total += 1
-        self.repo.db.conn.commit()
+            total += self.repo.delete_by_status(status)
         return {"status": "geloescht", "count": total}
 
     def _cap_update_proposal(self, proposal_id: int,

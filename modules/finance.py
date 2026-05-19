@@ -237,6 +237,10 @@ class FinanceModule(ModuleInterface):
         existed = self.repo.delete(expense_id)
         if not existed:
             return {"error": f"Ausgabe {expense_id} nicht gefunden"}
+        if (self._ctx is not None
+                and self._ctx.has_capability("notes.cleanup_for_entity")):
+            self._ctx.call("notes.cleanup_for_entity",
+                            entity_type="expenses", entity_id=expense_id)
         return {"status": "geloescht", "expense_id": expense_id}
 
     def _cap_by_category(self, month: str | None = None) -> dict:

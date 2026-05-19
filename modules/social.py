@@ -113,6 +113,7 @@ class SocialModule(ModuleInterface):
                 },
                 handler=self._cap_import_vcard,
                 destructive=True,
+                internal=True,
             ),
             Capability(
                 name="social.export_vcard",
@@ -188,6 +189,10 @@ class SocialModule(ModuleInterface):
         existed = self.repo.delete(contact_id)
         if not existed:
             return {"error": f"Kontakt {contact_id} nicht gefunden"}
+        if (self._ctx is not None
+                and self._ctx.has_capability("notes.cleanup_for_entity")):
+            self._ctx.call("notes.cleanup_for_entity",
+                            entity_type="social", entity_id=contact_id)
         return {"status": "geloescht", "contact_id": contact_id}
 
     def _cap_export_vcard(self, path: str) -> dict:
@@ -198,17 +203,29 @@ class SocialModule(ModuleInterface):
         return {"status": "exportiert", "count": count, "path": str(target)}
 
     def _cap_import_vcard(self, path: str) -> dict:
-        from pathlib import Path
+        from services.io_validation import validate_import_path
         from services.vcard import import_contacts
         try:
-            contacts = import_contacts(Path(path))
-        except FileNotFoundError as exc:
+            safe_path = validate_import_path(
+                path, allowed_extensions={".vcf"})
+            contacts = import_contacts(safe_path)
+        except (FileNotFoundError, ValueError) as exc:
             return {"error": str(exc)}
-        count = 0
+        accepted = 0
+        rejected: list[str] = []
+        # Durch _cap_add laufen - so greift die Pflichtfeld- und
+        # cadence_days-Validierung.
         for c in contacts:
-            self.repo.add(c)
-            count += 1
-        return {"status": "importiert", "count": count, "path": path}
+            result = self._cap_add(
+                name=c.name, relation=c.relation,
+                cadence_days=c.cadence_days, notes=c.notes)
+            if result.get("status") == "angelegt":
+                accepted += 1
+            else:
+                rejected.append(result.get("error", str(result)))
+        return {"status": "importiert", "count": accepted,
+                "rejected": rejected[:5], "rejected_total": len(rejected),
+                "path": str(safe_path)}
 
     def _cap_mark_contacted(self, contact_id: int) -> dict:
         c = self.repo.get(contact_id)

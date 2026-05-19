@@ -123,6 +123,9 @@
   "onboarding.choose_demo": "Beispieldaten laden",
   "onboarding.choose_empty": "Leer starten",
 
+  "shortcuts.quit_title": "Beenden bestaetigen",
+  "shortcuts.quit_message": "Alltagshelfer wirklich beenden?",
+
   "inbox.analyze": "Analysieren",
   "inbox.fetch_imap": "IMAP abrufen",
   "inbox.accept": "Uebernehmen",

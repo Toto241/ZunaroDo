@@ -123,6 +123,9 @@
   "onboarding.choose_demo": "Load sample data",
   "onboarding.choose_empty": "Start empty",
 
+  "shortcuts.quit_title": "Confirm quit",
+  "shortcuts.quit_message": "Really quit Daily Helper?",
+
   "inbox.analyze": "Analyze",
   "inbox.fetch_imap": "Fetch IMAP",
   "inbox.accept": "Accept",

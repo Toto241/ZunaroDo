@@ -124,6 +124,21 @@ class NotesModule(ModuleInterface):
                 handler=self._cap_delete,
                 destructive=True,
             ),
+            Capability(
+                name="notes.cleanup_for_entity",
+                description="Loescht alle Notizen, die an die angegebene "
+                            "Entitaet geheftet sind. Wird intern von den "
+                            "Loesch-Capabilities anderer Module aufgerufen.",
+                parameters={
+                    "entity_type": {"type": "string", "_required": True,
+                                      "description": "Entitaets-Typ"},
+                    "entity_id": {"type": "integer", "_required": True,
+                                    "description": "ID der Entitaet"},
+                },
+                handler=self._cap_cleanup_for_entity,
+                destructive=True,
+                internal=True,
+            ),
         ]
 
     # ---- Handler -------------------------------------------------------
@@ -136,9 +151,12 @@ class NotesModule(ModuleInterface):
         if entity_type and entity_type not in _VALID_ENTITY_TYPES:
             return {"error": f"entity_type '{entity_type}' nicht erlaubt; "
                               f"gueltig: {sorted(_VALID_ENTITY_TYPES)}"}
+        # Wichtig: 'is None' statt 'if entity_id' - sonst wuerden gueltige
+        # IDs wie 0 still zu None (H4).
+        eid = entity_id if entity_id is not None else None
         note = Note(title=title, content=content,
                      entity_type=entity_type or None,
-                     entity_id=entity_id if entity_id else None)
+                     entity_id=eid)
         saved = self.repo.add(note)
         return {"status": "angelegt", "note": saved.to_dict()}
 
@@ -170,8 +188,8 @@ class NotesModule(ModuleInterface):
                      entity_id: int | None = None) -> dict:
         if entity_type and entity_type not in _VALID_ENTITY_TYPES:
             return {"error": f"entity_type '{entity_type}' nicht erlaubt"}
-        updated = self.repo.attach(note_id, entity_type or None,
-                                     entity_id if entity_id else None)
+        eid = entity_id if entity_id is not None else None
+        updated = self.repo.attach(note_id, entity_type or None, eid)
         if updated is None:
             return {"error": f"Notiz {note_id} nicht gefunden"}
         return {"status": "verknuepft", "note": updated.to_dict()}
@@ -180,3 +198,8 @@ class NotesModule(ModuleInterface):
         if not self.repo.delete(note_id):
             return {"error": f"Notiz {note_id} nicht gefunden"}
         return {"status": "geloescht", "note_id": note_id}
+
+    def _cap_cleanup_for_entity(self, entity_type: str,
+                                  entity_id: int) -> dict:
+        removed = self.repo.delete_for_entity(entity_type, entity_id)
+        return {"status": "aufgeraeumt", "removed": removed}

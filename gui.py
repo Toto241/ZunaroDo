@@ -50,6 +50,29 @@ URGENCY_COLOR = {"hoch": "#d9534f", "mittel": "#e8a33d", "normal": "#5b9bd5"}
 URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
 
 
+# Tk-Geometry-String: 'WIDTHxHEIGHT' oder 'WIDTHxHEIGHT+X+Y' (X/Y koennen
+# auch negativ sein). Mit Sanity-Bounds: kein Fenster ausserhalb realer
+# Bildschirme.
+import re as _re
+_GEOMETRY_RE = _re.compile(r"^(\d+)x(\d+)(?:([+-]\d+)([+-]\d+))?$")
+
+
+def _is_valid_geometry(value: str) -> bool:
+    if not value:
+        return False
+    m = _GEOMETRY_RE.match(value)
+    if not m:
+        return False
+    w, h = int(m.group(1)), int(m.group(2))
+    if not (300 <= w <= 8000 and 200 <= h <= 5000):
+        return False
+    if m.group(3) and m.group(4):
+        x, y = int(m.group(3)), int(m.group(4))
+        if not (-2000 <= x <= 8000 and -2000 <= y <= 5000):
+            return False
+    return True
+
+
 # ---------------------------------------------------------------------
 #  Beispieldaten beim ersten Start
 # ---------------------------------------------------------------------
@@ -198,9 +221,13 @@ class AlltagshelferGUI(ctk.CTk):
 
         self.title(self.i18n.t("app.title"))
         # Persistierte Geometrie: Fenster merkt sich Groesse und Position
-        # ueber Sessions hinweg. Default-Wert nur, wenn nichts gespeichert.
+        # ueber Sessions hinweg. Default nur, wenn nichts oder etwas
+        # offensichtlich Kaputtes gespeichert wurde (M6).
         saved_geometry = self.settings_repo.get("gui.geometry")
-        self.geometry(saved_geometry or "1080x720")
+        if saved_geometry and _is_valid_geometry(saved_geometry):
+            self.geometry(saved_geometry)
+        else:
+            self.geometry("1080x720")
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -1257,9 +1284,14 @@ class AlltagshelferGUI(ctk.CTk):
         text = self.entry.get().strip()
         if not text:
             return
+        # Streaming-Lock: zwei Sends gleichzeitig wuerden die Chat-Box
+        # durcheinanderbringen. Ein zweiter Klick waehrend eines aktiven
+        # Streams wird ignoriert (K4).
+        if getattr(self, "_streaming_active", False):
+            return
+        self._streaming_active = True
         self.entry.delete(0, "end")
         self._append_chat(self.i18n.t("common.you"), text)
-        # Streaming-Container vorbereiten - der Worker fuellt ihn live.
         self._begin_assistant_stream()
         threading.Thread(target=self._chat_worker,
                           args=(text,), daemon=True).start()
@@ -1273,41 +1305,51 @@ class AlltagshelferGUI(ctk.CTk):
         artiges Auftauchen.
         """
         def stream_callback(chunk: str) -> None:
-            # Thread-safe: GUI-Update ueber after-Queue
-            self.after(0, lambda c=chunk: self._append_to_stream(c))
+            self._safe_after(0, lambda c=chunk: self._append_to_stream(c))
 
-        if self.assistant.llm is not None:
-            answer = self.assistant.ask(prompt,
-                                          stream_callback=stream_callback)
-            # Wenn das LLM nichts gestreamt hat (z.B. Fehlerfall), zeigen
-            # wir die endgueltige Antwort am Stueck.
-            self.after(0, lambda a=answer: self._finalize_stream(a))
-        else:
-            answer = self.assistant.ask(prompt)
-            self._simulate_word_stream(answer)
-        self.after(0, self._refresh_all)
+        try:
+            if self.assistant.llm is not None:
+                answer = self.assistant.ask(prompt,
+                                              stream_callback=stream_callback)
+                self._safe_after(
+                    0, lambda a=answer: self._finalize_stream(a))
+            else:
+                answer = self.assistant.ask(prompt)
+                self._simulate_word_stream(answer)
+        finally:
+            # Streaming-Lock immer freigeben, damit naechster Send geht.
+            self._safe_after(0, self._end_stream)
+        self._safe_after(0, self._refresh_all)
 
     def _begin_assistant_stream(self) -> None:
-        """Schreibt 'Assistent:\\n' und merkt sich, wo der Streaming-Text
-        beginnt."""
+        """
+        Setzt einen Tk-Mark an die Einfuegestelle. Tk-Marks bewegen sich
+        bei Inserts automatisch - kein String-Akkumulieren mehr.
+        """
         self.chat.configure(state="normal")
         label = self.i18n.t("common.assistant")
         self.chat.insert("end", f"{label}:\n")
-        self._stream_anchor = self.chat.index("end-1c")
+        # Mark mit Gravity 'left': Inserts AN dieser Position schieben
+        # die Mark mit nach rechts, sodass der naechste Chunk an die
+        # richtige Stelle kommt.
+        self.chat.mark_set("stream_mark", "end-1c")
+        self.chat.mark_gravity("stream_mark", "left")
         self.chat.insert("end", "\n\n")
         self.chat.see("end")
         self.chat.configure(state="disabled")
         self._stream_received_anything = False
 
     def _append_to_stream(self, chunk: str) -> None:
-        """Haengt einen Streaming-Chunk vor den Schluss-Newlines an."""
+        """Haengt einen Streaming-Chunk an der Tk-Mark an."""
         if not chunk:
             return
+        try:
+            if not self.winfo_exists():
+                return
+        except Exception:
+            return
         self.chat.configure(state="normal")
-        self.chat.insert(self._stream_anchor, chunk)
-        # Anchor verschiebt sich automatisch nicht - daher neu setzen
-        self._stream_anchor = (
-            f"{self._stream_anchor}+{len(chunk)}c")
+        self.chat.insert("stream_mark", chunk)
         self.chat.see("end")
         self.chat.configure(state="disabled")
         self._stream_received_anything = True
@@ -1318,13 +1360,17 @@ class AlltagshelferGUI(ctk.CTk):
             return
         self._append_to_stream(full_answer)
 
+    def _end_stream(self) -> None:
+        """Stream-Lock freigeben."""
+        self._streaming_active = False
+
     def _simulate_word_stream(self, text: str, delay_ms: int = 25) -> None:
         """Im Offline-Modus: Wort fuer Wort mit kurzem Delay anzeigen."""
         tokens = text.split(" ")
         for i, token in enumerate(tokens):
             chunk = token + (" " if i < len(tokens) - 1 else "")
-            self.after(i * delay_ms,
-                        lambda c=chunk: self._append_to_stream(c))
+            self._safe_after(i * delay_ms,
+                              lambda c=chunk: self._append_to_stream(c))
 
     def _append_chat(self, who: str, text: str) -> None:
         self.chat.configure(state="normal")
@@ -1737,14 +1783,58 @@ class AlltagshelferGUI(ctk.CTk):
     ]
 
     def _bind_shortcuts(self) -> None:
+        # add='+' verhindert, dass wir bestehende globale Bindings
+        # ueberschreiben (z.B. F5 von CustomTkinter) - N3.
         for sequence, tab_key, action in self.SHORTCUT_MAP:
-            self.bind_all(sequence,
-                          lambda _e, t=tab_key, a=action:
-                          self._run_shortcut(t, a))
+            self.bind_all(
+                sequence,
+                lambda e, t=tab_key, a=action:
+                self._run_shortcut(e, t, a),
+                add="+")
 
-    def _run_shortcut(self, tab_key: str, action: str) -> str:
-        """Wechselt auf den Tab und fuehrt die Folgeaktion aus. 'break'
-        verhindert weiteres Event-Bubbling."""
+    def _focus_is_text_entry(self, event) -> bool:
+        """True, wenn der Fokus auf einem Text-Eingabe-Widget liegt -
+        dann keine seiteneffekt-belasteten Shortcuts abfangen (M4)."""
+        try:
+            focused = event.widget if event is not None else None
+        except Exception:
+            focused = None
+        if focused is None:
+            try:
+                focused = self.focus_get()
+            except Exception:
+                focused = None
+        if focused is None:
+            return False
+        # Tk-Klassen-Namen: 'Entry', 'Text', plus CTk-Aequivalente
+        try:
+            cls = focused.winfo_class()
+        except Exception:
+            return False
+        return cls in ("Entry", "Text", "TEntry", "CTkEntry", "CTkTextbox")
+
+    def _run_shortcut(self, event, tab_key: str, action: str) -> str:
+        """
+        Wechselt auf den Tab und fuehrt die Folgeaktion aus. 'break'
+        verhindert weiteres Event-Bubbling.
+
+        Seiteneffekt-belastete Shortcuts (backup_now, close) werden
+        unterdrueckt, wenn der Nutzer gerade in einem Text-Feld tippt
+        (M4). Reine Navigations-Shortcuts (focus_*, refresh_all) sind
+        immer erlaubt.
+        """
+        side_effect_actions = {"backup_now", "close"}
+        if action in side_effect_actions and self._focus_is_text_entry(event):
+            return None         # Default-Verhalten des Widgets erlauben
+        if action == "close":
+            try:
+                from tkinter import messagebox
+                if not messagebox.askyesno(
+                        self.i18n.t("shortcuts.quit_title"),
+                        self.i18n.t("shortcuts.quit_message")):
+                    return "break"
+            except Exception:
+                pass
         if tab_key:
             try:
                 self.tabs.set(self.i18n.t(tab_key))
@@ -1770,11 +1860,43 @@ class AlltagshelferGUI(ctk.CTk):
         return "break"
 
     # ================================================================
-    #  Fenster-Schluss: Geometrie persistieren
+    #  Fenster-Schluss: Geometrie persistieren + after-Callbacks canceln
     # ================================================================
-    def _on_close(self) -> None:
+    def _safe_after(self, ms: int, callback) -> str:
+        """
+        Wie self.after(...), nur dass die ID gesammelt wird, damit wir
+        sie beim Fenster-Close alle abbrechen koennen (M5). Verhindert
+        TclError, wenn ein verzoegerter Callback ein zerstoertes Widget
+        anspricht.
+        """
         try:
-            self.settings_repo.set("gui.geometry", self.geometry())
+            after_id = self.after(ms, callback)
+        except Exception:
+            return ""
+        if not hasattr(self, "_after_ids"):
+            self._after_ids = set()
+        self._after_ids.add(after_id)
+        return after_id
+
+    def _cancel_pending_after(self) -> None:
+        ids = getattr(self, "_after_ids", set())
+        for aid in list(ids):
+            try:
+                self.after_cancel(aid)
+            except Exception:
+                pass
+        ids.clear()
+
+    def _on_close(self) -> None:
+        # Pending Callbacks zuerst stoppen - sonst feuern Simulate-Word-
+        # Stream-Timer noch in zerstoerte Widgets.
+        self._cancel_pending_after()
+        # Geometry validieren bevor wir sie persistieren - eine kaputte
+        # ('iconified', 'withdrawn') wuerde beim naechsten Start crashen.
+        try:
+            current = self.geometry()
+            if _is_valid_geometry(current):
+                self.settings_repo.set("gui.geometry", current)
         except Exception:
             pass
         self.destroy()

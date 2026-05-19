@@ -140,6 +140,7 @@ class CalendarModule(ModuleInterface):
                 },
                 handler=self._cap_import_ical,
                 destructive=True,
+                internal=True,
             ),
             Capability(
                 name="calendar.export_ical",
@@ -216,6 +217,10 @@ class CalendarModule(ModuleInterface):
 
     def _cap_delete(self, event_id: int) -> dict:
         self.repo.delete(event_id)
+        if (self._ctx is not None
+                and self._ctx.has_capability("notes.cleanup_for_entity")):
+            self._ctx.call("notes.cleanup_for_entity",
+                            entity_type="calendar", entity_id=event_id)
         return {"status": "geloescht", "event_id": event_id}
 
     def _cap_export_ical(self, path: str) -> dict:
@@ -226,15 +231,34 @@ class CalendarModule(ModuleInterface):
 
     def _cap_import_ical(self, path: str) -> dict:
         from services.ical import import_events
+        from services.io_validation import validate_import_path
         try:
-            events = import_events(Path(path))
-        except FileNotFoundError as exc:
+            safe_path = validate_import_path(
+                path, allowed_extensions={".ics"})
+            events = import_events(safe_path)
+        except (FileNotFoundError, ValueError) as exc:
             return {"error": str(exc)}
-        count = 0
+        # Import laeuft durch _cap_add_event - damit greifen
+        # Recurrence-Validierung, Kategorie-Whitelist und
+        # Datum-Pruefung.
+        accepted = 0
+        rejected: list[str] = []
         for ev in events:
-            self.repo.add(ev)
-            count += 1
-        return {"status": "importiert", "count": count, "path": path}
+            result = self._cap_add_event(
+                title=ev.title,
+                due_date=ev.due_date.isoformat(),
+                category=ev.category or "termin",
+                description=ev.description or "",
+                recurrence_days=ev.recurrence_days,
+                person_id=ev.person_id,
+            )
+            if result.get("status") == "angelegt":
+                accepted += 1
+            else:
+                rejected.append(result.get("error", str(result)))
+        return {"status": "importiert", "count": accepted,
+                "rejected": rejected[:5], "rejected_total": len(rejected),
+                "path": str(safe_path)}
 
     # ---- Spezialquellen ------------------------------------------------
     def _birthday_events(self, horizon_days: int) -> Iterable[Event]:

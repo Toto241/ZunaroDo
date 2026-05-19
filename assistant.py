@@ -23,6 +23,7 @@ Erweiterungen gegenueber der frueheren Anthropic-Anbindung:
 from __future__ import annotations
 
 import json
+import threading
 from typing import Callable, Optional
 
 from core.interface import ModuleRegistry
@@ -75,6 +76,9 @@ class Assistant:
         self._usage = TokenUsage()
         # Confirm-Callback fuer destruktive Aufrufe
         self._confirm: ConfirmCallback = _allow_all
+        # Lock fuer 'ask' - verhindert, dass zwei GUI-Sends parallel
+        # in _history/_usage schreiben (H7).
+        self._ask_lock = threading.Lock()
 
     # ------------------------------------------------------------------
     @property
@@ -98,15 +102,18 @@ class Assistant:
     # ------------------------------------------------------------------
     def ask(self, user_message: str,
             stream_callback: Optional[Callable[[str], None]] = None) -> str:
-        if self.log is not None:
-            self.log.append("user", user_message)
-        if self.llm is None:
-            answer = self._ask_offline(user_message)
-        else:
-            answer = self._ask_api(user_message, stream_callback)
-        if self.log is not None:
-            self.log.append("assistant", answer)
-        return answer
+        # Serialisieren: zwei parallele asks haetten sonst auf _history
+        # und _usage Race-Conditions (H7).
+        with self._ask_lock:
+            if self.log is not None:
+                self.log.append("user", user_message)
+            if self.llm is None:
+                answer = self._ask_offline(user_message)
+            else:
+                answer = self._ask_api(user_message, stream_callback)
+            if self.log is not None:
+                self.log.append("assistant", answer)
+            return answer
 
     # ---- API-Modus -----------------------------------------------------
     def _ask_api(self, user_message: str,

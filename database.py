@@ -828,6 +828,19 @@ class ProposalRepository:
             "UPDATE proposals SET status=? WHERE id=?", (status, proposal_id))
         self.db.conn.commit()
 
+    def delete(self, proposal_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "DELETE FROM proposals WHERE id=?", (proposal_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def delete_by_status(self, status: str) -> int:
+        """Massen-Loeschung aller Vorschlaege mit gegebenem Status (N6)."""
+        cur = self.db.conn.execute(
+            "DELETE FROM proposals WHERE status=?", (status,))
+        self.db.conn.commit()
+        return cur.rowcount
+
     def update_payload(self, proposal_id: int, summary: str,
                         payload: dict) -> Optional[Proposal]:
         """
@@ -1136,6 +1149,15 @@ class NoteRepository:
             "DELETE FROM notes WHERE id=?", (note_id,))
         self.db.conn.commit()
         return cur.rowcount > 0
+
+    def delete_for_entity(self, entity_type: str, entity_id: int) -> int:
+        """Loescht alle Notizen, die an die angegebene Entitaet geheftet
+        sind. Verhindert verwaiste Notizen (M7)."""
+        cur = self.db.conn.execute(
+            "DELETE FROM notes WHERE entity_type=? AND entity_id=?",
+            (entity_type, entity_id))
+        self.db.conn.commit()
+        return cur.rowcount
 
     def get(self, note_id: int) -> Optional[Note]:
         row = self.db.conn.execute(

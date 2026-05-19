@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from core.interface import Capability, ModuleInterface
+from core.interface import Capability, ModuleContext, ModuleInterface
 from database import ContractRepository
 from models import Contract, Deadline, Event
 from services.output import OutputService, slugify
@@ -92,6 +92,17 @@ class ContractModule(ModuleInterface):
                  output_service: OutputService | None = None):
         self.repo = repo
         self.output = output_service        # optional: fuer PDF/Mail-Ausgabe
+        self._ctx: ModuleContext | None = None
+
+    def on_register(self, context: ModuleContext) -> None:
+        self._ctx = context
+
+    def _cleanup_notes(self, entity_id: int) -> None:
+        """Verwaiste Notizen aufraeumen, falls Notes-Modul aktiv ist."""
+        if (self._ctx is not None
+                and self._ctx.has_capability("notes.cleanup_for_entity")):
+            self._ctx.call("notes.cleanup_for_entity",
+                            entity_type="contracts", entity_id=entity_id)
 
     # ---- Pflichtangaben des Interface ---------------------------------
     @property
@@ -287,6 +298,7 @@ class ContractModule(ModuleInterface):
         existed = self.repo.delete(contract_id)
         if not existed:
             return {"error": f"Vertrag {contract_id} nicht gefunden"}
+        self._cleanup_notes(contract_id)
         return {"status": "geloescht", "contract_id": contract_id}
 
     def _cap_set_owner(self, contract_id: int, owner_id: int = 0) -> dict:

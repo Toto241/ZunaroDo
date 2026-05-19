@@ -1,7 +1,7 @@
 """
-vCard-Export (RFC 6350, Version 3.0).
+vCard-Export und -Import (RFC 6350, Version 3.0).
 
-Schreibt soziale Kontakte als .vcf-Datei. Das Format ist von praktisch
+Schreibt soziale Kontakte als .vcf-Datei. Format ist von praktisch
 allen Adressbuechern lesbar.
 
 Wir exportieren bewusst nur die Felder, die wir auch fuehren:
@@ -10,40 +10,50 @@ Wir exportieren bewusst nur die Felder, die wir auch fuehren:
   - NOTE (Notizen + Wunsch-Rhythmus + letztes Kontaktdatum)
   - CATEGORIES (Beziehung)
 
-Telefon/E-Mail/Adresse fehlen in der App, daher auch im Export.
+Import: cadence_days wird auf >=1 geclampt, um Endlos-„heute-faellig"-
+Loops zu vermeiden.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Iterable
 
 from models import SocialContact
 
 
-def _escape(value: str) -> str:
-    return (value.replace("\\", "\\\\")
-                  .replace("\n", "\\n")
-                  .replace(",", "\\,")
-                  .replace(";", "\\;"))
+def _escape(value) -> str:
+    if value is None:
+        return ""
+    return (str(value).replace("\\", "\\\\")
+                       .replace("\n", "\\n")
+                       .replace(",", "\\,")
+                       .replace(";", "\\;"))
+
+
+# Regex-basiertes Unescape - keine NUL-Byte-Placeholder noetig
+_UNESCAPE_RE = re.compile(r"\\([\\,;nN])")
+_UNESCAPE_MAP = {"\\": "\\", ",": ",", ";": ";", "n": "\n", "N": "\n"}
 
 
 def _unescape(value: str) -> str:
-    out = (value.replace("\\\\", "\x00")
-                 .replace("\\n", "\n")
-                 .replace("\\,", ",")
-                 .replace("\\;", ";")
-                 .replace("\x00", "\\"))
-    return out
+    return _UNESCAPE_RE.sub(
+        lambda m: _UNESCAPE_MAP.get(m.group(1), m.group(0)), value)
+
+
+def _atomic_write_text(target: Path, content: str) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text(content, encoding="utf-8")
+    tmp.replace(target)
 
 
 def export_contacts(contacts: Iterable[SocialContact],
                      target: Path) -> int:
     """Schreibt vCard-Datei mit allen Kontakten. Liefert Anzahl."""
-    target.parent.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []
     count = 0
     for c in contacts:
-        # Notiz zusammensetzen: vorhandene Notiz + Rhythmus + Last-Contact
         notes_parts: list[str] = []
         if c.notes:
             notes_parts.append(c.notes)
@@ -57,36 +67,30 @@ def export_contacts(contacts: Iterable[SocialContact],
             "BEGIN:VCARD",
             "VERSION:3.0",
             f"FN:{_escape(c.name)}",
-            # N: Familienname;Vorname;... -> wir kennen nur einen Namen
             f"N:{_escape(c.name)};;;;",
             f"NOTE:{note}",
         ])
         if c.relation:
             lines.append(f"CATEGORIES:{_escape(c.relation)}")
-        # UID damit ein erneuter Import vorhandene Kontakte aktualisiert
         lines.append(f"UID:alltagshelfer-social-{c.id or 'x'}")
         lines.append("END:VCARD")
         count += 1
-    target.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
+    _atomic_write_text(target, "\r\n".join(lines) + "\r\n")
     return count
 
 
 # ---------------------------------------------------------------------
 #  Import
 # ---------------------------------------------------------------------
-def import_contacts(source: Path) -> list[SocialContact]:
-    """
-    Liest eine vCard-Datei und liefert SocialContact-Objekte.
+_RHYTHM_RE = re.compile(r"Rhythmus:\s*alle\s+(\d+)\s+Tage", re.IGNORECASE)
 
-    Bewusst nachsichtig: unbekannte Felder werden ignoriert, Eintraege
-    ohne FN/N werden uebersprungen. Folding (Continuation mit Leading-
-    Space) wird beruecksichtigt.
-    """
+
+def import_contacts(source: Path) -> list[SocialContact]:
+    """Liest eine vCard-Datei und liefert SocialContact-Objekte."""
     if not source.exists():
         raise FileNotFoundError(f"vCard-Datei '{source}' nicht gefunden")
     raw = source.read_text(encoding="utf-8")
     raw = raw.replace("\r\n", "\n").replace("\r", "\n")
-    # Folding
     unfolded: list[str] = []
     for line in raw.split("\n"):
         if line.startswith((" ", "\t")) and unfolded:
@@ -109,10 +113,12 @@ def import_contacts(source: Path) -> list[SocialContact]:
             in_card = False
             name = current.get("fn") or current.get("n")
             if name:
+                # Rhythmus immer mindestens 1 - sonst Endlos-Spam.
+                cadence = max(1, current.get("cadence", 30))
                 contacts.append(SocialContact(
                     name=name,
                     relation=current.get("relation", ""),
-                    cadence_days=current.get("cadence", 30),
+                    cadence_days=cadence,
                     notes=current.get("notes", ""),
                 ))
             current = {}
@@ -126,17 +132,12 @@ def import_contacts(source: Path) -> list[SocialContact]:
         if key == "FN":
             current["fn"] = _unescape(value).strip()
         elif key == "N":
-            # N: Familienname;Vorname;... - wir nutzen den ersten Teil
             first = _unescape(value).split(";")[0].strip()
             if first and "n" not in current:
                 current["n"] = first
         elif key == "NOTE":
             current["notes"] = _unescape(value).strip()
-            # Wenn die NOTE einen Rhythmus-Hinweis aus unserem Export
-            # enthaelt, lesen wir den heraus.
-            import re
-            m = re.search(r"Rhythmus:\s*alle\s+(\d+)\s+Tage",
-                           current["notes"])
+            m = _RHYTHM_RE.search(current["notes"])
             if m:
                 try:
                     current["cadence"] = int(m.group(1))

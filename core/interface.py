@@ -40,6 +40,12 @@ class Capability:
     handler: Callable[..., dict]
     module_id: str = ""
     destructive: bool = False
+    # 'internal=True': Capability ist nur fuer die App selbst (GUI/CLI)
+    # gedacht. Sie taucht NICHT im Tool-Schema fuer das LLM auf und
+    # geht auch nicht ueber Sync ins Replay. Wird fuer riskante
+    # Operationen wie Datei-Importe verwendet, damit das Modell sie
+    # nicht eigenstaendig mit beliebigen Pfaden aufrufen kann.
+    internal: bool = False
 
     def required_params(self) -> list[str]:
         return [n for n, spec in self.parameters.items()
@@ -248,11 +254,15 @@ class ModuleRegistry:
         return list(self._modules.values())
 
     def tool_schemas(self) -> list[dict]:
-        """Tool-Schemata fuer Gemini (nur aktive Module)."""
-        return [c.to_tool_schema() for c in self.all_capabilities()]
+        """Tool-Schemata fuer Gemini - 'internal' wird ausgeblendet."""
+        return [c.to_tool_schema() for c in self.all_capabilities()
+                if not c.internal]
 
     def destructive_capability_names(self) -> set[str]:
         return {c.name for c in self.all_capabilities() if c.destructive}
+
+    def internal_capability_names(self) -> set[str]:
+        return {c.name for c in self.all_capabilities() if c.internal}
 
     # ---- Sidebar / Kontext-Ueberblick --------------------------------
     def context_overview(self) -> str:

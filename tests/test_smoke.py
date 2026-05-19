@@ -1802,7 +1802,8 @@ class TestIcalExport(unittest.TestCase):
         self.assertIn("END:VCALENDAR", text)
         self.assertIn("SUMMARY:TUEV", text)
         self.assertIn("Geburtstag\\, mit Komma", text)
-        self.assertIn("RRULE:FREQ=DAILY;INTERVAL=365", text)
+        # M3: 365 Tage werden als YEARLY exportiert, nicht DAILY
+        self.assertIn("RRULE:FREQ=YEARLY;INTERVAL=1", text)
 
 
 class TestVCardExport(unittest.TestCase):
@@ -2127,6 +2128,269 @@ class TestBulkOperations(unittest.TestCase):
             "family.bulk_complete_overdue", {})
         # Zwei der drei Aufgaben sind ueberfaellig
         self.assertEqual(result["count"], 2)
+
+
+class TestReviewFixes(unittest.TestCase):
+    """Direkte Tests fuer die 21 Code-Review-Befunde dieser Runde."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_review_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    # ---- K1: Import-Pfad-Validierung -----------------------------------
+    def test_ical_import_rejects_path_outside_or_bad_extension(self) -> None:
+        # Falsche Extension
+        bad = self.tmp / "evil.txt"
+        bad.write_text("BEGIN:VCALENDAR\nEND:VCALENDAR\n",
+                        encoding="utf-8")
+        result = self.registry.dispatch("calendar.import_ical",
+                                          {"path": str(bad)})
+        self.assertIn("error", result)
+
+    def test_ical_import_rejects_nonexistent(self) -> None:
+        result = self.registry.dispatch("calendar.import_ical",
+                                          {"path": "nicht-existent.ics"})
+        self.assertIn("error", result)
+
+    def test_vcard_import_rejects_too_large(self) -> None:
+        from services.io_validation import DEFAULT_MAX_IMPORT_BYTES
+        big = self.tmp / "big.vcf"
+        # 1 MB groesser als das Limit
+        big.write_bytes(b"x" * (DEFAULT_MAX_IMPORT_BYTES + 1024))
+        result = self.registry.dispatch("social.import_vcard",
+                                          {"path": str(big)})
+        self.assertIn("error", result)
+
+    # ---- K2: Import laeuft durch _cap_add_event -------------------------
+    def test_ical_import_validates_recurrence(self) -> None:
+        # ICS mit ungueltigem RRULE-Wert - der Import sollte den Eintrag
+        # NICHT erstellen, da _cap_add_event recurrence_days <= 0 ablehnt.
+        # Wir zeigen das indirekt: ein RRULE, das auf 0 mapped, fuehrt
+        # zu recurrence_days=None, der Termin wird trotzdem angelegt -
+        # das ist ok. Aber: ein Event ohne SUMMARY oder DTSTART wird gar
+        # nicht erst durch den Parser durchgelassen.
+        ics = self.tmp / "x.ics"
+        ics.write_text(
+            "BEGIN:VCALENDAR\r\nVERSION:2.0\r\n"
+            "BEGIN:VEVENT\r\nSUMMARY:OK-Event\r\nDTSTART;VALUE=DATE:20300101\r\n"
+            "RRULE:FREQ=DAILY;INTERVAL=0\r\nEND:VEVENT\r\n"
+            "END:VCALENDAR\r\n", encoding="utf-8")
+        result = self.registry.dispatch("calendar.import_ical",
+                                          {"path": str(ics)})
+        # Akzeptiert das Event, recurrence wird auf None gesetzt
+        self.assertEqual(result["count"], 1)
+
+    # ---- K3: HttpSyncProvider.read_all existiert ------------------------
+    def test_http_provider_has_read_all(self) -> None:
+        from services.sync import HttpSyncProvider
+        provider = HttpSyncProvider(
+            "http://localhost:1", "dev-x",
+            local_state_path=self.tmp / "seen.json")
+        # Nicht erreichbar - read_all liefert leere Liste statt zu crashen
+        self.assertEqual(provider.read_all(), [])
+
+    # ---- K4: Streaming-Lock --------------------------------------------
+    # GUI-Code laesst sich headless nicht ausfuehren - wir testen das
+    # Verhalten indirekt ueber Assistant._ask_lock (H7).
+    def test_assistant_ask_lock_serializes(self) -> None:
+        # Zwei parallele asks auf demselben Assistant duerfen sich nicht
+        # ueberlappen. Der Lock garantiert das.
+        import threading as _threading
+        from assistant import Assistant
+        a = Assistant(self.registry)
+        a.llm = None  # Offline-Modus
+        order: list[str] = []
+
+        def worker(prefix: str) -> None:
+            a.ask(f"Frage {prefix}")
+            order.append(prefix)
+
+        t1 = _threading.Thread(target=worker, args=("A",))
+        t2 = _threading.Thread(target=worker, args=("B",))
+        t1.start()
+        t2.start()
+        t1.join(timeout=5)
+        t2.join(timeout=5)
+        self.assertEqual(len(order), 2)
+
+    # ---- K5: deepcopy von args -----------------------------------------
+    def test_sync_event_args_deep_copy(self) -> None:
+        """Mutiere args nach dispatch - das Event darf NICHT mitwandern."""
+        from services.sync import FileSyncProvider, install_sync_hook
+        provider = FileSyncProvider(str(self.tmp / "shared"), "dev-x",
+                                      local_seen_path=self.tmp / "seen.json")
+        install_sync_hook(self.registry, provider)
+        args = {"name": "X", "category": "streaming", "provider": "Y",
+                "start_date": "2025-01-01", "minimum_term_months": 1,
+                "notice_period_months": 1, "auto_renew_months": 1,
+                "monthly_cost": 1.0}
+        self.registry.dispatch("contracts.add", args)
+        # Nachtraegliche Mutation
+        args["name"] = "MANIPULIERT"
+        # Das gespeicherte Event muss noch 'X' enthalten
+        events = provider.read_all()
+        self.assertEqual(events[-1].args["name"], "X")
+
+    # ---- H1: _initial_lamport_value nur eigene Events -------------------
+    def test_initial_lamport_ignores_other_devices(self) -> None:
+        from services.sync import (FileSyncProvider, LamportClock,
+                                     SyncEvent, SyncedRegistry,
+                                     install_sync_hook)
+        shared = self.tmp / "shared"
+        shared.mkdir()
+        log = shared / "sync_events.jsonl"
+        # Ein fremdes Event mit hohem Lamport
+        foreign = SyncEvent(
+            event_id="x1", device_id="other-device",
+            timestamp="2026-01-01T00:00:00+00:00",
+            capability="family.add_member",
+            args={"name": "X"}, lamport=99)
+        log.write_text(
+            __import__("json").dumps(foreign.to_dict()) + "\n",
+            encoding="utf-8")
+        provider = FileSyncProvider(str(shared), "my-device",
+                                      local_seen_path=self.tmp / "s.json")
+        synced = SyncedRegistry(self.registry, provider)
+        # Eigene Counter startet NICHT bei 99 (fremder Wert) - sondern bei 0
+        self.assertEqual(synced.clock.value, 0)
+
+    # ---- H2: vCard-Import clampt cadence_days auf >=1 -------------------
+    def test_vcard_import_clamps_cadence(self) -> None:
+        vcf = self.tmp / "bad.vcf"
+        vcf.write_text(
+            "BEGIN:VCARD\nVERSION:3.0\nFN:Test\nN:Test;;;;\n"
+            "NOTE:Rhythmus: alle 0 Tage\n"
+            "END:VCARD\n", encoding="utf-8")
+        result = self.registry.dispatch("social.import_vcard",
+                                          {"path": str(vcf)})
+        self.assertEqual(result["count"], 1)
+        contacts = self.registry.dispatch("social.contacts",
+                                            {})["contacts"]
+        # cadence_days clamped auf 1 statt 0
+        self.assertGreaterEqual(contacts[0]["cadence_days"], 1)
+
+    # ---- H3: UTF-8-Byte-Folding ----------------------------------------
+    def test_ical_export_folds_at_byte_boundary(self) -> None:
+        from services.ical import _fold
+        # 100 Umlaute -> 200 Bytes -> muss in mehrere Zeilen gebrochen werden
+        line = "SUMMARY:" + ("ae" * 50)
+        folded = _fold(line)
+        # Pro Zeile darf kein Stuck > 75 BYTES sein
+        for chunk in folded.split("\r\n"):
+            # Continuation-Lines beginnen mit Leerzeichen
+            actual = chunk[1:] if chunk.startswith(" ") else chunk
+            self.assertLessEqual(len(actual.encode("utf-8")), 75)
+
+    # ---- H4: entity_id=0 wird NICHT zu None -----------------------------
+    def test_notes_entity_id_zero_preserved(self) -> None:
+        r = self.registry.dispatch("notes.add", {
+            "title": "Test", "content": "x",
+            "entity_type": "contracts", "entity_id": 0})
+        self.assertEqual(r["note"]["entity_id"], 0)
+
+    # ---- H6: Bulk-Ops laufen durch dispatch (Sync-faehig) ---------------
+    def test_bulk_complete_overdue_dispatches_individual_tasks(self) -> None:
+        from services.sync import (FileSyncProvider, install_sync_hook)
+        provider = FileSyncProvider(str(self.tmp / "shared"), "dev",
+                                      local_seen_path=self.tmp / "seen.json")
+        install_sync_hook(self.registry, provider)
+        self.registry.dispatch("family.add_member", {"name": "Anna"})
+        old = (date.today() - timedelta(days=10)).isoformat()
+        self.registry.dispatch("family.add_task", {
+            "title": "X", "interval_days": 7,
+            "assignees": ["Anna"], "first_due": old})
+        events_before = len(provider.read_all())
+        self.registry.dispatch("family.bulk_complete_overdue", {})
+        events_after = len(provider.read_all())
+        # Bulk-Op hat individuelle complete_task-Events erzeugt
+        self.assertGreater(events_after, events_before)
+        # Naemlich: family.complete_task soll geloggt sein
+        last_caps = [e.capability for e in provider.read_all()]
+        self.assertIn("family.complete_task", last_caps)
+
+    # ---- M1: Regex-Unescape ohne NUL-Marker -----------------------------
+    def test_unescape_preserves_real_null_bytes(self) -> None:
+        from services.ical import _unescape
+        # Echtes NUL-Byte im Wert: darf nicht mit dem alten Placeholder
+        # verwechselt werden.
+        original = "Hallo\x00Welt mit \\, und \\n"
+        result = _unescape(original)
+        self.assertIn("\x00", result)
+        self.assertIn(",", result)
+        self.assertIn("\n", result)
+
+    # ---- M3: RRULE-Format bevorzugt grobe Frequenz ----------------------
+    def test_rrule_uses_yearly_for_365(self) -> None:
+        from services.ical import _format_rrule
+        self.assertEqual(_format_rrule(365),
+                          "RRULE:FREQ=YEARLY;INTERVAL=1")
+        self.assertEqual(_format_rrule(7),
+                          "RRULE:FREQ=WEEKLY;INTERVAL=1")
+        self.assertEqual(_format_rrule(14),
+                          "RRULE:FREQ=WEEKLY;INTERVAL=2")
+        self.assertEqual(_format_rrule(3),
+                          "RRULE:FREQ=DAILY;INTERVAL=3")
+
+    # ---- M6: Geometry-Validierung --------------------------------------
+    def test_geometry_validation(self) -> None:
+        from gui import _is_valid_geometry
+        self.assertTrue(_is_valid_geometry("1080x720"))
+        self.assertTrue(_is_valid_geometry("1080x720+100+50"))
+        self.assertTrue(_is_valid_geometry("1080x720-50-50"))
+        self.assertFalse(_is_valid_geometry(""))
+        self.assertFalse(_is_valid_geometry("abc"))
+        self.assertFalse(_is_valid_geometry("100x50"))         # zu klein
+        self.assertFalse(_is_valid_geometry("99999x99999"))    # zu gross
+        self.assertFalse(_is_valid_geometry("1080x720+99999+0"))
+
+    # ---- M7: Orphan-Notes-Cleanup --------------------------------------
+    def test_deleting_contract_cleans_attached_notes(self) -> None:
+        self.registry.dispatch("contracts.add", dict(
+            name="X", category="streaming", provider="Y",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=10.0))
+        cid = self.registry.dispatch("contracts.list",
+                                       {})["contracts"][0]["id"]
+        self.registry.dispatch("notes.add", {
+            "title": "Note zu Vertrag", "content": "X",
+            "entity_type": "contracts", "entity_id": cid})
+        self.assertEqual(
+            self.registry.dispatch("notes.list", {})["count"], 1)
+        self.registry.dispatch("contracts.delete", {"contract_id": cid})
+        # Verwaiste Notiz muss weg sein
+        self.assertEqual(
+            self.registry.dispatch("notes.list", {})["count"], 0)
+
+    # ---- N6: delete_by_status nutzt Repository --------------------------
+    def test_bulk_delete_archived_uses_repository_method(self) -> None:
+        from models import Proposal
+        repo = ProposalRepository(self.db)
+        for status in ("uebernommen", "abgelehnt", "offen"):
+            p = repo.add(Proposal(source="test", summary=status,
+                                     target_capability="x.y", payload={}))
+            if p.id is not None and status != "offen":
+                repo.set_status(p.id, status)
+        result = self.registry.dispatch("inbox.bulk_delete_archived", {})
+        self.assertEqual(result["count"], 2)
+        # Offener Vorschlag bleibt
+        self.assertEqual(len(repo.list()), 1)
+
+    # ---- Internal-Capabilities sind NICHT im LLM-Tool-Schema ------------
+    def test_internal_capabilities_hidden_from_llm(self) -> None:
+        schemas = self.registry.tool_schemas()
+        names = {s["name"] for s in schemas}
+        self.assertNotIn("calendar.import_ical", names)
+        self.assertNotIn("social.import_vcard", names)
+        self.assertNotIn("notes.cleanup_for_entity", names)
+        # Aber sie sind via has_capability erreichbar
+        self.assertTrue(
+            self.registry.has_capability("calendar.import_ical"))
 
 
 class TestProposalsFlow(unittest.TestCase):

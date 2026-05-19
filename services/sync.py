@@ -31,6 +31,7 @@ Log-Kompaktierung:
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import threading
@@ -118,7 +119,17 @@ class SyncEvent:
         )
 
     def order_key(self) -> tuple:
-        """Sortier-Schluessel fuer Replay: deterministisch und kausal."""
+        """
+        Sortier-Schluessel fuer Replay.
+
+        Lamport-Counter sind kausal monoton, das Hauptkriterium also
+        immer der `lamport`-Wert. Bei gleichem Lamport (z.B. Backward-
+        Compat-Events ohne Counter = 0) entscheidet Timestamp und
+        zuletzt die device_id alphabetisch als deterministischer
+        Tiebreak. Diese sekundaeren Kriterien sind NICHT echte
+        Kausalitaet - sie sorgen nur fuer reproduzierbare Replays
+        (M8).
+        """
         return (self.lamport, self.timestamp, self.device_id, self.event_id)
 
 
@@ -290,20 +301,36 @@ class SyncedRegistry:
         self._local = threading.local()
         # ueberbruecken den Hook, indem wir den ORIGINAL-dispatch merken
         self._inner_dispatch = inner_dispatch or registry.dispatch
+        # Lock fuer apply_remote(): verhindert, dass ein PeriodicSync-
+        # Worker parallel zu einem GUI-getriebenen Dispatch in dieselbe
+        # Capability laeuft (N5). Da der Lock ein RLock ist, koennen
+        # nested ctx.call-Aufrufe waehrend Replay funktionieren.
+        self._replay_lock = threading.RLock()
         # Lamport-Clock: initialer Wert = hoechster bereits bekannter
-        # Lamport-Counter. So bleibt die Monotonie auch ueber Neustarts
-        # erhalten, sobald wir den eigenen Provider lesen koennen.
+        # EIGENER Lamport-Counter. So bleibt die Monotonie auch ueber
+        # Neustarts erhalten.
         self.clock = LamportClock(
             initial=self._initial_lamport_value())
 
     def _initial_lamport_value(self) -> int:
-        """Hoechster Lamport-Counter im Log, damit wir nach Neustart kausal
-        weiterzaehlen."""
+        """
+        Hoechster Lamport-Counter EIGENER Events im Log, damit wir nach
+        Neustart kausal weiterzaehlen. Fremde Werte werden ueber
+        observe() beim Replay aufgenommen - sie hier hineinzumischen
+        wuerde den Counter unnoetig in die Hoehe treiben und entgegen
+        der Definition 'monoton pro Geraet' wirken.
+        """
+        # Falls der Provider kein read_all hat (z.B. HttpSync vor Patch),
+        # fallen wir sauber auf 0 zurueck.
+        if not hasattr(self.provider, "read_all"):
+            return 0
         try:
             events = self.provider.read_all()
         except Exception:
             return 0
-        return max((e.lamport for e in events), default=0)
+        own_id = getattr(self.provider, "device_id", "")
+        return max((e.lamport for e in events
+                     if e.device_id == own_id), default=0)
 
     def dispatch(self, capability: str, args: dict) -> dict:
         is_synced = capability in self.synced
@@ -316,13 +343,16 @@ class SyncedRegistry:
                     and not in_synced_outer
                     and not self._replaying
                     and "error" not in result):
+                # Tief kopierte Args: das Event darf nicht auf das
+                # urspruengliche dict referenzieren, sonst kann ein
+                # spaeterer Aufrufer das Event nachtraeglich mutieren.
                 event = SyncEvent(
                     event_id=str(uuid.uuid4()),
                     device_id=self.provider.device_id,
                     timestamp=datetime.now(timezone.utc).isoformat(
                         timespec="seconds"),
                     capability=capability,
-                    args=args,
+                    args=copy.deepcopy(args),
                     lamport=self.clock.tick(),
                 )
                 try:
@@ -335,19 +365,28 @@ class SyncedRegistry:
                 self._local.in_synced = in_synced_outer
 
     def apply_remote(self) -> int:
-        """Wendet alle ungesehenen Events anderer Geraete an. Liefert Anzahl."""
+        """
+        Wendet alle ungesehenen Events anderer Geraete an. Liefert Anzahl.
+
+        Replay laeuft unter Lock, damit ein paralleler dispatch() im
+        GUI-/Worker-Thread nicht zwischen zwei Replay-Steps reingrätscht
+        und die Reihenfolge zerschiesst (N5).
+        """
         applied = 0
-        self._replaying = True
-        try:
-            for event in self.provider.unseen_events():
-                # Lamport: lokalen Counter auf >= empfangenen Wert hochziehen.
-                self.clock.observe(event.lamport)
-                result = self._inner_dispatch(event.capability, event.args)
-                if "error" not in result:
-                    applied += 1
-                self.provider.mark_seen(event.event_id)
-        finally:
-            self._replaying = False
+        with self._replay_lock:
+            self._replaying = True
+            try:
+                for event in self.provider.unseen_events():
+                    # Lamport: lokalen Counter auf >= empfangenen Wert
+                    # hochziehen.
+                    self.clock.observe(event.lamport)
+                    result = self._inner_dispatch(event.capability,
+                                                    event.args)
+                    if "error" not in result:
+                        applied += 1
+                    self.provider.mark_seen(event.event_id)
+            finally:
+                self._replaying = False
         return applied
 
     # ---- Pass-through: registry-aehnliche API -------------------------
@@ -446,6 +485,17 @@ class HttpSyncProvider:
         with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))
         return [SyncEvent.from_dict(e) for e in data.get("events", [])]
+
+    def read_all(self) -> list[SyncEvent]:
+        """
+        Liefert alle Events vom Server (oder leere Liste bei Offline).
+        Pendant zu FileSyncProvider.read_all - erlaubt unter anderem
+        dem Lamport-Init bei Neustart, eigene Werte wiederzufinden.
+        """
+        try:
+            return self._fetch()
+        except Exception:
+            return []
 
     def unseen_events(self) -> list[SyncEvent]:
         events = self._fetch()

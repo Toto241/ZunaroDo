@@ -309,6 +309,10 @@ class FamilyModule(ModuleInterface):
         existed = self.repo.delete_member(member_id)
         if not existed:
             return {"error": f"Mitglied {member_id} nicht gefunden"}
+        if (self._ctx is not None
+                and self._ctx.has_capability("notes.cleanup_for_entity")):
+            self._ctx.call("notes.cleanup_for_entity",
+                            entity_type="family", entity_id=member_id)
         return {"status": "geloescht", "member_id": member_id}
 
     def _cap_add_task(self, title: str, assignees: list[str],
@@ -360,6 +364,11 @@ class FamilyModule(ModuleInterface):
                 "next_assignee": task.current_assignee_name}
 
     def _cap_bulk_complete_overdue(self) -> dict:
+        """
+        Hakt alle ueberfaelligen Aufgaben ab - ueber ctx.call, damit jede
+        einzelne Aktion durch den Sync-Hook laeuft. So sehen andere
+        Geraete den korrekten Effekt (H6).
+        """
         today = date.today()
         completed: list[dict] = []
         for task in self.repo.list_tasks():
@@ -367,15 +376,20 @@ class FamilyModule(ModuleInterface):
                 continue
             if task.id is None:
                 continue
-            try:
-                updated = self.repo.complete_task(task.id)
+            if self._ctx is not None:
+                result = self._ctx.call("family.complete_task",
+                                          task_id=task.id)
+                if "error" in result:
+                    continue
                 completed.append({"task_id": task.id,
-                                    "title": updated.title,
-                                    "next_due": (updated.next_due.isoformat()
-                                                  if updated.next_due
-                                                  else None)})
-            except ValueError:
-                continue
+                                    "title": task.title})
+            else:
+                try:
+                    self.repo.complete_task(task.id)
+                    completed.append({"task_id": task.id,
+                                        "title": task.title})
+                except ValueError:
+                    continue
         return {"status": "abgehakt", "count": len(completed),
                 "tasks": completed}
 
