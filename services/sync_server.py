@@ -150,9 +150,33 @@ class _Handler(BaseHTTPRequestHandler):
 
 def serve(log_path: Path, host: str, port: int,
           token: Optional[str],
-          max_log_lines: int = DEFAULT_MAX_LOG_LINES) -> ThreadingHTTPServer:
+          max_log_lines: int = DEFAULT_MAX_LOG_LINES,
+          certfile: Optional[str] = None,
+          keyfile: Optional[str] = None) -> ThreadingHTTPServer:
+    """
+    Startet den Sync-Server (ungebunden, der Aufrufer muss
+    serve_forever() ausfuehren).
+
+    Wenn 'certfile' UND 'keyfile' gesetzt sind, wird das Listening-
+    Socket per TLS verschluesselt. Ohne diese Parameter laeuft der
+    Server unverschluesselt - dann auf 127.0.0.1 binden ODER Token
+    setzen ODER beides.
+    """
     _Handler.state = _State(log_path, token, max_log_lines=max_log_lines)
     server = ThreadingHTTPServer((host, port), _Handler)
+    if certfile and keyfile:
+        import ssl
+        try:
+            ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            ctx.load_cert_chain(certfile=certfile, keyfile=keyfile)
+            server.socket = ctx.wrap_socket(server.socket, server_side=True)
+        except BaseException:
+            # Bei jedem Fehler im TLS-Setup (fehlende Datei, falsches
+            # Passwort etc.) muss das frisch geoeffnete Listening-Socket
+            # wieder geschlossen werden - sonst leakt es bis zum
+            # naechsten GC.
+            server.server_close()
+            raise
     return server
 
 
@@ -169,13 +193,23 @@ def main() -> None:
                          default=DEFAULT_MAX_LOG_LINES,
                          help=("Weiche Obergrenze fuer Eintraege im Log; "
                                 "danach wird automatisch kompaktiert."))
+    parser.add_argument("--cert", default=None,
+                         help="Pfad zum TLS-Zertifikat (PEM)")
+    parser.add_argument("--key", default=None,
+                         help="Pfad zum privaten TLS-Schluessel (PEM)")
     args = parser.parse_args()
 
+    if bool(args.cert) != bool(args.key):
+        parser.error("--cert UND --key muessen gemeinsam gesetzt sein")
+
     server = serve(Path(args.log), args.host, args.port, args.token,
-                    max_log_lines=args.max_log_lines)
-    print(f"Sync-Server laeuft auf http://{args.host}:{args.port}")
+                    max_log_lines=args.max_log_lines,
+                    certfile=args.cert, keyfile=args.key)
+    scheme = "https" if args.cert else "http"
+    print(f"Sync-Server laeuft auf {scheme}://{args.host}:{args.port}")
     print(f"Log:    {args.log}")
     print(f"Token:  {'gesetzt' if args.token else '(keiner)'}")
+    print(f"TLS:    {'aktiv' if args.cert else 'aus'}")
     if not args.token:
         # Auf nicht-lokale Bind-Adressen ist das ein echtes Sicherheits-
         # problem - der Endpunkt akzeptiert sonst beliebige Schreibzugriffe

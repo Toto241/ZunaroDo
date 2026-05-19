@@ -212,9 +212,8 @@ class AlltagshelferGUI(ctk.CTk):
         self.assistant.set_confirm_callback(self._confirm_destructive)
 
         self._refresh_all()
-        self._append_chat("Assistent",
-                           "Hallo! Im Dashboard siehst du deine naechsten "
-                           "Ereignisse. Hier kannst du mich alles fragen.")
+        self._append_chat(self.i18n.t("common.assistant"),
+                           self.i18n.t("chat.greeting"))
 
     # ================================================================
     #  Sidebar
@@ -1100,11 +1099,13 @@ class AlltagshelferGUI(ctk.CTk):
         self.chat.grid(row=0, column=0, columnspan=2, sticky="nsew",
                        pady=(6, 8))
         self.chat.configure(state="disabled")
-        self.entry = ctk.CTkEntry(parent, placeholder_text="Frage eingeben ...")
+        self.entry = ctk.CTkEntry(
+            parent,
+            placeholder_text=self.i18n.t("common.placeholder.question"))
         self.entry.grid(row=1, column=0, sticky="ew", padx=(0, 6),
                          pady=(0, 6))
         self.entry.bind("<Return>", lambda _e: self._on_send())
-        ctk.CTkButton(parent, text="Senden", width=90,
+        ctk.CTkButton(parent, text=self.i18n.t("common.send"), width=90,
                       command=self._on_send
                       ).grid(row=1, column=1, sticky="e", pady=(0, 6))
 
@@ -1113,8 +1114,9 @@ class AlltagshelferGUI(ctk.CTk):
         if not text:
             return
         self.entry.delete(0, "end")
-        self._append_chat("Du", text)
-        self._append_chat("Assistent", "denkt nach ...")
+        self._append_chat(self.i18n.t("common.you"), text)
+        self._append_chat(self.i18n.t("common.assistant"),
+                           self.i18n.t("chat.thinking"))
         threading.Thread(target=self._chat_worker,
                           args=(text,), daemon=True).start()
 
@@ -1132,10 +1134,12 @@ class AlltagshelferGUI(ctk.CTk):
     def _replace_last_chat(self, answer: str) -> None:
         self.chat.configure(state="normal")
         content = self.chat.get("1.0", "end-1c")
-        marker = "Assistent:\ndenkt nach ...\n\n"
+        assistant_label = self.i18n.t("common.assistant")
+        marker = (f"{assistant_label}:\n"
+                   f"{self.i18n.t('chat.thinking')}\n\n")
         if content.endswith(marker):
             self.chat.delete(f"end-{len(marker) + 1}c", "end")
-        self.chat.insert("end", f"Assistent:\n{answer}\n\n")
+        self.chat.insert("end", f"{assistant_label}:\n{answer}\n\n")
         self.chat.see("end")
         self.chat.configure(state="disabled")
 
@@ -1264,7 +1268,7 @@ class AlltagshelferGUI(ctk.CTk):
         parent.grid_columnconfigure(0, weight=1)
         parent.grid_rowconfigure(2, weight=1)
 
-        ctk.CTkLabel(parent, text="Volltextsuche",
+        ctk.CTkLabel(parent, text=self.i18n.t("search.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 6))
 
@@ -1272,10 +1276,10 @@ class AlltagshelferGUI(ctk.CTk):
         bar.grid(row=1, column=0, sticky="ew", pady=(0, 8))
         bar.grid_columnconfigure(0, weight=1)
         self.search_entry = ctk.CTkEntry(
-            bar, placeholder_text="Mindestens 2 Zeichen ...")
+            bar, placeholder_text=self.i18n.t("search.placeholder"))
         self.search_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
         self.search_entry.bind("<Return>", lambda _e: self._run_search())
-        ctk.CTkButton(bar, text="Suchen", width=110,
+        ctk.CTkButton(bar, text=self.i18n.t("search.button"), width=110,
                       command=self._run_search).grid(row=0, column=1)
 
         self.search_results = ctk.CTkScrollableFrame(
@@ -1287,7 +1291,7 @@ class AlltagshelferGUI(ctk.CTk):
         _clear(self.search_results)
         if len(query) < 2:
             ctk.CTkLabel(self.search_results,
-                         text="Bitte mindestens 2 Zeichen eingeben.",
+                         text=self.i18n.t("search.too_short"),
                          text_color="gray").pack(pady=20)
             return
         result = self.registry.dispatch(
@@ -1300,11 +1304,12 @@ class AlltagshelferGUI(ctk.CTk):
         hits = result.get("hits", [])
         if not hits:
             ctk.CTkLabel(self.search_results,
-                         text="Keine Treffer.", text_color="gray"
-                         ).pack(pady=20)
+                         text=self.i18n.t("search.no_hits"),
+                         text_color="gray").pack(pady=20)
             return
         ctk.CTkLabel(self.search_results,
-                     text=f"{result['count']} Treffer:",
+                     text=self.i18n.t("search.results_count").format(
+                         count=result['count']),
                      text_color="gray").pack(anchor="w", pady=(4, 8))
         for hit in hits:
             self._search_card(hit)
@@ -1341,10 +1346,11 @@ class AlltagshelferGUI(ctk.CTk):
 
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
-        ctk.CTkLabel(header, text="Assistenten-Verlauf",
+        ctk.CTkLabel(header, text=self.i18n.t("history.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
                      ).pack(side="left")
-        ctk.CTkButton(header, text="Aktualisieren", width=120,
+        ctk.CTkButton(header, text=self.i18n.t("history.refresh"),
+                      width=120,
                       command=self._refresh_history).pack(side="right")
 
         self.history_text = ctk.CTkTextbox(
@@ -1353,23 +1359,26 @@ class AlltagshelferGUI(ctk.CTk):
         self.history_text.configure(state="disabled")
 
     def _refresh_history(self) -> None:
-        from database import AssistantLogRepository
-        repo = AssistantLogRepository(self.assistant.log.db
-                                        if self.assistant.log
-                                        else None)
-        try:
-            entries = repo.tail(limit=200)
-        except Exception:
-            entries = []
+        # Vorhandenes Log-Repository des Assistenten weiterverwenden -
+        # neu zu konstruieren wuerde die DB-Referenz unnoetig duplizieren
+        # (und mypy laesst keinen Optional-Database durchgehen).
+        repo = self.assistant.log
+        entries = []
+        if repo is not None:
+            try:
+                entries = repo.tail(limit=200)
+            except Exception:
+                entries = []
         self.history_text.configure(state="normal")
         self.history_text.delete("1.0", "end")
         if not entries:
-            self.history_text.insert("1.0",
-                "Noch keine Eintraege - frage den Assistenten etwas.")
+            self.history_text.insert("1.0", self.i18n.t("history.empty"))
         else:
+            you_label = self.i18n.t("common.you")
+            assistant_label = self.i18n.t("common.assistant")
             for entry in entries:
-                who = ("Du" if entry.role == "user"
-                        else "Assistent" if entry.role == "assistant"
+                who = (you_label if entry.role == "user"
+                        else assistant_label if entry.role == "assistant"
                         else entry.role)
                 self.history_text.insert("end", f"{who}:\n{entry.content}\n\n")
         self.history_text.configure(state="disabled")

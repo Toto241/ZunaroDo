@@ -1,47 +1,77 @@
 """
 Backup und Restore der Alltagshelfer-DB.
 
-Verwendet bei Plain-SQLite die offizielle Online-Backup-API
-(`sqlite3.Connection.backup`) - die kann mit laufenden Schreib-
-transaktionen umgehen und liefert eine konsistente Kopie, ohne
-dass die App heruntergefahren werden muss.
+Zwei Pfade je nach Verschluesselung:
+  - Plain SQLite: offizielle Online-Backup-API
+    (`sqlite3.Connection.backup`). Konsistent waehrend laufender
+    Schreiboperationen, kein App-Stopp noetig.
+  - SQLCipher:    Online-Verschluesseltes Backup ueber
+    `ATTACH DATABASE ... KEY '...'; SELECT sqlcipher_export(...)`. Das
+    Backup ist seinerseits eine SQLCipher-Datei mit demselben oder
+    einem neuen Schluessel.
 
-Fuer SQLCipher waere ein Inline-Backup-Pfad nur mit
-`ATTACH DATABASE ... KEY '...'; SELECT sqlcipher_export('encrypted');`
-moeglich. Damit das Modul nicht von SQLCipher-Internas abhaengt,
-faellt der SQLCipher-Pfad auf einen einfachen Datei-Snapshot zurueck
-und verlangt vorab das Schliessen der DB. Der Aufrufer bekommt eine
-klare Meldung statt halb-konsistente Backups.
+`backup_file_copy()` bleibt als roher Datei-Snapshot, falls die DB
+ohnehin geschlossen ist.
 """
 from __future__ import annotations
 
+import os
 import shutil
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from database import Database
 
 
-def make_backup(db: Database, target: Path) -> Path:
+def make_backup(db: Database, target: Path,
+                 encryption_key: Optional[str] = None) -> Path:
     """
     Schreibt eine Sicherung der laufenden DB nach 'target'.
 
-    Bei Plain-SQLite: Online-Backup (sicher waehrend Schreiboperationen).
-    Bei SQLCipher:    der Aufrufer wird angewiesen, die DB zuerst
-                      mit close() zu schliessen und dann
-                      backup_file_copy() zu verwenden.
+    Bei Plain-SQLite: Online-Backup via Connection.backup().
+    Bei SQLCipher:    Online-Backup via sqlcipher_export(). Der
+                      'encryption_key'-Parameter (oder Env-Var
+                      ALLTAGSHELFER_DB_KEY) wird auf das Backup
+                      angewendet - so kann das Backup mit demselben oder
+                      einem neuen Schluessel verschluesselt werden.
     """
     target.parent.mkdir(parents=True, exist_ok=True)
+
     if db.encryption_mode == "sqlcipher":
-        raise RuntimeError(
-            "SQLCipher-DB kann nicht online gesichert werden. "
-            "Beende die App und nutze backup_file_copy() oder "
-            "kopiere die DB-Datei direkt - der Schluessel bleibt im "
-            "Backup gleich.")
+        key = encryption_key or os.environ.get("ALLTAGSHELFER_DB_KEY")
+        if not key:
+            raise RuntimeError(
+                "SQLCipher-Backup: 'encryption_key' fehlt. Entweder "
+                "Parameter setzen oder ALLTAGSHELFER_DB_KEY in der "
+                "Umgebung.")
+        if "\x00" in key:
+            raise ValueError("Schluessel darf kein NUL-Byte enthalten")
+        if len(key) < 8:
+            raise ValueError("Schluessel ist zu kurz (mindestens 8 Zeichen)")
+        # Sicher gehen, dass kein bestehendes Backup-File im Weg liegt -
+        # sqlcipher_export legt die ATTACH-Datei selbst an.
+        if target.exists():
+            target.unlink()
+        hex_key = key.encode("utf-8").hex()
+        with db.lock:
+            src = db.conn._conn                            # type: ignore[attr-defined]
+            # Pfad-Quoting in ATTACH: einfache Anfuehrungszeichen
+            # verdoppeln. Hex-Key braucht kein Quoting.
+            safe_path = str(target).replace("'", "''")
+            src.execute(
+                f"ATTACH DATABASE '{safe_path}' AS backup_db "
+                f"KEY \"x'{hex_key}'\"")
+            try:
+                src.execute("SELECT sqlcipher_export('backup_db')")
+                src.commit()
+            finally:
+                src.execute("DETACH DATABASE backup_db")
+        return target
+
     # Plain SQLite Online-Backup
     with db.lock:
-        # _SafeConnection legt die echte Connection unter _conn ab.
         src = db.conn._conn                                # type: ignore[attr-defined]
         dest = sqlite3.connect(str(target))
         try:

@@ -1357,6 +1357,73 @@ class TestI18n(unittest.TestCase):
         self.assertNotEqual(i18n_en.t("app.title"), "app.title")
 
 
+class TestBackupSqlCipherPath(unittest.TestCase):
+    """Encrypted-Backup-Pfad: ohne installiertes sqlcipher3 kann nichts
+    real getestet werden - aber die Argument-Validierung kann.
+    """
+
+    def test_sqlcipher_path_requires_key(self) -> None:
+        # Wir koennen den SQLCipher-Pfad nur testen, wenn auch eine
+        # SQLCipher-DB vorhanden ist; sonst greift der Plain-Pfad.
+        # Hier: gefaelschtes db-Objekt mit encryption_mode='sqlcipher'.
+        from services.backup import make_backup
+
+        class FakeConn:
+            pass
+
+        class FakeDb:
+            encryption_mode = "sqlcipher"
+            lock = threading.Lock()
+            conn = FakeConn()
+
+        tmp = Path(tempfile.mkdtemp(prefix="ah_cipher_"))
+        try:
+            old_key = os.environ.pop("ALLTAGSHELFER_DB_KEY", None)
+            try:
+                with self.assertRaises(RuntimeError):
+                    make_backup(FakeDb(), tmp / "out.db",
+                                  encryption_key=None)
+            finally:
+                if old_key is not None:
+                    os.environ["ALLTAGSHELFER_DB_KEY"] = old_key
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_sqlcipher_path_rejects_short_key(self) -> None:
+        from services.backup import make_backup
+
+        class FakeConn:
+            pass
+
+        class FakeDb:
+            encryption_mode = "sqlcipher"
+            lock = threading.Lock()
+            conn = FakeConn()
+
+        tmp = Path(tempfile.mkdtemp(prefix="ah_cipher2_"))
+        try:
+            with self.assertRaises(ValueError):
+                make_backup(FakeDb(), tmp / "out.db",
+                              encryption_key="kurz")
+        finally:
+            shutil.rmtree(tmp)
+
+
+class TestSyncServerTls(unittest.TestCase):
+    """Pruefen, dass --cert/--key-Wiring funktioniert."""
+
+    def test_serve_with_bad_cert_path_raises(self) -> None:
+        from services.sync_server import serve
+        tmp = Path(tempfile.mkdtemp(prefix="ah_tls_"))
+        try:
+            with self.assertRaises((FileNotFoundError, OSError)):
+                serve(tmp / "events.jsonl", "127.0.0.1", 0, None,
+                       certfile="/does/not/exist.pem",
+                       keyfile="/does/not/exist.key")
+        finally:
+            shutil.rmtree(tmp)
+
+
 class TestProposalsFlow(unittest.TestCase):
 
     def setUp(self) -> None:

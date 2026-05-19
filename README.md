@@ -1,156 +1,243 @@
 # Alltagshelfer
 
-Datenschutzfreundlicher Alltagsassistent mit **sieben Fachmodulen**, einem
-**Dashboard**, einem **proaktiven Scheduler**, **Mehrgeräte-Sync**,
-optionaler **DB-Verschlüsselung**, **GUI-Modulverwaltung** und Anbindung
-an **Google Gemini** über eine provider-agnostische LLM-Schnittstelle.
+Datenschutzfreundlicher Alltagsassistent für den deutschsprachigen Raum
+mit **acht Fachmodulen**, einem **Dashboard**, **Google Gemini** als
+optionalem KI-Backend, **Mehrgeräte-Synchronisation** (Datei oder HTTP,
+optional HTTPS), **optionaler SQLCipher-Verschlüsselung**,
+**Volltextsuche**, **CSV-Export**, **Online-Backup**, einem **CLI** und
+einer **CustomTkinter-GUI** mit DE/EN-Lokalisierung.
 
 ## Schnellstart
 
 ```bash
 pip install -r requirements.txt
-python main.py        # Konsolen-Demo
-python gui.py         # GUI mit allen Tabs
 
-# Mit Gemini (echtes LLM)
+# Konsolen-Demo (Offline-Modus, alles tut auch ohne Netz)
+python main.py
+
+# GUI mit allen Tabs
+python gui.py
+
+# Subcommands ueber python __main__.py
+python __main__.py --diagnose
+python __main__.py --gui
+python __main__.py --backup
+python __main__.py --list-backups
+python __main__.py --restore backups/alltagshelfer-20260519-185747.db
+python __main__.py --export
+python __main__.py --sync-server --port 5151
+```
+
+### Optionale Erweiterungen
+
+```bash
+# Google Gemini als KI-Backend
 pip install google-generativeai
 GOOGLE_API_KEY=... python gui.py
 
 # Verschluesselte DB (SQLCipher)
 pip install sqlcipher3-binary
-ALLTAGSHELFER_DB_KEY=mein-geheimes-passwort python gui.py
+ALLTAGSHELFER_DB_KEY=mein-passwort python gui.py
 
-# Mehrgeraete-Sync (geteilter Ordner, z.B. OneDrive/Dropbox)
+# Mehrgeraete-Sync via geteiltem Ordner
 ALLTAGSHELFER_SYNC_DIR=C:\Users\me\Dropbox\alltagshelfer python gui.py
 
-# Optional: IMAP statt Mail-Text einfuegen
+# Oder via HTTP-Sync-Server
+python __main__.py --sync-server --port 5151
+ALLTAGSHELFER_SYNC_URL=http://server:5151 python gui.py
+
+# Server mit TLS und Token
+python __main__.py --sync-server --port 5151 \
+  --cert server.pem --key server.key \
+  --token "geheim"
+
+# Mail per IMAP holen
 ALLTAGSHELFER_IMAP_HOST=imap.example.com \
 ALLTAGSHELFER_IMAP_USER=... \
 ALLTAGSHELFER_IMAP_PASS=... \
 python gui.py
+
+# OCR fuer Kassenbons (Tesseract ODER easyocr)
+pip install pytesseract Pillow
+# oder
+pip install easyocr
 ```
 
-Tests: `python -m unittest discover tests` — 16 Tests grün.
+Tests: `python -m unittest discover tests` — 80+ Tests grün.
 
-## Module
+## Module (acht aktiv)
 
 | Modul | Name | Aufgabe |
 | --- | --- | --- |
-| A | Vertrags- & Fristenmanager | Verträge, Kündigungsfristen, **Kündigungsschreiben** (PDF + Mail + Druck), Preisänderungen, Person-Zuordnung |
-| B | Finanz-Cockpit | Ausgaben, monatliche Belastung, Aggregate, Preisgedächtnis, OCR |
-| C | Termine & Kalender | Termine, Garantien, TÜV, Steuerfristen, Geburtstage |
-| D | Familie & Haushalt | Mitglieder, Aufgaben (Rotation), Aufträge, Einkaufsliste |
-| E | Soziale Pflege | Kontakte mit Rhythmus, **LLM-generierter Nachrichten-Entwurf** |
-| – | Tagesstruktur | Scaffold: Energie-Tagebuch |
-| – | Posteingang | Mail-Analyse: regelbasiert + **LLM-basiert via Gemini**, .eml, IMAP, Vorschläge |
+| A | Vertrags- & Fristenmanager | Verträge, Kündigungsfristen, **Kündigungsschreiben** (PDF + Mail + Druck), Preisänderungen, **Lösch-Capability**, Person-Zuordnung |
+| B | Finanz-Cockpit | Ausgaben, monatliche Belastung, Aggregate pro Person/Kategorie, **Preisgedächtnis**, OCR, Lösch-Capability |
+| C | Termine & Kalender | Termine, Garantien, TÜV, Steuerfristen, Geburtstage; Kategorie-Whitelist; Recurrence-Validierung |
+| D | Familie & Haushalt | Mitglieder (mit Geburtstag), Aufgaben (Rotation mit **Catch-Up** verpasster Zyklen), Aufträge, Einkaufsliste, Lösch-Capability |
+| E | Soziale Pflege | Kontakte mit Rhythmus, LLM-generierter Nachrichten-Entwurf, Lösch-Capability |
+| – | Tagesstruktur | Energie-Tagebuch (persistiert), einfache Empfehlung |
+| – | Posteingang | Mail-Analyse regelbasiert + LLM-basiert, `.eml`-Import, IMAP, zentrale Vorschlags-Ablage, **Inline-Editor** für Vorschläge |
+| – | Volltextsuche | `system.search` quer durch Verträge/Ausgaben/Termine/Familie/Aufträge/Kontakte/Vorschläge |
 
 ## Die drei Schnittstellen
 
 1. **Front-End ↔ Modul** – `ModuleRegistry.dispatch(name, args)`
-2. **Modul ↔ Modul** – `ModuleContext.call(...)`
-3. **Dashboard** – `ModuleRegistry.collect_events(...)`
+2. **Modul ↔ Modul** – `ModuleContext.call(...)` (lose Kopplung über die Registry, mit Re-Entry-Schutz im Sync-Hook)
+3. **Dashboard** – `ModuleRegistry.collect_events(...)` aggregiert Events aller Module chronologisch
 
-## Gemini-Integration
+Weitere Detail-Methoden auf der Registry: `get_capability(name)` (für dynamische Formulare in der GUI), `destructive_capability_names()` (Confirm-Dialog im Assistant), `module_states()`, `set_module_enabled()`.
 
-Implementiert in [services/gemini.py](services/gemini.py) hinter der
-provider-neutralen Schnittstelle [services/llm.py](services/llm.py). Aus
-der Analyse der bisherigen Anthropic-Anbindung in
-[assistant.py](assistant.py) wurden folgende Erweiterungen abgeleitet
-und in die Gemini-Variante eingebaut:
+## Google Gemini
 
-| Erweiterung | Wo |
-| --- | --- |
-| Konversationsverlauf pro Session | `Assistant._history` + Gemini-Chat |
-| Konfigurierbare Iterations- und Token-Limits | `max_iterations`, `max_output_tokens` |
-| Token-Verbrauch wird gemessen | `TokenUsage`, `Assistant.token_usage` |
-| Stream-Callback für UI | `stream_callback`-Argument |
-| Trennung statischer/dynamischer System-Prompt | erleichtert Gemini-Context-Caching |
-| Provider-neutrales Tool-Schema | `Capability.to_provider_neutral_schema()` |
-| **Bestätigung vor destruktiven Aufrufen** | `destructive: bool` an Capability + `ConfirmCallback`; GUI fragt per messagebox |
-| Strukturierte Fehler aus Tool-Aufrufen | als `FunctionResponse.response.result` |
+[services/gemini.py](services/gemini.py) implementiert das LLM-Backend hinter der provider-neutralen [services/llm.py](services/llm.py). Aktiv, sobald `GOOGLE_API_KEY` (oder `GEMINI_API_KEY`) gesetzt UND `google-generativeai` installiert ist; sonst läuft der Offline-Modus mit regelbasiertem Intent-Router.
 
-`Capability` liefert weiterhin auch `to_tool_schema()` im Anthropic-Stil,
-womit ein Anthropic-Client jederzeit parallel ergänzt werden kann.
+Implementierte LLM-Features:
 
-## SQLCipher-Verschlüsselung
-
-[database.py](database.py) wählt automatisch zwischen Klartext-SQLite
-und SQLCipher:
-
-- `ALLTAGSHELFER_DB_KEY` nicht gesetzt → Klartext (Default)
-- Key gesetzt + `sqlcipher3` installiert → verschlüsselt
-- Key gesetzt + `sqlcipher3` fehlt → **harter Fehler** (kein stilles
-  Unverschlüsselt-Fallback)
-
-`db.encryption_mode` zeigt den aktiven Modus an.
+- **Tool-Use-Schleife** mit Funktionsaufrufen über `function_declarations`
+- **Konversationsverlauf** wird zwischen Aufrufen erhalten (`Assistant._history`)
+- **Streaming** für Text-Teile (im Stream-Callback)
+- **Token-Verbrauch** wird gemessen (`Assistant.token_usage`)
+- **Confirm-Callback** vor destruktiven Capabilities
+- **Robuste Fehlerbehandlung** — Netz/Rate-Limit liefert eine Nutzer-Meldung statt Crash
+- **Halluzinations-Schutz** im Inbox-Modul: LLM-Vorschläge werden gegen eine Allowlist und das Pflichtparameter-Schema validiert, bevor sie in der Ablage landen
 
 ## Mehrgeräte-Synchronisation
 
-[services/sync.py](services/sync.py) implementiert einen Datei-basierten
-Event-Log:
+Zwei austauschbare Provider, beide implementieren dieselbe kleine Schnittstelle:
+
+- **FileSyncProvider** – Event-Log in einem geteilten Ordner (z. B. Dropbox/OneDrive/Netzlaufwerk).
+- **HttpSyncProvider** – HTTP/HTTPS-Sync gegen [services/sync_server.py](services/sync_server.py).
+
+Architektur:
 
 ```text
-geteilter Ordner/
-└── sync_events.jsonl     # eine JSON-Zeile pro Mutation, mit Geräte-UUID
+geteilter Speicherort/
+└── sync_events.jsonl   # eine JSON-Zeile pro Mutation mit Geräte-UUID
 
 lokales Profil/
-├── device_id             # eigene UUID (einmalig erzeugt)
-└── sync_seen.json        # bereits angewendete Event-IDs
+├── device_id           # eigene UUID (einmalig erzeugt)
+└── sync_seen.json      # bereits angewendete Event-IDs (atomar geschrieben)
 ```
 
-Ablauf: Aufrufe synchronisierungs-fähiger Capabilities (Standard:
-`family.*`) werden mitprotokolliert. Beim Start spielt jedes Gerät
-fremde, noch nicht gesehene Events nach (idempotent über Event-UUIDs).
-Aktivieren über `ALLTAGSHELFER_SYNC_DIR`.
+Standard-`DEFAULT_SYNCED_CAPABILITIES` umfasst alle relevanten Mutationen aus Modulen A–E (Verträge, Ausgaben, Termine, Familie/Aufgaben/Aufträge/Einkaufsliste, Kontakte). Re-Entry-Schutz: nested Aufrufe innerhalb eines bereits geloggten synced Calls werden nicht doppelt geschrieben — der äußere Aufruf trägt den Effekt beim Replay zuverlässig nach.
 
-Bewusst klein gehalten: keine CRDTs, kein Server. Reicht für einen
-Familienhaushalt; bei nicht-idempotenten Operationen gewinnt die
-zuletzt angewendete Reihenfolge.
+Server-Features:
 
-## GUI-Modulverwaltung
+- **Periodischer Hintergrund-Worker** (`PeriodicSyncWorker`) holt fremde Events alle `sync.interval_seconds` Sekunden
+- **Automatische Log-Kompaktierung** auf Server- und Client-Seite (`MAX_LOG_LINES`)
+- **Bearer-Token** über `--token` (oder `ALLTAGSHELFER_SYNC_TOKEN`)
+- **TLS** über `--cert PATH --key PATH`
+- **Warnung** beim Start ohne Token auf öffentlicher Bind-Adresse
 
-Neuer Tab **Module** in [gui.py](gui.py): jeder Modul-Eintrag hat einen
-Switch. Deaktivierte Module liefern weder Capabilities noch Dashboard-
-Eintraege, ihre Daten bleiben in der DB erhalten. `ModuleRegistry`
-trägt das über `set_module_enabled`, `is_module_enabled` und
-`module_states()`.
+## SQLCipher-Verschlüsselung
+
+[database.py](database.py) wählt automatisch zwischen Klartext und SQLCipher:
+
+- `ALLTAGSHELFER_DB_KEY` nicht gesetzt → Klartext (Default)
+- Key gesetzt + `sqlcipher3` installiert → verschlüsselt
+- Key gesetzt + `sqlcipher3` fehlt → harter Fehler (kein stilles Unverschlüsselt-Fallback)
+
+Der Schlüssel wird als Hex-Form `x'<hex>'` an `PRAGMA key` übergeben — keine Quote/Backslash-Probleme. Mindestlänge 8 Zeichen, NUL-Bytes werden abgelehnt.
+
+**Online-Backup** ([services/backup.py](services/backup.py)):
+
+- Plain SQLite: SQLite-eigene `Connection.backup()`-API (sicher während Schreiboperationen)
+- SQLCipher: `ATTACH DATABASE ... KEY '...'; SELECT sqlcipher_export(...)` — das Backup ist seinerseits eine verschlüsselte SQLCipher-Datei mit demselben (oder einem neuen) Schlüssel
+
+## CLI-Subcommands
+
+```text
+python __main__.py [keine Args]   Konsolen-Demo (main.py)
+                  --gui           startet die GUI
+                  --diagnose      Statusbericht (Plattform, Pakete, OCR-Engines)
+                  --sync-server   HTTP/HTTPS-Sync-Server starten
+                  --backup [pfad] DB online sichern
+                  --restore <pfad> DB wiederherstellen (App muss aus sein)
+                  --list-backups [verz]  Backups anzeigen
+                  --export [verz] CSV-Export aller Entitäten
+```
+
+## CSV-Export
+
+[services/export.py](services/export.py) schreibt je eine CSV pro Entität (`contracts.csv`, `expenses.csv`, `calendar.csv`, `social.csv`, `family.csv`). Format: UTF-8-BOM + Strichpunkt → Excel-DE erkennt Spalten ohne Konfiguration. Datumsfelder im ISO-Format.
+
+## Volltextsuche
+
+`system.search(query, limit=50)` durchsucht alle Repositories (Verträge, Ausgaben, Termine, Mitglieder, Aufträge, Kontakte, Vorschläge) und liefert vereinheitlichte Treffer mit `source`/`entity_id`/`title`/`detail`. Mindestlänge 2 Zeichen.
+
+## Internationalisierung
+
+[services/i18n.py](services/i18n.py) lädt Sprachdateien aus [locales/](locales/):
+
+- `de.json` — Standardsprache mit ~80 Keys
+- `en.json` — Englisch-Fallback mit denselben Keys
+
+Spracheinstellung über `i18n.language` in den App-Settings (Default `de`). Fallback-Kette: angeforderte Sprache → DE → Key selbst. Unbekannte Sprachen fallen auf DE zurück.
+
+Aktuell übersetzt: Tab-Labels, Sidebar, Dashboard, Suche, Verlauf, Chat-Bubbles, Settings-Texte, Proposal-Editor, Modul-Verwaltung, Inbox-Aktionen, sämtliche `common.*`-/`form.*`-/`action.*`-Buttons (über 80 Strings).
+
+## Proaktive Benachrichtigungen
+
+[services/scheduler.py](services/scheduler.py) prüft im Hintergrund (APScheduler oder Thread-Fallback) regelmäßig `registry.collect_events()` und schickt Desktop-Notifikationen (plyer mit Fallback) für anstehende Ereignisse innerhalb `notify.warn_within_days`.
+
+## GUI-Tabs (zwölf)
+
+```text
+Dashboard – Vertraege – Familie – Finanzen – Kalender – Sozial
+   – Posteingang – Assistent – Suche – Verlauf – Module – Einstellungen
+```
+
+Bemerkenswerte Features:
+
+- **Posteingang**: IMAP-Abruf im Worker-Thread (kein Einfrieren), Inline-Editor für Vorschläge mit form-generierten Feldern aus dem Capability-Schema
+- **Module**: Switches pro Modul, persistiert in der DB
+- **Einstellungen**: alle nicht-geheimen Konfig-Werte editierbar; Geheimnisse (API-Keys etc.) ausschließlich per Env-Var
+- **Verlauf**: zeigt `assistant_log` (User vs. Assistent)
+- **Suche**: einheitliche Trefferdarstellung mit Quellen-Tag
+
+## Konfigurations-System
+
+[services/config.py](services/config.py): Defaults < DB-Werte < Umgebungsvariablen. Geheime Felder werden nicht persistiert. Konfigurierbar sind unter anderem:
+
+- `gemini.api_key`, `gemini.model`, `gemini.max_iterations`, `gemini.max_tokens`
+- `imap.host`/`user`/`pass`/`folder`
+- `smtp.host`/`port`/`user`/`pass`/`sender`/`starttls`
+- `sync.dir`, `sync.enabled`, `sync.interval_seconds`
+- `db.key`, `notify.warn_within_days`, `i18n.language`
 
 ## Projektstruktur
 
 ```text
 .
 ├── models.py
-├── database.py                 SQLite (+ optional SQLCipher)
-├── core/interface.py           Drei Schnittstellen + Enable/Disable
-├── modules/                    A, B, C, D, E, Posteingang, Tagesstruktur
+├── database.py                 SQLite (+ optional SQLCipher) + Thread-Safety
+├── core/interface.py           Drei Schnittstellen + Enable/Disable + get_capability
+├── modules/                    Acht Fachmodule
 ├── services/
-│   ├── llm.py                  Provider-Vertrag
+│   ├── llm.py                  Provider-Vertrag (provider-agnostisch)
 │   ├── gemini.py               Gemini-Client
-│   ├── sync.py                 Mehrgeräte-Event-Log
-│   ├── output.py               PDF + Mail + Druck + SMTP
-│   ├── ocr.py                  Kassenbon-OCR (optional)
+│   ├── sync.py                 Datei- und HTTP-Sync-Provider + Worker
+│   ├── sync_server.py          HTTP/HTTPS-Sync-Server
+│   ├── output.py               PDF + Mail-Entwurf + SMTP + Druck
+│   ├── ocr.py                  Tesseract + easyocr (lokal, keine Cloud)
 │   ├── notifier.py             Desktop-Notifikation
-│   └── scheduler.py            Proaktive Hintergrund-Checks
+│   ├── scheduler.py            Proaktive Hintergrund-Checks
+│   ├── backup.py               Online-Backup (Plain + SQLCipher)
+│   ├── export.py               CSV-Export aller Entitäten
+│   ├── config.py               Konfigurations-System
+│   └── i18n.py                 Lokalisierung
+├── locales/                    de.json, en.json
 ├── assistant.py                LLM-agnostisch
-├── gui.py                      CTk-GUI mit 9 Tabs (inkl. Modulverwaltung)
+├── gui.py                      CustomTkinter-GUI mit zwölf Tabs
 ├── main.py                     Konsolen-Demo
-├── tests/test_smoke.py         16 Tests
+├── __main__.py                 CLI-Subcommands
+├── diagnose.py                 Status-Bericht
+├── tests/test_smoke.py         80+ Tests
 └── requirements.txt
 ```
 
-## Was komplett umgesetzt ist
+## Status & bewusst offen geblieben
 
-Aus den zuvor offen gelassenen Punkten:
-
-- [x] **SQLCipher-DB-Verschlüsselung** – produktionsfähig, mit klarem
-      Fehler bei fehlender Bibliothek
-- [x] **Mehrgeräte-Sync** für Modul D – Datei-basiert, idempotent,
-      mit Geräte-UUIDs und Replay
-- [x] **LLM-basierte Mail-Analyse** über Gemini – läuft zusätzlich zur
-      regelbasierten Erkennung
-- [x] **GUI-Modulverwaltung** – Switch pro Modul, sofort wirksam
-- [x] **Google Gemini** als KI-Backend hinter provider-neutraler
-      Schnittstelle
-- [x] **Anthropic-Schnittstelle analysiert** – die acht ableitbaren
-      Erweiterungen (siehe Tabelle oben) sind in die Gemini-Variante
-      eingeflossen
+- **DST/Timezone-Audit** — Sync-Timestamps sind bereits UTC; weitere Date-Felder sind lokale Zeit (für Single-User unkritisch)
+- **Multi-User-Profile auf einem Gerät** — keine getrennten Profile vorgesehen
+- **i18n-Vollausbau** — Formularfeld-Labels in den einzelnen Modul-Tabs und Capability-Descriptions sind weiterhin hartcodiert deutsch
+- **Eigenes TLS für eingebetteten Server** — Zertifikate via `--cert/--key` werden unterstützt; Erstellung übernimmt der Nutzer (z. B. via `openssl req`)
