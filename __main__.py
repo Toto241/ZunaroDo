@@ -28,7 +28,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-DEFAULT_DB = Path("alltagshelfer_demo.db")
+DEFAULT_DB = Path("alltagshelfer.db")
 DEFAULT_BACKUP_DIR = Path("backups")
 DEFAULT_EXPORT_DIR = Path("ausgaben")
 

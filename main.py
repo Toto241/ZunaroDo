@@ -12,13 +12,14 @@ from typing import Optional
 
 from assistant import Assistant
 from core.interface import ModuleRegistry
-from database import (AssistantLogRepository, CalendarRepository,
-                      ContractRepository, Database, DayEntryRepository,
-                      ExpenseRepository, FamilyRepository,
-                      ModuleStateRepository, NoteRepository,
+from database import (AssistantLogRepository, AuditLogRepository,
+                      CalendarRepository, ContractRepository, Database,
+                      DayEntryRepository, ExpenseRepository,
+                      FamilyRepository, ModuleStateRepository,
+                      NoteAttachmentRepository, NoteRepository,
                       PriceMemoryRepository, ProposalRepository,
                       SettingsRepository, ShoppingRepository,
-                      SocialRepository)
+                      SocialRepository, TaskTemplateRepository)
 from modules.calendar import CalendarModule
 from modules.contracts import ContractModule
 from modules.daystructure import DayStructureModule
@@ -29,9 +30,11 @@ from modules.notes import NotesModule
 from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
+from modules.templates import TaskTemplatesModule
 from services.config import AppConfig, load_config
 from services.backup import AutoBackupWorker
 from services.gemini import GeminiClient
+from services.logging_setup import configure_logging, get_logger
 from services.output import OutputService, SmtpConfig
 from services.profile import db_path, resolve_profile, state_dir
 from services.scheduler import ProactiveScheduler
@@ -52,15 +55,22 @@ def make_smtp_config(config: AppConfig) -> SmtpConfig | None:
 
 
 def make_auto_backup_worker(db, config: AppConfig) -> AutoBackupWorker | None:
-    """Baut AutoBackupWorker nur, wenn in den Einstellungen aktiviert."""
+    """
+    Baut AutoBackupWorker nur, wenn in den Einstellungen aktiviert.
+
+    Schluessel-Logik: 'backup.key' (eigener Backup-Schluessel) hat
+    Vorrang vor 'db.key'. So koennen Backups mit einem anderen
+    Schluessel verschluesselt werden als die Live-DB.
+    """
     if not config.backup_auto_enabled:
         return None
+    backup_key = config.backup_key or config.db_key
     return AutoBackupWorker(
         db,
         directory=Path(config.backup_directory),
         retention_count=config.backup_retention_count,
         interval_hours=config.backup_interval_hours,
-        encryption_key=(config.db_key or None
+        encryption_key=(backup_key or None
                          if db.encryption_mode == "sqlcipher" else None),
     )
 
@@ -99,11 +109,13 @@ def build_registry(db: Database, output: OutputService,
     registry.register(SocialModule(social_repo, llm=llm))
     registry.register(DayStructureModule(DayEntryRepository(db)))
     registry.register(InboxModule(proposal_repo, llm=llm))
-    registry.register(NotesModule(notes_repo))
+    attach_repo = NoteAttachmentRepository(db)
+    registry.register(NotesModule(notes_repo, attachments=attach_repo))
     registry.register(SearchModule(
         contracts_repo, expense_repo, calendar_repo,
         family_repo, social_repo, proposal_repo, notes=notes_repo))
     registry.register(StatisticsModule(expense_repo, contracts_repo))
+    registry.register(TaskTemplatesModule(TaskTemplateRepository(db)))
     return registry
 
 
@@ -127,8 +139,14 @@ def make_sync_provider(local_state_dir: Path):
 
 
 def main() -> None:
+    # Logging zentral konfigurieren - rotierende Datei in logs/ + Konsole
+    configure_logging(log_dir=Path("logs"))
+    log = get_logger("main")
     profile = resolve_profile()
-    db = Database(db_path(profile, "alltagshelfer_demo.db"))
+    db = Database(db_path(profile, "alltagshelfer.db"))
+    log.info("DB geoeffnet: %s, Profil=%s, Schema-Version=%s",
+              db.path, profile or "default",
+              getattr(db, "schema_version", "?"))
     settings = SettingsRepository(db)
     config: AppConfig = load_config(settings)
     output = OutputService("ausgaben", smtp=make_smtp_config(config))
@@ -140,6 +158,27 @@ def main() -> None:
 
     registry = build_registry(db, output, llm=active_llm)
     apply_persisted_module_states(registry, ModuleStateRepository(db))
+
+    # Audit-Log fuer destruktive Aktionen (B)
+    audit_repo = AuditLogRepository(db)
+
+    def _audit(capability: str, args: dict, result: dict) -> None:
+        import json as _json
+        entity_type = capability.split(".", 1)[0]
+        eid = (args.get("contract_id") or args.get("event_id")
+                or args.get("contact_id") or args.get("member_id")
+                or args.get("expense_id") or args.get("note_id")
+                or args.get("proposal_id") or args.get("task_id")
+                or args.get("order_id"))
+        try:
+            details = _json.dumps(args, ensure_ascii=False)[:500]
+        except Exception:
+            details = str(args)[:500]
+        audit_repo.append(capability, entity_type=entity_type,
+                            entity_id=eid, details=details,
+                            actor=profile or "local")
+
+    registry.set_audit_hook(_audit)
 
     assistant = Assistant(
         registry, llm=active_llm,

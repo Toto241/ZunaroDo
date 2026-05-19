@@ -20,25 +20,8 @@ from pathlib import Path
 from typing import Iterable
 
 from models import SocialContact
-
-
-def _escape(value) -> str:
-    if value is None:
-        return ""
-    return (str(value).replace("\\", "\\\\")
-                       .replace("\n", "\\n")
-                       .replace(",", "\\,")
-                       .replace(";", "\\;"))
-
-
-# Regex-basiertes Unescape - keine NUL-Byte-Placeholder noetig
-_UNESCAPE_RE = re.compile(r"\\([\\,;nN])")
-_UNESCAPE_MAP = {"\\": "\\", ",": ",", ";": ";", "n": "\n", "N": "\n"}
-
-
-def _unescape(value: str) -> str:
-    return _UNESCAPE_RE.sub(
-        lambda m: _UNESCAPE_MAP.get(m.group(1), m.group(0)), value)
+from services.escaping import escape_text as _escape
+from services.escaping import unescape_text as _unescape
 
 
 def _atomic_write_text(target: Path, content: str) -> None:

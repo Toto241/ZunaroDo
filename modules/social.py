@@ -127,13 +127,41 @@ class SocialModule(ModuleInterface):
             ),
             Capability(
                 name="social.delete_contact",
-                description="Loescht einen Kontakt endgueltig.",
+                description="Verschiebt einen Kontakt in den Papierkorb. "
+                            "Restore via social.restore_contact; "
+                            "endgueltig erst via social.purge_contact.",
                 parameters={
                     "contact_id": {"type": "integer", "_required": True,
                                    "description": "ID des Kontakts"},
                 },
                 handler=self._cap_delete,
                 destructive=True,
+            ),
+            Capability(
+                name="social.restore_contact",
+                description="Stellt einen geloeschten Kontakt wieder her.",
+                parameters={
+                    "contact_id": {"type": "integer", "_required": True,
+                                   "description": "ID des Kontakts"},
+                },
+                handler=self._cap_restore,
+                destructive=True,
+            ),
+            Capability(
+                name="social.purge_contact",
+                description="Loescht einen Kontakt endgueltig.",
+                parameters={
+                    "contact_id": {"type": "integer", "_required": True,
+                                   "description": "ID des Kontakts"},
+                },
+                handler=self._cap_purge,
+                destructive=True,
+            ),
+            Capability(
+                name="social.list_deleted",
+                description="Listet Kontakte im Papierkorb.",
+                parameters={},
+                handler=self._cap_list_deleted,
             ),
             Capability(
                 name="social.mark_contacted",
@@ -186,6 +214,17 @@ class SocialModule(ModuleInterface):
         return {"count": len(result), "contacts": result}
 
     def _cap_delete(self, contact_id: int) -> dict:
+        if not self.repo.soft_delete(contact_id):
+            return {"error": f"Kontakt {contact_id} nicht gefunden oder "
+                              "bereits im Papierkorb"}
+        return {"status": "im papierkorb", "contact_id": contact_id}
+
+    def _cap_restore(self, contact_id: int) -> dict:
+        if not self.repo.restore(contact_id):
+            return {"error": f"Kontakt {contact_id} nicht im Papierkorb"}
+        return {"status": "wiederhergestellt", "contact_id": contact_id}
+
+    def _cap_purge(self, contact_id: int) -> dict:
         existed = self.repo.delete(contact_id)
         if not existed:
             return {"error": f"Kontakt {contact_id} nicht gefunden"}
@@ -193,7 +232,12 @@ class SocialModule(ModuleInterface):
                 and self._ctx.has_capability("notes.cleanup_for_entity")):
             self._ctx.call("notes.cleanup_for_entity",
                             entity_type="social", entity_id=contact_id)
-        return {"status": "geloescht", "contact_id": contact_id}
+        return {"status": "endgueltig geloescht", "contact_id": contact_id}
+
+    def _cap_list_deleted(self) -> dict:
+        items = self.repo.list_deleted()
+        return {"count": len(items),
+                "contacts": [c.to_dict() for c in items]}
 
     def _cap_export_vcard(self, path: str) -> dict:
         from pathlib import Path

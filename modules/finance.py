@@ -127,13 +127,41 @@ class FinanceModule(ModuleInterface):
             ),
             Capability(
                 name="finance.delete_expense",
-                description="Loescht eine erfasste Ausgabe endgueltig.",
+                description="Verschiebt eine Ausgabe in den Papierkorb. "
+                            "Restore via 'finance.restore_expense'; "
+                            "endgueltig erst via 'finance.purge_expense'.",
                 parameters={
                     "expense_id": {"type": "integer", "_required": True,
                                    "description": "ID der Ausgabe"},
                 },
                 handler=self._cap_delete_expense,
                 destructive=True,
+            ),
+            Capability(
+                name="finance.restore_expense",
+                description="Stellt eine geloeschte Ausgabe wieder her.",
+                parameters={
+                    "expense_id": {"type": "integer", "_required": True,
+                                   "description": "ID der Ausgabe"},
+                },
+                handler=self._cap_restore_expense,
+                destructive=True,
+            ),
+            Capability(
+                name="finance.purge_expense",
+                description="Loescht eine Ausgabe endgueltig.",
+                parameters={
+                    "expense_id": {"type": "integer", "_required": True,
+                                   "description": "ID der Ausgabe"},
+                },
+                handler=self._cap_purge_expense,
+                destructive=True,
+            ),
+            Capability(
+                name="finance.list_deleted",
+                description="Listet Ausgaben im Papierkorb.",
+                parameters={},
+                handler=self._cap_list_deleted,
             ),
             Capability(
                 name="finance.expenses_by_category",
@@ -234,6 +262,18 @@ class FinanceModule(ModuleInterface):
         return {"status": "erfasst", "expense": saved.to_dict()}
 
     def _cap_delete_expense(self, expense_id: int) -> dict:
+        # Soft-Delete: in den Papierkorb statt sofort weg
+        if not self.repo.soft_delete(expense_id):
+            return {"error": f"Ausgabe {expense_id} nicht gefunden "
+                              "oder bereits im Papierkorb"}
+        return {"status": "im papierkorb", "expense_id": expense_id}
+
+    def _cap_restore_expense(self, expense_id: int) -> dict:
+        if not self.repo.restore(expense_id):
+            return {"error": f"Ausgabe {expense_id} nicht im Papierkorb"}
+        return {"status": "wiederhergestellt", "expense_id": expense_id}
+
+    def _cap_purge_expense(self, expense_id: int) -> dict:
         existed = self.repo.delete(expense_id)
         if not existed:
             return {"error": f"Ausgabe {expense_id} nicht gefunden"}
@@ -241,7 +281,12 @@ class FinanceModule(ModuleInterface):
                 and self._ctx.has_capability("notes.cleanup_for_entity")):
             self._ctx.call("notes.cleanup_for_entity",
                             entity_type="expenses", entity_id=expense_id)
-        return {"status": "geloescht", "expense_id": expense_id}
+        return {"status": "endgueltig geloescht", "expense_id": expense_id}
+
+    def _cap_list_deleted(self) -> dict:
+        items = self.repo.list_deleted()
+        return {"count": len(items),
+                "expenses": [e.to_dict() for e in items]}
 
     def _cap_by_category(self, month: str | None = None) -> dict:
         ausgaben = self._select_expenses(month)

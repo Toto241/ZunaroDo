@@ -36,9 +36,10 @@ def _now_utc_iso() -> str:
     """
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-from models import (AssistantLogEntry, CalendarEvent, Contract, DayEntry,
-                    Expense, FamilyMember, HouseholdOrder, HouseholdTask,
-                    Note, PriceMemory, Proposal, ShoppingItem, SocialContact)
+from models import (AssistantLogEntry, AuditLogEntry, CalendarEvent,
+                    Contract, DayEntry, Expense, FamilyMember,
+                    HouseholdOrder, HouseholdTask, Note, PriceMemory,
+                    Proposal, ShoppingItem, SocialContact, TaskTemplate)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS contracts (
@@ -226,6 +227,121 @@ def _ensure_column(conn, table: str,
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}")
 
 
+# =====================================================================
+#  Schema-Versionierung
+# =====================================================================
+# 'CURRENT_SCHEMA_VERSION' ist die Version, die der Code erwartet. Wird
+# bei jedem Open verglichen mit PRAGMA user_version - bei Bedarf
+# laufen die Migrations-Steps nacheinander.
+CURRENT_SCHEMA_VERSION = 2
+
+# Migrations werden als (von, nach, SQL-Skript)-Tupel registriert.
+# Schritt 1 -> 2: Soft-Delete-Spalten + Audit-Log + Task-Templates +
+#                  Note-Attachments
+_MIGRATION_2 = """
+ALTER TABLE contracts ADD COLUMN deleted_at TEXT;
+ALTER TABLE expenses ADD COLUMN deleted_at TEXT;
+ALTER TABLE calendar_events ADD COLUMN deleted_at TEXT;
+ALTER TABLE social_contacts ADD COLUMN deleted_at TEXT;
+ALTER TABLE family_members ADD COLUMN deleted_at TEXT;
+ALTER TABLE household_orders ADD COLUMN deleted_at TEXT;
+ALTER TABLE notes ADD COLUMN deleted_at TEXT;
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    action      TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id   INTEGER,
+    details     TEXT,
+    actor       TEXT,
+    created_at  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS task_templates (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    title         TEXT NOT NULL,
+    interval_days INTEGER NOT NULL DEFAULT 7,
+    description   TEXT DEFAULT '',
+    created_at    TEXT
+);
+
+CREATE TABLE IF NOT EXISTS note_attachments (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    note_id     INTEGER NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id   INTEGER NOT NULL,
+    created_at  TEXT,
+    FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_note_attachments_entity
+    ON note_attachments(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_note_attachments_note
+    ON note_attachments(note_id);
+"""
+
+
+def _migrate_schema(conn) -> tuple[int, int]:
+    """
+    Wendet alle ausstehenden Migrationen an. Liefert (alte_version,
+    neue_version) zurueck. Idempotent: wiederholter Aufruf ist ein
+    No-Op.
+    """
+    row = conn.execute("PRAGMA user_version").fetchone()
+    current = row[0] if row else 0
+    target = CURRENT_SCHEMA_VERSION
+    if current >= target:
+        return current, current
+
+    if current < 2:
+        # Vor Version 2: alle additiven Spalten via _ensure_column,
+        # damit alte DBs nicht crashen (ALTER TABLE wuerde sonst werfen
+        # weil Spalten teilweise schon existieren).
+        for table, column in [
+            ("contracts", "deleted_at"),
+            ("expenses", "deleted_at"),
+            ("calendar_events", "deleted_at"),
+            ("social_contacts", "deleted_at"),
+            ("family_members", "deleted_at"),
+            ("household_orders", "deleted_at"),
+            ("notes", "deleted_at"),
+        ]:
+            _ensure_column(conn, table, column, "TEXT")
+        # Neue Tabellen via executescript (idempotent durch IF NOT EXISTS)
+        conn.executescript("""
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            action      TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id   INTEGER,
+            details     TEXT,
+            actor       TEXT,
+            created_at  TEXT
+        );
+        CREATE TABLE IF NOT EXISTS task_templates (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            title         TEXT NOT NULL,
+            interval_days INTEGER NOT NULL DEFAULT 7,
+            description   TEXT DEFAULT '',
+            created_at    TEXT
+        );
+        CREATE TABLE IF NOT EXISTS note_attachments (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            note_id     INTEGER NOT NULL,
+            entity_type TEXT NOT NULL,
+            entity_id   INTEGER NOT NULL,
+            created_at  TEXT,
+            FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_note_attachments_entity
+            ON note_attachments(entity_type, entity_id);
+        CREATE INDEX IF NOT EXISTS idx_note_attachments_note
+            ON note_attachments(note_id);
+        """)
+    conn.execute(f"PRAGMA user_version = {target}")
+    conn.commit()
+    return current, target
+
+
 class _SafeConnection:
     """
     Thread-sicherer Wrapper um sqlite3.Connection.
@@ -347,10 +463,16 @@ class Database:
         self.conn.commit()
 
     def _migrate(self) -> None:
-        """Spalten, die in alten DBs noch fehlen, nachziehen."""
+        """Schema-Migrationen: zuerst additiv-historisch, dann
+        versionierte Migrations-Schritte ueber user_version."""
+        # Historische Spalten-Ergaenzungen (vor Version 1)
         _ensure_column(self.conn, "contracts", "owner_id", "INTEGER")
         _ensure_column(self.conn, "expenses", "owner_id", "INTEGER")
         _ensure_column(self.conn, "family_members", "birthday", "TEXT")
+        # Versionierte Migration
+        before, after = _migrate_schema(self.conn)
+        self.schema_version = after
+        self._migration_jump = (before, after)
 
     def close(self) -> None:
         self.conn.close()
@@ -419,11 +541,17 @@ class ContractRepository:
         ).fetchone()
         return self._row_to_contract(row) if row else None
 
-    def list_all(self, only_active: bool = True) -> list[Contract]:
+    def list_all(self, only_active: bool = True,
+                  include_deleted: bool = False) -> list[Contract]:
         sql = ("SELECT c.*, m.name AS owner_name FROM contracts c"
                " LEFT JOIN family_members m ON m.id = c.owner_id")
+        clauses = []
         if only_active:
-            sql += " WHERE c.status='active'"
+            clauses.append("c.status='active'")
+        if not include_deleted:
+            clauses.append("c.deleted_at IS NULL")
+        if clauses:
+            sql += " WHERE " + " AND ".join(clauses)
         sql += " ORDER BY c.name"
         return [self._row_to_contract(r) for r in self.db.conn.execute(sql)]
 
@@ -433,6 +561,32 @@ class ContractRepository:
             "DELETE FROM contracts WHERE id=?", (contract_id,))
         self.db.conn.commit()
         return cur.rowcount > 0
+
+    def soft_delete(self, contract_id: int) -> bool:
+        """Markiert Vertrag als geloescht (Papierkorb). Endgueltig erst
+        ueber 'delete'."""
+        cur = self.db.conn.execute(
+            "UPDATE contracts SET deleted_at=?, updated_at=?"
+            " WHERE id=? AND deleted_at IS NULL",
+            (_now_utc_iso(), _now_utc_iso(), contract_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def restore(self, contract_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE contracts SET deleted_at=NULL, updated_at=?"
+            " WHERE id=? AND deleted_at IS NOT NULL",
+            (_now_utc_iso(), contract_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def list_deleted(self) -> list[Contract]:
+        """Listet die im Papierkorb liegenden Vertraege."""
+        rows = self.db.conn.execute(
+            "SELECT c.*, m.name AS owner_name FROM contracts c"
+            " LEFT JOIN family_members m ON m.id = c.owner_id"
+            " WHERE c.deleted_at IS NOT NULL ORDER BY c.deleted_at DESC")
+        return [self._row_to_contract(r) for r in rows]
 
     def price_changes(self, contract_id: int) -> list[dict]:
         rows = self.db.conn.execute(
@@ -483,18 +637,41 @@ class ExpenseRepository:
         e.id = cur.lastrowid
         return e
 
-    def list_all(self) -> list[Expense]:
-        rows = self.db.conn.execute(
-            "SELECT e.*, m.name AS owner_name FROM expenses e"
-            " LEFT JOIN family_members m ON m.id = e.owner_id"
-            " ORDER BY e.spent_on DESC, e.id DESC")
-        return [self._row_to_expense(r) for r in rows]
+    def list_all(self, include_deleted: bool = False) -> list[Expense]:
+        sql = ("SELECT e.*, m.name AS owner_name FROM expenses e"
+               " LEFT JOIN family_members m ON m.id = e.owner_id")
+        if not include_deleted:
+            sql += " WHERE e.deleted_at IS NULL"
+        sql += " ORDER BY e.spent_on DESC, e.id DESC"
+        return [self._row_to_expense(r) for r in self.db.conn.execute(sql)]
 
     def delete(self, expense_id: int) -> bool:
         cur = self.db.conn.execute(
             "DELETE FROM expenses WHERE id=?", (expense_id,))
         self.db.conn.commit()
         return cur.rowcount > 0
+
+    def soft_delete(self, expense_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE expenses SET deleted_at=? WHERE id=? "
+            "AND deleted_at IS NULL", (_now_utc_iso(), expense_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def restore(self, expense_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE expenses SET deleted_at=NULL WHERE id=? "
+            "AND deleted_at IS NOT NULL", (expense_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def list_deleted(self) -> list[Expense]:
+        rows = self.db.conn.execute(
+            "SELECT e.*, m.name AS owner_name FROM expenses e"
+            " LEFT JOIN family_members m ON m.id = e.owner_id"
+            " WHERE e.deleted_at IS NOT NULL"
+            " ORDER BY e.deleted_at DESC")
+        return [self._row_to_expense(r) for r in rows]
 
     def list_in_month(self, year: int, month: int) -> list[Expense]:
         prefix = f"{year:04d}-{month:02d}"
@@ -571,9 +748,13 @@ class FamilyRepository:
         m.id = cur.lastrowid
         return m
 
-    def list_members(self) -> list[FamilyMember]:
-        rows = self.db.conn.execute("SELECT * FROM family_members ORDER BY id")
-        return [self._row_to_member(r) for r in rows]
+    def list_members(self,
+                       include_deleted: bool = False) -> list[FamilyMember]:
+        sql = "SELECT * FROM family_members"
+        if not include_deleted:
+            sql += " WHERE deleted_at IS NULL"
+        sql += " ORDER BY id"
+        return [self._row_to_member(r) for r in self.db.conn.execute(sql)]
 
     def get_member(self, member_id: int) -> Optional[FamilyMember]:
         r = self.db.conn.execute(
@@ -583,7 +764,7 @@ class FamilyRepository:
 
     def delete_member(self, member_id: int) -> bool:
         """
-        Loescht ein Mitglied. Referenzen (assignee_id in Auftraegen,
+        Endgueltige Loeschung. Referenzen (assignee_id in Auftraegen,
         owner_id in Vertraegen/Ausgaben, person_id in Terminen) werden
         ueber ON DELETE SET NULL automatisch entkoppelt.
         """
@@ -591,6 +772,26 @@ class FamilyRepository:
             "DELETE FROM family_members WHERE id=?", (member_id,))
         self.db.conn.commit()
         return cur.rowcount > 0
+
+    def soft_delete_member(self, member_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE family_members SET deleted_at=? WHERE id=? "
+            "AND deleted_at IS NULL", (_now_utc_iso(), member_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def restore_member(self, member_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE family_members SET deleted_at=NULL WHERE id=? "
+            "AND deleted_at IS NOT NULL", (member_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def list_deleted_members(self) -> list[FamilyMember]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM family_members"
+            " WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC")
+        return [self._row_to_member(r) for r in rows]
 
     def find_member_by_name(self, name: str) -> Optional[FamilyMember]:
         r = self.db.conn.execute(
@@ -889,12 +1090,13 @@ class CalendarRepository:
         e.id = cur.lastrowid
         return e
 
-    def list_all(self) -> list[CalendarEvent]:
-        rows = self.db.conn.execute(
-            "SELECT c.*, m.name AS person_name FROM calendar_events c"
-            " LEFT JOIN family_members m ON m.id = c.person_id"
-            " ORDER BY c.due_date")
-        return [self._row_to_event(r) for r in rows]
+    def list_all(self, include_deleted: bool = False) -> list[CalendarEvent]:
+        sql = ("SELECT c.*, m.name AS person_name FROM calendar_events c"
+               " LEFT JOIN family_members m ON m.id = c.person_id")
+        if not include_deleted:
+            sql += " WHERE c.deleted_at IS NULL"
+        sql += " ORDER BY c.due_date"
+        return [self._row_to_event(r) for r in self.db.conn.execute(sql)]
 
     def list_upcoming(self, horizon_days: int = 90) -> list[CalendarEvent]:
         """
@@ -933,6 +1135,28 @@ class CalendarRepository:
             "DELETE FROM calendar_events WHERE id=?", (event_id,))
         self.db.conn.commit()
 
+    def soft_delete(self, event_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE calendar_events SET deleted_at=? WHERE id=?"
+            " AND deleted_at IS NULL", (_now_utc_iso(), event_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def restore(self, event_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE calendar_events SET deleted_at=NULL WHERE id=?"
+            " AND deleted_at IS NOT NULL", (event_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def list_deleted(self) -> list[CalendarEvent]:
+        rows = self.db.conn.execute(
+            "SELECT c.*, m.name AS person_name FROM calendar_events c"
+            " LEFT JOIN family_members m ON m.id = c.person_id"
+            " WHERE c.deleted_at IS NOT NULL"
+            " ORDER BY c.deleted_at DESC")
+        return [self._row_to_event(r) for r in rows]
+
     @staticmethod
     def _row_to_event(row: sqlite3.Row) -> CalendarEvent:
         return CalendarEvent(
@@ -965,10 +1189,12 @@ class SocialRepository:
         c.id = cur.lastrowid
         return c
 
-    def list_all(self) -> list[SocialContact]:
-        rows = self.db.conn.execute(
-            "SELECT * FROM social_contacts ORDER BY name")
-        return [self._row_to_contact(r) for r in rows]
+    def list_all(self, include_deleted: bool = False) -> list[SocialContact]:
+        sql = "SELECT * FROM social_contacts"
+        if not include_deleted:
+            sql += " WHERE deleted_at IS NULL"
+        sql += " ORDER BY name"
+        return [self._row_to_contact(r) for r in self.db.conn.execute(sql)]
 
     def get(self, contact_id: int) -> Optional[SocialContact]:
         r = self.db.conn.execute(
@@ -981,6 +1207,26 @@ class SocialRepository:
             "DELETE FROM social_contacts WHERE id=?", (contact_id,))
         self.db.conn.commit()
         return cur.rowcount > 0
+
+    def soft_delete(self, contact_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE social_contacts SET deleted_at=? WHERE id=? "
+            "AND deleted_at IS NULL", (_now_utc_iso(), contact_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def restore(self, contact_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "UPDATE social_contacts SET deleted_at=NULL WHERE id=? "
+            "AND deleted_at IS NOT NULL", (contact_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def list_deleted(self) -> list[SocialContact]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM social_contacts"
+            " WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC")
+        return [self._row_to_contact(r) for r in rows]
 
     def mark_contacted(self, contact_id: int,
                        contacted_on: Optional[date] = None) -> None:
@@ -1187,6 +1433,134 @@ class NoteRepository:
             id=row["id"], title=row["title"], content=row["content"],
             entity_type=row["entity_type"], entity_id=row["entity_id"],
         )
+
+
+class AuditLogRepository:
+    """Audit-Log fuer destruktive/aenderne Aktionen (B: Audit-Log)."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def append(self, action: str,
+                entity_type: Optional[str] = None,
+                entity_id: Optional[int] = None,
+                details: str = "",
+                actor: str = "local") -> AuditLogEntry:
+        now = _now_utc_iso()
+        cur = self.db.conn.execute(
+            "INSERT INTO audit_log (action, entity_type, entity_id,"
+            " details, actor, created_at) VALUES (?,?,?,?,?,?)",
+            (action, entity_type, entity_id, details, actor, now))
+        self.db.conn.commit()
+        return AuditLogEntry(
+            id=cur.lastrowid, action=action, entity_type=entity_type,
+            entity_id=entity_id, details=details, actor=actor)
+
+    def tail(self, limit: int = 200) -> list[AuditLogEntry]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM audit_log ORDER BY id DESC LIMIT ?", (limit,))
+        out: list[AuditLogEntry] = []
+        for r in rows:
+            out.append(AuditLogEntry(
+                id=r["id"], action=r["action"],
+                entity_type=r["entity_type"], entity_id=r["entity_id"],
+                details=r["details"], actor=r["actor"]))
+        return list(reversed(out))
+
+
+class TaskTemplateRepository:
+    """Vorlagen fuer wiederkehrende Haushaltsaufgaben (C: Templates)."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def add(self, t: TaskTemplate) -> TaskTemplate:
+        now = _now_utc_iso()
+        cur = self.db.conn.execute(
+            "INSERT INTO task_templates (title, interval_days,"
+            " description, created_at) VALUES (?,?,?,?)",
+            (t.title, t.interval_days, t.description, now))
+        self.db.conn.commit()
+        t.id = cur.lastrowid
+        return t
+
+    def list_all(self) -> list[TaskTemplate]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM task_templates ORDER BY title")
+        return [TaskTemplate(
+            id=r["id"], title=r["title"],
+            interval_days=r["interval_days"],
+            description=r["description"] or "")
+            for r in rows]
+
+    def get(self, template_id: int) -> Optional[TaskTemplate]:
+        r = self.db.conn.execute(
+            "SELECT * FROM task_templates WHERE id=?", (template_id,)
+        ).fetchone()
+        if r is None:
+            return None
+        return TaskTemplate(
+            id=r["id"], title=r["title"],
+            interval_days=r["interval_days"],
+            description=r["description"] or "")
+
+    def delete(self, template_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "DELETE FROM task_templates WHERE id=?", (template_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+
+class NoteAttachmentRepository:
+    """N:M-Anhaenge zwischen Notizen und Entitaeten (C: Multi-Attach)."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def attach(self, note_id: int, entity_type: str,
+                entity_id: int) -> None:
+        # Idempotent: gleiche Verknuepfung doppelt anlegen ist OK
+        existing = self.db.conn.execute(
+            "SELECT 1 FROM note_attachments WHERE note_id=?"
+            " AND entity_type=? AND entity_id=?",
+            (note_id, entity_type, entity_id)).fetchone()
+        if existing:
+            return
+        self.db.conn.execute(
+            "INSERT INTO note_attachments (note_id, entity_type,"
+            " entity_id, created_at) VALUES (?,?,?,?)",
+            (note_id, entity_type, entity_id, _now_utc_iso()))
+        self.db.conn.commit()
+
+    def detach(self, note_id: int, entity_type: str,
+                entity_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "DELETE FROM note_attachments WHERE note_id=? AND"
+            " entity_type=? AND entity_id=?",
+            (note_id, entity_type, entity_id))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def list_for_note(self, note_id: int) -> list[dict]:
+        rows = self.db.conn.execute(
+            "SELECT entity_type, entity_id FROM note_attachments"
+            " WHERE note_id=?", (note_id,))
+        return [{"entity_type": r["entity_type"],
+                  "entity_id": r["entity_id"]} for r in rows]
+
+    def list_for_entity(self, entity_type: str,
+                         entity_id: int) -> list[int]:
+        rows = self.db.conn.execute(
+            "SELECT note_id FROM note_attachments WHERE entity_type=?"
+            " AND entity_id=?", (entity_type, entity_id))
+        return [r["note_id"] for r in rows]
+
+    def delete_for_entity(self, entity_type: str, entity_id: int) -> int:
+        cur = self.db.conn.execute(
+            "DELETE FROM note_attachments WHERE entity_type=?"
+            " AND entity_id=?", (entity_type, entity_id))
+        self.db.conn.commit()
+        return cur.rowcount
 
 
 class SettingsRepository:

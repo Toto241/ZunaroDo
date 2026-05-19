@@ -133,16 +133,43 @@ class FamilyModule(ModuleInterface):
             ),
             Capability(
                 name="family.delete_member",
-                description="Loescht ein Haushaltsmitglied. Bestehende "
-                            "Auftraege/Vertraege/Ausgaben/Termine werden "
-                            "entkoppelt (Zuweisung wird leer), nicht "
-                            "geloescht.",
+                description="Verschiebt ein Haushaltsmitglied in den "
+                            "Papierkorb (Soft-Delete). Restore via "
+                            "family.restore_member, endgueltig erst via "
+                            "family.purge_member.",
                 parameters={
                     "member_id": {"type": "integer", "_required": True,
                                    "description": "ID des Mitglieds"},
                 },
                 handler=self._cap_delete_member,
                 destructive=True,
+            ),
+            Capability(
+                name="family.restore_member",
+                description="Stellt ein geloeschtes Mitglied wieder her.",
+                parameters={
+                    "member_id": {"type": "integer", "_required": True,
+                                   "description": "ID des Mitglieds"},
+                },
+                handler=self._cap_restore_member,
+                destructive=True,
+            ),
+            Capability(
+                name="family.purge_member",
+                description="Loescht ein Mitglied endgueltig. Referenzen "
+                            "werden ueber ON DELETE SET NULL entkoppelt.",
+                parameters={
+                    "member_id": {"type": "integer", "_required": True,
+                                   "description": "ID des Mitglieds"},
+                },
+                handler=self._cap_purge_member,
+                destructive=True,
+            ),
+            Capability(
+                name="family.list_deleted_members",
+                description="Listet Mitglieder im Papierkorb.",
+                parameters={},
+                handler=self._cap_list_deleted_members,
             ),
             Capability(
                 name="family.add_task",
@@ -306,6 +333,17 @@ class FamilyModule(ModuleInterface):
         return {"status": "aktualisiert", "item_id": item_id, "bought": bought}
 
     def _cap_delete_member(self, member_id: int) -> dict:
+        if not self.repo.soft_delete_member(member_id):
+            return {"error": f"Mitglied {member_id} nicht gefunden oder "
+                              "bereits im Papierkorb"}
+        return {"status": "im papierkorb", "member_id": member_id}
+
+    def _cap_restore_member(self, member_id: int) -> dict:
+        if not self.repo.restore_member(member_id):
+            return {"error": f"Mitglied {member_id} nicht im Papierkorb"}
+        return {"status": "wiederhergestellt", "member_id": member_id}
+
+    def _cap_purge_member(self, member_id: int) -> dict:
         existed = self.repo.delete_member(member_id)
         if not existed:
             return {"error": f"Mitglied {member_id} nicht gefunden"}
@@ -313,7 +351,12 @@ class FamilyModule(ModuleInterface):
                 and self._ctx.has_capability("notes.cleanup_for_entity")):
             self._ctx.call("notes.cleanup_for_entity",
                             entity_type="family", entity_id=member_id)
-        return {"status": "geloescht", "member_id": member_id}
+        return {"status": "endgueltig geloescht", "member_id": member_id}
+
+    def _cap_list_deleted_members(self) -> dict:
+        items = self.repo.list_deleted_members()
+        return {"count": len(items),
+                "members": [m.to_dict() for m in items]}
 
     def _cap_add_task(self, title: str, assignees: list[str],
                       interval_days: int = 7,

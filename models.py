@@ -31,6 +31,7 @@ class Contract:
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None    # Soft-Delete (Papierkorb)
 
     def to_dict(self) -> dict:
         return {
@@ -324,6 +325,42 @@ class AssistantLogEntry:
     content: str
     id: Optional[int] = None
     created_at: Optional[datetime] = None
+
+
+@dataclass
+class AuditLogEntry:
+    """Eine Zeile im Audit-Log fuer destruktive/aenderne Aktionen."""
+    action: str                         # z.B. 'contracts.delete'
+    entity_type: Optional[str] = None
+    entity_id: Optional[int] = None
+    details: str = ""
+    actor: str = "local"
+    id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "action": self.action,
+            "entity_type": self.entity_type,
+            "entity_id": self.entity_id,
+            "details": self.details,
+            "actor": self.actor,
+        }
+
+
+@dataclass
+class TaskTemplate:
+    """Vorlage fuer eine wiederkehrende Haushaltsaufgabe."""
+    title: str
+    interval_days: int = 7
+    description: str = ""
+    id: Optional[int] = None
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "title": self.title,
+                "interval_days": self.interval_days,
+                "description": self.description}
 
 
 @dataclass

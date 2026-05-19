@@ -112,6 +112,38 @@ def list_backups(directory: Path) -> list[Path]:
                    key=lambda p: p.stat().st_mtime, reverse=True)
 
 
+def verify_backup(path: Path,
+                   encryption_key: Optional[str] = None) -> bool:
+    """
+    Oeffnet die Backup-Datei kurz und prueft, ob das Schema lesbar
+    ist. Liefert True bei OK, False bei Korruption / falschem Key.
+
+    Wird vom AutoBackupWorker direkt nach dem Backup aufgerufen, damit
+    stiller Backup-Schaden NICHT erst beim Restore auffaellt.
+    """
+    if not path.exists():
+        return False
+    # Wir oeffnen einen kurzlebigen Database-Wrapper auf der Backup-
+    # Datei. Mit Schluessel: SQLCipher-Pfad; sonst Plain.
+    try:
+        from database import Database     # spaeter Import (Zykel-Vermeidung)
+        env_key_backup = os.environ.pop("ALLTAGSHELFER_DB_KEY", None)
+        try:
+            db = Database(str(path), encryption_key=encryption_key)
+            try:
+                # Mindest-Plausibilitaet: Versions-Tabelle muss lesbar sein
+                row = db.conn.execute(
+                    "SELECT count(*) AS n FROM sqlite_master").fetchone()
+                return row is not None and row["n"] >= 0
+            finally:
+                db.close()
+        finally:
+            if env_key_backup is not None:
+                os.environ["ALLTAGSHELFER_DB_KEY"] = env_key_backup
+    except Exception:
+        return False
+
+
 def prune_old_backups(directory: Path, keep: int) -> list[Path]:
     """
     Loescht alle Backups in 'directory' bis auf die juengsten 'keep'
@@ -175,10 +207,24 @@ class AutoBackupWorker:
             self._thread = None
 
     def run_once(self) -> Optional[Path]:
-        """Manueller Auto-Backup-Lauf: Backup + Pruning."""
+        """Manueller Auto-Backup-Lauf: Backup + Verifikation + Pruning."""
         try:
             target = self.directory / default_backup_name()
             make_backup(self.db, target, encryption_key=self.encryption_key)
+            # Verifikation: Backup direkt nach Schreiben kurz oeffnen
+            # und das Schema lesen. Stiller Backup-Schaden ist sonst
+            # erst beim Restore sichtbar (B: Backup-Verifikation).
+            if not verify_backup(target,
+                                  encryption_key=self.encryption_key):
+                # Verifikation fehlgeschlagen - Datei wegwerfen, sonst
+                # liegt eine korrupte 'Sicherung' im Backup-Ordner.
+                try:
+                    target.unlink()
+                except OSError:
+                    pass
+                self.last_error = (f"Backup '{target}' nicht "
+                                     "wieder lesbar - verworfen.")
+                return None
             prune_old_backups(self.directory, self.retention_count)
             self.last_backup_path = target
             self.last_error = None

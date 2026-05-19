@@ -53,6 +53,13 @@ DEFAULTS: dict[str, str] = {
     "backup.directory": "backups",
     "backup.retention_count": "10",
     "backup.interval_hours": "24",
+    # Wenn gesetzt: Backup wird mit diesem Schluessel verschluesselt,
+    # NICHT mit dem Live-DB-Schluessel. Sinnvoll, wenn Backups z.B.
+    # an einen anderen Personenkreis weitergegeben werden.
+    "backup.key": "",
+    # GUI: erlaubt das Hinterlegen einer Tab-Reihenfolge als Komma-
+    # separierte Liste der Tab-Keys.
+    "gui.tab_order": "",
 }
 
 ENV_MAP: dict[str, str] = {
@@ -64,11 +71,12 @@ ENV_MAP: dict[str, str] = {
     "imap.folder": "ALLTAGSHELFER_IMAP_FOLDER",
     "sync.dir": "ALLTAGSHELFER_SYNC_DIR",
     "db.key": "ALLTAGSHELFER_DB_KEY",
+    "backup.key": "ALLTAGSHELFER_BACKUP_KEY",
 }
 
-# Schluessel, deren Wert nicht in der DB stehen sollte (zu sensibel oder
-# besser per Env)
-SECRET_KEYS = {"gemini.api_key", "imap.pass", "smtp.pass", "db.key"}
+# Schluessel, deren Wert nicht in der DB stehen sollte
+SECRET_KEYS = {"gemini.api_key", "imap.pass", "smtp.pass",
+               "db.key", "backup.key"}
 
 
 @dataclass
@@ -103,6 +111,8 @@ class AppConfig:
     backup_directory: str = "backups"
     backup_retention_count: int = 10
     backup_interval_hours: int = 24
+    backup_key: str = ""
+    gui_tab_order: str = ""
 
 
 def _coerce(key: str, raw: str, config: AppConfig) -> None:

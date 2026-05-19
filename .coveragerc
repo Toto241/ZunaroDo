@@ -1,0 +1,28 @@
+[run]
+branch = True
+source = .
+omit =
+    tests/*
+    */tests/*
+    gui.py
+    main.py
+    services/sync_server.py
+    services/print_service.py
+    setup.py
+    */__main__.py
+
+[report]
+precision = 1
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    def __repr__
+    pass
+    \.\.\.
+
+[html]
+directory = htmlcov

@@ -224,16 +224,43 @@ class ContractModule(ModuleInterface):
             ),
             Capability(
                 name="contracts.delete",
-                description="Loescht einen Vertrag samt Preis-Historie "
-                            "endgueltig. Fuer Statuswechsel (gekuendigt) "
-                            "stattdessen 'contracts.report_price_change' "
-                            "mit 0.0 oder eine Statusspalte verwenden.",
+                description="Verschiebt einen Vertrag in den Papierkorb "
+                            "(Soft-Delete). Mit 'contracts.restore' "
+                            "wiederherstellbar; endgueltig erst durch "
+                            "'contracts.purge'.",
                 parameters={
                     "contract_id": {"type": "integer", "_required": True,
                                     "description": "ID des Vertrags"},
                 },
                 handler=self._cap_delete,
                 destructive=True,
+            ),
+            Capability(
+                name="contracts.restore",
+                description="Stellt einen geloeschten Vertrag wieder her.",
+                parameters={
+                    "contract_id": {"type": "integer", "_required": True,
+                                    "description": "ID des Vertrags"},
+                },
+                handler=self._cap_restore,
+                destructive=True,
+            ),
+            Capability(
+                name="contracts.purge",
+                description="Endgueltige Loeschung eines Vertrags (kein "
+                            "Restore mehr moeglich).",
+                parameters={
+                    "contract_id": {"type": "integer", "_required": True,
+                                    "description": "ID des Vertrags"},
+                },
+                handler=self._cap_purge,
+                destructive=True,
+            ),
+            Capability(
+                name="contracts.list_deleted",
+                description="Listet die im Papierkorb liegenden Vertraege.",
+                parameters={},
+                handler=self._cap_list_deleted,
             ),
             Capability(
                 name="contracts.generate_cancellation",
@@ -295,11 +322,30 @@ class ContractModule(ModuleInterface):
         return {"status": "angelegt", "contract": saved.to_dict()}
 
     def _cap_delete(self, contract_id: int) -> dict:
+        """Standard-Loeschen ist jetzt Soft-Delete (Papierkorb)."""
+        existed = self.repo.soft_delete(contract_id)
+        if not existed:
+            return {"error": f"Vertrag {contract_id} nicht gefunden "
+                              "oder bereits im Papierkorb"}
+        return {"status": "im papierkorb", "contract_id": contract_id}
+
+    def _cap_restore(self, contract_id: int) -> dict:
+        if not self.repo.restore(contract_id):
+            return {"error": f"Vertrag {contract_id} ist nicht im "
+                              "Papierkorb"}
+        return {"status": "wiederhergestellt", "contract_id": contract_id}
+
+    def _cap_purge(self, contract_id: int) -> dict:
         existed = self.repo.delete(contract_id)
         if not existed:
             return {"error": f"Vertrag {contract_id} nicht gefunden"}
         self._cleanup_notes(contract_id)
-        return {"status": "geloescht", "contract_id": contract_id}
+        return {"status": "endgueltig geloescht", "contract_id": contract_id}
+
+    def _cap_list_deleted(self) -> dict:
+        items = self.repo.list_deleted()
+        return {"count": len(items),
+                "contracts": [c.to_dict() for c in items]}
 
     def _cap_set_owner(self, contract_id: int, owner_id: int = 0) -> dict:
         contract = self.repo.get(contract_id)

@@ -38,20 +38,47 @@ from typing import Optional
 
 
 DEFAULT_MAX_LOG_LINES = 5000
+# Rate-Limit: maximal so viele POST-Requests pro IP innerhalb des
+# Sliding-Window von DEFAULT_RATE_WINDOW_SEC Sekunden. Konservativ
+# gewaehlt - ein normales Geraet erzeugt vielleicht 1 Event pro Minute.
+DEFAULT_RATE_LIMIT = 60
+DEFAULT_RATE_WINDOW_SEC = 60
 
 
 class _State:
     """Gemeinsamer Zustand zwischen allen Requests."""
 
     def __init__(self, log_path: Path, token: Optional[str],
-                 max_log_lines: int = DEFAULT_MAX_LOG_LINES):
+                 max_log_lines: int = DEFAULT_MAX_LOG_LINES,
+                 rate_limit: int = DEFAULT_RATE_LIMIT,
+                 rate_window_sec: int = DEFAULT_RATE_WINDOW_SEC):
         self.log_path = log_path
         self.token = token
         self.max_log_lines = max_log_lines
+        self.rate_limit = max(1, rate_limit)
+        self.rate_window_sec = max(1, rate_window_sec)
         self.lock = threading.Lock()
+        # Pro Client-IP eine Liste von Timestamps der letzten POSTs.
+        # Sliding-Window: alles aelter als rate_window_sec wird verworfen.
+        self._request_log: dict[str, list[float]] = {}
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         if not self.log_path.exists():
             self.log_path.write_text("", encoding="utf-8")
+
+    def check_rate(self, client_ip: str) -> bool:
+        """True = unter dem Limit, False = abgelehnt."""
+        import time as _time
+        now = _time.time()
+        cutoff = now - self.rate_window_sec
+        with self.lock:
+            timestamps = self._request_log.setdefault(client_ip, [])
+            # Alte Eintraege wegwerfen
+            while timestamps and timestamps[0] < cutoff:
+                timestamps.pop(0)
+            if len(timestamps) >= self.rate_limit:
+                return False
+            timestamps.append(now)
+            return True
 
     def compact_if_needed(self) -> int:
         """
@@ -121,6 +148,11 @@ class _Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:                           # noqa: N802
         if not self._check_token():
             return self._send_json(401, {"error": "unauthorized"})
+        # Rate-Limit pro Client-IP: schuetzt auch vor einem
+        # kompromittierten Geraet, das den Log mit Muell fluten will (B).
+        client_ip = self.client_address[0] if self.client_address else "?"
+        if not self.state.check_rate(client_ip):
+            return self._send_json(429, {"error": "rate limit exceeded"})
         if self.path != "/events":
             return self._send_json(404, {"error": "not found"})
         length = int(self.headers.get("Content-Length", "0") or "0")
@@ -152,7 +184,9 @@ def serve(log_path: Path, host: str, port: int,
           token: Optional[str],
           max_log_lines: int = DEFAULT_MAX_LOG_LINES,
           certfile: Optional[str] = None,
-          keyfile: Optional[str] = None) -> ThreadingHTTPServer:
+          keyfile: Optional[str] = None,
+          rate_limit: int = DEFAULT_RATE_LIMIT,
+          rate_window_sec: int = DEFAULT_RATE_WINDOW_SEC) -> ThreadingHTTPServer:
     """
     Startet den Sync-Server (ungebunden, der Aufrufer muss
     serve_forever() ausfuehren).
@@ -161,8 +195,14 @@ def serve(log_path: Path, host: str, port: int,
     Socket per TLS verschluesselt. Ohne diese Parameter laeuft der
     Server unverschluesselt - dann auf 127.0.0.1 binden ODER Token
     setzen ODER beides.
+
+    Rate-Limit: max 'rate_limit' POSTs pro Client-IP im Sliding-Window
+    'rate_window_sec' Sekunden. Schuetzt vor einem kompromittierten
+    Geraet, das den Log voll spammen will.
     """
-    _Handler.state = _State(log_path, token, max_log_lines=max_log_lines)
+    _Handler.state = _State(log_path, token, max_log_lines=max_log_lines,
+                              rate_limit=rate_limit,
+                              rate_window_sec=rate_window_sec)
     server = ThreadingHTTPServer((host, port), _Handler)
     if certfile and keyfile:
         import ssl

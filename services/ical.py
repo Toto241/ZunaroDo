@@ -16,40 +16,16 @@ Format-Vorsicht:
 """
 from __future__ import annotations
 
-import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
 from models import CalendarEvent
+from services.escaping import escape_text as _escape
+from services.escaping import unescape_text as _unescape
 
 
 _LINE_BYTE_LIMIT = 75
-
-
-def _escape(value) -> str:
-    """Escaped Sonderzeichen fuer iCal-TEXT-Felder. None wird zu ''."""
-    if value is None:
-        return ""
-    return (str(value).replace("\\", "\\\\")
-                       .replace("\n", "\\n")
-                       .replace(",", "\\,")
-                       .replace(";", "\\;"))
-
-
-# Regex fuer Unescape: ein Backslash gefolgt von Schluesselzeichen
-_UNESCAPE_RE = re.compile(r"\\([\\,;nN])")
-_UNESCAPE_MAP = {"\\": "\\", ",": ",", ";": ";", "n": "\n", "N": "\n"}
-
-
-def _unescape(value: str) -> str:
-    """
-    Macht das _escape rueckgaengig - in einem einzigen Pass per Regex.
-    So tritt das frueher genutzte NUL-Byte-Placeholder-Verfahren nicht
-    in Konflikt mit echten NUL-Bytes im Input.
-    """
-    return _UNESCAPE_RE.sub(
-        lambda m: _UNESCAPE_MAP.get(m.group(1), m.group(0)), value)
 
 
 def _fold(line: str) -> str:

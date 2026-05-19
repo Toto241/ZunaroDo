@@ -12,8 +12,10 @@ Sechs Capabilities:
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from core.interface import Capability, ModuleInterface
-from database import NoteRepository
+from database import NoteAttachmentRepository, NoteRepository
 from models import Note
 
 
@@ -23,8 +25,13 @@ _VALID_ENTITY_TYPES = {
 
 class NotesModule(ModuleInterface):
 
-    def __init__(self, repo: NoteRepository):
+    def __init__(self, repo: NoteRepository,
+                 attachments: Optional[NoteAttachmentRepository] = None):
         self.repo = repo
+        # n:m-Anhaenge: eine Notiz kann an mehrere Entitaeten geheftet
+        # sein. 'entity_type'/'entity_id' am Note-Objekt bleibt der
+        # primaere Anhang fuer Backwards-Compat.
+        self.attachments = attachments
 
     @property
     def module_id(self) -> str:
@@ -139,6 +146,32 @@ class NotesModule(ModuleInterface):
                 destructive=True,
                 internal=True,
             ),
+            Capability(
+                name="notes.add_attachment",
+                description="Heftet eine Notiz zusaetzlich an eine "
+                            "weitere Entitaet (n:m). Die primaere "
+                            "Verknuepfung via notes.attach bleibt davon "
+                            "unberuehrt.",
+                parameters={
+                    "note_id": {"type": "integer", "_required": True,
+                                 "description": "ID der Notiz"},
+                    "entity_type": {"type": "string", "_required": True,
+                                      "description": "Entitaets-Typ"},
+                    "entity_id": {"type": "integer", "_required": True,
+                                    "description": "ID der Entitaet"},
+                },
+                handler=self._cap_add_attachment,
+                destructive=True,
+            ),
+            Capability(
+                name="notes.list_attachments",
+                description="Listet alle Anhaenge einer Notiz auf.",
+                parameters={
+                    "note_id": {"type": "integer", "_required": True,
+                                 "description": "ID der Notiz"},
+                },
+                handler=self._cap_list_attachments,
+            ),
         ]
 
     # ---- Handler -------------------------------------------------------
@@ -202,4 +235,28 @@ class NotesModule(ModuleInterface):
     def _cap_cleanup_for_entity(self, entity_type: str,
                                   entity_id: int) -> dict:
         removed = self.repo.delete_for_entity(entity_type, entity_id)
-        return {"status": "aufgeraeumt", "removed": removed}
+        # Auch die n:m-Anhaenge aufraeumen
+        attached_removed = 0
+        if self.attachments is not None:
+            attached_removed = self.attachments.delete_for_entity(
+                entity_type, entity_id)
+        return {"status": "aufgeraeumt", "removed": removed,
+                "attachments_removed": attached_removed}
+
+    def _cap_add_attachment(self, note_id: int, entity_type: str,
+                              entity_id: int) -> dict:
+        if self.attachments is None:
+            return {"error": "Attachments-Repository nicht verfuegbar"}
+        if entity_type not in _VALID_ENTITY_TYPES:
+            return {"error": f"entity_type '{entity_type}' nicht erlaubt"}
+        if self.repo.get(note_id) is None:
+            return {"error": f"Notiz {note_id} nicht gefunden"}
+        self.attachments.attach(note_id, entity_type, entity_id)
+        return {"status": "verknuepft", "note_id": note_id,
+                "entity_type": entity_type, "entity_id": entity_id}
+
+    def _cap_list_attachments(self, note_id: int) -> dict:
+        if self.attachments is None:
+            return {"count": 0, "attachments": []}
+        items = self.attachments.list_for_note(note_id)
+        return {"count": len(items), "attachments": items}

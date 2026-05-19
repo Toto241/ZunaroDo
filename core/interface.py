@@ -157,6 +157,10 @@ class ModuleRegistry:
         # bestehen, nur dispatch() und Dashboard liefern fuer diese Module
         # nichts mehr aus.
         self._disabled: set[str] = set()
+        # Optionaler Audit-Hook: wird nach jedem destruktiven Aufruf
+        # aufgerufen mit (capability_name, args, result). Wird in main.py
+        # gesetzt - bei den Tests bleibt er None.
+        self._audit_hook = None
 
     # ---- Registrierung ------------------------------------------------
     def register(self, module: ModuleInterface) -> None:
@@ -219,7 +223,21 @@ class ModuleRegistry:
             return {"error": f"Ungueltige Parameter fuer '{capability_name}': {exc}"}
         except Exception as exc:                       # noqa: BLE001
             return {"error": f"Fehler in '{capability_name}': {exc}"}
-        return result if isinstance(result, dict) else {"result": result}
+        result_dict = result if isinstance(result, dict) else {"result": result}
+        # Audit-Hook fuer destruktive Capabilities mit erfolgreichem Ergebnis
+        if (self._audit_hook is not None
+                and cap.destructive
+                and "error" not in result_dict):
+            try:
+                self._audit_hook(capability_name, kwargs, result_dict)
+            except Exception:                          # noqa: BLE001
+                pass                                    # Audit darf nichts brechen
+        return result_dict
+
+    def set_audit_hook(self, hook) -> None:
+        """Hook(capability_name, args_dict, result_dict) -> None.
+        Wird automatisch nach destruktiven Calls aufgerufen."""
+        self._audit_hook = hook
 
     def has_capability(self, capability_name: str) -> bool:
         """True nur, wenn die Capability existiert UND ihr Modul aktiv ist."""

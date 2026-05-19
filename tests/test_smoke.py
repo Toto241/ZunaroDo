@@ -918,9 +918,19 @@ class TestDeleteCapabilities(unittest.TestCase):
             "contracts.list", {})["contracts"][0]["id"]
         result = self.registry.dispatch(
             "contracts.delete", {"contract_id": cid})
-        self.assertEqual(result["status"], "geloescht")
+        # Soft-Delete: Vertrag liegt im Papierkorb, restore moeglich
+        self.assertEqual(result["status"], "im papierkorb")
         self.assertEqual(
             self.registry.dispatch("contracts.list", {})["count"], 0)
+        deleted = self.registry.dispatch("contracts.list_deleted", {})
+        self.assertEqual(deleted["count"], 1)
+        # Endgueltige Loeschung via purge
+        purged = self.registry.dispatch(
+            "contracts.purge", {"contract_id": cid})
+        self.assertEqual(purged["status"], "endgueltig geloescht")
+        self.assertEqual(
+            self.registry.dispatch("contracts.list_deleted",
+                                     {})["count"], 0)
 
     def test_delete_unknown_returns_error(self) -> None:
         result = self.registry.dispatch(
@@ -937,11 +947,17 @@ class TestDeleteCapabilities(unittest.TestCase):
             start_date="2025-01-01", minimum_term_months=1,
             notice_period_months=1, auto_renew_months=1,
             monthly_cost=5.0, owner_id=mid))
+        # Soft-Delete: member liegt im Papierkorb, owner-Referenz bleibt
         self.registry.dispatch(
             "family.delete_member", {"member_id": mid})
         contracts = self.registry.dispatch(
             "contracts.list", {})["contracts"]
-        # Vertrag bleibt, owner_id wird durch ON DELETE SET NULL geloescht
+        self.assertEqual(len(contracts), 1)
+        # Erst purge entkoppelt via ON DELETE SET NULL
+        self.registry.dispatch(
+            "family.purge_member", {"member_id": mid})
+        contracts = self.registry.dispatch(
+            "contracts.list", {})["contracts"]
         self.assertEqual(len(contracts), 1)
         self.assertEqual(contracts[0].get("owner"), "")
 
@@ -2362,8 +2378,12 @@ class TestReviewFixes(unittest.TestCase):
             "entity_type": "contracts", "entity_id": cid})
         self.assertEqual(
             self.registry.dispatch("notes.list", {})["count"], 1)
+        # Soft-Delete laesst Notiz erhalten (Restore moeglich)
         self.registry.dispatch("contracts.delete", {"contract_id": cid})
-        # Verwaiste Notiz muss weg sein
+        self.assertEqual(
+            self.registry.dispatch("notes.list", {})["count"], 1)
+        # Erst purge raeumt verwaiste Notiz weg
+        self.registry.dispatch("contracts.purge", {"contract_id": cid})
         self.assertEqual(
             self.registry.dispatch("notes.list", {})["count"], 0)
 

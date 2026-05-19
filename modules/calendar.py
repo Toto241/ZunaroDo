@@ -155,13 +155,41 @@ class CalendarModule(ModuleInterface):
             ),
             Capability(
                 name="calendar.delete_event",
-                description="Entfernt einen Termin.",
+                description="Verschiebt einen Termin in den Papierkorb. "
+                            "Restore via calendar.restore_event; "
+                            "endgueltig erst via calendar.purge_event.",
                 parameters={
                     "event_id": {"type": "integer", "_required": True,
                                  "description": "ID des Termins"},
                 },
                 handler=self._cap_delete,
                 destructive=True,
+            ),
+            Capability(
+                name="calendar.restore_event",
+                description="Stellt einen geloeschten Termin wieder her.",
+                parameters={
+                    "event_id": {"type": "integer", "_required": True,
+                                 "description": "ID des Termins"},
+                },
+                handler=self._cap_restore,
+                destructive=True,
+            ),
+            Capability(
+                name="calendar.purge_event",
+                description="Loescht einen Termin endgueltig.",
+                parameters={
+                    "event_id": {"type": "integer", "_required": True,
+                                 "description": "ID des Termins"},
+                },
+                handler=self._cap_purge,
+                destructive=True,
+            ),
+            Capability(
+                name="calendar.list_deleted",
+                description="Listet Termine im Papierkorb.",
+                parameters={},
+                handler=self._cap_list_deleted,
             ),
         ]
 
@@ -216,12 +244,28 @@ class CalendarModule(ModuleInterface):
                 "events": [e.to_dict() for e in events]}
 
     def _cap_delete(self, event_id: int) -> dict:
+        if not self.repo.soft_delete(event_id):
+            return {"error": f"Termin {event_id} nicht gefunden oder "
+                              "bereits im Papierkorb"}
+        return {"status": "im papierkorb", "event_id": event_id}
+
+    def _cap_restore(self, event_id: int) -> dict:
+        if not self.repo.restore(event_id):
+            return {"error": f"Termin {event_id} nicht im Papierkorb"}
+        return {"status": "wiederhergestellt", "event_id": event_id}
+
+    def _cap_purge(self, event_id: int) -> dict:
         self.repo.delete(event_id)
         if (self._ctx is not None
                 and self._ctx.has_capability("notes.cleanup_for_entity")):
             self._ctx.call("notes.cleanup_for_entity",
                             entity_type="calendar", entity_id=event_id)
-        return {"status": "geloescht", "event_id": event_id}
+        return {"status": "endgueltig geloescht", "event_id": event_id}
+
+    def _cap_list_deleted(self) -> dict:
+        items = self.repo.list_deleted()
+        return {"count": len(items),
+                "events": [e.to_dict() for e in items]}
 
     def _cap_export_ical(self, path: str) -> dict:
         from services.ical import export_events

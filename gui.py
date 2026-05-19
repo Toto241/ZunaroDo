@@ -17,18 +17,18 @@ Start:  python gui.py
 from __future__ import annotations
 
 import os
+import re
 import threading
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Callable
 
 import customtkinter as ctk
 
-from pathlib import Path
-
 from assistant import Assistant
 from core.interface import ModuleRegistry
-from database import (AssistantLogRepository, Database, ModuleStateRepository,
-                      SettingsRepository)
+from database import (AssistantLogRepository, AuditLogRepository, Database,
+                      ModuleStateRepository, SettingsRepository)
 from main import (apply_persisted_module_states, build_registry,
                     make_auto_backup_worker, make_smtp_config,
                     make_sync_provider)
@@ -53,8 +53,7 @@ URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
 # Tk-Geometry-String: 'WIDTHxHEIGHT' oder 'WIDTHxHEIGHT+X+Y' (X/Y koennen
 # auch negativ sein). Mit Sanity-Bounds: kein Fenster ausserhalb realer
 # Bildschirme.
-import re as _re
-_GEOMETRY_RE = _re.compile(r"^(\d+)x(\d+)(?:([+-]\d+)([+-]\d+))?$")
+_GEOMETRY_RE = re.compile(r"^(\d+)x(\d+)(?:([+-]\d+)([+-]\d+))?$")
 
 
 def _is_valid_geometry(value: str) -> bool:
@@ -138,7 +137,11 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
                           SettingsRepository, ModuleStateRepository, object,
                           str]:
     profile = resolve_profile()
-    db = Database(db_path(profile, "alltagshelfer_gui.db"))
+    # Vereinheitlichter Basis-Dateiname: 'alltagshelfer.db', plus optional
+    # ein '-<profil>'-Suffix. Frueher gab es zwei verschiedene Default-
+    # Namen (alltagshelfer_demo / alltagshelfer_gui), das ist jetzt
+    # konsistent (F4).
+    db = Database(db_path(profile, "alltagshelfer.db"))
     settings = SettingsRepository(db)
     config = load_config(settings)
 
@@ -150,6 +153,27 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
 
     module_states = ModuleStateRepository(db)
     apply_persisted_module_states(registry, module_states)
+
+    # Audit-Hook fuer destruktive Aktionen
+    _audit_repo = AuditLogRepository(db)
+
+    def _audit(capability: str, args: dict, result: dict) -> None:
+        import json as _json
+        entity_type = capability.split(".", 1)[0]
+        eid = (args.get("contract_id") or args.get("event_id")
+                or args.get("contact_id") or args.get("member_id")
+                or args.get("expense_id") or args.get("note_id")
+                or args.get("proposal_id") or args.get("task_id")
+                or args.get("order_id"))
+        try:
+            details = _json.dumps(args, ensure_ascii=False)[:500]
+        except Exception:
+            details = str(args)[:500]
+        _audit_repo.append(capability, entity_type=entity_type,
+                              entity_id=eid, details=details,
+                              actor=profile or "local")
+
+    registry.set_audit_hook(_audit)
 
     # Onboarding wird im GUI-Hauptloop entschieden (nicht automatisch).
     assistant = Assistant(
@@ -213,6 +237,10 @@ class AlltagshelferGUI(ctk.CTk):
         self.profile = profile
         self.auto_backup = auto_backup
         self.i18n = I18n(language=config.i18n_language)
+        # Sammlung aller scheduled-After-Callbacks fuer sauberes Canceln
+        # beim Fenster-Close - frueher lazy, jetzt explizit (F2).
+        self._after_ids: set[str] = set()
+        self._streaming_active: bool = False
         self.scheduler = ProactiveScheduler(
             registry, warn_within_days=config.notify_warn_within_days)
         self.sync_worker = PeriodicSyncWorker(
@@ -256,7 +284,11 @@ class AlltagshelferGUI(ctk.CTk):
             t("tab.modules"): self._build_module_admin,
             t("tab.settings"): self._build_settings,
         }
-        for name, builder in self.tab_builders.items():
+        # Nutzer kann ueber `gui.tab_order` eine eigene Reihenfolge der
+        # Tabs vorgeben (kommaseparierte Tab-Keys wie 'dashboard,finance').
+        # Unbekannte oder fehlende Tabs landen am Ende in Standard-Reihenfolge.
+        ordered = self._resolve_tab_order(self.tab_builders, t)
+        for name, builder in ordered:
             builder(self.tabs.add(name))
 
         # Assistant bei destruktiven Aufrufen den Nutzer fragen lassen
@@ -271,6 +303,39 @@ class AlltagshelferGUI(ctk.CTk):
         # Onboarding-Dialog erst nach mainloop-Start zeigen, damit alle
         # Widgets sichtbar sind.
         self.after(200, self._maybe_run_onboarding)
+
+    def _resolve_tab_order(self, builders: dict, t) -> list[tuple[str, Callable]]:
+        """Wendet eine vom Nutzer hinterlegte Tab-Reihenfolge an.
+
+        Schluessel sind die kurzen Tab-Keys ('dashboard', 'finance', ...) -
+        sie werden ueber i18n auf die tatsaechlichen Tab-Labels gemappt.
+        Unbekannte Eintraege werden ignoriert, fehlende landen unten in
+        Standardreihenfolge.
+        """
+        raw = (self.config.gui_tab_order or "").strip()
+        if not raw:
+            return list(builders.items())
+        wanted_keys = [k.strip() for k in raw.split(",") if k.strip()]
+        # short_key -> translated label (alles, was der Builder anbietet)
+        short_to_label = {}
+        for short in ("dashboard", "contracts", "family", "finance",
+                       "calendar", "social", "inbox", "statistics",
+                       "data", "assistant", "search", "history",
+                       "modules", "settings"):
+            label = t(f"tab.{short}")
+            if label in builders:
+                short_to_label[short] = label
+        ordered: list[tuple[str, Callable]] = []
+        used: set[str] = set()
+        for k in wanted_keys:
+            label = short_to_label.get(k)
+            if label and label not in used:
+                ordered.append((label, builders[label]))
+                used.add(label)
+        for label, builder in builders.items():
+            if label not in used:
+                ordered.append((label, builder))
+        return ordered
 
     def _maybe_run_onboarding(self) -> None:
         """Bei leerer DB einmaligen Dialog zeigen - Demo-Daten oder leer?"""
@@ -1873,19 +1938,16 @@ class AlltagshelferGUI(ctk.CTk):
             after_id = self.after(ms, callback)
         except Exception:
             return ""
-        if not hasattr(self, "_after_ids"):
-            self._after_ids = set()
         self._after_ids.add(after_id)
         return after_id
 
     def _cancel_pending_after(self) -> None:
-        ids = getattr(self, "_after_ids", set())
-        for aid in list(ids):
+        for aid in list(self._after_ids):
             try:
                 self.after_cancel(aid)
             except Exception:
                 pass
-        ids.clear()
+        self._after_ids.clear()
 
     def _on_close(self) -> None:
         # Pending Callbacks zuerst stoppen - sonst feuern Simulate-Word-

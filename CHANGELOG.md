@@ -2,6 +2,43 @@
 
 Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
+## [0.8.0] - 2026-05-19
+
+### Neu
+
+- **Soft-Delete (Papierkorb)** fuer Vertraege, Termine, Ausgaben, Kontakte
+  und Haushaltsmitglieder: `*.delete` schiebt in den Papierkorb,
+  `*.restore` holt zurueck, `*.purge` loescht endgueltig.
+- **Aufgaben-Vorlagen** (`templates.add/list/apply/delete`) zur schnellen
+  Instanzierung wiederkehrender Haushaltsaufgaben.
+- **n:m-Notizverknuepfung** ueber `notes.add_attachment` und
+  `notes.list_attachments` (eine Notiz kann an mehrere Entitaeten haengen).
+- **Audit-Log** ueber Registry-Hook: alle destruktiven Capabilities werden
+  mit Capability, Argumenten, Zeitstempel und Entity-ID persistiert.
+- **Schema-Versionierung** via `PRAGMA user_version` mit Inline-Migration.
+- **Backup-Verifikation**: `verify_backup()` oeffnet das Backup vor dem
+  Bekanntgeben, defekte Sicherungen werden verworfen.
+- **Rate-Limit** im HTTP-Sync-Server (Sliding-Window pro Client-IP).
+- **Zentrales Logging** ueber `services.logging_setup` mit Rotation.
+- **Backup-Schluessel** separat konfigurierbar (`backup.key`,
+  `ALLTAGSHELFER_BACKUP_KEY`).
+- **Integration-Tests** mit Mocks fuer SMTP/IMAP/OCR/Print sowie
+  echtes TLS-Handshake-Beispiel fuer den Sync-Server.
+- **Property-based Tests** (optional, ueber `hypothesis`).
+- **Performance-Tests** zur Regressions-Erkennung.
+- **Headless GUI-Smoke-Tests** ohne grafische Umgebung.
+
+### Geaendert
+
+- `services.escaping` zentralisiert Escape/Unescape fuer iCal und vCard.
+- Default-DB-Pfad einheitlich `alltagshelfer.db` (CLI + GUI).
+- `_cap_add` (Notes) erkennt `entity_id=0` korrekt (war truthiness-Bug).
+
+### Korrigiert
+
+- Cleanup verwaister Notizen erfolgt jetzt auf `purge` statt `delete`
+  (Soft-Delete laesst Notizen erhalten - Restore funktioniert vollstaendig).
+
 ## [0.6.0] - 2026-05-19
 
 ### Neu
