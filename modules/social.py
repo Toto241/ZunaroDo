@@ -102,6 +102,16 @@ class SocialModule(ModuleInterface):
                 handler=self._cap_list,
             ),
             Capability(
+                name="social.delete_contact",
+                description="Loescht einen Kontakt endgueltig.",
+                parameters={
+                    "contact_id": {"type": "integer", "_required": True,
+                                   "description": "ID des Kontakts"},
+                },
+                handler=self._cap_delete,
+                destructive=True,
+            ),
+            Capability(
                 name="social.mark_contacted",
                 description="Markiert einen Kontakt als gerade kontaktiert "
                             "(setzt last_contacted = heute).",
@@ -132,7 +142,11 @@ class SocialModule(ModuleInterface):
     # ---- Handler -------------------------------------------------------
     def _cap_add(self, name: str, relation: str = "",
                  cadence_days: int = 30, notes: str = "") -> dict:
-        c = SocialContact(name=name, relation=relation,
+        if not name or not name.strip():
+            return {"error": "Name darf nicht leer sein"}
+        if cadence_days <= 0:
+            return {"error": "cadence_days muss positiv sein"}
+        c = SocialContact(name=name.strip(), relation=relation,
                           cadence_days=cadence_days, notes=notes)
         saved = self.repo.add(c)
         return {"status": "angelegt", "contact": saved.to_dict()}
@@ -146,6 +160,12 @@ class SocialModule(ModuleInterface):
             entry["next_due"] = self._next_due(c).isoformat()
             result.append(entry)
         return {"count": len(result), "contacts": result}
+
+    def _cap_delete(self, contact_id: int) -> dict:
+        existed = self.repo.delete(contact_id)
+        if not existed:
+            return {"error": f"Kontakt {contact_id} nicht gefunden"}
+        return {"status": "geloescht", "contact_id": contact_id}
 
     def _cap_mark_contacted(self, contact_id: int) -> dict:
         c = self.repo.get(contact_id)

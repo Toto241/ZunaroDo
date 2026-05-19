@@ -403,6 +403,13 @@ class ContractRepository:
         sql += " ORDER BY c.name"
         return [self._row_to_contract(r) for r in self.db.conn.execute(sql)]
 
+    def delete(self, contract_id: int) -> bool:
+        """Loescht einen Vertrag samt Preis-Historie. True = vorhanden gewesen."""
+        cur = self.db.conn.execute(
+            "DELETE FROM contracts WHERE id=?", (contract_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
     def price_changes(self, contract_id: int) -> list[dict]:
         rows = self.db.conn.execute(
             "SELECT old_cost, new_cost, changed_at FROM price_history"
@@ -458,6 +465,12 @@ class ExpenseRepository:
             " LEFT JOIN family_members m ON m.id = e.owner_id"
             " ORDER BY e.spent_on DESC, e.id DESC")
         return [self._row_to_expense(r) for r in rows]
+
+    def delete(self, expense_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "DELETE FROM expenses WHERE id=?", (expense_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
 
     def list_in_month(self, year: int, month: int) -> list[Expense]:
         prefix = f"{year:04d}-{month:02d}"
@@ -543,6 +556,17 @@ class FamilyRepository:
             "SELECT * FROM family_members WHERE id=?", (member_id,)
         ).fetchone()
         return self._row_to_member(r) if r else None
+
+    def delete_member(self, member_id: int) -> bool:
+        """
+        Loescht ein Mitglied. Referenzen (assignee_id in Auftraegen,
+        owner_id in Vertraegen/Ausgaben, person_id in Terminen) werden
+        ueber ON DELETE SET NULL automatisch entkoppelt.
+        """
+        cur = self.db.conn.execute(
+            "DELETE FROM family_members WHERE id=?", (member_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
 
     def find_member_by_name(self, name: str) -> Optional[FamilyMember]:
         r = self.db.conn.execute(
@@ -897,6 +921,12 @@ class SocialRepository:
             "SELECT * FROM social_contacts WHERE id=?", (contact_id,)
         ).fetchone()
         return self._row_to_contact(r) if r else None
+
+    def delete(self, contact_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "DELETE FROM social_contacts WHERE id=?", (contact_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
 
     def mark_contacted(self, contact_id: int,
                        contacted_on: Optional[date] = None) -> None:

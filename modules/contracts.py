@@ -212,6 +212,19 @@ class ContractModule(ModuleInterface):
                 destructive=True,
             ),
             Capability(
+                name="contracts.delete",
+                description="Loescht einen Vertrag samt Preis-Historie "
+                            "endgueltig. Fuer Statuswechsel (gekuendigt) "
+                            "stattdessen 'contracts.report_price_change' "
+                            "mit 0.0 oder eine Statusspalte verwenden.",
+                parameters={
+                    "contract_id": {"type": "integer", "_required": True,
+                                    "description": "ID des Vertrags"},
+                },
+                handler=self._cap_delete,
+                destructive=True,
+            ),
+            Capability(
                 name="contracts.generate_cancellation",
                 description="Erstellt ein fristgerechtes Kuendigungsschreiben "
                             "fuer einen Vertrag - als druckbares PDF und/oder "
@@ -269,6 +282,12 @@ class ContractModule(ModuleInterface):
         if saved.id is not None:
             saved = self.repo.get(saved.id) or saved
         return {"status": "angelegt", "contract": saved.to_dict()}
+
+    def _cap_delete(self, contract_id: int) -> dict:
+        existed = self.repo.delete(contract_id)
+        if not existed:
+            return {"error": f"Vertrag {contract_id} nicht gefunden"}
+        return {"status": "geloescht", "contract_id": contract_id}
 
     def _cap_set_owner(self, contract_id: int, owner_id: int = 0) -> dict:
         contract = self.repo.get(contract_id)

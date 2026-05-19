@@ -197,12 +197,19 @@ class InboxModule(ModuleInterface):
                 "proposals": [p.to_dict() for p in proposals]}
 
     # ---- LLM-basierte Analyse (Gemini) ---------------------------------
+    # Halluzinationen abfangen: das Modell darf nur Vorschlaege fuer
+    # Capabilities aus dieser Allowlist erzeugen. Alles andere wird im
+    # Parser verworfen.
+    _ALLOWED_LLM_TARGETS: set[str] = {
+        "contracts.add", "contracts.report_price_change",
+        "family.add_order", "calendar.add_event",
+    }
+
     def _analyze_with_llm(self, mail_text: str) -> list[Proposal]:
         """Bittet das LLM, strukturierte Vorschlaege im JSON-Format zu liefern."""
         cap_names = []
         if self._ctx is not None:
-            for cap in ("contracts.add", "contracts.report_price_change",
-                         "family.add_order", "calendar.add_event"):
+            for cap in self._ALLOWED_LLM_TARGETS:
                 if self._ctx.has_capability(cap):
                     cap_names.append(cap)
         instruction = (
@@ -213,7 +220,7 @@ class InboxModule(ModuleInterface):
             "Antworte AUSSCHLIESSLICH mit gueltigem JSON, ohne weitere "
             "Erklaerung, im Schema "
             '{"proposals": [{"target_capability": "<eine der: '
-            f"{', '.join(cap_names) or 'contracts.add, family.add_order'}>"
+            f"{', '.join(sorted(cap_names)) or 'contracts.add, family.add_order'}>"
             '", "summary": "<kurz>", "payload": {<Argumente fuer die '
             'Capability>}}]}. Wenn nichts Konkretes erkennbar ist, '
             'gib {"proposals": []} zurueck.')
@@ -221,7 +228,33 @@ class InboxModule(ModuleInterface):
             raw, _ = self.llm.analyze_text(instruction, mail_text)
         except Exception:                                  # pragma: no cover
             return []
-        return self._parse_llm_proposals(raw)
+        candidates = self._parse_llm_proposals(raw)
+        # Validierung gegen das Capability-Schema, bevor wir die Vorschlaege
+        # ablegen. Halluzinierte Ziele und fehlende Pflichtparameter werden
+        # gefiltert.
+        return [p for p in candidates if self._is_valid_proposal(p)]
+
+    def _is_valid_proposal(self, p: Proposal) -> bool:
+        """True, wenn target_capability erlaubt ist und Pflichtparameter da sind."""
+        if p.target_capability not in self._ALLOWED_LLM_TARGETS:
+            return False
+        if self._ctx is None or not self._ctx.has_capability(
+                p.target_capability):
+            return False
+        required = self._required_params(p.target_capability)
+        missing = [name for name in required if name not in p.payload]
+        return not missing
+
+    def _required_params(self, capability_name: str) -> list[str]:
+        """Holt die Pflichtparameter einer Capability ueber die Registry."""
+        registry = getattr(self._ctx, "_registry", None) \
+            if self._ctx is not None else None
+        if registry is None:
+            return []
+        cap = registry._capabilities.get(capability_name)
+        if cap is None:
+            return []
+        return cap.required_params()
 
     @staticmethod
     def _parse_llm_proposals(raw: str) -> list[Proposal]:

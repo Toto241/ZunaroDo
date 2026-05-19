@@ -140,17 +140,29 @@ class CalendarModule(ModuleInterface):
         ]
 
     # ---- Handler -------------------------------------------------------
+    # Erlaubte Kategorien - dient der Vollstaendigkeitspruefung. Beliebige
+    # Strings werden zwar akzeptiert, aber das LLM/die GUI sollen die
+    # bekannten Kategorien bevorzugen, damit Filter und Labels passen.
+    _KNOWN_CATEGORIES: set[str] = {
+        "termin", "garantie", "tuev", "steuer", "geburtstag", "sonstiges"}
+
     def _cap_add_event(self, title: str, due_date: str,
                        category: str = "termin",
                        description: str = "",
                        recurrence_days: int | None = None,
                        person_id: int | None = None) -> dict:
+        if not title or not title.strip():
+            return {"error": "Titel darf nicht leer sein"}
         # 'recurrence_days' muss entweder fehlen (einmaliger Termin) oder
         # positiv sein - 0 oder negative Werte sind unzulaessig, weil sie
         # die Wiederholungs-Schleife endlos machen wuerden.
         if recurrence_days is not None and recurrence_days <= 0:
             return {"error": "recurrence_days muss positiv sein "
                               "(oder leer lassen fuer einmalig)"}
+        # Unbekannte Kategorien werden auf 'sonstiges' normalisiert -
+        # so bleibt die UI-Anzeige konsistent.
+        if category not in self._KNOWN_CATEGORIES:
+            category = "sonstiges"
         try:
             parsed = date.fromisoformat(due_date)
         except (TypeError, ValueError):

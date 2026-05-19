@@ -362,12 +362,11 @@ class TestHttpSyncRoundTrip(unittest.TestCase):
         cls.thread = threading.Thread(target=cls.server.serve_forever,
                                         daemon=True)
         cls.thread.start()
-        # Auf Server warten
+        # Health-Check via _open_url, damit der Socket sauber geschlossen
+        # wird und keine ResourceWarning hinterbleibt.
         for _ in range(20):
             try:
-                urllib.request.urlopen(
-                    f"http://127.0.0.1:{cls.port}/health",
-                    timeout=1.0).read()
+                cls._open_url(f"http://127.0.0.1:{cls.port}/health")
                 break
             except urllib.error.URLError:
                 time.sleep(0.05)
@@ -375,8 +374,15 @@ class TestHttpSyncRoundTrip(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.server.shutdown()
+        cls.server.server_close()    # schliesst das Listening-Socket
         cls.thread.join(timeout=2)
         shutil.rmtree(cls.tmp)
+
+    @staticmethod
+    def _open_url(url: str) -> bytes:
+        """Holt eine URL und schliesst den Socket explizit."""
+        with urllib.request.urlopen(url, timeout=1.0) as response:
+            return response.read()
 
     def test_http_provider_append_and_fetch(self) -> None:
         state_dir = Path(tempfile.mkdtemp(prefix="ah_httpclient_"))
@@ -691,7 +697,8 @@ class TestSyncServerCompaction(unittest.TestCase):
                         headers={"Content-Type":
                                   "application/json; charset=utf-8"},
                         method="POST")
-                    urllib.request.urlopen(req, timeout=2).read()
+                    with urllib.request.urlopen(req, timeout=2) as resp:
+                        resp.read()
                 lines = (tmp / "events.jsonl").read_text(
                     encoding="utf-8").splitlines()
                 self.assertLessEqual(len(lines), 5)
@@ -700,6 +707,7 @@ class TestSyncServerCompaction(unittest.TestCase):
                 self.assertEqual(first["event_id"], "e5")
             finally:
                 server.shutdown()
+                server.server_close()
                 thread.join(timeout=2)
         finally:
             shutil.rmtree(tmp)
@@ -867,6 +875,191 @@ class TestLlmJsonParsing(unittest.TestCase):
         from modules.inbox import InboxModule
         out = InboxModule._parse_llm_proposals("kein JSON hier")
         self.assertEqual(out, [])
+
+
+class TestDeleteCapabilities(unittest.TestCase):
+    """Loesch-Capabilities funktionieren und sind als destruktiv markiert."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_delete_caps_are_destructive(self) -> None:
+        names = self.registry.destructive_capability_names()
+        for cap in ("contracts.delete", "family.delete_member",
+                     "social.delete_contact", "finance.delete_expense"):
+            self.assertIn(cap, names)
+
+    def test_delete_contract_round_trip(self) -> None:
+        self.registry.dispatch("contracts.add", dict(
+            name="X", category="streaming", provider="Y",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=10.0))
+        cid = self.registry.dispatch(
+            "contracts.list", {})["contracts"][0]["id"]
+        result = self.registry.dispatch(
+            "contracts.delete", {"contract_id": cid})
+        self.assertEqual(result["status"], "geloescht")
+        self.assertEqual(
+            self.registry.dispatch("contracts.list", {})["count"], 0)
+
+    def test_delete_unknown_returns_error(self) -> None:
+        result = self.registry.dispatch(
+            "contracts.delete", {"contract_id": 9999})
+        self.assertIn("error", result)
+
+    def test_delete_member_keeps_orphan_contracts(self) -> None:
+        self.registry.dispatch("family.add_member",
+                                {"name": "Anna", "role": "erwachsen"})
+        mid = self.registry.dispatch(
+            "family.members", {})["members"][0]["id"]
+        self.registry.dispatch("contracts.add", dict(
+            name="Y", category="streaming", provider="Z",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=5.0, owner_id=mid))
+        self.registry.dispatch(
+            "family.delete_member", {"member_id": mid})
+        contracts = self.registry.dispatch(
+            "contracts.list", {})["contracts"]
+        # Vertrag bleibt, owner_id wird durch ON DELETE SET NULL geloescht
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(contracts[0].get("owner"), "")
+
+
+class TestInputValidation(unittest.TestCase):
+    """Input-Validierung in den Modulen."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_social_rejects_non_positive_cadence(self) -> None:
+        result = self.registry.dispatch(
+            "social.add_contact", {"name": "X", "cadence_days": 0})
+        self.assertIn("error", result)
+
+    def test_social_rejects_empty_name(self) -> None:
+        result = self.registry.dispatch(
+            "social.add_contact", {"name": "   "})
+        self.assertIn("error", result)
+
+    def test_family_task_rejects_zero_interval(self) -> None:
+        self.registry.dispatch("family.add_member",
+                                {"name": "Anna"})
+        result = self.registry.dispatch("family.add_task", {
+            "title": "X", "interval_days": 0,
+            "assignees": ["Anna"]})
+        self.assertIn("error", result)
+
+    def test_finance_rejects_negative_amount(self) -> None:
+        result = self.registry.dispatch(
+            "finance.add_expense",
+            {"description": "X", "amount": -1.5})
+        self.assertIn("error", result)
+
+    def test_finance_rejects_bad_date(self) -> None:
+        result = self.registry.dispatch(
+            "finance.add_expense",
+            {"description": "X", "amount": 1.0,
+             "spent_on": "nicht-iso"})
+        self.assertIn("error", result)
+
+    def test_calendar_unknown_category_normalizes(self) -> None:
+        result = self.registry.dispatch("calendar.add_event", {
+            "title": "X", "due_date": "2030-01-01",
+            "category": "irgendwas-erfundenes"})
+        self.assertEqual(result["status"], "angelegt")
+        self.assertEqual(result["event"]["category"], "sonstiges")
+
+
+class TestLlmProposalValidation(unittest.TestCase):
+    """LLM-Halluzinationen werden vor dem Speichern gefiltert."""
+
+    def setUp(self) -> None:
+        # Stub-LLM mit definierter Antwort
+        class FixedLLM(StubLLM):
+            def __init__(self, response: str):
+                super().__init__()
+                self._response = response
+
+            def analyze_text(self, instructions, text,
+                              max_output_tokens=1024):
+                return self._response, TokenUsage(5, 5)
+
+        self.FixedLLM = FixedLLM
+
+    def test_unknown_target_capability_dropped(self) -> None:
+        llm = self.FixedLLM(
+            '{"proposals": [{"target_capability": "evil.delete_db", '
+            '"summary": "boese", "payload": {}}]}')
+        db, registry, _, path = _build_system(llm=llm)
+        try:
+            result = registry.dispatch(
+                "inbox.analyze_mail",
+                {"mail_text": "irrelevant - LLM antwortet fest"})
+            self.assertEqual(result.get("found", 0), 0)
+        finally:
+            db.close()
+            os.unlink(path)
+
+    def test_missing_required_dropped(self) -> None:
+        # contracts.add braucht 'name' und 'category' - lassen wir
+        # absichtlich weg
+        llm = self.FixedLLM(
+            '{"proposals": [{"target_capability": "contracts.add", '
+            '"summary": "ohne pflichtfelder", "payload": {}}]}')
+        db, registry, _, path = _build_system(llm=llm)
+        try:
+            result = registry.dispatch(
+                "inbox.analyze_mail",
+                {"mail_text": "ignoriert"})
+            self.assertEqual(result.get("found", 0), 0)
+        finally:
+            db.close()
+            os.unlink(path)
+
+
+class TestDisabledModuleSurfaced(unittest.TestCase):
+    """Disabled abhaengiges Modul zeigt sich als Dashboard-Warnung."""
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_disabled_contracts_yields_warning_in_finance_events(self) -> None:
+        self.registry.set_module_enabled("contracts", False)
+        events = self.registry.collect_events(horizon_days=120)
+        warn = [e for e in events
+                if e.module_id == "finance" and e.category == "warnung"]
+        self.assertEqual(len(warn), 1)
+        self.assertIn("Vertraege-Modul", warn[0].title)
+
+
+class TestDiagnose(unittest.TestCase):
+    """Diagnose-Befehl liefert sinnvolle Felder."""
+
+    def test_collect_returns_expected_shape(self) -> None:
+        from diagnose import collect_diagnosis
+        data = collect_diagnosis()
+        self.assertIn("python_version", data)
+        self.assertIn("modules", data)
+        self.assertIn("ocr_engines", data)
+        # google.generativeai ist in der Umgebung evtl. NICHT installiert
+        # - der Eintrag muss aber existieren.
+        self.assertIn("google.generativeai", data["modules"])
+        # Mindestens Modul + Capabilities zaehlen
+        self.assertGreaterEqual(data["module_count"], 0)
 
 
 class TestProposalsFlow(unittest.TestCase):

@@ -61,6 +61,10 @@ class FinanceModule(ModuleInterface):
         """
         Ein wiederkehrendes Ereignis: Monatsabschluss/Ausgaben pruefen.
         Faelligkeit ist der Letzte des laufenden Monats.
+
+        Zusaetzlich: wenn Modul A deaktiviert ist, taucht ein hinweisendes
+        Ereignis auf - sonst wuerde die monatliche Belastung still auf 0
+        EUR fallen und der Nutzer wuesste nicht warum.
         """
         today = date.today()
         if today.month == 12:
@@ -69,18 +73,33 @@ class FinanceModule(ModuleInterface):
             month_end = date(today.year, today.month + 1, 1).fromordinal(
                 date(today.year, today.month + 1, 1).toordinal() - 1)
         days = (month_end - today).days
-        if days < 0 or days > horizon_days:
-            return []
-        monat = _MONTHS_DE[today.month - 1]
-        return [Event(
-            title=f"Monatsabschluss {monat}: Ausgaben pruefen",
-            due_date=month_end,
-            module_id=self.module_id,
-            module_name=self.display_name,
-            category="review",
-            detail="Belege erfassen, monatliche Belastung kontrollieren.",
-            days_remaining=days,
-        )]
+        events: list[Event] = []
+        if 0 <= days <= horizon_days:
+            monat = _MONTHS_DE[today.month - 1]
+            events.append(Event(
+                title=f"Monatsabschluss {monat}: Ausgaben pruefen",
+                due_date=month_end,
+                module_id=self.module_id,
+                module_name=self.display_name,
+                category="review",
+                detail="Belege erfassen, monatliche Belastung kontrollieren.",
+                days_remaining=days,
+            ))
+        # Hinweis-Ereignis bei deaktiviertem Modul A
+        if (self._ctx is not None
+                and not self._ctx.has_capability("contracts.list")):
+            events.append(Event(
+                title="Vertraege-Modul ist deaktiviert",
+                due_date=today,
+                module_id=self.module_id,
+                module_name=self.display_name,
+                category="warnung",
+                detail=("Die monatliche Belastung enthaelt aktuell KEINE "
+                        "wiederkehrenden Vertragskosten. Aktiviere Modul A "
+                        "wieder, um den Gesamtbetrag korrekt zu sehen."),
+                days_remaining=0,
+            ))
+        return events
 
     # ---- Faehigkeiten --------------------------------------------------
     def get_capabilities(self) -> list[Capability]:
@@ -105,6 +124,16 @@ class FinanceModule(ModuleInterface):
                                                 "(siehe family.members)"},
                 },
                 handler=self._cap_add_expense,
+            ),
+            Capability(
+                name="finance.delete_expense",
+                description="Loescht eine erfasste Ausgabe endgueltig.",
+                parameters={
+                    "expense_id": {"type": "integer", "_required": True,
+                                   "description": "ID der Ausgabe"},
+                },
+                handler=self._cap_delete_expense,
+                destructive=True,
             ),
             Capability(
                 name="finance.expenses_by_category",
@@ -179,11 +208,21 @@ class FinanceModule(ModuleInterface):
                          category: str = "sonstiges",
                          spent_on: str | None = None,
                          owner_id: int | None = None) -> dict:
+        if not description or not description.strip():
+            return {"error": "description darf nicht leer sein"}
+        if amount < 0:
+            return {"error": "amount muss >= 0 sein"}
+        try:
+            parsed_date = (date.fromisoformat(spent_on) if spent_on
+                            else date.today())
+        except (TypeError, ValueError):
+            return {"error": f"Ungueltiges Datum '{spent_on}', "
+                              "erwartet YYYY-MM-DD"}
         e = Expense(
-            description=description,
+            description=description.strip(),
             amount=amount,
             category=category,
-            spent_on=date.fromisoformat(spent_on) if spent_on else date.today(),
+            spent_on=parsed_date,
             owner_id=owner_id if owner_id else None,
         )
         saved = self.repo.add(e)
@@ -193,6 +232,12 @@ class FinanceModule(ModuleInterface):
                 saved = ex
                 break
         return {"status": "erfasst", "expense": saved.to_dict()}
+
+    def _cap_delete_expense(self, expense_id: int) -> dict:
+        existed = self.repo.delete(expense_id)
+        if not existed:
+            return {"error": f"Ausgabe {expense_id} nicht gefunden"}
+        return {"status": "geloescht", "expense_id": expense_id}
 
     def _cap_by_category(self, month: str | None = None) -> dict:
         ausgaben = self._select_expenses(month)

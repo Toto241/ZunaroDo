@@ -176,6 +176,18 @@ def main() -> None:
     print(f"Sync-Server laeuft auf http://{args.host}:{args.port}")
     print(f"Log:    {args.log}")
     print(f"Token:  {'gesetzt' if args.token else '(keiner)'}")
+    if not args.token:
+        # Auf nicht-lokale Bind-Adressen ist das ein echtes Sicherheits-
+        # problem - der Endpunkt akzeptiert sonst beliebige Schreibzugriffe
+        # auf den geteilten Log. Auf 127.0.0.1 nur ein Hinweis.
+        is_local_only = args.host in ("127.0.0.1", "localhost", "::1")
+        if is_local_only:
+            print("Hinweis: Ohne Token nur fuer Tests auf 127.0.0.1 nutzen.")
+        else:
+            print("WARNUNG: Server bindet auf eine OEFFENTLICHE Adresse "
+                  f"({args.host}) OHNE Token. Jeder, der den Port erreicht, "
+                  "kann Events einspeisen. Entweder --token setzen oder "
+                  "auf 127.0.0.1 binden.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

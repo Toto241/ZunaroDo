@@ -132,6 +132,19 @@ class FamilyModule(ModuleInterface):
                 handler=self._cap_add_member,
             ),
             Capability(
+                name="family.delete_member",
+                description="Loescht ein Haushaltsmitglied. Bestehende "
+                            "Auftraege/Vertraege/Ausgaben/Termine werden "
+                            "entkoppelt (Zuweisung wird leer), nicht "
+                            "geloescht.",
+                parameters={
+                    "member_id": {"type": "integer", "_required": True,
+                                   "description": "ID des Mitglieds"},
+                },
+                handler=self._cap_delete_member,
+                destructive=True,
+            ),
+            Capability(
                 name="family.add_task",
                 description="Legt eine wiederkehrende Haushaltsaufgabe mit "
                             "Rotation zwischen Mitgliedern an.",
@@ -283,9 +296,19 @@ class FamilyModule(ModuleInterface):
         self.shopping.mark_bought(item_id, bought)
         return {"status": "aktualisiert", "item_id": item_id, "bought": bought}
 
+    def _cap_delete_member(self, member_id: int) -> dict:
+        existed = self.repo.delete_member(member_id)
+        if not existed:
+            return {"error": f"Mitglied {member_id} nicht gefunden"}
+        return {"status": "geloescht", "member_id": member_id}
+
     def _cap_add_task(self, title: str, assignees: list[str],
                       interval_days: int = 7,
                       first_due: str | None = None) -> dict:
+        if not title or not title.strip():
+            return {"error": "Titel darf nicht leer sein"}
+        if interval_days <= 0:
+            return {"error": "interval_days muss positiv sein"}
         # Namen in Mitglieder-IDs aufloesen
         rotation: list[int] = []
         unknown: list[str] = []
