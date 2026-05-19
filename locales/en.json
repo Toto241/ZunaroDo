@@ -116,6 +116,13 @@
 
   "module_admin.toggle": "active",
 
+  "onboarding.title": "Welcome to Daily Helper",
+  "onboarding.intro": "Your database is empty. How would you like to start?",
+  "onboarding.option_demo": "Start with sample data (2 contracts, 3 family members, a few events)",
+  "onboarding.option_empty": "Start with an empty database",
+  "onboarding.choose_demo": "Load sample data",
+  "onboarding.choose_empty": "Start empty",
+
   "inbox.analyze": "Analyze",
   "inbox.fetch_imap": "Fetch IMAP",
   "inbox.accept": "Accept",

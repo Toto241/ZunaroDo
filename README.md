@@ -83,9 +83,15 @@ Tests: `python -m unittest discover tests` — 80+ Tests grün.
 | – | Tagesstruktur | Energie-Tagebuch (persistiert), einfache Empfehlung |
 | – | Posteingang | Mail-Analyse regelbasiert + LLM-basiert, `.eml`-Import, IMAP, zentrale Vorschlags-Ablage, **Inline-Editor** für Vorschläge |
 | – | Volltextsuche | `system.search` quer durch Verträge/Ausgaben/Termine/Familie/Aufträge/Kontakte/Vorschläge |
-| – | Statistiken & Trends | `stats.expenses_per_month`, `stats.expenses_per_category`, `stats.contracts_overview`, `stats.yearly_summary` |
+| – | Statistiken & Trends | `stats.expenses_per_month`, `stats.expenses_per_category`, `stats.contracts_overview`, `stats.yearly_summary`, **`stats.export_yearly_pdf`** |
 
 GUI hat dafür einen eigenen **Statistiken-Tab** mit Canvas-Bar-Chart über die letzten 12 Monate, Vertragsübersicht und Jahressumme.
+
+Außerdem stehen drei Standard-Export-Capabilities zur Verfügung — alle ohne externe Pakete, alles lokal:
+
+- `calendar.export_ical(path)` → `.ics` (RFC 5545), in Google/Apple/Outlook/Thunderbird importierbar
+- `social.export_vcard(path)` → `.vcf` (RFC 6350 v3.0), in jedes Adressbuch importierbar
+- `stats.export_yearly_pdf(path, year)` → druckbarer PDF-Jahresbericht (via fpdf2)
 
 ## Die drei Schnittstellen
 
@@ -189,6 +195,26 @@ Alle internen Zeitstempel (`created_at`, `updated_at`, `changed_at` etc.) werden
 
 [services/import_csv.py](services/import_csv.py) ist der Spiegel: liest dieselben CSV-Dateien aus einem Verzeichnis und legt die Einträge an. Die ID-Spalte wird ignoriert — alles bekommt neue IDs. Ungültige Datumsangaben landen als `NULL`, statt den Import abzubrechen. Für einen exakten 1:1-Round-Trip ist `--backup`/`--restore` der bessere Weg.
 
+## Auto-Backup
+
+[services/backup.py:AutoBackupWorker](services/backup.py) zieht periodisch ein Backup und räumt alte Snapshots automatisch auf. Konfigurierbar in den App-Settings:
+
+- `backup.auto_enabled` — true/false (Default: false)
+- `backup.directory` — Zielverzeichnis (Default: `backups`)
+- `backup.retention_count` — Anzahl Backups, die behalten werden (Default: 10)
+- `backup.interval_hours` — Intervall in Stunden (Default: 24)
+
+Im GUI-Daten-Tab steht zusätzlich ein „Backup jetzt erstellen"-Button.
+
+## Onboarding
+
+Beim ersten Start einer neuen DB zeigt die GUI einen Dialog mit zwei Optionen:
+
+- „Beispieldaten laden" — bringt 2 Verträge, 3 Familienmitglieder und ein paar Termine mit
+- „Leer starten" — komplett leere DB, der Nutzer trägt selbst ein
+
+Vorher wurden Demo-Daten ungefragt automatisch eingespielt.
+
 ## Volltextsuche
 
 `system.search(query, limit=50)` durchsucht alle Repositories (Verträge, Ausgaben, Termine, Mitglieder, Aufträge, Kontakte, Vorschläge) und liefert vereinheitlichte Treffer mit `source`/`entity_id`/`title`/`detail`. Mindestlänge 2 Zeichen.
@@ -262,9 +288,12 @@ Bemerkenswerte Features:
 │   ├── ocr.py                  Tesseract + easyocr (lokal, keine Cloud)
 │   ├── notifier.py             Desktop-Notifikation
 │   ├── scheduler.py            Proaktive Hintergrund-Checks
-│   ├── backup.py               Online-Backup (Plain + SQLCipher)
+│   ├── backup.py               Online-Backup (Plain + SQLCipher) + AutoBackupWorker
 │   ├── export.py               CSV-Export aller Entitäten
 │   ├── import_csv.py           CSV-Import (Spiegel zum Export)
+│   ├── ical.py                 iCalendar-Export (.ics)
+│   ├── vcard.py                vCard-Export (.vcf)
+│   ├── reports.py              PDF-Jahresbericht (fpdf2)
 │   ├── config.py               Konfigurations-System
 │   └── i18n.py                 Lokalisierung
 ├── locales/                    de.json, en.json (~100 Keys)

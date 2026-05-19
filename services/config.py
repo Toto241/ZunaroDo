@@ -49,6 +49,10 @@ DEFAULTS: dict[str, str] = {
     "db.key": "",
     "notify.warn_within_days": "14",
     "i18n.language": "de",
+    "backup.auto_enabled": "false",
+    "backup.directory": "backups",
+    "backup.retention_count": "10",
+    "backup.interval_hours": "24",
 }
 
 ENV_MAP: dict[str, str] = {
@@ -94,6 +98,11 @@ class AppConfig:
     db_key: str = ""
     notify_warn_within_days: int = 14
     i18n_language: str = "de"
+
+    backup_auto_enabled: bool = False
+    backup_directory: str = "backups"
+    backup_retention_count: int = 10
+    backup_interval_hours: int = 24
 
 
 def _coerce(key: str, raw: str, config: AppConfig) -> None:

@@ -1716,6 +1716,153 @@ class TestProfile(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+class TestAutoBackup(unittest.TestCase):
+    """Auto-Backup-Job + Retention."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_auto_"))
+        self.db_path = self.tmp / "live.db"
+        self.db = Database(str(self.db_path))
+        ContractRepository(self.db).add(self._sample_contract())
+
+    def tearDown(self) -> None:
+        self.db.close()
+        shutil.rmtree(self.tmp)
+
+    @staticmethod
+    def _sample_contract():
+        from models import Contract
+        return Contract(name="X", category="streaming", provider="Y",
+                         start_date=date(2025, 1, 1),
+                         minimum_term_months=1, notice_period_months=1,
+                         auto_renew_months=1, monthly_cost=1.0)
+
+    def test_run_once_creates_backup_and_prunes(self) -> None:
+        from services.backup import AutoBackupWorker, list_backups
+        backup_dir = self.tmp / "backups"
+        worker = AutoBackupWorker(self.db, directory=backup_dir,
+                                    retention_count=3)
+        # 5x laufen lassen - jedes Mal ein neues Backup, nur 3 bleiben
+        for _ in range(5):
+            worker.run_once()
+            time.sleep(0.01)        # eindeutige mtime / Dateinamen
+        files = list_backups(backup_dir)
+        self.assertLessEqual(len(files), 3)
+        self.assertIsNotNone(worker.last_backup_path)
+        self.assertIsNone(worker.last_error)
+
+    def test_prune_old_backups_keeps_newest(self) -> None:
+        from services.backup import prune_old_backups
+        backup_dir = self.tmp / "bk"
+        backup_dir.mkdir()
+        # 5 Dateien mit absteigender mtime anlegen
+        files = []
+        for i in range(5):
+            f = backup_dir / f"bk-{i:02d}.db"
+            f.write_bytes(b"x")
+            f.touch()
+            files.append(f)
+            time.sleep(0.01)
+        removed = prune_old_backups(backup_dir, keep=2)
+        self.assertEqual(len(removed), 3)
+        # Die 2 neuesten muessen weiterhin existieren
+        remaining = sorted(backup_dir.glob("*.db"),
+                            key=lambda p: p.stat().st_mtime, reverse=True)
+        self.assertEqual(len(remaining), 2)
+
+
+class TestIcalExport(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.registry.dispatch("calendar.add_event", dict(
+            title="TUEV", due_date="2030-01-15", category="tuev"))
+        self.registry.dispatch("calendar.add_event", dict(
+            title="Geburtstag, mit Komma", due_date="2030-05-01",
+            category="geburtstag", recurrence_days=365))
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_ical_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_export_creates_valid_ical(self) -> None:
+        out = self.tmp / "events.ics"
+        result = self.registry.dispatch("calendar.export_ical",
+                                          {"path": str(out)})
+        self.assertEqual(result["count"], 2)
+        text = out.read_text(encoding="utf-8")
+        # Grundstruktur und Spezialeskaping
+        self.assertIn("BEGIN:VCALENDAR", text)
+        self.assertIn("END:VCALENDAR", text)
+        self.assertIn("SUMMARY:TUEV", text)
+        self.assertIn("Geburtstag\\, mit Komma", text)
+        self.assertIn("RRULE:FREQ=DAILY;INTERVAL=365", text)
+
+
+class TestVCardExport(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.registry.dispatch("social.add_contact",
+                                {"name": "Oma", "relation": "Familie",
+                                 "cadence_days": 14})
+        self.registry.dispatch("social.add_contact",
+                                {"name": "Tobias, Test",
+                                 "relation": "Freund"})
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_vcf_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_export_creates_valid_vcard(self) -> None:
+        out = self.tmp / "contacts.vcf"
+        result = self.registry.dispatch("social.export_vcard",
+                                          {"path": str(out)})
+        self.assertEqual(result["count"], 2)
+        text = out.read_text(encoding="utf-8")
+        self.assertIn("BEGIN:VCARD", text)
+        self.assertIn("END:VCARD", text)
+        self.assertIn("FN:Oma", text)
+        self.assertIn("Tobias\\, Test", text)
+        self.assertIn("CATEGORIES:Familie", text)
+
+
+class TestYearlyPdfReport(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        # Ein paar Ausgaben + Vertraege
+        for i, amount in enumerate([10.0, 22.5, 5.0]):
+            self.registry.dispatch("finance.add_expense", {
+                "description": f"X{i}", "amount": amount,
+                "category": "lebensmittel",
+                "spent_on": f"{date.today().year}-02-{i+1:02d}"})
+        self.registry.dispatch("contracts.add", dict(
+            name="Strom", category="strom", provider="Stadtwerke",
+            start_date="2025-01-01", minimum_term_months=1,
+            notice_period_months=1, auto_renew_months=1,
+            monthly_cost=80.0))
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_pdf_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_pdf_report_produced(self) -> None:
+        out = self.tmp / "bericht.pdf"
+        result = self.registry.dispatch("stats.export_yearly_pdf",
+                                          {"path": str(out)})
+        self.assertEqual(result["status"], "PDF erstellt")
+        self.assertTrue(out.exists())
+        # PDF beginnt mit %PDF-
+        self.assertTrue(out.read_bytes().startswith(b"%PDF-"))
+
+
 class TestProposalsFlow(unittest.TestCase):
 
     def setUp(self) -> None:

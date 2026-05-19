@@ -28,6 +28,7 @@ from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
 from services.config import AppConfig, load_config
+from services.backup import AutoBackupWorker
 from services.gemini import GeminiClient
 from services.output import OutputService, SmtpConfig
 from services.profile import db_path, resolve_profile, state_dir
@@ -45,6 +46,20 @@ def make_smtp_config(config: AppConfig) -> SmtpConfig | None:
         username=config.smtp_user, password=config.smtp_pass,
         sender=config.smtp_sender or config.smtp_user,
         use_starttls=config.smtp_starttls,
+    )
+
+
+def make_auto_backup_worker(db, config: AppConfig) -> AutoBackupWorker | None:
+    """Baut AutoBackupWorker nur, wenn in den Einstellungen aktiviert."""
+    if not config.backup_auto_enabled:
+        return None
+    return AutoBackupWorker(
+        db,
+        directory=Path(config.backup_directory),
+        retention_count=config.backup_retention_count,
+        interval_hours=config.backup_interval_hours,
+        encryption_key=(config.db_key or None
+                         if db.encryption_mode == "sqlcipher" else None),
     )
 
 SAMPLE_MAIL = """Betreff: Wichtige Information zu Ihrem Netflix-Abo

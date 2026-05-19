@@ -116,6 +116,13 @@
 
   "module_admin.toggle": "aktiv",
 
+  "onboarding.title": "Willkommen im Alltagshelfer",
+  "onboarding.intro": "Deine Datenbank ist leer. Wie moechtest du starten?",
+  "onboarding.option_demo": "Mit Beispieldaten starten (2 Vertraege, 3 Familienmitglieder, ein paar Termine)",
+  "onboarding.option_empty": "Mit leerer DB beginnen",
+  "onboarding.choose_demo": "Beispieldaten laden",
+  "onboarding.choose_empty": "Leer starten",
+
   "inbox.analyze": "Analysieren",
   "inbox.fetch_imap": "IMAP abrufen",
   "inbox.accept": "Uebernehmen",

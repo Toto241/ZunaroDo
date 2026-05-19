@@ -94,6 +94,19 @@ class StatisticsModule(ModuleInterface):
                 },
                 handler=self._cap_yearly_summary,
             ),
+            Capability(
+                name="stats.export_yearly_pdf",
+                description="Erzeugt einen druckbaren PDF-Jahresbericht "
+                            "mit Ausgaben-Summe, Top-Kategorien und "
+                            "Vertraege-Uebersicht.",
+                parameters={
+                    "path": {"type": "string", "_required": True,
+                             "description": "Zielpfad (PDF)"},
+                    "year": {"type": "integer",
+                              "description": "Zieljahr (Default: aktuell)"},
+                },
+                handler=self._cap_export_yearly_pdf,
+            ),
         ]
 
     # ---- Handler -------------------------------------------------------
@@ -149,6 +162,20 @@ class StatisticsModule(ModuleInterface):
                         "provider": c.provider}
                        for c in top],
         }
+
+    def _cap_export_yearly_pdf(self, path: str,
+                                 year: int | None = None) -> dict:
+        from pathlib import Path
+        from services.reports import make_yearly_report
+        target_year = year or date.today().year
+        yearly = self._cap_yearly_summary(target_year)
+        contracts = self._cap_contracts_overview()
+        per_cat = self._cap_expenses_per_category(target_year)
+        target = Path(path)
+        result = make_yearly_report(target, target_year, yearly,
+                                      contracts, per_cat)
+        return {"status": "PDF erstellt", "path": str(result),
+                "year": target_year}
 
     def _cap_yearly_summary(self, year: int | None = None) -> dict:
         target_year = year or date.today().year

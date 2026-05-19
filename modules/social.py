@@ -102,6 +102,16 @@ class SocialModule(ModuleInterface):
                 handler=self._cap_list,
             ),
             Capability(
+                name="social.export_vcard",
+                description="Exportiert alle Kontakte als vCard-Datei (.vcf), "
+                            "importierbar in jedes gaengige Adressbuch.",
+                parameters={
+                    "path": {"type": "string", "_required": True,
+                             "description": "Zielpfad (sollte auf .vcf enden)"},
+                },
+                handler=self._cap_export_vcard,
+            ),
+            Capability(
                 name="social.delete_contact",
                 description="Loescht einen Kontakt endgueltig.",
                 parameters={
@@ -166,6 +176,13 @@ class SocialModule(ModuleInterface):
         if not existed:
             return {"error": f"Kontakt {contact_id} nicht gefunden"}
         return {"status": "geloescht", "contact_id": contact_id}
+
+    def _cap_export_vcard(self, path: str) -> dict:
+        from pathlib import Path
+        from services.vcard import export_contacts
+        target = Path(path)
+        count = export_contacts(self.repo.list_all(), target)
+        return {"status": "exportiert", "count": count, "path": str(target)}
 
     def _cap_mark_contacted(self, contact_id: int) -> dict:
         c = self.repo.get(contact_id)

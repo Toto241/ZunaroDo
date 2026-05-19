@@ -30,7 +30,8 @@ from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, Database, ModuleStateRepository,
                       SettingsRepository)
 from main import (apply_persisted_module_states, build_registry,
-                    make_smtp_config, make_sync_provider)
+                    make_auto_backup_worker, make_smtp_config,
+                    make_sync_provider)
 from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
                               load_config, save_value)
 from services.gemini import GeminiClient
@@ -52,9 +53,17 @@ URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
 # ---------------------------------------------------------------------
 #  Beispieldaten beim ersten Start
 # ---------------------------------------------------------------------
-def _seed_if_empty(registry: ModuleRegistry) -> None:
+def _has_any_data(registry: ModuleRegistry) -> bool:
+    """True, wenn schon irgendwelche Nutzdaten vorhanden sind."""
     if registry.dispatch("contracts.list", {}).get("count", 0) > 0:
-        return
+        return True
+    if registry.dispatch("family.members", {}).get("count", 0) > 0:
+        return True
+    return False
+
+
+def _seed_demo_data(registry: ModuleRegistry) -> None:
+    """Legt das bekannte Demo-Datenset an. NICHT automatisch."""
     registry.dispatch("family.add_member",
                         {"name": "Anna", "role": "erwachsen",
                          "birthday": "1989-07-12"})
@@ -119,7 +128,7 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
     module_states = ModuleStateRepository(db)
     apply_persisted_module_states(registry, module_states)
 
-    _seed_if_empty(registry)
+    # Onboarding wird im GUI-Hauptloop entschieden (nicht automatisch).
     assistant = Assistant(
         registry, log=AssistantLogRepository(db), llm=active_llm,
         max_iterations=config.gemini_max_iterations,
@@ -136,8 +145,9 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
         except Exception:
             pass
         synced.apply_remote()
+    auto_backup = make_auto_backup_worker(db, config)
     return (db, registry, assistant, config, settings, module_states,
-            synced, profile)
+            synced, profile, auto_backup)
 
 
 # ---------------------------------------------------------------------
@@ -168,7 +178,8 @@ class AlltagshelferGUI(ctk.CTk):
                  settings_repo: SettingsRepository,
                  module_states: ModuleStateRepository,
                  synced=None,
-                 profile: str = ""):
+                 profile: str = "",
+                 auto_backup=None):
         super().__init__()
         self.registry = registry
         self.assistant = assistant
@@ -177,6 +188,7 @@ class AlltagshelferGUI(ctk.CTk):
         self.module_states = module_states
         self.synced = synced
         self.profile = profile
+        self.auto_backup = auto_backup
         self.i18n = I18n(language=config.i18n_language)
         self.scheduler = ProactiveScheduler(
             registry, warn_within_days=config.notify_warn_within_days)
@@ -222,6 +234,48 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
         self._append_chat(self.i18n.t("common.assistant"),
                            self.i18n.t("chat.greeting"))
+        # Onboarding-Dialog erst nach mainloop-Start zeigen, damit alle
+        # Widgets sichtbar sind.
+        self.after(200, self._maybe_run_onboarding)
+
+    def _maybe_run_onboarding(self) -> None:
+        """Bei leerer DB einmaligen Dialog zeigen - Demo-Daten oder leer?"""
+        if _has_any_data(self.registry):
+            return
+        t = self.i18n.t
+        dlg = ctk.CTkToplevel(self)
+        dlg.title(t("onboarding.title"))
+        dlg.geometry("520x260")
+        dlg.transient(self)
+        dlg.grab_set()
+        ctk.CTkLabel(dlg, text=t("onboarding.title"),
+                     font=ctk.CTkFont(size=15, weight="bold")
+                     ).pack(padx=20, pady=(20, 6))
+        ctk.CTkLabel(dlg, text=t("onboarding.intro"),
+                     wraplength=460, justify="left"
+                     ).pack(padx=20, pady=(0, 12))
+        ctk.CTkLabel(dlg, text="• " + t("onboarding.option_demo"),
+                     text_color="gray", wraplength=460, justify="left",
+                     anchor="w").pack(fill="x", padx=20, pady=2)
+        ctk.CTkLabel(dlg, text="• " + t("onboarding.option_empty"),
+                     text_color="gray", wraplength=460, justify="left",
+                     anchor="w").pack(fill="x", padx=20, pady=2)
+        btn_row = ctk.CTkFrame(dlg, fg_color="transparent")
+        btn_row.pack(fill="x", padx=20, pady=14)
+
+        def _choose_demo():
+            dlg.destroy()
+            _seed_demo_data(self.registry)
+            self._refresh_all()
+
+        def _choose_empty():
+            dlg.destroy()
+
+        ctk.CTkButton(btn_row, text=t("onboarding.choose_demo"),
+                      command=_choose_demo).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(btn_row, text=t("onboarding.choose_empty"),
+                      fg_color="transparent", border_width=1,
+                      command=_choose_empty).pack(side="left")
 
     # ================================================================
     #  Sidebar
@@ -1828,19 +1882,24 @@ def main() -> None:
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
     (db, registry, assistant, config, settings, module_states,
-     synced, profile) = bootstrap()
+     synced, profile, auto_backup) = bootstrap()
     app = AlltagshelferGUI(registry, assistant, config,
-                             settings, module_states, synced, profile)
+                             settings, module_states, synced, profile,
+                             auto_backup=auto_backup)
     # Hintergrund-Dienste starten
     app.scheduler.start()
     if app.sync_worker is not None:
         app.sync_worker.start()
+    if app.auto_backup is not None:
+        app.auto_backup.start()
     try:
         app.mainloop()
     finally:
         app.scheduler.stop()
         if app.sync_worker is not None:
             app.sync_worker.stop()
+        if app.auto_backup is not None:
+            app.auto_backup.stop()
         db.close()
 
 

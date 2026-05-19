@@ -15,6 +15,7 @@ Zwei Spezialfaelle, die das Modul von sich aus liefert:
 from __future__ import annotations
 
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Iterable
 
 from core.interface import Capability, ModuleContext, ModuleInterface
@@ -128,6 +129,17 @@ class CalendarModule(ModuleInterface):
                 handler=self._cap_upcoming,
             ),
             Capability(
+                name="calendar.export_ical",
+                description="Exportiert alle Termine als iCalendar-Datei "
+                            "(.ics), die in jeden gaengigen Kalender "
+                            "importiert werden kann.",
+                parameters={
+                    "path": {"type": "string", "_required": True,
+                             "description": "Zielpfad (sollte auf .ics enden)"},
+                },
+                handler=self._cap_export_ical,
+            ),
+            Capability(
                 name="calendar.delete_event",
                 description="Entfernt einen Termin.",
                 parameters={
@@ -192,6 +204,12 @@ class CalendarModule(ModuleInterface):
     def _cap_delete(self, event_id: int) -> dict:
         self.repo.delete(event_id)
         return {"status": "geloescht", "event_id": event_id}
+
+    def _cap_export_ical(self, path: str) -> dict:
+        from services.ical import export_events
+        target = Path(path)
+        count = export_events(self.repo.list_all(), target)
+        return {"status": "exportiert", "count": count, "path": str(target)}
 
     # ---- Spezialquellen ------------------------------------------------
     def _birthday_events(self, horizon_days: int) -> Iterable[Event]:

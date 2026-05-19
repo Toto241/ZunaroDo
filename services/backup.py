@@ -112,6 +112,88 @@ def list_backups(directory: Path) -> list[Path]:
                    key=lambda p: p.stat().st_mtime, reverse=True)
 
 
+def prune_old_backups(directory: Path, keep: int) -> list[Path]:
+    """
+    Loescht alle Backups in 'directory' bis auf die juengsten 'keep'
+    Dateien. Liefert die Liste der entfernten Pfade.
+    """
+    if keep <= 0:
+        return []
+    files = list_backups(directory)
+    if len(files) <= keep:
+        return []
+    to_remove = files[keep:]
+    for path in to_remove:
+        try:
+            path.unlink()
+        except OSError:                                # pragma: no cover
+            pass
+    return to_remove
+
+
 def default_backup_name(prefix: str = "alltagshelfer") -> str:
-    """Aktuell-zeitstempel-basierter Dateiname (sortierbar)."""
+    """Aktuell-zeitstempel-basierter Dateiname (sortierbar, lokal)."""
     return f"{prefix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db"
+
+
+class AutoBackupWorker:
+    """
+    Periodischer Auto-Backup-Hintergrundjob.
+
+    Startet einen Thread, der alle 'interval_hours' Stunden ein Backup
+    zieht und alte Eintraege bis auf 'retention_count' aufraeumt.
+    """
+
+    def __init__(self, db: "Database",
+                 directory: Path,
+                 retention_count: int = 10,
+                 interval_hours: int = 24,
+                 encryption_key: Optional[str] = None):
+        import threading
+        self.db = db
+        self.directory = Path(directory)
+        self.retention_count = max(1, retention_count)
+        self.interval_seconds = max(60, int(interval_hours * 3600))
+        self.encryption_key = encryption_key
+        self._stop = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self.last_backup_path: Optional[Path] = None
+        self.last_error: Optional[str] = None
+
+    def start(self) -> None:
+        if self._thread is not None:
+            return
+        import threading
+        self._stop.clear()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+            self._thread = None
+
+    def run_once(self) -> Optional[Path]:
+        """Manueller Auto-Backup-Lauf: Backup + Pruning."""
+        try:
+            target = self.directory / default_backup_name()
+            make_backup(self.db, target, encryption_key=self.encryption_key)
+            prune_old_backups(self.directory, self.retention_count)
+            self.last_backup_path = target
+            self.last_error = None
+            return target
+        except Exception as exc:                       # noqa: BLE001
+            self.last_error = str(exc)
+            return None
+
+    def _loop(self) -> None:
+        # Erstes Backup ein paar Sekunden nach dem Start, damit nicht
+        # gleichzeitig mit Demo/Seed-Aufrufen.
+        first_delay = min(60, self.interval_seconds)
+        if self._stop.wait(first_delay):
+            return
+        while not self._stop.is_set():
+            self.run_once()
+            if self._stop.wait(self.interval_seconds):
+                return
