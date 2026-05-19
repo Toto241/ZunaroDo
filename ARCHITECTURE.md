@@ -24,9 +24,11 @@ Logik hingehoert.
 ## Schichten (aussen nach innen)
 
 ```
-+--------------------------------------------------------+
-|  Praesentation:  gui.py  (CTk)   |  __main__ / CLI     |
-+--------------------------------------------------------+
++----------------------------------------------------------+
+|  Praesentation:                                          |
+|    Desktop:  gui.py (CustomTkinter) | __main__ / CLI     |
+|    Mobile:   mobile/ (KivyMD, Android via Buildozer)     |
++----------------------------------------------------------+
 |  Orchestrierung: core.interface (ModuleRegistry,       |
 |                   ModuleContext, Capability)           |
 +--------------------------------------------------------+
@@ -130,6 +132,20 @@ nur per Env-Var oder Keyring entgegengenommen.
 - `tests/test_performance.py` - Regressionsbudget fuer Hot-Pfade.
 - `tests/test_gui_smoke.py` - Import-/Signatur-Smoke ohne Tk-Display.
 - Coverage-Konfiguration in `.coveragerc`.
+
+## Mobile-Frontend (Android)
+
+`mobile/` ist eine **zweite Praesentationsschicht** neben der Desktop-GUI:
+
+- Implementierung in **KivyMD** (Material-Design auf Kivy), gebaut zur
+  APK via **Buildozer**.
+- Nutzt **dieselbe** `build_registry(db, output)` wie die Desktop-GUI -
+  also identische Capabilities, identische Datenbank, identische Regeln.
+- UI ist phone-spezifisch reduziert: 5 Bottom-Nav-Bereiche statt 14
+  Desktop-Tabs, vertikale Listen statt Tabellen, FAB statt Toolbars.
+- Pure-Logik in `mobile/helpers.py` ist von Kivy entkoppelt und unter
+  unittest testbar.
+- Details und Build-Schritte in [MOBILE.md](MOBILE.md).
 
 ## Was hier *nicht* hingehoert
 

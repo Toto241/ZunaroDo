@@ -2,6 +2,30 @@
 
 Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
+## [0.9.0] - 2026-05-19
+
+### Neu
+
+- **Android-Port** als zweite UI-Schicht (`mobile/`) auf Basis von
+  **KivyMD**. Backend (Module, Registry, DB) wird 1:1 wiederverwendet.
+- **Bottom-Navigation** mit 5 phone-optimierten Bereichen
+  (Start, Vertraege, Finanzen, Termine, Mehr) statt 14 Desktop-Tabs.
+- **Floating-Action-Button** auf allen Listen-Screens fuer Schnellanlage.
+- **Material-3-Theme**, grosse Tap-Ziele (>=56dp), vertikale Listen
+  statt Tabellen, Urgency-Farbcodierung fuer Fristen.
+- **buildozer.spec** fuer Android-APK-Build via Buildozer/p4a
+  (`arm64-v8a` + `armeabi-v7a`, API 33).
+- **MOBILE.md** mit Build-Anleitung (WSL2/Ubuntu), Datenort-Erklaerung
+  und Phone-UI-Patterns.
+- **mobile/helpers.py** mit testbarer Pure-Logic
+  (Currency-Format, days_until, relative_when, urgency_color, ...).
+- 28 neue Unit-Tests in `tests/test_mobile_helpers.py`.
+
+### Geaendert
+
+- DB landet auf Android im sandboxed `user_data_dir` der App
+  (kein anderer App-Zugriff moeglich - Datenschutz-Leitprinzip).
+
 ## [0.8.0] - 2026-05-19
 
 ### Neu
