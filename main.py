@@ -15,15 +15,17 @@ from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, CalendarRepository,
                       ContractRepository, Database, DayEntryRepository,
                       ExpenseRepository, FamilyRepository,
-                      ModuleStateRepository, PriceMemoryRepository,
-                      ProposalRepository, SettingsRepository,
-                      ShoppingRepository, SocialRepository)
+                      ModuleStateRepository, NoteRepository,
+                      PriceMemoryRepository, ProposalRepository,
+                      SettingsRepository, ShoppingRepository,
+                      SocialRepository)
 from modules.calendar import CalendarModule
 from modules.contracts import ContractModule
 from modules.daystructure import DayStructureModule
 from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
+from modules.notes import NotesModule
 from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
@@ -89,6 +91,7 @@ def build_registry(db: Database, output: OutputService,
     calendar_repo = CalendarRepository(db)
     social_repo = SocialRepository(db)
     proposal_repo = ProposalRepository(db)
+    notes_repo = NoteRepository(db)
     registry.register(ContractModule(contracts_repo, output))
     registry.register(FinanceModule(expense_repo, PriceMemoryRepository(db)))
     registry.register(FamilyModule(family_repo, ShoppingRepository(db)))
@@ -96,9 +99,10 @@ def build_registry(db: Database, output: OutputService,
     registry.register(SocialModule(social_repo, llm=llm))
     registry.register(DayStructureModule(DayEntryRepository(db)))
     registry.register(InboxModule(proposal_repo, llm=llm))
+    registry.register(NotesModule(notes_repo))
     registry.register(SearchModule(
         contracts_repo, expense_repo, calendar_repo,
-        family_repo, social_repo, proposal_repo))
+        family_repo, social_repo, proposal_repo, notes=notes_repo))
     registry.register(StatisticsModule(expense_repo, contracts_repo))
     return registry
 

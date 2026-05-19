@@ -141,6 +141,24 @@ class InboxModule(ModuleInterface):
                 destructive=True,
             ),
             Capability(
+                name="inbox.bulk_reject_open",
+                description="Lehnt alle offenen Vorschlaege auf einen "
+                            "Schlag ab. Liefert die Anzahl der "
+                            "abgelehnten Vorschlaege.",
+                parameters={},
+                handler=self._cap_bulk_reject_open,
+                destructive=True,
+            ),
+            Capability(
+                name="inbox.bulk_delete_archived",
+                description="Loescht alle Vorschlaege, die bereits "
+                            "uebernommen oder abgelehnt wurden, endgueltig "
+                            "aus der Ablage.",
+                parameters={},
+                handler=self._cap_bulk_delete_archived,
+                destructive=True,
+            ),
+            Capability(
                 name="inbox.update_proposal",
                 description="Bearbeitet einen offenen Vorschlag, bevor er "
                             "uebernommen wird. Beruehrt nur Vorschlaege im "
@@ -345,6 +363,30 @@ class InboxModule(ModuleInterface):
             return {"error": f"Vorschlag {proposal_id} nicht gefunden"}
         self.repo.set_status(proposal_id, "abgelehnt")
         return {"status": "Vorschlag abgelehnt"}
+
+    def _cap_bulk_reject_open(self) -> dict:
+        open_proposals = self.repo.list(status="offen")
+        count = 0
+        for p in open_proposals:
+            if p.id is None:
+                continue
+            self.repo.set_status(p.id, "abgelehnt")
+            count += 1
+        return {"status": "abgelehnt", "count": count}
+
+    def _cap_bulk_delete_archived(self) -> dict:
+        total = 0
+        for status in ("uebernommen", "abgelehnt"):
+            entries = self.repo.list(status=status)
+            for p in entries:
+                if p.id is None:
+                    continue
+                # repo.delete koennte fehlen - direkt ueber die Connection.
+                self.repo.db.conn.execute(
+                    "DELETE FROM proposals WHERE id=?", (p.id,))
+                total += 1
+        self.repo.db.conn.commit()
+        return {"status": "geloescht", "count": total}
 
     def _cap_update_proposal(self, proposal_id: int,
                               payload: dict | None = None,

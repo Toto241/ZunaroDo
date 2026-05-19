@@ -38,7 +38,7 @@ def _now_utc_iso() -> str:
 
 from models import (AssistantLogEntry, CalendarEvent, Contract, DayEntry,
                     Expense, FamilyMember, HouseholdOrder, HouseholdTask,
-                    PriceMemory, Proposal, ShoppingItem, SocialContact)
+                    Note, PriceMemory, Proposal, ShoppingItem, SocialContact)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS contracts (
@@ -175,6 +175,18 @@ CREATE TABLE IF NOT EXISTS assistant_log (
     content    TEXT,
     created_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS notes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT NOT NULL,
+    content     TEXT DEFAULT '',
+    entity_type TEXT,
+    entity_id   INTEGER,
+    created_at  TEXT,
+    updated_at  TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_notes_entity
+    ON notes(entity_type, entity_id);
 
 CREATE TABLE IF NOT EXISTS module_states (
     module_id  TEXT PRIMARY KEY,
@@ -1076,6 +1088,83 @@ class DayEntryRepository:
             "SELECT 1 FROM day_entries WHERE day=?", (day.isoformat(),)
         ).fetchone()
         return r is not None
+
+
+class NoteRepository:
+    """Repository fuer Freitext-Notizen, optional an Entitaeten geheftet."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def add(self, note: Note) -> Note:
+        now = _now_utc_iso()
+        cur = self.db.conn.execute(
+            "INSERT INTO notes (title, content, entity_type, entity_id,"
+            " created_at, updated_at) VALUES (?,?,?,?,?,?)",
+            (note.title, note.content, note.entity_type, note.entity_id,
+             now, now))
+        self.db.conn.commit()
+        note.id = cur.lastrowid
+        return note
+
+    def update(self, note_id: int, title: Optional[str] = None,
+                content: Optional[str] = None) -> Optional[Note]:
+        existing = self.get(note_id)
+        if existing is None:
+            return None
+        new_title = existing.title if title is None else title
+        new_content = existing.content if content is None else content
+        self.db.conn.execute(
+            "UPDATE notes SET title=?, content=?, updated_at=? WHERE id=?",
+            (new_title, new_content, _now_utc_iso(), note_id))
+        self.db.conn.commit()
+        return self.get(note_id)
+
+    def attach(self, note_id: int, entity_type: Optional[str],
+                entity_id: Optional[int]) -> Optional[Note]:
+        if self.get(note_id) is None:
+            return None
+        self.db.conn.execute(
+            "UPDATE notes SET entity_type=?, entity_id=?, updated_at=?"
+            " WHERE id=?",
+            (entity_type, entity_id, _now_utc_iso(), note_id))
+        self.db.conn.commit()
+        return self.get(note_id)
+
+    def delete(self, note_id: int) -> bool:
+        cur = self.db.conn.execute(
+            "DELETE FROM notes WHERE id=?", (note_id,))
+        self.db.conn.commit()
+        return cur.rowcount > 0
+
+    def get(self, note_id: int) -> Optional[Note]:
+        row = self.db.conn.execute(
+            "SELECT * FROM notes WHERE id=?", (note_id,)).fetchone()
+        return self._row_to_note(row) if row else None
+
+    def list_all(self) -> list[Note]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM notes ORDER BY updated_at DESC, id DESC")
+        return [self._row_to_note(r) for r in rows]
+
+    def list_attached(self, entity_type: str,
+                       entity_id: Optional[int] = None) -> list[Note]:
+        if entity_id is None:
+            rows = self.db.conn.execute(
+                "SELECT * FROM notes WHERE entity_type=?"
+                " ORDER BY updated_at DESC", (entity_type,))
+        else:
+            rows = self.db.conn.execute(
+                "SELECT * FROM notes WHERE entity_type=? AND entity_id=?"
+                " ORDER BY updated_at DESC", (entity_type, entity_id))
+        return [self._row_to_note(r) for r in rows]
+
+    @staticmethod
+    def _row_to_note(row: sqlite3.Row) -> Note:
+        return Note(
+            id=row["id"], title=row["title"], content=row["content"],
+            entity_type=row["entity_type"], entity_id=row["entity_id"],
+        )
 
 
 class SettingsRepository:

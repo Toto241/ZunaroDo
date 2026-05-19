@@ -129,6 +129,8 @@
   "inbox.reject": "Ablehnen",
   "inbox.edit": "Bearbeiten",
   "inbox.no_proposals": "Keine offenen Vorschlaege.",
+  "inbox.bulk_reject": "Alle ablehnen",
+  "inbox.bulk_purge": "Archivierte loeschen",
   "inbox.title": "Eingegangene Mail analysieren",
   "inbox.proposals_count": "Offene Vorschlaege ({count})",
   "inbox.imap_querying": "IMAP wird abgefragt ...",
@@ -178,6 +180,7 @@
   "form.relation": "Beziehung",
   "form.cadence_days": "Rhythmus (Tage)",
 
+  "action.bulk_complete_overdue": "Alle ueberfaelligen abhaken",
   "action.create_contract": "Vertrag anlegen",
   "action.cancellation_letter": "Kuendigungsschreiben",
   "action.add_task": "Aufgabe anlegen",

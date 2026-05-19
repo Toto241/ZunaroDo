@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass
 
 from core.interface import Capability, ModuleInterface
 from database import (CalendarRepository, ContractRepository,
-                      ExpenseRepository, FamilyRepository,
+                      ExpenseRepository, FamilyRepository, NoteRepository,
                       ProposalRepository, SocialRepository)
 
 
@@ -38,13 +38,15 @@ class SearchModule(ModuleInterface):
                  calendar: CalendarRepository,
                  family: FamilyRepository,
                  social: SocialRepository,
-                 proposals: ProposalRepository):
+                 proposals: ProposalRepository,
+                 notes: NoteRepository | None = None):
         self.contracts = contracts
         self.expenses = expenses
         self.calendar = calendar
         self.family = family
         self.social = social
         self.proposals = proposals
+        self.notes = notes
 
     @property
     def module_id(self) -> str:
@@ -157,3 +159,15 @@ class SearchModule(ModuleInterface):
                     source="proposals", entity_id=p.id or 0,
                     title=p.summary,
                     detail=f"{p.status} -> {p.target_capability}")
+
+        # Notizen
+        if self.notes is not None:
+            for n in self.notes.list_all():
+                haystack = " ".join(filter(None, [
+                    n.title, n.content, n.entity_type])).lower()
+                if query in haystack:
+                    target = (f"-> {n.entity_type}#{n.entity_id}"
+                               if n.entity_type else "(frei)")
+                    yield SearchHit(
+                        source="notes", entity_id=n.id or 0,
+                        title=n.title, detail=target)

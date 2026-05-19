@@ -206,6 +206,15 @@ class FamilyModule(ModuleInterface):
                 handler=self._cap_orders,
             ),
             Capability(
+                name="family.bulk_complete_overdue",
+                description="Hakt alle Aufgaben ab, die heute oder davor "
+                            "faellig sind/waren. Die Rotation rueckt fuer "
+                            "jede Aufgabe um eine Person weiter.",
+                parameters={},
+                handler=self._cap_bulk_complete_overdue,
+                destructive=True,
+            ),
+            Capability(
                 name="family.complete_order",
                 description="Markiert einen Auftrag als erledigt.",
                 parameters={
@@ -349,6 +358,26 @@ class FamilyModule(ModuleInterface):
         return {"status": "abgehakt",
                 "task": task.to_dict(),
                 "next_assignee": task.current_assignee_name}
+
+    def _cap_bulk_complete_overdue(self) -> dict:
+        today = date.today()
+        completed: list[dict] = []
+        for task in self.repo.list_tasks():
+            if task.next_due is None or task.next_due > today:
+                continue
+            if task.id is None:
+                continue
+            try:
+                updated = self.repo.complete_task(task.id)
+                completed.append({"task_id": task.id,
+                                    "title": updated.title,
+                                    "next_due": (updated.next_due.isoformat()
+                                                  if updated.next_due
+                                                  else None)})
+            except ValueError:
+                continue
+        return {"status": "abgehakt", "count": len(completed),
+                "tasks": completed}
 
     def _cap_add_order(self, title: str, assignee: str = "",
                        due_date: str | None = None,

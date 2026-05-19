@@ -102,6 +102,19 @@ class SocialModule(ModuleInterface):
                 handler=self._cap_list,
             ),
             Capability(
+                name="social.import_vcard",
+                description="Liest eine vCard-Datei (.vcf) und legt die "
+                            "enthaltenen Kontakte an. Bestehende Kontakte "
+                            "bleiben unveraendert - es entstehen neue "
+                            "Eintraege.",
+                parameters={
+                    "path": {"type": "string", "_required": True,
+                             "description": "Pfad zur .vcf-Datei"},
+                },
+                handler=self._cap_import_vcard,
+                destructive=True,
+            ),
+            Capability(
                 name="social.export_vcard",
                 description="Exportiert alle Kontakte als vCard-Datei (.vcf), "
                             "importierbar in jedes gaengige Adressbuch.",
@@ -183,6 +196,19 @@ class SocialModule(ModuleInterface):
         target = Path(path)
         count = export_contacts(self.repo.list_all(), target)
         return {"status": "exportiert", "count": count, "path": str(target)}
+
+    def _cap_import_vcard(self, path: str) -> dict:
+        from pathlib import Path
+        from services.vcard import import_contacts
+        try:
+            contacts = import_contacts(Path(path))
+        except FileNotFoundError as exc:
+            return {"error": str(exc)}
+        count = 0
+        for c in contacts:
+            self.repo.add(c)
+            count += 1
+        return {"status": "importiert", "count": count, "path": path}
 
     def _cap_mark_contacted(self, contact_id: int) -> dict:
         c = self.repo.get(contact_id)

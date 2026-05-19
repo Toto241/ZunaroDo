@@ -129,6 +129,8 @@
   "inbox.reject": "Reject",
   "inbox.edit": "Edit",
   "inbox.no_proposals": "No open proposals.",
+  "inbox.bulk_reject": "Reject all",
+  "inbox.bulk_purge": "Purge archived",
   "inbox.title": "Analyze incoming mail",
   "inbox.proposals_count": "Open proposals ({count})",
   "inbox.imap_querying": "Querying IMAP ...",
@@ -178,6 +180,7 @@
   "form.relation": "Relation",
   "form.cadence_days": "Cadence (days)",
 
+  "action.bulk_complete_overdue": "Complete all overdue",
   "action.create_contract": "Create contract",
   "action.cancellation_letter": "Cancellation letter",
   "action.add_task": "Add task",

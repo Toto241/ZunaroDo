@@ -24,15 +24,17 @@ from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, CalendarRepository,
                       ContractRepository, Database, DayEntryRepository,
                       ExpenseRepository, FamilyRepository,
-                      ModuleStateRepository, PriceMemoryRepository,
-                      ProposalRepository, SettingsRepository,
-                      ShoppingRepository, SocialRepository)
+                      ModuleStateRepository, NoteRepository,
+                      PriceMemoryRepository, ProposalRepository,
+                      SettingsRepository, ShoppingRepository,
+                      SocialRepository)
 from modules.calendar import CalendarModule
 from modules.contracts import ContractModule
 from modules.daystructure import DayStructureModule
 from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
+from modules.notes import NotesModule
 from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
@@ -77,6 +79,7 @@ def _build_system(llm=None) -> tuple[Database, ModuleRegistry, Assistant, str]:
     calendar_repo = CalendarRepository(db)
     social_repo = SocialRepository(db)
     proposal_repo = ProposalRepository(db)
+    notes_repo = NoteRepository(db)
     registry.register(ContractModule(contracts_repo, output))
     registry.register(FinanceModule(expense_repo,
                                      PriceMemoryRepository(db)))
@@ -85,9 +88,10 @@ def _build_system(llm=None) -> tuple[Database, ModuleRegistry, Assistant, str]:
     registry.register(SocialModule(social_repo, llm=llm))
     registry.register(DayStructureModule(DayEntryRepository(db)))
     registry.register(InboxModule(proposal_repo, llm=llm))
+    registry.register(NotesModule(notes_repo))
     registry.register(SearchModule(
         contracts_repo, expense_repo, calendar_repo,
-        family_repo, social_repo, proposal_repo))
+        family_repo, social_repo, proposal_repo, notes=notes_repo))
     registry.register(StatisticsModule(expense_repo, contracts_repo))
     return db, registry, Assistant(registry, llm=llm), tmp.name
 
@@ -1861,6 +1865,268 @@ class TestYearlyPdfReport(unittest.TestCase):
         self.assertTrue(out.exists())
         # PDF beginnt mit %PDF-
         self.assertTrue(out.read_bytes().startswith(b"%PDF-"))
+
+
+class TestNotesModule(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_add_list_update_attach_delete(self) -> None:
+        # Anlegen
+        r = self.registry.dispatch("notes.add", {
+            "title": "Idee", "content": "Lange Notiz"})
+        self.assertEqual(r["status"], "angelegt")
+        note_id = r["note"]["id"]
+        # Auflisten
+        l = self.registry.dispatch("notes.list", {})
+        self.assertEqual(l["count"], 1)
+        # Aktualisieren
+        u = self.registry.dispatch("notes.update", {
+            "note_id": note_id, "content": "Geaendert"})
+        self.assertEqual(u["note"]["content"], "Geaendert")
+        # An Entitaet heften
+        a = self.registry.dispatch("notes.attach", {
+            "note_id": note_id, "entity_type": "contracts",
+            "entity_id": 42})
+        self.assertEqual(a["note"]["entity_type"], "contracts")
+        # Filter nach Entitaet
+        filtered = self.registry.dispatch("notes.list", {
+            "entity_type": "contracts", "entity_id": 42})
+        self.assertEqual(filtered["count"], 1)
+        # Loeschen
+        d = self.registry.dispatch("notes.delete", {"note_id": note_id})
+        self.assertEqual(d["status"], "geloescht")
+
+    def test_empty_title_rejected(self) -> None:
+        r = self.registry.dispatch("notes.add",
+                                     {"title": "   ", "content": "x"})
+        self.assertIn("error", r)
+
+    def test_invalid_entity_type_rejected(self) -> None:
+        r = self.registry.dispatch("notes.add", {
+            "title": "X", "content": "", "entity_type": "evil",
+            "entity_id": 1})
+        self.assertIn("error", r)
+
+    def test_search_finds_notes(self) -> None:
+        self.registry.dispatch("notes.add", {
+            "title": "Geheimnis", "content": "Schluesselwort"})
+        result = self.registry.dispatch(
+            "system.search", {"query": "schluesselwort"})
+        sources = {h["source"] for h in result["hits"]}
+        self.assertIn("notes", sources)
+
+
+class TestIcalImportRoundTrip(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_ical_rt_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_roundtrip(self) -> None:
+        self.registry.dispatch("calendar.add_event", {
+            "title": "TUEV, jaehrlich", "due_date": "2030-09-15",
+            "category": "tuev", "recurrence_days": 365,
+            "description": "Erinnerung mit ; und , Sonderzeichen"})
+        out = self.tmp / "events.ics"
+        self.registry.dispatch("calendar.export_ical", {"path": str(out)})
+        # Frische DB
+        tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp_db.close()
+        try:
+            fresh = Database(tmp_db.name)
+            try:
+                from modules.calendar import CalendarModule
+                reg = ModuleRegistry()
+                reg.register(CalendarModule(CalendarRepository(fresh)))
+                result = reg.dispatch("calendar.import_ical",
+                                       {"path": str(out)})
+                self.assertEqual(result["count"], 1)
+                events = CalendarRepository(fresh).list_all()
+                self.assertEqual(events[0].title, "TUEV, jaehrlich")
+                self.assertEqual(events[0].recurrence_days, 365)
+                self.assertIn(";", events[0].description)
+            finally:
+                fresh.close()
+        finally:
+            os.unlink(tmp_db.name)
+
+    def test_import_missing_file_returns_error(self) -> None:
+        result = self.registry.dispatch("calendar.import_ical",
+                                          {"path": "nicht-da.ics"})
+        self.assertIn("error", result)
+
+
+class TestVCardImportRoundTrip(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+        self.tmp = Path(tempfile.mkdtemp(prefix="ah_vcf_rt_"))
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+        shutil.rmtree(self.tmp)
+
+    def test_roundtrip_preserves_rhythmus(self) -> None:
+        self.registry.dispatch("social.add_contact", {
+            "name": "Oma, Test", "relation": "Familie",
+            "cadence_days": 21})
+        out = self.tmp / "contacts.vcf"
+        self.registry.dispatch("social.export_vcard", {"path": str(out)})
+        # Frische DB
+        tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp_db.close()
+        try:
+            fresh = Database(tmp_db.name)
+            try:
+                from modules.social import SocialModule
+                reg = ModuleRegistry()
+                reg.register(SocialModule(SocialRepository(fresh)))
+                result = reg.dispatch("social.import_vcard",
+                                       {"path": str(out)})
+                self.assertEqual(result["count"], 1)
+                contacts = SocialRepository(fresh).list_all()
+                self.assertEqual(contacts[0].name, "Oma, Test")
+                self.assertEqual(contacts[0].relation, "Familie")
+                # Rhythmus aus NOTE wieder rekonstruiert
+                self.assertEqual(contacts[0].cadence_days, 21)
+            finally:
+                fresh.close()
+        finally:
+            os.unlink(tmp_db.name)
+
+
+class TestLamportCrdt(unittest.TestCase):
+    """Lamport-Counter sorgt fuer kausale Reihenfolge bei Sync."""
+
+    def setUp(self) -> None:
+        self.root = Path(tempfile.mkdtemp(prefix="ah_lamport_"))
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.root)
+
+    def test_clock_ticks_monotonically(self) -> None:
+        from services.sync import LamportClock
+        c = LamportClock()
+        self.assertEqual(c.tick(), 1)
+        self.assertEqual(c.tick(), 2)
+        self.assertEqual(c.observe(10), 11)
+        self.assertEqual(c.tick(), 12)
+        # Observe mit kleinerem Wert hebt counter nur durch +1
+        self.assertEqual(c.observe(5), 13)
+
+    def test_events_get_lamport_counter(self) -> None:
+        from services.sync import FileSyncProvider, install_sync_hook
+        provider = FileSyncProvider(str(self.root / "shared"), "dev",
+                                      local_seen_path=self.root / "seen.json")
+        db, registry, _, db_path = _build_system()
+        try:
+            install_sync_hook(registry, provider)
+            registry.dispatch("family.add_member", {"name": "Anna"})
+            registry.dispatch("family.add_member", {"name": "Bernd"})
+            events = provider.read_all()
+            counters = [e.lamport for e in events]
+            self.assertEqual(counters, [1, 2])
+        finally:
+            db.close()
+            os.unlink(db_path)
+
+    def test_replay_order_uses_lamport(self) -> None:
+        """Bei zwei Geraeten zaehlt der Lamport - nicht die Wall-Clock."""
+        from services.sync import (FileSyncProvider, SyncEvent,
+                                     install_sync_hook)
+        shared = self.root / "shared"
+        shared.mkdir()
+        # Geraet A schreibt Event mit hoeherem Lamport
+        # Geraet B schreibt frueheres mit niedrigerem Lamport
+        # Replay-Reihenfolge muss B vor A applizieren.
+        events = [
+            SyncEvent(event_id="e2", device_id="dev-a",
+                       timestamp="2026-01-01T00:00:00+00:00",
+                       capability="family.add_member",
+                       args={"name": "Spaeter"}, lamport=5),
+            SyncEvent(event_id="e1", device_id="dev-b",
+                       timestamp="2026-01-01T00:00:00+00:00",
+                       capability="family.add_member",
+                       args={"name": "Frueher"}, lamport=3),
+        ]
+        log = shared / "sync_events.jsonl"
+        log.write_text("\n".join(
+            __import__("json").dumps(e.to_dict()) for e in events) + "\n",
+            encoding="utf-8")
+        provider = FileSyncProvider(str(shared), "dev-other",
+                                      local_seen_path=self.root / "seen.json")
+        ordered = provider.unseen_events()
+        # 'Frueher' mit Lamport 3 muss vor 'Spaeter' mit Lamport 5 stehen
+        self.assertEqual([e.args["name"] for e in ordered],
+                          ["Frueher", "Spaeter"])
+
+
+class TestBulkOperations(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.db, self.registry, _, self.path = _build_system()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        os.unlink(self.path)
+
+    def test_bulk_reject_open_proposals(self) -> None:
+        # Drei Vorschlaege manuell anlegen
+        from models import Proposal
+        repo = ProposalRepository(self.db)
+        for i in range(3):
+            repo.add(Proposal(source="test", summary=f"P{i}",
+                                target_capability="x.y", payload={}))
+        result = self.registry.dispatch("inbox.bulk_reject_open", {})
+        self.assertEqual(result["count"], 3)
+        # Es darf keinen offenen Vorschlag mehr geben
+        self.assertEqual(len(repo.list(status="offen")), 0)
+        self.assertEqual(len(repo.list(status="abgelehnt")), 3)
+
+    def test_bulk_delete_archived(self) -> None:
+        from models import Proposal
+        repo = ProposalRepository(self.db)
+        for status in ("uebernommen", "abgelehnt", "offen"):
+            p = repo.add(Proposal(source="test", summary=status,
+                                     target_capability="x.y", payload={}))
+            if p.id is not None and status != "offen":
+                repo.set_status(p.id, status)
+        result = self.registry.dispatch("inbox.bulk_delete_archived", {})
+        self.assertEqual(result["count"], 2)
+        # Der offene Vorschlag bleibt
+        remaining = repo.list()
+        self.assertEqual(len(remaining), 1)
+        self.assertEqual(remaining[0].status, "offen")
+
+    def test_bulk_complete_overdue_tasks(self) -> None:
+        self.registry.dispatch("family.add_member",
+                                {"name": "Anna"})
+        self.registry.dispatch("family.add_member",
+                                {"name": "Bernd"})
+        # Zwei ueberfaellige + eine in der Zukunft
+        old = (date.today() - timedelta(days=5)).isoformat()
+        future = (date.today() + timedelta(days=10)).isoformat()
+        for title, due in [("Muell", old), ("Kueche", old),
+                            ("Garage", future)]:
+            self.registry.dispatch("family.add_task", {
+                "title": title, "interval_days": 7,
+                "assignees": ["Anna", "Bernd"], "first_due": due})
+        result = self.registry.dispatch(
+            "family.bulk_complete_overdue", {})
+        # Zwei der drei Aufgaben sind ueberfaellig
+        self.assertEqual(result["count"], 2)
 
 
 class TestProposalsFlow(unittest.TestCase):

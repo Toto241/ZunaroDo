@@ -327,6 +327,33 @@ class AssistantLogEntry:
 
 
 @dataclass
+class Note:
+    """
+    Freie Notiz. Optional an eine Entitaet angeheftet.
+
+    'entity_type' ist eine der Modul-IDs ("contracts", "calendar",
+    "social", "family", "expenses") oder None fuer eine freie Notiz.
+    'entity_id' ist die ID des betroffenen Objekts (oder None).
+    """
+    title: str
+    content: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[int] = None
+    id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "entity_type": self.entity_type,
+            "entity_id": self.entity_id,
+        }
+
+
+@dataclass
 class DayEntry:
     """Persistierter Tagebuch-Eintrag des Tagesstruktur-Moduls."""
     day: date

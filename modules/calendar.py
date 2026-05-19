@@ -129,6 +129,19 @@ class CalendarModule(ModuleInterface):
                 handler=self._cap_upcoming,
             ),
             Capability(
+                name="calendar.import_ical",
+                description="Liest eine iCalendar-Datei (.ics) und legt die "
+                            "enthaltenen Termine an. Bestehende Termine "
+                            "werden NICHT veraendert - es entstehen neue "
+                            "Eintraege.",
+                parameters={
+                    "path": {"type": "string", "_required": True,
+                             "description": "Pfad zur .ics-Datei"},
+                },
+                handler=self._cap_import_ical,
+                destructive=True,
+            ),
+            Capability(
                 name="calendar.export_ical",
                 description="Exportiert alle Termine als iCalendar-Datei "
                             "(.ics), die in jeden gaengigen Kalender "
@@ -210,6 +223,18 @@ class CalendarModule(ModuleInterface):
         target = Path(path)
         count = export_events(self.repo.list_all(), target)
         return {"status": "exportiert", "count": count, "path": str(target)}
+
+    def _cap_import_ical(self, path: str) -> dict:
+        from services.ical import import_events
+        try:
+            events = import_events(Path(path))
+        except FileNotFoundError as exc:
+            return {"error": str(exc)}
+        count = 0
+        for ev in events:
+            self.repo.add(ev)
+            count += 1
+        return {"status": "importiert", "count": count, "path": path}
 
     # ---- Spezialquellen ------------------------------------------------
     def _birthday_events(self, horizon_days: int) -> Iterable[Event]:

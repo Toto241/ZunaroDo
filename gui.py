@@ -197,9 +197,13 @@ class AlltagshelferGUI(ctk.CTk):
             if synced is not None else None
 
         self.title(self.i18n.t("app.title"))
-        self.geometry("1080x720")
+        # Persistierte Geometrie: Fenster merkt sich Groesse und Position
+        # ueber Sessions hinweg. Default-Wert nur, wenn nichts gespeichert.
+        saved_geometry = self.settings_repo.get("gui.geometry")
+        self.geometry(saved_geometry or "1080x720")
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._build_sidebar()
 
@@ -230,6 +234,9 @@ class AlltagshelferGUI(ctk.CTk):
 
         # Assistant bei destruktiven Aufrufen den Nutzer fragen lassen
         self.assistant.set_confirm_callback(self._confirm_destructive)
+
+        # Tastatur-Shortcuts
+        self._bind_shortcuts()
 
         self._refresh_all()
         self._append_chat(self.i18n.t("common.assistant"),
@@ -567,11 +574,22 @@ class AlltagshelferGUI(ctk.CTk):
             "first_due": _labeled_entry(form, t("form.first_due"),
                                            date.today().isoformat()),
         }
-        ctk.CTkButton(form, text=t("action.add_task"),
-                      command=self._on_task_add).pack(pady=6)
+        btn_row = ctk.CTkFrame(form, fg_color="transparent")
+        btn_row.pack(fill="x", pady=6)
+        ctk.CTkButton(btn_row, text=t("action.add_task"),
+                      command=self._on_task_add).pack(side="left",
+                                                        padx=(0, 8))
+        ctk.CTkButton(btn_row, text=t("action.bulk_complete_overdue"),
+                      fg_color="transparent", border_width=1,
+                      command=self._bulk_complete_overdue
+                      ).pack(side="left")
         self.task_list = ctk.CTkScrollableFrame(parent,
                                                   fg_color="transparent")
         self.task_list.pack(fill="both", expand=True)
+
+    def _bulk_complete_overdue(self) -> None:
+        self.registry.dispatch("family.bulk_complete_overdue", {})
+        self._refresh_all()
 
     def _on_task_add(self) -> None:
         v = {k: e.get().strip() for k, e in self.task_inputs.items()}
@@ -960,10 +978,20 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkButton(actions, text=t("inbox.fetch_imap"), width=130,
                       command=self._fetch_imap).pack(pady=2)
 
+        info_row = ctk.CTkFrame(parent, fg_color="transparent")
+        info_row.grid(row=2, column=0, sticky="ew", pady=(0, 4))
         self.inbox_info = ctk.CTkLabel(
-            parent, text=t("inbox.proposals_count").format(count=0),
+            info_row, text=t("inbox.proposals_count").format(count=0),
             font=ctk.CTkFont(size=14, weight="bold"))
-        self.inbox_info.grid(row=2, column=0, sticky="w", pady=(0, 4))
+        self.inbox_info.pack(side="left")
+        ctk.CTkButton(info_row, text=t("inbox.bulk_reject"), width=130,
+                      fg_color="transparent", border_width=1,
+                      command=self._bulk_reject_open
+                      ).pack(side="right", padx=(0, 4))
+        ctk.CTkButton(info_row, text=t("inbox.bulk_purge"), width=140,
+                      fg_color="transparent", border_width=1,
+                      command=self._bulk_delete_archived
+                      ).pack(side="right", padx=(0, 4))
 
         self.proposal_list = ctk.CTkScrollableFrame(parent,
                                                        fg_color="transparent")
@@ -1196,6 +1224,14 @@ class AlltagshelferGUI(ctk.CTk):
         self.registry.dispatch(cap, {"proposal_id": proposal_id})
         self._refresh_all()
 
+    def _bulk_reject_open(self) -> None:
+        self.registry.dispatch("inbox.bulk_reject_open", {})
+        self._refresh_all()
+
+    def _bulk_delete_archived(self) -> None:
+        self.registry.dispatch("inbox.bulk_delete_archived", {})
+        self._refresh_all()
+
     # ================================================================
     #  Chat
     # ================================================================
@@ -1223,15 +1259,72 @@ class AlltagshelferGUI(ctk.CTk):
             return
         self.entry.delete(0, "end")
         self._append_chat(self.i18n.t("common.you"), text)
-        self._append_chat(self.i18n.t("common.assistant"),
-                           self.i18n.t("chat.thinking"))
+        # Streaming-Container vorbereiten - der Worker fuellt ihn live.
+        self._begin_assistant_stream()
         threading.Thread(target=self._chat_worker,
                           args=(text,), daemon=True).start()
 
     def _chat_worker(self, prompt: str) -> None:
-        answer = self.assistant.ask(prompt)
-        self.after(0, lambda: self._replace_last_chat(answer))
+        """
+        Ruft den Assistenten auf. Wenn der LLM streamt, schreibt jeder
+        Chunk live in die Chat-Box; im Offline-Modus simulieren wir
+        Streaming, indem wir die fertige Antwort Wort fuer Wort
+        einblenden - das fuehlt sich fluessiger an als ein Schlag-
+        artiges Auftauchen.
+        """
+        def stream_callback(chunk: str) -> None:
+            # Thread-safe: GUI-Update ueber after-Queue
+            self.after(0, lambda c=chunk: self._append_to_stream(c))
+
+        if self.assistant.llm is not None:
+            answer = self.assistant.ask(prompt,
+                                          stream_callback=stream_callback)
+            # Wenn das LLM nichts gestreamt hat (z.B. Fehlerfall), zeigen
+            # wir die endgueltige Antwort am Stueck.
+            self.after(0, lambda a=answer: self._finalize_stream(a))
+        else:
+            answer = self.assistant.ask(prompt)
+            self._simulate_word_stream(answer)
         self.after(0, self._refresh_all)
+
+    def _begin_assistant_stream(self) -> None:
+        """Schreibt 'Assistent:\\n' und merkt sich, wo der Streaming-Text
+        beginnt."""
+        self.chat.configure(state="normal")
+        label = self.i18n.t("common.assistant")
+        self.chat.insert("end", f"{label}:\n")
+        self._stream_anchor = self.chat.index("end-1c")
+        self.chat.insert("end", "\n\n")
+        self.chat.see("end")
+        self.chat.configure(state="disabled")
+        self._stream_received_anything = False
+
+    def _append_to_stream(self, chunk: str) -> None:
+        """Haengt einen Streaming-Chunk vor den Schluss-Newlines an."""
+        if not chunk:
+            return
+        self.chat.configure(state="normal")
+        self.chat.insert(self._stream_anchor, chunk)
+        # Anchor verschiebt sich automatisch nicht - daher neu setzen
+        self._stream_anchor = (
+            f"{self._stream_anchor}+{len(chunk)}c")
+        self.chat.see("end")
+        self.chat.configure(state="disabled")
+        self._stream_received_anything = True
+
+    def _finalize_stream(self, full_answer: str) -> None:
+        """Wenn nichts gestreamt wurde, die ganze Antwort einmal einsetzen."""
+        if self._stream_received_anything:
+            return
+        self._append_to_stream(full_answer)
+
+    def _simulate_word_stream(self, text: str, delay_ms: int = 25) -> None:
+        """Im Offline-Modus: Wort fuer Wort mit kurzem Delay anzeigen."""
+        tokens = text.split(" ")
+        for i, token in enumerate(tokens):
+            chunk = token + (" " if i < len(tokens) - 1 else "")
+            self.after(i * delay_ms,
+                        lambda c=chunk: self._append_to_stream(c))
 
     def _append_chat(self, who: str, text: str) -> None:
         self.chat.configure(state="normal")
@@ -1629,6 +1722,62 @@ class AlltagshelferGUI(ctk.CTk):
         self.registry.set_module_enabled(module_id, enabled)
         self.module_states.set_enabled(module_id, enabled)
         self._refresh_all()
+
+    # ================================================================
+    #  Tastatur-Shortcuts
+    # ================================================================
+    SHORTCUT_MAP: list[tuple[str, str, str]] = [
+        # (Tk-Sequence, Tab-Key, Aktion)
+        ("<Control-n>", "tab.contracts", "focus_new_contract"),
+        ("<Control-f>", "tab.search", "focus_search"),
+        ("<Control-i>", "tab.inbox", ""),
+        ("<F5>", "", "refresh_all"),
+        ("<Control-s>", "", "backup_now"),
+        ("<Control-q>", "", "close"),
+    ]
+
+    def _bind_shortcuts(self) -> None:
+        for sequence, tab_key, action in self.SHORTCUT_MAP:
+            self.bind_all(sequence,
+                          lambda _e, t=tab_key, a=action:
+                          self._run_shortcut(t, a))
+
+    def _run_shortcut(self, tab_key: str, action: str) -> str:
+        """Wechselt auf den Tab und fuehrt die Folgeaktion aus. 'break'
+        verhindert weiteres Event-Bubbling."""
+        if tab_key:
+            try:
+                self.tabs.set(self.i18n.t(tab_key))
+            except Exception:
+                pass
+        if action == "focus_new_contract":
+            entry = self.contract_inputs.get("name") \
+                if hasattr(self, "contract_inputs") else None
+            if entry is not None:
+                entry.focus_set()
+        elif action == "focus_search":
+            if hasattr(self, "search_entry"):
+                self.search_entry.focus_set()
+        elif action == "refresh_all":
+            self._refresh_all()
+        elif action == "backup_now":
+            try:
+                self._do_backup()
+            except Exception:
+                pass
+        elif action == "close":
+            self._on_close()
+        return "break"
+
+    # ================================================================
+    #  Fenster-Schluss: Geometrie persistieren
+    # ================================================================
+    def _on_close(self) -> None:
+        try:
+            self.settings_repo.set("gui.geometry", self.geometry())
+        except Exception:
+            pass
+        self.destroy()
 
     # ================================================================
     #  Suche

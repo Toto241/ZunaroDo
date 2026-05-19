@@ -87,3 +87,130 @@ def export_events(events: Iterable[CalendarEvent], target: Path,
     # iCal verlangt CRLF
     target.write_text("\r\n".join(folded) + "\r\n", encoding="utf-8")
     return count
+
+
+# ---------------------------------------------------------------------
+#  Import
+# ---------------------------------------------------------------------
+def _unescape(value: str) -> str:
+    """Kehrt das _escape aus dem Export-Pfad um."""
+    # Reihenfolge wichtig: erst \\ -> placeholder, dann andere, dann zurueck
+    out = (value.replace("\\\\", "\x00")
+                .replace("\\n", "\n")
+                .replace("\\,", ",")
+                .replace("\\;", ";")
+                .replace("\x00", "\\"))
+    return out
+
+
+def _unfold(raw: str) -> list[str]:
+    """RFC-5545-Line-Unfolding: Zeilen, die mit Whitespace beginnen, an die
+    vorherige anhaengen."""
+    raw = raw.replace("\r\n", "\n").replace("\r", "\n")
+    result: list[str] = []
+    for line in raw.split("\n"):
+        if line.startswith((" ", "\t")) and result:
+            result[-1] += line[1:]
+        else:
+            result.append(line)
+    return result
+
+
+def _parse_date(value: str) -> date | None:
+    """Akzeptiert sowohl 'YYYYMMDD' (DATE) als auch 'YYYYMMDDTHHMMSSZ' (DATE-TIME)."""
+    value = value.strip()
+    if not value:
+        return None
+    base = value.split("T", 1)[0]
+    if len(base) != 8 or not base.isdigit():
+        return None
+    try:
+        return date(int(base[:4]), int(base[4:6]), int(base[6:8]))
+    except ValueError:
+        return None
+
+
+def _parse_rrule(value: str) -> int | None:
+    """Extrahiert recurrence_days aus RRULE. Akzeptiert FREQ=DAILY/WEEKLY/
+    MONTHLY/YEARLY mit optionalem INTERVAL."""
+    parts = {}
+    for piece in value.split(";"):
+        if "=" in piece:
+            k, v = piece.split("=", 1)
+            parts[k.strip().upper()] = v.strip()
+    freq = parts.get("FREQ", "").upper()
+    try:
+        interval = int(parts.get("INTERVAL", "1"))
+    except ValueError:
+        interval = 1
+    if interval <= 0:
+        return None
+    if freq == "DAILY":
+        return interval
+    if freq == "WEEKLY":
+        return interval * 7
+    if freq == "MONTHLY":
+        return interval * 30        # naehe-rungsweise (kein echter Kalender)
+    if freq == "YEARLY":
+        return interval * 365
+    return None
+
+
+def import_events(source: Path) -> list[CalendarEvent]:
+    """
+    Liest eine iCal-Datei und liefert CalendarEvent-Objekte.
+
+    Bewusst nachsichtig: unbekannte Felder werden ignoriert, Bloecke
+    ohne SUMMARY oder DTSTART uebersprungen. Zeilen-Folding und das
+    Standard-Escaping (\\n, \\,, \\;, \\\\) werden korrekt aufgeloest.
+    """
+    if not source.exists():
+        raise FileNotFoundError(f"iCal-Datei '{source}' nicht gefunden")
+    raw = source.read_text(encoding="utf-8")
+    lines = _unfold(raw)
+
+    events: list[CalendarEvent] = []
+    in_event = False
+    current: dict = {}
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.upper() == "BEGIN:VEVENT":
+            in_event = True
+            current = {}
+            continue
+        if line.upper() == "END:VEVENT":
+            in_event = False
+            title = current.get("summary")
+            due = current.get("dtstart")
+            if title and due:
+                events.append(CalendarEvent(
+                    title=title,
+                    due_date=due,
+                    category=current.get("category") or "termin",
+                    description=current.get("description") or "",
+                    recurrence_days=current.get("rrule"),
+                ))
+            current = {}
+            continue
+        if not in_event:
+            continue
+        # Property-Zeilen: KEY[;PARAMS]:VALUE
+        if ":" not in line:
+            continue
+        head, _, value = line.partition(":")
+        key = head.split(";", 1)[0].upper()
+        if key == "SUMMARY":
+            current["summary"] = _unescape(value).strip()
+        elif key == "DTSTART":
+            current["dtstart"] = _parse_date(value)
+        elif key == "DESCRIPTION":
+            current["description"] = _unescape(value)
+        elif key == "CATEGORIES":
+            # Erste Kategorie reicht, wir trennen nicht weiter
+            cat = _unescape(value).split(",", 1)[0].strip().lower()
+            current["category"] = cat if cat else "termin"
+        elif key == "RRULE":
+            current["rrule"] = _parse_rrule(value)
+    return events

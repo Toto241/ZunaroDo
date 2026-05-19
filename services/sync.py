@@ -80,16 +80,33 @@ DEFAULT_SYNCED_CAPABILITIES: set[str] = {
 
 @dataclass
 class SyncEvent:
+    """
+    Ein Sync-Event mit Lamport-Counter fuer kausale Ordnung.
+
+    Wall-Clock-Timestamps allein reichen fuer Mehrgeraete-Sync nicht:
+    Geraete-Uhren laufen auseinander, ein Geraet kann ueberholen, ohne
+    dass das in der lokalen Zeit sichtbar ist. Lamport-Counter loesen
+    das deterministisch:
+      - jeder Sender erhoeht seinen Counter pro Ereignis monoton
+      - jeder Empfaenger setzt seinen Counter auf
+        max(lokal, empfangen) + 1
+      - bei gleicher Lamport-Zahl entscheidet device_id alphabetisch
+
+    Backward-Compat: alte Events ohne Lamport-Feld werden mit 0
+    geladen - sie kommen damit beim Sort an den Anfang, was korrekt
+    ist (sie waren zeitlich vor dem CRDT-Update).
+    """
     event_id: str
     device_id: str
     timestamp: str
     capability: str
     args: dict
+    lamport: int = 0
 
     def to_dict(self) -> dict:
         return {"event_id": self.event_id, "device_id": self.device_id,
                 "timestamp": self.timestamp, "capability": self.capability,
-                "args": self.args}
+                "args": self.args, "lamport": self.lamport}
 
     @classmethod
     def from_dict(cls, data: dict) -> "SyncEvent":
@@ -97,7 +114,37 @@ class SyncEvent:
             event_id=data["event_id"], device_id=data["device_id"],
             timestamp=data["timestamp"], capability=data["capability"],
             args=data.get("args", {}),
+            lamport=int(data.get("lamport", 0) or 0),
         )
+
+    def order_key(self) -> tuple:
+        """Sortier-Schluessel fuer Replay: deterministisch und kausal."""
+        return (self.lamport, self.timestamp, self.device_id, self.event_id)
+
+
+class LamportClock:
+    """Sehr schlanker Lamport-Counter, thread-safe."""
+
+    def __init__(self, initial: int = 0):
+        self._value = max(0, initial)
+        self._lock = threading.Lock()
+
+    @property
+    def value(self) -> int:
+        with self._lock:
+            return self._value
+
+    def tick(self) -> int:
+        """Ein eigenes Ereignis: counter+1, Rueckgabe = neuer Wert."""
+        with self._lock:
+            self._value += 1
+            return self._value
+
+    def observe(self, received: int) -> int:
+        """Empfangenes Ereignis: counter = max(lokal, received) + 1."""
+        with self._lock:
+            self._value = max(self._value, int(received or 0)) + 1
+            return self._value
 
 
 class SyncProviderProtocol(Protocol):
@@ -174,7 +221,7 @@ class FileSyncProvider:
         events = [e for e in self.read_all()
                    if e.event_id not in self._seen
                    and e.device_id != self.device_id]
-        events.sort(key=lambda ev: ev.timestamp)
+        events.sort(key=lambda ev: ev.order_key())
         return events
 
     def mark_seen(self, event_id: str) -> None:
@@ -238,25 +285,27 @@ class SyncedRegistry:
         self.synced = synced or DEFAULT_SYNCED_CAPABILITIES
         self._replaying = False
         # Thread-Local-Marker: True, wenn der aktuelle Thread bereits
-        # mitten in einem dispatch() steckt. Modul-zu-Modul-Aufrufe sind
-        # dadurch erkennbar - sie sollen NICHT als eigenes Event in den
-        # Sync-Log gehen (sonst wird derselbe Effekt beim Replay doppelt
-        # angewendet).
+        # mitten in einem synced dispatch() steckt. So werden Modul-zu-
+        # Modul-Aufrufe nicht doppelt geloggt.
         self._local = threading.local()
         # ueberbruecken den Hook, indem wir den ORIGINAL-dispatch merken
         self._inner_dispatch = inner_dispatch or registry.dispatch
+        # Lamport-Clock: initialer Wert = hoechster bereits bekannter
+        # Lamport-Counter. So bleibt die Monotonie auch ueber Neustarts
+        # erhalten, sobald wir den eigenen Provider lesen koennen.
+        self.clock = LamportClock(
+            initial=self._initial_lamport_value())
+
+    def _initial_lamport_value(self) -> int:
+        """Hoechster Lamport-Counter im Log, damit wir nach Neustart kausal
+        weiterzaehlen."""
+        try:
+            events = self.provider.read_all()
+        except Exception:
+            return 0
+        return max((e.lamport for e in events), default=0)
 
     def dispatch(self, capability: str, args: dict) -> dict:
-        # 'in_synced_outer' markiert, dass wir bereits innerhalb eines
-        # synchronisierten dispatch-Aufrufs stecken. Nested Aufrufe
-        # innerhalb eines bereits geloggten Events duerfen NICHT erneut
-        # ein eigenes Event schreiben - sonst wuerde der Effekt beim
-        # Replay doppelt angewendet.
-        #
-        # Wichtig dabei: wenn der AEUSSERE Aufruf nicht synchronisiert
-        # ist (z.B. inbox.accept_proposal), darf der nested Aufruf
-        # weiterhin loggen - denn ohne das Event wuerde der Effekt
-        # andere Geraete sonst nie erreichen.
         is_synced = capability in self.synced
         in_synced_outer = bool(getattr(self._local, "in_synced", False))
         if is_synced:
@@ -274,6 +323,7 @@ class SyncedRegistry:
                         timespec="seconds"),
                     capability=capability,
                     args=args,
+                    lamport=self.clock.tick(),
                 )
                 try:
                     self.provider.append(event)
@@ -290,6 +340,8 @@ class SyncedRegistry:
         self._replaying = True
         try:
             for event in self.provider.unseen_events():
+                # Lamport: lokalen Counter auf >= empfangenen Wert hochziehen.
+                self.clock.observe(event.lamport)
                 result = self._inner_dispatch(event.capability, event.args)
                 if "error" not in result:
                     applied += 1
@@ -400,7 +452,7 @@ class HttpSyncProvider:
         events = [e for e in events
                    if e.event_id not in self._seen
                    and e.device_id != self.device_id]
-        events.sort(key=lambda ev: ev.timestamp)
+        events.sort(key=lambda ev: ev.order_key())
         return events
 
     def mark_seen(self, event_id: str) -> None:
