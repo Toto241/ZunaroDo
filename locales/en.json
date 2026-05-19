@@ -1,0 +1,66 @@
+{
+  "app.title": "Daily Helper",
+  "tab.dashboard": "Dashboard",
+  "tab.contracts": "Contracts",
+  "tab.family": "Family",
+  "tab.finance": "Finance",
+  "tab.calendar": "Calendar",
+  "tab.social": "Social",
+  "tab.inbox": "Inbox",
+  "tab.assistant": "Assistant",
+  "tab.search": "Search",
+  "tab.history": "History",
+  "tab.modules": "Modules",
+  "tab.settings": "Settings",
+
+  "sidebar.module_status": "Module status",
+  "sidebar.assistant_mode": "Assistant mode",
+  "sidebar.refresh_all": "Refresh everything",
+  "sidebar.check_now": "Check for notifications now",
+
+  "dashboard.title": "Upcoming events",
+  "dashboard.none": "No upcoming events.",
+  "dashboard.urgency.high": "URGENT",
+  "dashboard.urgency.medium": "SOON",
+  "dashboard.urgency.normal": "PLANNED",
+
+  "search.title": "Full-text search",
+  "search.placeholder": "At least 2 characters ...",
+  "search.button": "Search",
+  "search.no_hits": "No hits.",
+  "search.too_short": "Please enter at least 2 characters.",
+
+  "history.title": "Assistant history",
+  "history.empty": "No entries yet - ask the assistant something.",
+  "history.refresh": "Refresh",
+
+  "common.you": "You",
+  "common.assistant": "Assistant",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete",
+  "common.confirm": "Confirm",
+  "common.close": "Close",
+  "common.edit": "Edit",
+
+  "modules.title": "Enable/disable modules",
+  "modules.hint": "Disabled modules expose neither capabilities nor dashboard events. Their data stays in the database.",
+  "modules.active": "active",
+
+  "settings.title": "Settings",
+  "settings.save": "Save (restart required)",
+  "settings.reset": "Reset to defaults",
+
+  "inbox.analyze": "Analyze",
+  "inbox.fetch_imap": "Fetch IMAP",
+  "inbox.accept": "Accept",
+  "inbox.reject": "Reject",
+  "inbox.edit": "Edit",
+  "inbox.no_proposals": "No open proposals.",
+
+  "proposal_editor.title": "Edit proposal",
+  "proposal_editor.summary": "Short description",
+  "proposal_editor.save_only": "Save",
+  "proposal_editor.save_and_accept": "Save and accept",
+  "proposal_editor.required_marker": " *"
+}

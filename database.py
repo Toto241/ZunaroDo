@@ -804,6 +804,23 @@ class ProposalRepository:
             "UPDATE proposals SET status=? WHERE id=?", (status, proposal_id))
         self.db.conn.commit()
 
+    def update_payload(self, proposal_id: int, summary: str,
+                        payload: dict) -> Optional[Proposal]:
+        """
+        Aktualisiert den Vorschlag in der Ablage - aber NUR im Status
+        'offen'. Bereits uebernommene/abgelehnte Eintraege bleiben
+        unveraendert (Audit-Trail).
+        """
+        existing = self.get(proposal_id)
+        if existing is None or existing.status != "offen":
+            return None
+        self.db.conn.execute(
+            "UPDATE proposals SET summary=?, payload=? WHERE id=?",
+            (summary, json.dumps(payload, ensure_ascii=False),
+             proposal_id))
+        self.db.conn.commit()
+        return self.get(proposal_id)
+
     @staticmethod
     def _row_to_proposal(row: sqlite3.Row) -> Proposal:
         return Proposal(

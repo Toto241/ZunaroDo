@@ -34,6 +34,7 @@ from main import (apply_persisted_module_states, build_registry,
 from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
                               load_config, save_value)
 from services.gemini import GeminiClient
+from services.i18n import I18n
 from services.output import OutputService
 from services.scheduler import ProactiveScheduler
 from services.sync import PeriodicSyncWorker, install_sync_hook
@@ -170,13 +171,14 @@ class AlltagshelferGUI(ctk.CTk):
         self.settings_repo = settings_repo
         self.module_states = module_states
         self.synced = synced
+        self.i18n = I18n(language=config.i18n_language)
         self.scheduler = ProactiveScheduler(
             registry, warn_within_days=config.notify_warn_within_days)
         self.sync_worker = PeriodicSyncWorker(
             synced, interval_seconds=config.sync_interval_seconds) \
             if synced is not None else None
 
-        self.title("Alltagshelfer")
+        self.title(self.i18n.t("app.title"))
         self.geometry("1080x720")
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -186,19 +188,22 @@ class AlltagshelferGUI(ctk.CTk):
         self.tabs = ctk.CTkTabview(self)
         self.tabs.grid(row=0, column=1, sticky="nsew",
                        padx=(0, 10), pady=10)
+        # Tab-Labels durch i18n - Reihenfolge bleibt fest (Werte sind die
+        # Builder-Funktionen, Schluessel die uebersetzten Labels).
+        t = self.i18n.t
         self.tab_builders: dict[str, Callable] = {
-            "Dashboard": self._build_dashboard,
-            "Vertraege": self._build_contracts,
-            "Familie": self._build_family,
-            "Finanzen": self._build_finance,
-            "Kalender": self._build_calendar,
-            "Sozial": self._build_social,
-            "Posteingang": self._build_inbox,
-            "Assistent": self._build_chat,
-            "Suche": self._build_search,
-            "Verlauf": self._build_history,
-            "Module": self._build_module_admin,
-            "Einstellungen": self._build_settings,
+            t("tab.dashboard"): self._build_dashboard,
+            t("tab.contracts"): self._build_contracts,
+            t("tab.family"): self._build_family,
+            t("tab.finance"): self._build_finance,
+            t("tab.calendar"): self._build_calendar,
+            t("tab.social"): self._build_social,
+            t("tab.inbox"): self._build_inbox,
+            t("tab.assistant"): self._build_chat,
+            t("tab.search"): self._build_search,
+            t("tab.history"): self._build_history,
+            t("tab.modules"): self._build_module_admin,
+            t("tab.settings"): self._build_settings,
         }
         for name, builder in self.tab_builders.items():
             builder(self.tabs.add(name))
@@ -218,21 +223,24 @@ class AlltagshelferGUI(ctk.CTk):
         bar = ctk.CTkFrame(self, width=260, corner_radius=0)
         bar.grid(row=0, column=0, sticky="nsew")
 
-        ctk.CTkLabel(bar, text="Alltagshelfer",
+        t = self.i18n.t
+        ctk.CTkLabel(bar, text=t("app.title"),
                      font=ctk.CTkFont(size=20, weight="bold")
                      ).pack(padx=20, pady=(20, 2))
-        ctk.CTkLabel(bar, text=f"Assistent-Modus: {self.assistant.mode}",
-                     text_color="gray").pack(padx=20, pady=(0, 14))
+        ctk.CTkLabel(
+            bar,
+            text=f"{t('sidebar.assistant_mode')}: {self.assistant.mode}",
+            text_color="gray").pack(padx=20, pady=(0, 14))
 
-        ctk.CTkLabel(bar, text="Modulstatus",
+        ctk.CTkLabel(bar, text=t("sidebar.module_status"),
                      font=ctk.CTkFont(weight="bold")
                      ).pack(padx=20, anchor="w")
         self.status_box = ctk.CTkTextbox(bar, width=240, height=320, wrap="word")
         self.status_box.pack(padx=10, pady=8)
 
-        ctk.CTkButton(bar, text="Alles aktualisieren",
+        ctk.CTkButton(bar, text=t("sidebar.refresh_all"),
                       command=self._refresh_all).pack(padx=15, pady=4, fill="x")
-        ctk.CTkButton(bar, text="Jetzt nach Notifikationen suchen",
+        ctk.CTkButton(bar, text=t("sidebar.check_now"),
                       command=self._check_notifications
                       ).pack(padx=15, pady=4, fill="x")
 
@@ -928,11 +936,153 @@ class AlltagshelferGUI(ctk.CTk):
                       command=lambda i=p["id"]:
                       self._decide_proposal(i, True)
                       ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(buttons, text="Bearbeiten", width=110,
+                      fg_color="transparent", border_width=1,
+                      command=lambda pp=p:
+                      self._open_proposal_editor(pp)
+                      ).pack(side="left", padx=(0, 8))
         ctk.CTkButton(buttons, text="Ablehnen", width=100,
                       fg_color="transparent", border_width=1,
                       command=lambda i=p["id"]:
                       self._decide_proposal(i, False)
                       ).pack(side="left")
+
+    def _open_proposal_editor(self, proposal: dict) -> None:
+        """
+        Oeffnet einen Dialog mit Formularfeldern, die aus dem Schema der
+        Ziel-Capability erzeugt werden. So kann der Nutzer Halluzinationen
+        oder fehlende Felder korrigieren, bevor der Vorschlag uebernommen
+        wird.
+        """
+        target = proposal["target_capability"]
+        cap = self.registry.get_capability(target)
+        if cap is None:
+            self._show_dialog(
+                "Bearbeiten nicht moeglich",
+                f"Die Ziel-Capability '{target}' ist nicht verfuegbar. "
+                "Pruefe, ob das zustaendige Modul aktiviert ist.")
+            return
+
+        dlg = ctk.CTkToplevel(self)
+        dlg.title(f"Vorschlag #{proposal['id']} bearbeiten")
+        dlg.geometry("620x520")
+        dlg.grab_set()
+
+        ctk.CTkLabel(dlg, text=f"Bearbeiten: {target}",
+                     font=ctk.CTkFont(size=14, weight="bold")
+                     ).pack(padx=20, pady=(20, 6), anchor="w")
+        ctk.CTkLabel(dlg, text=cap.description,
+                     text_color="gray", wraplength=560, justify="left"
+                     ).pack(padx=20, pady=(0, 10), anchor="w")
+
+        # Kurzbeschreibung
+        summary_row = ctk.CTkFrame(dlg, fg_color="transparent")
+        summary_row.pack(fill="x", padx=20, pady=4)
+        ctk.CTkLabel(summary_row, text="Kurzbeschreibung",
+                     width=180, anchor="w").pack(side="left")
+        summary_entry = ctk.CTkEntry(summary_row)
+        summary_entry.insert(0, proposal.get("summary", ""))
+        summary_entry.pack(side="left", fill="x", expand=True)
+
+        # Formularfelder pro Parameter
+        scroll = ctk.CTkScrollableFrame(dlg, fg_color="transparent",
+                                          height=240)
+        scroll.pack(fill="both", expand=True, padx=20, pady=(8, 8))
+        param_inputs: dict[str, ctk.CTkEntry] = {}
+        payload = proposal.get("payload", {})
+        for name, spec in cap.parameters.items():
+            if not isinstance(spec, dict):
+                continue
+            row = ctk.CTkFrame(scroll, fg_color="transparent")
+            row.pack(fill="x", pady=3)
+            required = " *" if spec.get("_required") else ""
+            label_text = (f"{name}{required}  ({spec.get('type', 'string')})")
+            ctk.CTkLabel(row, text=label_text,
+                          width=200, anchor="w"
+                          ).pack(side="left")
+            entry = ctk.CTkEntry(row)
+            entry.insert(0, "" if payload.get(name) is None
+                                else str(payload.get(name)))
+            entry.pack(side="left", fill="x", expand=True)
+            description = spec.get("description", "")
+            if description:
+                ctk.CTkLabel(scroll, text=f"   {description}",
+                              text_color="gray",
+                              font=ctk.CTkFont(size=10),
+                              anchor="w", justify="left",
+                              wraplength=520
+                              ).pack(fill="x", padx=(8, 0))
+            param_inputs[name] = entry
+
+        status = ctk.CTkLabel(dlg, text="", text_color="gray")
+        status.pack(fill="x", padx=20)
+
+        # Aktions-Buttons
+        actions = ctk.CTkFrame(dlg, fg_color="transparent")
+        actions.pack(fill="x", padx=20, pady=(8, 16))
+
+        def _collect_payload() -> tuple[dict, list[str]]:
+            new_payload: dict = {}
+            problems: list[str] = []
+            for name, spec in cap.parameters.items():
+                if not isinstance(spec, dict):
+                    continue
+                raw = param_inputs[name].get().strip()
+                if not raw:
+                    if spec.get("_required"):
+                        problems.append(f"'{name}' ist Pflichtfeld")
+                    continue
+                ptype = spec.get("type", "string")
+                try:
+                    if ptype == "integer":
+                        new_payload[name] = int(raw)
+                    elif ptype == "number":
+                        new_payload[name] = float(raw)
+                    elif ptype == "boolean":
+                        new_payload[name] = raw.lower() in ("1", "true",
+                                                              "yes", "ja")
+                    else:
+                        new_payload[name] = raw
+                except ValueError:
+                    problems.append(
+                        f"'{name}' erwartet {ptype}, '{raw}' ungueltig")
+            return new_payload, problems
+
+        def _do_save(then_accept: bool) -> None:
+            new_payload, problems = _collect_payload()
+            if problems:
+                status.configure(text="; ".join(problems),
+                                  text_color="#d9534f")
+                return
+            result = self.registry.dispatch("inbox.update_proposal", {
+                "proposal_id": proposal["id"],
+                "summary": summary_entry.get().strip()
+                            or proposal.get("summary", ""),
+                "payload": new_payload,
+            })
+            if "error" in result:
+                status.configure(text=result["error"], text_color="#d9534f")
+                return
+            if then_accept:
+                accept = self.registry.dispatch(
+                    "inbox.accept_proposal",
+                    {"proposal_id": proposal["id"]})
+                if "error" in accept:
+                    status.configure(text=accept["error"],
+                                      text_color="#d9534f")
+                    return
+            dlg.destroy()
+            self._refresh_all()
+
+        ctk.CTkButton(actions, text="Speichern",
+                      command=lambda: _do_save(False)
+                      ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(actions, text="Speichern + Uebernehmen",
+                      command=lambda: _do_save(True)
+                      ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(actions, text="Abbrechen",
+                      fg_color="transparent", border_width=1,
+                      command=dlg.destroy).pack(side="right")
 
     def _decide_proposal(self, proposal_id: int, accept: bool) -> None:
         cap = "inbox.accept_proposal" if accept else "inbox.reject_proposal"

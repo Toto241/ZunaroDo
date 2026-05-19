@@ -1,0 +1,66 @@
+{
+  "app.title": "Alltagshelfer",
+  "tab.dashboard": "Dashboard",
+  "tab.contracts": "Vertraege",
+  "tab.family": "Familie",
+  "tab.finance": "Finanzen",
+  "tab.calendar": "Kalender",
+  "tab.social": "Sozial",
+  "tab.inbox": "Posteingang",
+  "tab.assistant": "Assistent",
+  "tab.search": "Suche",
+  "tab.history": "Verlauf",
+  "tab.modules": "Module",
+  "tab.settings": "Einstellungen",
+
+  "sidebar.module_status": "Modulstatus",
+  "sidebar.assistant_mode": "Assistent-Modus",
+  "sidebar.refresh_all": "Alles aktualisieren",
+  "sidebar.check_now": "Jetzt nach Notifikationen suchen",
+
+  "dashboard.title": "Naechste Ereignisse",
+  "dashboard.none": "Keine anstehenden Ereignisse.",
+  "dashboard.urgency.high": "DRINGEND",
+  "dashboard.urgency.medium": "BALD",
+  "dashboard.urgency.normal": "GEPLANT",
+
+  "search.title": "Volltextsuche",
+  "search.placeholder": "Mindestens 2 Zeichen ...",
+  "search.button": "Suchen",
+  "search.no_hits": "Keine Treffer.",
+  "search.too_short": "Bitte mindestens 2 Zeichen eingeben.",
+
+  "history.title": "Assistenten-Verlauf",
+  "history.empty": "Noch keine Eintraege - frage den Assistenten etwas.",
+  "history.refresh": "Aktualisieren",
+
+  "common.you": "Du",
+  "common.assistant": "Assistent",
+  "common.save": "Speichern",
+  "common.cancel": "Abbrechen",
+  "common.delete": "Loeschen",
+  "common.confirm": "Bestaetigen",
+  "common.close": "Schliessen",
+  "common.edit": "Bearbeiten",
+
+  "modules.title": "Module ein-/ausschalten",
+  "modules.hint": "Deaktivierte Module liefern weder Capabilities noch Dashboard-Eintraege. Die Daten bleiben in der DB erhalten.",
+  "modules.active": "aktiv",
+
+  "settings.title": "Einstellungen",
+  "settings.save": "Speichern (Neustart noetig)",
+  "settings.reset": "Auf Default zuruecksetzen",
+
+  "inbox.analyze": "Analysieren",
+  "inbox.fetch_imap": "IMAP abrufen",
+  "inbox.accept": "Uebernehmen",
+  "inbox.reject": "Ablehnen",
+  "inbox.edit": "Bearbeiten",
+  "inbox.no_proposals": "Keine offenen Vorschlaege.",
+
+  "proposal_editor.title": "Vorschlag bearbeiten",
+  "proposal_editor.summary": "Kurzbeschreibung",
+  "proposal_editor.save_only": "Speichern",
+  "proposal_editor.save_and_accept": "Speichern + Uebernehmen",
+  "proposal_editor.required_marker": " *"
+}

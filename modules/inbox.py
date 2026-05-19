@@ -141,6 +141,24 @@ class InboxModule(ModuleInterface):
                 destructive=True,
             ),
             Capability(
+                name="inbox.update_proposal",
+                description="Bearbeitet einen offenen Vorschlag, bevor er "
+                            "uebernommen wird. Beruehrt nur Vorschlaege im "
+                            "Status 'offen'.",
+                parameters={
+                    "proposal_id": {"type": "integer", "_required": True,
+                                    "description": "ID des Vorschlags"},
+                    "summary": {"type": "string",
+                                 "description": "Neue Kurzbeschreibung "
+                                                "(optional)"},
+                    "payload": {"type": "object",
+                                 "description": "Vollstaendige neue Nutzlast "
+                                                "fuer die Ziel-Capability"},
+                },
+                handler=self._cap_update_proposal,
+                destructive=True,
+            ),
+            Capability(
                 name="inbox.import_eml",
                 description="Liest eine .eml-Datei ein und analysiert sie.",
                 parameters={
@@ -327,6 +345,24 @@ class InboxModule(ModuleInterface):
             return {"error": f"Vorschlag {proposal_id} nicht gefunden"}
         self.repo.set_status(proposal_id, "abgelehnt")
         return {"status": "Vorschlag abgelehnt"}
+
+    def _cap_update_proposal(self, proposal_id: int,
+                              payload: dict | None = None,
+                              summary: str | None = None) -> dict:
+        existing = self.repo.get(proposal_id)
+        if existing is None:
+            return {"error": f"Vorschlag {proposal_id} nicht gefunden"}
+        if existing.status != "offen":
+            return {"error": f"Vorschlag bereits '{existing.status}', "
+                              "Bearbeitung nicht moeglich"}
+        new_payload = (existing.payload if payload is None
+                        else dict(payload))
+        new_summary = existing.summary if summary is None else summary
+        updated = self.repo.update_payload(proposal_id, new_summary,
+                                            new_payload)
+        if updated is None:
+            return {"error": "Aktualisierung fehlgeschlagen"}
+        return {"status": "aktualisiert", "proposal": updated.to_dict()}
 
     # ---- .eml-Import + IMAP-Anbindung ----------------------------------
     def _cap_import_eml(self, path: str) -> dict:

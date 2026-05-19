@@ -222,6 +222,20 @@ class ModuleRegistry:
             return False
         return cap.module_id not in self._disabled
 
+    def get_capability(self,
+                        capability_name: str) -> Optional[Capability]:
+        """
+        Liefert das Capability-Objekt - oder None, wenn unbekannt oder
+        ihr Modul deaktiviert. Wird z.B. von der GUI genutzt, um aus dem
+        Parameter-Schema dynamische Formulare zu bauen.
+        """
+        cap = self._capabilities.get(capability_name)
+        if cap is None:
+            return None
+        if cap.module_id in self._disabled:
+            return None
+        return cap
+
     # ---- Auflistung / Schemata ---------------------------------------
     def all_capabilities(self,
                           include_disabled: bool = False) -> list[Capability]:

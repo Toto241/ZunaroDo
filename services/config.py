@@ -48,6 +48,7 @@ DEFAULTS: dict[str, str] = {
     "sync.enabled": "auto",                # auto | true | false
     "db.key": "",
     "notify.warn_within_days": "14",
+    "i18n.language": "de",
 }
 
 ENV_MAP: dict[str, str] = {
@@ -92,6 +93,7 @@ class AppConfig:
 
     db_key: str = ""
     notify_warn_within_days: int = 14
+    i18n_language: str = "de"
 
 
 def _coerce(key: str, raw: str, config: AppConfig) -> None:
