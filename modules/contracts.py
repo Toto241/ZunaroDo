@@ -167,8 +167,24 @@ class ContractModule(ModuleInterface):
                                                          "(z.B. 1 = monatlich kuendbar)"},
                     "monthly_cost": {"type": "number",
                                      "description": "Monatliche Kosten in EUR"},
+                    "owner_id": {"type": "integer",
+                                 "description": "Optional: ID des Haushalts"
+                                                "mitglieds, dem der Vertrag "
+                                                "gehoert (siehe family.members)"},
                 },
                 handler=self._cap_add,
+            ),
+            Capability(
+                name="contracts.set_owner",
+                description="Ordnet einen Vertrag einer Person zu (oder loest die "
+                            "Zuordnung mit owner_id=0).",
+                parameters={
+                    "contract_id": {"type": "integer", "_required": True,
+                                    "description": "ID des Vertrags"},
+                    "owner_id": {"type": "integer",
+                                 "description": "ID der Person (0 = keine)"},
+                },
+                handler=self._cap_set_owner,
             ),
             Capability(
                 name="contracts.upcoming_deadlines",
@@ -233,7 +249,8 @@ class ContractModule(ModuleInterface):
                  minimum_term_months: int = 12,
                  notice_period_months: int = 3,
                  auto_renew_months: int = 12,
-                 monthly_cost: float = 0.0) -> dict:
+                 monthly_cost: float = 0.0,
+                 owner_id: int | None = None) -> dict:
         contract = Contract(
             name=name,
             category=category,
@@ -244,9 +261,21 @@ class ContractModule(ModuleInterface):
             notice_period_months=notice_period_months,
             auto_renew_months=auto_renew_months,
             monthly_cost=monthly_cost,
+            owner_id=owner_id if owner_id else None,
         )
         saved = self.repo.add(contract)
+        if saved.id is not None:
+            saved = self.repo.get(saved.id) or saved
         return {"status": "angelegt", "contract": saved.to_dict()}
+
+    def _cap_set_owner(self, contract_id: int, owner_id: int = 0) -> dict:
+        contract = self.repo.get(contract_id)
+        if contract is None:
+            return {"error": f"Vertrag {contract_id} nicht gefunden"}
+        self.repo.set_owner(contract_id, owner_id if owner_id else None)
+        updated = self.repo.get(contract_id)
+        return {"status": "zugeordnet",
+                "contract": updated.to_dict() if updated else None}
 
     def _cap_generate_cancellation(self, contract_id: int,
                                    sender_name: str = "(Ihr Name)",

@@ -1,6 +1,20 @@
 __pycache__/
 *.pyc
+*.pyo
 .venv/
 .vscode/
 .idea/
 .env
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+
+# Generierte Daten (lokal, nicht committen)
+*.db
+*.db-journal
+ausgaben/
+mail_inbox/
+
+# Test-Artefakte
+.coverage
+htmlcov/

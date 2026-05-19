@@ -1,18 +1,16 @@
 """
 GUI - CustomTkinter-Oberflaeche fuer den Alltagshelfer.
 
-Die GUI ist nur ein Front-End. Sie greift NIEMALS direkt auf Datenbank
-oder Module zu, sondern ausschliesslich ueber die Schnittstellen:
-  - registry.collect_events()    -> Dashboard (naechste Ereignisse)
-  - registry.context_overview()  -> Modulstatus in der Sidebar
+Die GUI ist nur ein Front-End. Sie greift NIE direkt auf Datenbank oder
+Module zu, sondern ausschliesslich ueber die Schnittstellen:
+  - registry.collect_events()    -> Dashboard
+  - registry.context_overview()  -> Modulstatus
   - registry.dispatch(...)       -> Aktionen
   - assistant.ask(...)           -> Chat
 
-Aufbau:
-  +----------+------------------------------+
-  | Sidebar  |  [ Dashboard ] [ Assistent ] |
-  | Status   |  Tab-Inhalt                  |
-  +----------+------------------------------+
+Tabs:
+  Dashboard - Vertraege - Familie - Finanzen - Kalender - Sozial
+  - Posteingang - Assistent
 
 Start:  python gui.py
 """
@@ -20,48 +18,54 @@ from __future__ import annotations
 
 import threading
 from datetime import date, timedelta
+from typing import Callable
 
 import customtkinter as ctk
 
 from assistant import Assistant
 from core.interface import ModuleRegistry
-from database import (ContractRepository, Database, ExpenseRepository,
-                      FamilyRepository, ProposalRepository)
-from modules.contracts import ContractModule
-from modules.family import FamilyModule
-from modules.finance import FinanceModule
-from modules.inbox import InboxModule
+from database import AssistantLogRepository, Database
+from main import build_registry
 from services.output import OutputService
+from services.scheduler import ProactiveScheduler
 
-# Beispielmail, mit der man den Posteingang sofort ausprobieren kann
 SAMPLE_MAIL = (
     "Betreff: Information zu Ihrem Netflix-Abo\n\n"
     "Sehr geehrter Kunde, wir nehmen eine Preisanpassung vor. Ihr neuer "
     "monatlicher Preis betraegt 15,99 EUR.\n\nIhr Netflix-Team")
 
-# Farben je Dringlichkeitsstufe (siehe models.classify_urgency)
 URGENCY_COLOR = {"hoch": "#d9534f", "mittel": "#e8a33d", "normal": "#5b9bd5"}
 URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
 
 
+# ---------------------------------------------------------------------
+#  Beispieldaten beim ersten Start
+# ---------------------------------------------------------------------
 def _seed_if_empty(registry: ModuleRegistry) -> None:
-    """Legt beim ersten Start Beispieldaten an, damit die GUI nicht leer ist."""
     if registry.dispatch("contracts.list", {}).get("count", 0) > 0:
         return
+    registry.dispatch("family.add_member",
+                        {"name": "Anna", "role": "erwachsen",
+                         "birthday": "1989-07-12"})
+    registry.dispatch("family.add_member",
+                        {"name": "Bernd", "role": "erwachsen",
+                         "birthday": "1986-03-04"})
+    registry.dispatch("family.add_member",
+                        {"name": "Mia", "role": "kind",
+                         "birthday": "2018-11-22"})
+    anna_id = registry.dispatch(
+        "family.members", {})["members"][0]["id"]
     for v in [
         dict(name="Handyvertrag", category="mobilfunk", provider="Telekom",
              customer_number="DE-4471180", start_date="2024-06-01",
              minimum_term_months=24, notice_period_months=3,
-             auto_renew_months=12, monthly_cost=39.99),
+             auto_renew_months=12, monthly_cost=39.99, owner_id=anna_id),
         dict(name="Streaming-Abo", category="streaming", provider="Netflix",
              customer_number="NF-99213", start_date="2025-11-01",
              minimum_term_months=1, notice_period_months=1,
-             auto_renew_months=1, monthly_cost=13.99),
+             auto_renew_months=1, monthly_cost=13.99, owner_id=anna_id),
     ]:
         registry.dispatch("contracts.add", v)
-    for name, role in [("Anna", "erwachsen"), ("Bernd", "erwachsen"),
-                       ("Mia", "kind")]:
-        registry.dispatch("family.add_member", {"name": name, "role": role})
     registry.dispatch("family.add_task", {
         "title": "Muell rausbringen", "interval_days": 7,
         "assignees": ["Anna", "Bernd"],
@@ -70,54 +74,86 @@ def _seed_if_empty(registry: ModuleRegistry) -> None:
         "title": "Auto zur Inspektion bringen", "assignee": "Bernd",
         "due_date": (date.today() + timedelta(days=5)).isoformat(),
         "description": "Werkstatt-Termin ist vereinbart."})
+    registry.dispatch("calendar.add_event", {
+        "title": "TUEV Familienauto",
+        "due_date": (date.today() + timedelta(days=45)).isoformat(),
+        "category": "tuev"})
+    registry.dispatch("social.add_contact",
+                        {"name": "Oma", "relation": "Familie",
+                         "cadence_days": 14})
 
 
 def bootstrap() -> tuple[Database, ModuleRegistry, Assistant]:
-    """Baut das System auf - identisch zu main.py, nur fuer die GUI."""
     db = Database("alltagshelfer_gui.db")
     output = OutputService("ausgaben")
-    registry = ModuleRegistry()
-    registry.register(ContractModule(ContractRepository(db), output))  # Modul A
-    registry.register(FinanceModule(ExpenseRepository(db)))            # Modul B
-    registry.register(FamilyModule(FamilyRepository(db)))              # Modul D
-    registry.register(InboxModule(ProposalRepository(db)))             # Posteingang
+    registry = build_registry(db, output)
     _seed_if_empty(registry)
-    return db, registry, Assistant(registry)
+    assistant = Assistant(registry, log=AssistantLogRepository(db))
+    return db, registry, assistant
 
 
+# ---------------------------------------------------------------------
+#  Wiederverwendbare Hilfen
+# ---------------------------------------------------------------------
+def _labeled_entry(parent, label: str, placeholder: str = "",
+                   width: int = 200) -> ctk.CTkEntry:
+    row = ctk.CTkFrame(parent, fg_color="transparent")
+    row.pack(fill="x", pady=2)
+    ctk.CTkLabel(row, text=label, width=130, anchor="w").pack(side="left")
+    entry = ctk.CTkEntry(row, placeholder_text=placeholder, width=width)
+    entry.pack(side="left", fill="x", expand=True)
+    return entry
+
+
+def _clear(frame) -> None:
+    for w in frame.winfo_children():
+        w.destroy()
+
+
+# ---------------------------------------------------------------------
+#  Hauptfenster
+# ---------------------------------------------------------------------
 class AlltagshelferGUI(ctk.CTk):
-    """Hauptfenster: Sidebar + Tabs fuer Dashboard und Assistent."""
 
     def __init__(self, registry: ModuleRegistry, assistant: Assistant):
         super().__init__()
         self.registry = registry
         self.assistant = assistant
+        self.scheduler = ProactiveScheduler(registry, warn_within_days=14)
 
         self.title("Alltagshelfer")
-        self.geometry("900x600")
+        self.geometry("1080x720")
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         self._build_sidebar()
 
         self.tabs = ctk.CTkTabview(self)
-        self.tabs.grid(row=0, column=1, sticky="nsew", padx=(0, 10), pady=10)
-        self._build_dashboard(self.tabs.add("Dashboard"))
-        self._build_inbox(self.tabs.add("Posteingang"))
-        self._build_chat(self.tabs.add("Assistent"))
+        self.tabs.grid(row=0, column=1, sticky="nsew",
+                       padx=(0, 10), pady=10)
+        self.tab_builders: dict[str, Callable] = {
+            "Dashboard": self._build_dashboard,
+            "Vertraege": self._build_contracts,
+            "Familie": self._build_family,
+            "Finanzen": self._build_finance,
+            "Kalender": self._build_calendar,
+            "Sozial": self._build_social,
+            "Posteingang": self._build_inbox,
+            "Assistent": self._build_chat,
+        }
+        for name, builder in self.tab_builders.items():
+            builder(self.tabs.add(name))
 
-        self._refresh_status()
-        self._refresh_dashboard()
-        self._refresh_inbox()
-        self._append("Assistent",
-                      "Hallo! Im Dashboard siehst du deine naechsten "
-                      "Ereignisse. Hier kannst du mich alles fragen.")
+        self._refresh_all()
+        self._append_chat("Assistent",
+                           "Hallo! Im Dashboard siehst du deine naechsten "
+                           "Ereignisse. Hier kannst du mich alles fragen.")
 
     # ================================================================
-    #  Sidebar - Modulstatus
+    #  Sidebar
     # ================================================================
     def _build_sidebar(self) -> None:
-        bar = ctk.CTkFrame(self, width=240, corner_radius=0)
+        bar = ctk.CTkFrame(self, width=260, corner_radius=0)
         bar.grid(row=0, column=0, sticky="nsew")
 
         ctk.CTkLabel(bar, text="Alltagshelfer",
@@ -127,15 +163,19 @@ class AlltagshelferGUI(ctk.CTk):
                      text_color="gray").pack(padx=20, pady=(0, 14))
 
         ctk.CTkLabel(bar, text="Modulstatus",
-                     font=ctk.CTkFont(weight="bold")).pack(padx=20, anchor="w")
-        self.status_box = ctk.CTkTextbox(bar, width=210, height=200, wrap="word")
-        self.status_box.pack(padx=15, pady=8)
+                     font=ctk.CTkFont(weight="bold")
+                     ).pack(padx=20, anchor="w")
+        self.status_box = ctk.CTkTextbox(bar, width=240, height=320, wrap="word")
+        self.status_box.pack(padx=10, pady=8)
 
         ctk.CTkButton(bar, text="Alles aktualisieren",
-                      command=self._refresh_all).pack(padx=15, pady=4)
+                      command=self._refresh_all).pack(padx=15, pady=4, fill="x")
+        ctk.CTkButton(bar, text="Jetzt nach Notifikationen suchen",
+                      command=self._check_notifications
+                      ).pack(padx=15, pady=4, fill="x")
 
     # ================================================================
-    #  Tab 1 - Dashboard (naechste Ereignisse)
+    #  Dashboard
     # ================================================================
     def _build_dashboard(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
@@ -156,35 +196,25 @@ class AlltagshelferGUI(ctk.CTk):
         self.dash_list.grid(row=1, column=0, sticky="nsew")
 
     def _refresh_dashboard(self) -> None:
-        """Holt die Ereignisse ueber registry.collect_events() und rendert sie."""
-        for widget in self.dash_list.winfo_children():
-            widget.destroy()
-
+        _clear(self.dash_list)
         horizon = {"30 Tage": 30, "90 Tage": 90, "Alle": 3650}[self.horizon.get()]
         events = self.registry.collect_events(horizon)
-
         if not events:
             ctk.CTkLabel(self.dash_list, text="Keine anstehenden Ereignisse.",
                          text_color="gray").pack(pady=30)
             return
-
         for event in events:
             self._event_card(event)
 
     def _event_card(self, event) -> None:
-        """Eine einzelne Ereignis-Karte, farbcodiert nach Dringlichkeit."""
         color = URGENCY_COLOR[event.urgency]
         card = ctk.CTkFrame(self.dash_list, height=84)
         card.pack(fill="x", pady=3, padx=2)
-        card.pack_propagate(False)      # feste Hoehe, nicht an Inhalt anpassen
-
-        # farbiger Akzentbalken links
+        card.pack_propagate(False)
         ctk.CTkFrame(card, width=6, fg_color=color, corner_radius=0
                      ).pack(side="left", fill="y")
-
         body = ctk.CTkFrame(card, fg_color="transparent")
         body.pack(side="left", fill="both", expand=True, padx=12, pady=8)
-
         top = ctk.CTkFrame(body, fg_color="transparent")
         top.pack(fill="x")
         days = event.days_remaining
@@ -197,63 +227,680 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkLabel(top, text=URGENCY_LABEL[event.urgency], height=16,
                      font=ctk.CTkFont(size=10, weight="bold"),
                      text_color=color).pack(side="right")
-
         ctk.CTkLabel(body, text=event.title, height=22,
                      font=ctk.CTkFont(size=14, weight="bold")
                      ).pack(anchor="w")
         if event.detail:
             ctk.CTkLabel(body, text=event.detail, height=16,
                          font=ctk.CTkFont(size=11),
-                         text_color="gray", wraplength=480, justify="left"
+                         text_color="gray", wraplength=560, justify="left"
                          ).pack(anchor="w")
 
     # ================================================================
-    #  Tab 2 - Assistent (Chat)
+    #  Vertraege
+    # ================================================================
+    def _build_contracts(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(2, weight=1)
+
+        ctk.CTkLabel(parent, text="Vertraege",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+
+        form = ctk.CTkFrame(parent)
+        form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.contract_inputs = {
+            "name": _labeled_entry(form, "Name", "z.B. Stromvertrag"),
+            "provider": _labeled_entry(form, "Anbieter", "z.B. Stadtwerke"),
+            "category": _labeled_entry(form, "Kategorie",
+                                         "mobilfunk / streaming / strom / "
+                                         "versicherung / sonstiges"),
+            "monthly_cost": _labeled_entry(form, "Monatspreis (EUR)", "0.00"),
+            "start_date": _labeled_entry(form, "Start (YYYY-MM-DD)",
+                                            date.today().isoformat()),
+            "minimum_term_months": _labeled_entry(form, "Mindestlaufzeit (Mon.)",
+                                                     "12"),
+            "notice_period_months": _labeled_entry(form, "Kuendigungsfrist (Mon.)",
+                                                     "3"),
+            "auto_renew_months": _labeled_entry(form, "Verlaengerung (Mon.)",
+                                                  "12"),
+            "owner_name": _labeled_entry(form, "Person", "(leer = ohne)"),
+        }
+        ctk.CTkButton(form, text="Vertrag anlegen",
+                      command=self._on_contract_add).pack(pady=8)
+
+        self.contract_list = ctk.CTkScrollableFrame(parent,
+                                                      fg_color="transparent")
+        self.contract_list.grid(row=2, column=0, sticky="nsew")
+
+    def _on_contract_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.contract_inputs.items()}
+        if not v["name"] or not v["category"]:
+            return
+        payload = {
+            "name": v["name"],
+            "provider": v["provider"],
+            "category": v["category"] or "sonstiges",
+            "start_date": v["start_date"] or None,
+            "monthly_cost": float(v["monthly_cost"] or 0),
+            "minimum_term_months": int(v["minimum_term_months"] or 12),
+            "notice_period_months": int(v["notice_period_months"] or 3),
+            "auto_renew_months": int(v["auto_renew_months"] or 12),
+        }
+        if v["owner_name"]:
+            members = self.registry.dispatch("family.members",
+                                               {})["members"]
+            for m in members:
+                if m["name"].lower() == v["owner_name"].lower():
+                    payload["owner_id"] = m["id"]
+                    break
+        self.registry.dispatch("contracts.add", payload)
+        for e in self.contract_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_contracts(self) -> None:
+        _clear(self.contract_list)
+        contracts = self.registry.dispatch("contracts.list",
+                                             {}).get("contracts", [])
+        if not contracts:
+            ctk.CTkLabel(self.contract_list,
+                         text="Noch keine Vertraege.",
+                         text_color="gray").pack(pady=20)
+            return
+        for c in contracts:
+            self._contract_row(c)
+
+    def _contract_row(self, c: dict) -> None:
+        card = ctk.CTkFrame(self.contract_list)
+        card.pack(fill="x", pady=4, padx=2)
+        body = ctk.CTkFrame(card, fg_color="transparent")
+        body.pack(fill="x", padx=12, pady=8)
+
+        owner = f" - {c['owner']}" if c.get("owner") else ""
+        ctk.CTkLabel(body,
+                     text=f"{c['name']} ({c.get('provider', '') or '-'}){owner}",
+                     font=ctk.CTkFont(size=14, weight="bold")
+                     ).pack(anchor="w")
+        ctk.CTkLabel(body,
+                     text=(f"{c['monthly_cost']:.2f} EUR/Monat - "
+                            f"Kuendigung {c['notice_period_months']} Mon., "
+                            f"Verlaengerung {c['auto_renew_months']} Mon."),
+                     text_color="gray", font=ctk.CTkFont(size=11)
+                     ).pack(anchor="w")
+
+        btns = ctk.CTkFrame(body, fg_color="transparent")
+        btns.pack(anchor="w", pady=(6, 0))
+        ctk.CTkButton(btns, text="Kuendigungsschreiben",
+                      width=170,
+                      command=lambda i=c["id"], n=c["name"]:
+                      self._on_generate_cancellation(i, n)
+                      ).pack(side="left", padx=(0, 6))
+
+    def _on_generate_cancellation(self, contract_id: int,
+                                   contract_name: str) -> None:
+        result = self.registry.dispatch("contracts.generate_cancellation", {
+            "contract_id": contract_id,
+            "sender_name": "(Ihr Name)",
+            "sender_address": "(Ihre Anschrift)",
+            "sender_city": "(Ort)",
+            "channel": "both",
+        })
+        pdf = result.get("pdf_path")
+        msg = (f"Kuendigung fuer '{contract_name}' erstellt.\n"
+               f"PDF: {pdf}\nMail-Entwurf: {result.get('email_draft_path')}\n\n"
+               f"Frist zum: {result.get('cancellation_date')}")
+        self._show_dialog("Kuendigungsschreiben", msg, pdf_path=pdf)
+
+    # ================================================================
+    #  Familie (Mitglieder + Aufgaben + Auftraege + Einkaufsliste)
+    # ================================================================
+    def _build_family(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
+
+        sub = ctk.CTkTabview(parent)
+        sub.grid(row=0, column=0, sticky="nsew", rowspan=2)
+        self._build_family_members(sub.add("Mitglieder"))
+        self._build_family_tasks(sub.add("Aufgaben"))
+        self._build_family_orders(sub.add("Auftraege"))
+        self._build_family_shopping(sub.add("Einkaufsliste"))
+
+    def _build_family_members(self, parent) -> None:
+        form = ctk.CTkFrame(parent)
+        form.pack(fill="x", pady=(6, 8))
+        self.member_inputs = {
+            "name": _labeled_entry(form, "Name"),
+            "role": _labeled_entry(form, "Rolle",
+                                    "erwachsen / kind / sonstiges"),
+            "birthday": _labeled_entry(form, "Geburtstag (YYYY-MM-DD)"),
+        }
+        ctk.CTkButton(form, text="Hinzufuegen",
+                      command=self._on_member_add).pack(pady=6)
+        self.member_list = ctk.CTkScrollableFrame(parent,
+                                                    fg_color="transparent")
+        self.member_list.pack(fill="both", expand=True)
+
+    def _on_member_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.member_inputs.items()}
+        if not v["name"]:
+            return
+        payload = {"name": v["name"], "role": v["role"] or "erwachsen"}
+        if v["birthday"]:
+            payload["birthday"] = v["birthday"]
+        self.registry.dispatch("family.add_member", payload)
+        for e in self.member_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_members(self) -> None:
+        _clear(self.member_list)
+        for m in self.registry.dispatch("family.members",
+                                          {}).get("members", []):
+            bday = f"  - Geburtstag {m['birthday']}" if m.get("birthday") else ""
+            ctk.CTkLabel(self.member_list,
+                         text=f"#{m['id']}  {m['name']} ({m['role']}){bday}",
+                         anchor="w").pack(fill="x", padx=12, pady=2)
+
+    def _build_family_tasks(self, parent) -> None:
+        form = ctk.CTkFrame(parent)
+        form.pack(fill="x", pady=(6, 8))
+        self.task_inputs = {
+            "title": _labeled_entry(form, "Titel"),
+            "interval_days": _labeled_entry(form, "Intervall (Tage)", "7"),
+            "assignees": _labeled_entry(form, "Rotation (Komma)",
+                                          "Anna, Bernd"),
+            "first_due": _labeled_entry(form, "Erstmals (YYYY-MM-DD)",
+                                           date.today().isoformat()),
+        }
+        ctk.CTkButton(form, text="Aufgabe anlegen",
+                      command=self._on_task_add).pack(pady=6)
+        self.task_list = ctk.CTkScrollableFrame(parent,
+                                                  fg_color="transparent")
+        self.task_list.pack(fill="both", expand=True)
+
+    def _on_task_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.task_inputs.items()}
+        if not v["title"]:
+            return
+        assignees = [a.strip() for a in v["assignees"].split(",") if a.strip()]
+        self.registry.dispatch("family.add_task", {
+            "title": v["title"],
+            "interval_days": int(v["interval_days"] or 7),
+            "assignees": assignees,
+            "first_due": v["first_due"] or None,
+        })
+        for e in self.task_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_tasks(self) -> None:
+        _clear(self.task_list)
+        for t in self.registry.dispatch("family.tasks",
+                                          {}).get("tasks", []):
+            row = ctk.CTkFrame(self.task_list, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=3)
+            ctk.CTkLabel(row,
+                         text=(f"{t['title']}  -  faellig {t['next_due']}, "
+                                f"zustaendig {t['current_assignee']} "
+                                f"(alle {t['interval_days']} Tage)"),
+                         anchor="w").pack(side="left", fill="x", expand=True)
+            ctk.CTkButton(row, text="Abhaken", width=80,
+                          command=lambda i=t["id"]:
+                          self._dispatch_and_refresh(
+                              "family.complete_task", {"task_id": i})
+                          ).pack(side="right")
+
+    def _build_family_orders(self, parent) -> None:
+        form = ctk.CTkFrame(parent)
+        form.pack(fill="x", pady=(6, 8))
+        self.order_inputs = {
+            "title": _labeled_entry(form, "Titel"),
+            "assignee": _labeled_entry(form, "Wer", "Name"),
+            "due_date": _labeled_entry(form, "Bis wann (YYYY-MM-DD)"),
+            "description": _labeled_entry(form, "Notiz"),
+        }
+        ctk.CTkButton(form, text="Auftrag anlegen",
+                      command=self._on_order_add).pack(pady=6)
+        self.order_list = ctk.CTkScrollableFrame(parent,
+                                                   fg_color="transparent")
+        self.order_list.pack(fill="both", expand=True)
+
+    def _on_order_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.order_inputs.items()}
+        if not v["title"]:
+            return
+        payload = {"title": v["title"], "assignee": v["assignee"],
+                    "description": v["description"]}
+        if v["due_date"]:
+            payload["due_date"] = v["due_date"]
+        self.registry.dispatch("family.add_order", payload)
+        for e in self.order_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_orders(self) -> None:
+        _clear(self.order_list)
+        for o in self.registry.dispatch("family.orders",
+                                           {}).get("orders", []):
+            row = ctk.CTkFrame(self.order_list, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=3)
+            status_mark = "[ok]" if o["status"] == "erledigt" else "[offen]"
+            faellig = f", bis {o['due_date']}" if o.get("due_date") else ""
+            ctk.CTkLabel(row,
+                         text=(f"{status_mark} {o['title']} -> "
+                                f"{o.get('assignee') or 'niemand'}{faellig}"),
+                         anchor="w").pack(side="left", fill="x", expand=True)
+            if o["status"] != "erledigt":
+                ctk.CTkButton(row, text="Erledigt", width=80,
+                              command=lambda i=o["id"]:
+                              self._dispatch_and_refresh(
+                                  "family.complete_order", {"order_id": i})
+                              ).pack(side="right")
+
+    def _build_family_shopping(self, parent) -> None:
+        form = ctk.CTkFrame(parent)
+        form.pack(fill="x", pady=(6, 8))
+        self.shopping_inputs = {
+            "name": _labeled_entry(form, "Was"),
+            "quantity": _labeled_entry(form, "Menge", "z.B. 1 kg"),
+            "added_by": _labeled_entry(form, "Von", "Name"),
+        }
+        ctk.CTkButton(form, text="Auf die Liste",
+                      command=self._on_shopping_add).pack(pady=6)
+        self.shopping_list = ctk.CTkScrollableFrame(parent,
+                                                       fg_color="transparent")
+        self.shopping_list.pack(fill="both", expand=True)
+
+    def _on_shopping_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.shopping_inputs.items()}
+        if not v["name"]:
+            return
+        self.registry.dispatch("family.shopping_add", v)
+        for e in self.shopping_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_shopping(self) -> None:
+        _clear(self.shopping_list)
+        items = self.registry.dispatch(
+            "family.shopping_list",
+            {"include_bought": True}).get("items", [])
+        for item in items:
+            row = ctk.CTkFrame(self.shopping_list, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=3)
+            qty = f" ({item['quantity']})" if item.get("quantity") else ""
+            by = f" - von {item['added_by']}" if item.get("added_by") else ""
+            mark = "[x]" if item.get("bought") else "[ ]"
+            ctk.CTkLabel(row, text=f"{mark} {item['name']}{qty}{by}",
+                         anchor="w").pack(side="left", fill="x", expand=True)
+            ctk.CTkButton(
+                row, text="Abhaken" if not item["bought"] else "Zuruecksetzen",
+                width=110,
+                command=lambda i=item["id"], b=not item["bought"]:
+                self._dispatch_and_refresh(
+                    "family.shopping_mark",
+                    {"item_id": i, "bought": b})
+            ).pack(side="right")
+
+    # ================================================================
+    #  Finanzen
+    # ================================================================
+    def _build_finance(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(2, weight=1)
+
+        header = ctk.CTkFrame(parent, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
+        ctk.CTkLabel(header, text="Finanzen",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).pack(side="left")
+        self.finance_summary = ctk.CTkLabel(header, text="", text_color="gray")
+        self.finance_summary.pack(side="right")
+
+        form = ctk.CTkFrame(parent)
+        form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.expense_inputs = {
+            "description": _labeled_entry(form, "Wofuer", "z.B. Wocheneinkauf"),
+            "amount": _labeled_entry(form, "Betrag (EUR)", "0.00"),
+            "category": _labeled_entry(form, "Kategorie",
+                                         "lebensmittel / freizeit / sonstiges"),
+            "spent_on": _labeled_entry(form, "Datum (YYYY-MM-DD)",
+                                           date.today().isoformat()),
+            "owner_name": _labeled_entry(form, "Person", "(leer = ohne)"),
+        }
+        ctk.CTkButton(form, text="Ausgabe erfassen",
+                      command=self._on_expense_add).pack(pady=8)
+
+        self.expense_list = ctk.CTkScrollableFrame(parent,
+                                                       fg_color="transparent")
+        self.expense_list.grid(row=2, column=0, sticky="nsew")
+
+    def _on_expense_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.expense_inputs.items()}
+        if not v["description"] or not v["amount"]:
+            return
+        payload = {
+            "description": v["description"],
+            "amount": float(v["amount"]),
+            "category": v["category"] or "sonstiges",
+            "spent_on": v["spent_on"] or None,
+        }
+        if v["owner_name"]:
+            for m in self.registry.dispatch(
+                    "family.members", {}).get("members", []):
+                if m["name"].lower() == v["owner_name"].lower():
+                    payload["owner_id"] = m["id"]
+                    break
+        self.registry.dispatch("finance.add_expense", payload)
+        for e in self.expense_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_finance(self) -> None:
+        _clear(self.expense_list)
+        over = self.registry.dispatch("finance.monthly_overview", {})
+        self.finance_summary.configure(
+            text=(f"{over['month']}: Vertraege {over['recurring_contracts']:.2f} "
+                   f"+ einmalig {over['one_time_this_month']:.2f} = "
+                   f"{over['total_monthly']:.2f} EUR"))
+        for e in self.registry.dispatch("finance.list_expenses",
+                                            {}).get("expenses", []):
+            row = ctk.CTkFrame(self.expense_list, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=3)
+            owner = f"  -  {e['owner']}" if e.get("owner") else ""
+            ctk.CTkLabel(row,
+                         text=(f"{e.get('spent_on', '?')}  {e['description']}: "
+                                f"{e['amount']:.2f} EUR  [{e['category']}]{owner}"),
+                         anchor="w").pack(side="left", fill="x", expand=True)
+
+    # ================================================================
+    #  Kalender
+    # ================================================================
+    def _build_calendar(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(2, weight=1)
+
+        ctk.CTkLabel(parent, text="Termine & Kalender",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+
+        form = ctk.CTkFrame(parent)
+        form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.calendar_inputs = {
+            "title": _labeled_entry(form, "Titel"),
+            "due_date": _labeled_entry(form, "Datum (YYYY-MM-DD)",
+                                          date.today().isoformat()),
+            "category": _labeled_entry(form, "Kategorie",
+                                          "termin / garantie / tuev / "
+                                          "steuer / geburtstag / sonstiges"),
+            "description": _labeled_entry(form, "Notiz"),
+            "recurrence_days": _labeled_entry(form, "Wiederh. (Tage)",
+                                                  "(leer = einmalig)"),
+        }
+        ctk.CTkButton(form, text="Termin anlegen",
+                      command=self._on_calendar_add).pack(pady=6)
+
+        self.calendar_list = ctk.CTkScrollableFrame(parent,
+                                                        fg_color="transparent")
+        self.calendar_list.grid(row=2, column=0, sticky="nsew")
+
+    def _on_calendar_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.calendar_inputs.items()}
+        if not v["title"] or not v["due_date"]:
+            return
+        payload = {
+            "title": v["title"],
+            "due_date": v["due_date"],
+            "category": v["category"] or "termin",
+            "description": v["description"],
+        }
+        if v["recurrence_days"]:
+            try:
+                payload["recurrence_days"] = int(v["recurrence_days"])
+            except ValueError:
+                pass
+        self.registry.dispatch("calendar.add_event", payload)
+        for e in self.calendar_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_calendar(self) -> None:
+        _clear(self.calendar_list)
+        # Eigene Termine + alle synthetischen Events fuer kompletten Blick
+        events = self.registry.dispatch("calendar.list_events",
+                                            {}).get("events", [])
+        if not events:
+            ctk.CTkLabel(self.calendar_list, text="Noch keine Termine.",
+                         text_color="gray").pack(pady=20)
+            return
+        for e in events:
+            row = ctk.CTkFrame(self.calendar_list, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=3)
+            extra = f" - {e['person']}" if e.get("person") else ""
+            recur = (f", wiederkehrend alle {e['recurrence_days']} Tage"
+                     if e.get("recurrence_days") else "")
+            ctk.CTkLabel(row,
+                         text=(f"{e['due_date']}  [{e['category']}]  "
+                                f"{e['title']}{extra}{recur}"),
+                         anchor="w").pack(side="left", fill="x", expand=True)
+            ctk.CTkButton(row, text="Loeschen", width=90,
+                          fg_color="transparent", border_width=1,
+                          command=lambda i=e["id"]:
+                          self._dispatch_and_refresh(
+                              "calendar.delete_event", {"event_id": i})
+                          ).pack(side="right")
+
+    # ================================================================
+    #  Sozial
+    # ================================================================
+    def _build_social(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(2, weight=1)
+
+        ctk.CTkLabel(parent, text="Soziale Pflege",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+
+        form = ctk.CTkFrame(parent)
+        form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.social_inputs = {
+            "name": _labeled_entry(form, "Name"),
+            "relation": _labeled_entry(form, "Beziehung",
+                                          "Familie / Freund / Kollege ..."),
+            "cadence_days": _labeled_entry(form, "Rhythmus (Tage)", "30"),
+            "notes": _labeled_entry(form, "Notiz"),
+        }
+        ctk.CTkButton(form, text="Kontakt hinzufuegen",
+                      command=self._on_social_add).pack(pady=6)
+
+        self.social_list = ctk.CTkScrollableFrame(parent,
+                                                      fg_color="transparent")
+        self.social_list.grid(row=2, column=0, sticky="nsew")
+
+    def _on_social_add(self) -> None:
+        v = {k: e.get().strip() for k, e in self.social_inputs.items()}
+        if not v["name"]:
+            return
+        payload = {"name": v["name"], "relation": v["relation"],
+                    "notes": v["notes"]}
+        if v["cadence_days"]:
+            payload["cadence_days"] = int(v["cadence_days"])
+        self.registry.dispatch("social.add_contact", payload)
+        for e in self.social_inputs.values():
+            e.delete(0, "end")
+        self._refresh_all()
+
+    def _refresh_social(self) -> None:
+        _clear(self.social_list)
+        for c in self.registry.dispatch("social.contacts",
+                                           {}).get("contacts", []):
+            row = ctk.CTkFrame(self.social_list, fg_color="transparent")
+            row.pack(fill="x", padx=12, pady=3)
+            days = c.get("days_until_due", 0)
+            when = (f"in {days} Tagen" if days > 0
+                    else "heute" if days == 0
+                    else f"{-days} Tage ueberfaellig")
+            relation = f" ({c['relation']})" if c.get("relation") else ""
+            ctk.CTkLabel(row,
+                         text=f"{c['name']}{relation}  -  naechstes Melden {when}",
+                         anchor="w").pack(side="left", fill="x", expand=True)
+            ctk.CTkButton(row, text="Kontaktiert", width=110,
+                          command=lambda i=c["id"]:
+                          self._dispatch_and_refresh(
+                              "social.mark_contacted", {"contact_id": i})
+                          ).pack(side="right", padx=(0, 4))
+            ctk.CTkButton(row, text="Entwurf", width=80,
+                          command=lambda i=c["id"], n=c["name"]:
+                          self._show_message_draft(i, n)
+                          ).pack(side="right", padx=(0, 4))
+
+    def _show_message_draft(self, contact_id: int, name: str) -> None:
+        result = self.registry.dispatch("social.draft_message",
+                                          {"contact_id": contact_id,
+                                           "template": "kurz"})
+        self._show_dialog(f"Entwurf fuer {name}",
+                            result.get("message", str(result)))
+
+    # ================================================================
+    #  Posteingang
+    # ================================================================
+    def _build_inbox(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(3, weight=1)
+
+        ctk.CTkLabel(parent, text="Eingegangene Mail analysieren",
+                     font=ctk.CTkFont(size=16, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+
+        entry = ctk.CTkFrame(parent, fg_color="transparent")
+        entry.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        entry.grid_columnconfigure(0, weight=1)
+        self.mail_box = ctk.CTkTextbox(entry, height=120, wrap="word")
+        self.mail_box.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        self.mail_box.insert("1.0", SAMPLE_MAIL)
+        actions = ctk.CTkFrame(entry, fg_color="transparent")
+        actions.grid(row=0, column=1, sticky="n")
+        ctk.CTkButton(actions, text="Analysieren", width=130,
+                      command=self._analyze_mail).pack(pady=2)
+        ctk.CTkButton(actions, text="IMAP abrufen", width=130,
+                      command=self._fetch_imap).pack(pady=2)
+
+        self.inbox_info = ctk.CTkLabel(
+            parent, text="Offene Vorschlaege",
+            font=ctk.CTkFont(size=14, weight="bold"))
+        self.inbox_info.grid(row=2, column=0, sticky="w", pady=(0, 4))
+
+        self.proposal_list = ctk.CTkScrollableFrame(parent,
+                                                       fg_color="transparent")
+        self.proposal_list.grid(row=3, column=0, sticky="nsew")
+
+    def _analyze_mail(self) -> None:
+        text = self.mail_box.get("1.0", "end-1c").strip()
+        if not text:
+            return
+        result = self.registry.dispatch("inbox.analyze_mail",
+                                          {"mail_text": text})
+        found = result.get("found", 0)
+        self.inbox_info.configure(
+            text=(f"Analyse: {found} neue Vorschlaege" if found
+                  else "Analyse: kein bekanntes Muster"))
+        self.mail_box.delete("1.0", "end")
+        self._refresh_inbox(keep_info=True)
+        self._refresh_status()
+
+    def _fetch_imap(self) -> None:
+        result = self.registry.dispatch("inbox.fetch_imap", {})
+        if result.get("status") == "uebersprungen":
+            self._show_dialog("IMAP nicht konfiguriert",
+                                result.get("hinweis", ""))
+            return
+        self._refresh_all()
+
+    def _refresh_inbox(self, keep_info: bool = False) -> None:
+        _clear(self.proposal_list)
+        data = self.registry.dispatch("inbox.proposals", {})
+        count = data.get("count", 0)
+        if not keep_info:
+            self.inbox_info.configure(text=f"Offene Vorschlaege ({count})")
+        if count == 0:
+            ctk.CTkLabel(self.proposal_list, text="Keine offenen Vorschlaege.",
+                         text_color="gray").pack(pady=24)
+            return
+        for proposal in data["proposals"]:
+            self._proposal_card(proposal)
+
+    def _proposal_card(self, p: dict) -> None:
+        card = ctk.CTkFrame(self.proposal_list, corner_radius=8)
+        card.pack(fill="x", pady=4, padx=2)
+        body = ctk.CTkFrame(card, fg_color="transparent")
+        body.pack(fill="x", padx=12, pady=10)
+        ctk.CTkLabel(body, text=p["summary"], anchor="w", justify="left",
+                     wraplength=560,
+                     font=ctk.CTkFont(size=13, weight="bold")
+                     ).pack(anchor="w")
+        ctk.CTkLabel(body,
+                     text=f"Quelle: {p['source']}  -  Ziel: {p['target_capability']}",
+                     anchor="w", text_color="gray",
+                     font=ctk.CTkFont(size=10)).pack(anchor="w", pady=(2, 6))
+        buttons = ctk.CTkFrame(body, fg_color="transparent")
+        buttons.pack(anchor="w")
+        ctk.CTkButton(buttons, text="Uebernehmen", width=120,
+                      command=lambda i=p["id"]:
+                      self._decide_proposal(i, True)
+                      ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(buttons, text="Ablehnen", width=100,
+                      fg_color="transparent", border_width=1,
+                      command=lambda i=p["id"]:
+                      self._decide_proposal(i, False)
+                      ).pack(side="left")
+
+    def _decide_proposal(self, proposal_id: int, accept: bool) -> None:
+        cap = "inbox.accept_proposal" if accept else "inbox.reject_proposal"
+        self.registry.dispatch(cap, {"proposal_id": proposal_id})
+        self._refresh_all()
+
+    # ================================================================
+    #  Chat
     # ================================================================
     def _build_chat(self, parent) -> None:
         parent.grid_rowconfigure(0, weight=1)
         parent.grid_columnconfigure(0, weight=1)
-
         self.chat = ctk.CTkTextbox(parent, wrap="word",
-                                   font=ctk.CTkFont(size=13))
-        self.chat.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(6, 8))
+                                    font=ctk.CTkFont(size=13))
+        self.chat.grid(row=0, column=0, columnspan=2, sticky="nsew",
+                       pady=(6, 8))
         self.chat.configure(state="disabled")
-
         self.entry = ctk.CTkEntry(parent, placeholder_text="Frage eingeben ...")
-        self.entry.grid(row=1, column=0, sticky="ew", padx=(0, 6), pady=(0, 6))
+        self.entry.grid(row=1, column=0, sticky="ew", padx=(0, 6),
+                         pady=(0, 6))
         self.entry.bind("<Return>", lambda _e: self._on_send())
-
-        ctk.CTkButton(parent, text="Senden", width=90, command=self._on_send
+        ctk.CTkButton(parent, text="Senden", width=90,
+                      command=self._on_send
                       ).grid(row=1, column=1, sticky="e", pady=(0, 6))
 
     def _on_send(self) -> None:
         text = self.entry.get().strip()
-        if text:
-            self.entry.delete(0, "end")
-            self._ask(text)
+        if not text:
+            return
+        self.entry.delete(0, "end")
+        self._append_chat("Du", text)
+        self._append_chat("Assistent", "denkt nach ...")
+        threading.Thread(target=self._chat_worker,
+                          args=(text,), daemon=True).start()
 
-    def _ask(self, prompt: str) -> None:
-        """Frage an den Assistenten - in einem Thread, damit die GUI
-        nicht einfriert (wichtig im API-Modus)."""
-        self._append("Du", prompt)
-        self._append("Assistent", "denkt nach ...")
-        threading.Thread(target=self._worker, args=(prompt,),
-                         daemon=True).start()
-
-    def _worker(self, prompt: str) -> None:
+    def _chat_worker(self, prompt: str) -> None:
         answer = self.assistant.ask(prompt)
-        # GUI-Updates muessen im Hauptthread laufen:
-        self.after(0, lambda: self._replace_last(answer))
+        self.after(0, lambda: self._replace_last_chat(answer))
         self.after(0, self._refresh_all)
 
-    def _append(self, who: str, text: str) -> None:
+    def _append_chat(self, who: str, text: str) -> None:
         self.chat.configure(state="normal")
         self.chat.insert("end", f"{who}:\n{text}\n\n")
         self.chat.see("end")
         self.chat.configure(state="disabled")
 
-    def _replace_last(self, answer: str) -> None:
-        """Ersetzt das 'denkt nach ...' durch die echte Antwort."""
+    def _replace_last_chat(self, answer: str) -> None:
         self.chat.configure(state="normal")
         content = self.chat.get("1.0", "end-1c")
         marker = "Assistent:\ndenkt nach ...\n\n"
@@ -275,110 +922,58 @@ class AlltagshelferGUI(ctk.CTk):
     def _refresh_all(self) -> None:
         self._refresh_status()
         self._refresh_dashboard()
+        self._refresh_contracts()
+        self._refresh_members()
+        self._refresh_tasks()
+        self._refresh_orders()
+        self._refresh_shopping()
+        self._refresh_finance()
+        self._refresh_calendar()
+        self._refresh_social()
         self._refresh_inbox()
 
+    def _dispatch_and_refresh(self, capability: str, args: dict) -> None:
+        self.registry.dispatch(capability, args)
+        self._refresh_all()
+
     # ================================================================
-    #  Tab - Posteingang (Mail-Analyse + zentrale Vorschlags-Ablage)
+    #  Hilfsdialog
     # ================================================================
-    def _build_inbox(self, parent) -> None:
-        parent.grid_columnconfigure(0, weight=1)
-        parent.grid_rowconfigure(3, weight=1)
+    def _show_dialog(self, title: str, message: str,
+                     pdf_path: str | None = None) -> None:
+        dlg = ctk.CTkToplevel(self)
+        dlg.title(title)
+        dlg.geometry("520x320")
+        dlg.grab_set()
+        ctk.CTkLabel(dlg, text=title,
+                     font=ctk.CTkFont(size=14, weight="bold")
+                     ).pack(padx=20, pady=(20, 6), anchor="w")
+        box = ctk.CTkTextbox(dlg, wrap="word")
+        box.pack(fill="both", expand=True, padx=20, pady=10)
+        box.insert("1.0", message)
+        box.configure(state="disabled")
+        btns = ctk.CTkFrame(dlg, fg_color="transparent")
+        btns.pack(fill="x", padx=20, pady=(0, 12))
+        if pdf_path:
+            ctk.CTkButton(btns, text="Drucken",
+                          command=lambda: self._print_file(pdf_path)
+                          ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(btns, text="Schliessen",
+                      command=dlg.destroy).pack(side="right")
 
-        ctk.CTkLabel(parent, text="Eingegangene Mail analysieren",
-                     font=ctk.CTkFont(size=16, weight="bold")
-                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+    def _print_file(self, path: str) -> None:
+        result = OutputService.print_file(path)
+        self._show_dialog("Drucken",
+                            result.get("status") or result.get("error", ""))
 
-        entry = ctk.CTkFrame(parent, fg_color="transparent")
-        entry.grid(row=1, column=0, sticky="ew", pady=(0, 10))
-        entry.grid_columnconfigure(0, weight=1)
-        self.mail_box = ctk.CTkTextbox(entry, height=120, wrap="word")
-        self.mail_box.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        self.mail_box.insert("1.0", SAMPLE_MAIL)            # Beispiel vorbefuellt
-        ctk.CTkButton(entry, text="Analysieren", width=120,
-                      command=self._analyze_mail).grid(row=0, column=1, sticky="n")
-
-        self.inbox_info = ctk.CTkLabel(
-            parent, text="Offene Vorschlaege",
-            font=ctk.CTkFont(size=14, weight="bold"))
-        self.inbox_info.grid(row=2, column=0, sticky="w", pady=(0, 4))
-
-        self.proposal_list = ctk.CTkScrollableFrame(
-            parent, fg_color="transparent")
-        self.proposal_list.grid(row=3, column=0, sticky="nsew")
-        self.proposal_list.grid_columnconfigure(0, weight=1)
-
-    def _analyze_mail(self) -> None:
-        text = self.mail_box.get("1.0", "end-1c").strip()
-        if not text:
-            return
-        result = self.registry.dispatch("inbox.analyze_mail",
-                                        {"mail_text": text})
-        found = result.get("found", 0)
-        if found:
-            self.inbox_info.configure(
-                text=f"Analyse: {found} neue(r) Vorschlag/Vorschlaege")
-        else:
-            self.inbox_info.configure(
-                text="Analyse: kein bekanntes Muster erkannt")
-        self.mail_box.delete("1.0", "end")
-        self._refresh_inbox(keep_info=True)
-        self._refresh_status()
-
-    def _refresh_inbox(self, keep_info: bool = False) -> None:
-        for child in self.proposal_list.winfo_children():
-            child.destroy()
-        data = self.registry.dispatch("inbox.proposals", {})
-        count = data.get("count", 0)
-        if not keep_info:
-            self.inbox_info.configure(
-                text=f"Offene Vorschlaege ({count})")
-        if count == 0:
-            ctk.CTkLabel(self.proposal_list,
-                         text="Keine offenen Vorschlaege.",
-                         text_color="gray").pack(pady=24)
-            return
-        for proposal in data["proposals"]:
-            self._proposal_card(proposal)
-
-    def _proposal_card(self, p: dict) -> None:
-        card = ctk.CTkFrame(self.proposal_list, corner_radius=8)
-        card.pack(fill="x", pady=4, padx=2)
-
-        body = ctk.CTkFrame(card, fg_color="transparent")
-        body.pack(fill="x", padx=12, pady=10)
-
-        ctk.CTkLabel(body, text=p["summary"], anchor="w", justify="left",
-                     wraplength=460,
-                     font=ctk.CTkFont(size=13, weight="bold")
-                     ).pack(anchor="w")
-        ctk.CTkLabel(body,
-                     text=f"Quelle: {p['source']}  |  "
-                          f"Ziel: {p['target_capability']}",
-                     anchor="w", text_color="gray",
-                     font=ctk.CTkFont(size=10)).pack(anchor="w", pady=(2, 6))
-
-        buttons = ctk.CTkFrame(body, fg_color="transparent")
-        buttons.pack(anchor="w")
-        ctk.CTkButton(buttons, text="Uebernehmen", width=120,
-                      command=lambda i=p["id"]: self._decide_proposal(i, True)
-                      ).pack(side="left", padx=(0, 8))
-        ctk.CTkButton(buttons, text="Ablehnen", width=100,
-                      fg_color="transparent", border_width=1,
-                      text_color=("gray10", "gray90"),
-                      command=lambda i=p["id"]: self._decide_proposal(i, False)
-                      ).pack(side="left")
-
-    def _decide_proposal(self, proposal_id: int, accept: bool) -> None:
-        capability = ("inbox.accept_proposal" if accept
-                      else "inbox.reject_proposal")
-        result = self.registry.dispatch(capability,
-                                        {"proposal_id": proposal_id})
-        message = result.get("status") or result.get("error", "")
-        self.inbox_info.configure(text=message)
-        # Uebernahme kann Vertraege/Auftraege geaendert haben -> alles neu laden
-        self._refresh_inbox(keep_info=True)
-        self._refresh_status()
-        self._refresh_dashboard()
+    # ================================================================
+    #  Scheduler
+    # ================================================================
+    def _check_notifications(self) -> None:
+        triggered = self.scheduler.check_now()
+        msg = (f"{len(triggered)} Notifikation(en) ausgeloest."
+               if triggered else "Aktuell nichts Akutes.")
+        self._show_dialog("Notifikationen", msg)
 
 
 def main() -> None:
@@ -386,9 +981,12 @@ def main() -> None:
     ctk.set_default_color_theme("blue")
     db, registry, assistant = bootstrap()
     app = AlltagshelferGUI(registry, assistant)
+    # Scheduler im Hintergrund - meldet sich, wenn etwas akut wird
+    app.scheduler.start()
     try:
         app.mainloop()
     finally:
+        app.scheduler.stop()
         db.close()
 
 

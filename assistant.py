@@ -21,6 +21,7 @@ import json
 import os
 
 from core.interface import ModuleRegistry
+from database import AssistantLogRepository
 
 SYSTEM_PROMPT = (
     "Du bist der Alltagshelfer, ein freundlicher deutschsprachiger "
@@ -33,9 +34,12 @@ SYSTEM_PROMPT = (
 class Assistant:
     """Orchestriert Nutzeranfragen ueber die Modul-Schnittstelle."""
 
-    def __init__(self, registry: ModuleRegistry, model: str = "claude-opus-4-20250514"):
+    def __init__(self, registry: ModuleRegistry,
+                 model: str = "claude-sonnet-4-5",
+                 log: AssistantLogRepository | None = None):
         self.registry = registry
         self.model = model
+        self.log = log
         self._client = self._try_init_client()
 
     # ------------------------------------------------------------------
@@ -57,9 +61,13 @@ class Assistant:
     # ------------------------------------------------------------------
     def ask(self, user_message: str) -> str:
         """Eine Nutzeranfrage beantworten."""
-        if self._client:
-            return self._ask_api(user_message)
-        return self._ask_offline(user_message)
+        if self.log is not None:
+            self.log.append("user", user_message)
+        answer = (self._ask_api(user_message) if self._client
+                  else self._ask_offline(user_message))
+        if self.log is not None:
+            self.log.append("assistant", answer)
+        return answer
 
     # ---- API-Modus -----------------------------------------------------
     def _ask_api(self, user_message: str) -> str:
@@ -128,6 +136,25 @@ class Assistant:
             data = self.registry.dispatch("contracts.upcoming_deadlines", args)
             return self._format_deadlines(data)
 
+        # Absicht: Einkaufsliste (Modul D) - VOR dem "was steht"-Catch-all
+        if any(w in msg for w in ("einkauf", "einkaufsliste", "einkaufen",
+                                  "supermarkt")):
+            data = self.registry.dispatch("family.shopping_list", {})
+            return self._format_shopping(data)
+
+        # Absicht: Soziale Pflege (Modul E) - vor dem Catch-all
+        if any(w in msg for w in ("kontakt", "melden", "freund", "anrufen",
+                                  "anruf", "kümmer", "kuemmer", "anruf")):
+            data = self.registry.dispatch("social.contacts", {})
+            return self._format_social(data)
+
+        # Absicht: Termine / Kalender (Modul C)
+        if any(w in msg for w in ("termin", "kalender", "garantie", "tuev",
+                                  "tüv", "steuer", "geburtstag")):
+            data = self.registry.dispatch("calendar.upcoming",
+                                            {"horizon_days": 90})
+            return self._format_calendar(data)
+
         # Absicht: Dashboard / anstehende Ereignisse (modul-uebergreifend)
         if any(w in msg for w in ("agenda", "dashboard", "ereignis",
                                   "was steht", "was kommt", "ueberblick",
@@ -160,6 +187,12 @@ class Assistant:
                 return self._format_expense_list(data)
             data = self.registry.dispatch("finance.monthly_overview", {})
             return self._format_finance(data)
+
+        # Absicht: Preis-Gedaechtnis (Modul B)
+        if "preisgedächtnis" in msg or "preis gedächtnis" in msg or \
+           "preisgedaechtnis" in msg:
+            data = self.registry.dispatch("finance.price_memory", {})
+            return self._format_price_memory(data)
 
         # Absicht: Vertragsuebersicht (Modul A)
         if any(w in msg for w in ("vertrag", "übersicht", "uebersicht", "kosten")):
@@ -259,6 +292,53 @@ class Assistant:
             faellig = f", faellig {o['due_date']}" if o["due_date"] else ""
             lines.append(f"  {status} {o['title']} -> "
                           f"{o['assignee'] or 'niemand'}{faellig}")
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_calendar(data: dict) -> str:
+        if data.get("count", 0) == 0:
+            return "Keine Termine im Horizont."
+        lines = [f"Termine in den naechsten {data.get('horizon_days', 90)} Tagen:"]
+        for e in data["events"]:
+            extra = f" ({e['person']})" if e.get("person") else ""
+            lines.append(f"  - {e['due_date']}  {e['title']}{extra} "
+                          f"[{e['category']}]")
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_social(data: dict) -> str:
+        if data.get("count", 0) == 0:
+            return "Keine Kontakte fuer die soziale Pflege erfasst."
+        lines = ["Wichtige Kontakte:"]
+        for c in data["contacts"]:
+            days = c.get("days_until_due", 0)
+            when = (f"in {days} Tagen" if days > 0
+                    else "heute faellig" if days == 0
+                    else f"{-days} Tage ueberfaellig")
+            lines.append(f"  - {c['name']} ({c.get('relation') or 'Kontakt'}): "
+                          f"{when}, naechstes Mal {c['next_due']}")
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_shopping(data: dict) -> str:
+        if data.get("count", 0) == 0:
+            return "Die Einkaufsliste ist leer."
+        lines = ["Einkaufsliste:"]
+        for item in data["items"]:
+            mark = "[x]" if item.get("bought") else "[ ]"
+            qty = f" ({item['quantity']})" if item.get("quantity") else ""
+            by = f" (von {item['added_by']})" if item.get("added_by") else ""
+            lines.append(f"  {mark} {item['name']}{qty}{by}")
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_price_memory(data: dict) -> str:
+        if data.get("count", 0) == 0:
+            return "Noch keine gemerkten Preise."
+        lines = ["Preisgedaechtnis:"]
+        for p in data["products"]:
+            seen = f" (zuletzt {p['last_seen']})" if p.get("last_seen") else ""
+            lines.append(f"  - {p['product']}: {p['last_price']:.2f} EUR{seen}")
         return "\n".join(lines)
 
     @staticmethod

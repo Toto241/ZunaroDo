@@ -21,12 +21,17 @@ separater Schritt.
 """
 from __future__ import annotations
 
+import os
 import re
 from datetime import date
 
 from core.interface import Capability, ModuleContext, ModuleInterface
 from database import ProposalRepository
 from models import Proposal
+
+
+# IMAP-Postfachzugriff ist bewusst optional. Konfiguration via
+# Umgebungsvariablen ALLTAGSHELFER_IMAP_{HOST,USER,PASS}.
 
 # Stichworte zur groben Kategorie-Erkennung
 _CATEGORY_HINTS = {
@@ -131,6 +136,28 @@ class InboxModule(ModuleInterface):
                 },
                 handler=self._cap_reject_proposal,
             ),
+            Capability(
+                name="inbox.import_eml",
+                description="Liest eine .eml-Datei ein und analysiert sie.",
+                parameters={
+                    "path": {"type": "string", "_required": True,
+                             "description": "Pfad zur .eml-Datei"},
+                },
+                handler=self._cap_import_eml,
+            ),
+            Capability(
+                name="inbox.fetch_imap",
+                description="Holt ungelesene Mails per IMAP und analysiert sie. "
+                            "Braucht ALLTAGSHELFER_IMAP_HOST/USER/PASS in "
+                            "der Umgebung; ohne diese wird uebersprungen.",
+                parameters={
+                    "folder": {"type": "string",
+                               "description": "IMAP-Ordner (Standard: INBOX)"},
+                    "limit": {"type": "integer",
+                              "description": "Max. Anzahl Mails"},
+                },
+                handler=self._cap_fetch_imap,
+            ),
         ]
 
     # ---- Handler -------------------------------------------------------
@@ -179,6 +206,63 @@ class InboxModule(ModuleInterface):
             return {"error": f"Vorschlag {proposal_id} nicht gefunden"}
         self.repo.set_status(proposal_id, "abgelehnt")
         return {"status": "Vorschlag abgelehnt"}
+
+    # ---- .eml-Import + IMAP-Anbindung ----------------------------------
+    def _cap_import_eml(self, path: str) -> dict:
+        import email
+        from pathlib import Path
+        p = Path(path)
+        if not p.exists():
+            return {"error": f"Datei '{path}' nicht gefunden"}
+        try:
+            msg = email.message_from_bytes(p.read_bytes())
+        except Exception as exc:
+            return {"error": f".eml nicht lesbar: {exc}"}
+        return self._cap_analyze_mail(self._extract_text(msg))
+
+    def _cap_fetch_imap(self, folder: str = "INBOX",
+                        limit: int = 10) -> dict:
+        host = os.environ.get("ALLTAGSHELFER_IMAP_HOST")
+        user = os.environ.get("ALLTAGSHELFER_IMAP_USER")
+        pwd = os.environ.get("ALLTAGSHELFER_IMAP_PASS")
+        if not (host and user and pwd):
+            return {"status": "uebersprungen",
+                    "hinweis": ("IMAP nicht konfiguriert. Setze "
+                                 "ALLTAGSHELFER_IMAP_HOST/USER/PASS, um echte "
+                                 "Mails zu lesen.")}
+        try:
+            import email
+            import imaplib
+            client = imaplib.IMAP4_SSL(host)
+            client.login(user, pwd)
+            client.select(folder)
+            _typ, data = client.search(None, "UNSEEN")
+            ids = data[0].split()[:limit]
+            found = 0
+            for mid in ids:
+                _typ, msg_data = client.fetch(mid, "(RFC822)")
+                msg = email.message_from_bytes(msg_data[0][1])
+                res = self._cap_analyze_mail(self._extract_text(msg))
+                found += res.get("found", 0)
+            client.logout()
+            return {"status": "abgerufen", "checked": len(ids),
+                    "found": found}
+        except Exception as exc:
+            return {"status": "fehler", "error": str(exc)}
+
+    @staticmethod
+    def _extract_text(msg) -> str:
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_type() == "text/plain":
+                    return part.get_payload(decode=True).decode(
+                        part.get_content_charset() or "utf-8",
+                        errors="replace")
+        payload = msg.get_payload(decode=True)
+        if payload:
+            return payload.decode(msg.get_content_charset() or "utf-8",
+                                   errors="replace")
+        return str(msg.get_payload())
 
     # ---- Mail-Analyse (regelbasiert) ----------------------------------
     def _analyze(self, mail_text: str) -> list[Proposal]:

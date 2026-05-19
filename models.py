@@ -1,5 +1,5 @@
 """
-Domänenmodelle des Alltagshelfers.
+Domaenenmodelle des Alltagshelfers.
 
 Reine Datenklassen ohne Logik - sie bilden die "Sprache",
 in der Datenmodell, Module und KI-Assistent miteinander reden.
@@ -26,12 +26,13 @@ class Contract:
     currency: str = "EUR"
     notes: str = ""
     status: str = "active"              # active | cancelled | expired
+    owner_id: Optional[int] = None      # Querschnitts-Person via family.members
+    owner_name: str = ""                # nur Anzeige, nicht persistiert
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     def to_dict(self) -> dict:
-        """JSON-serialisierbare Darstellung - das Format der Schnittstelle."""
         return {
             "id": self.id,
             "name": self.name,
@@ -46,19 +47,44 @@ class Contract:
             "currency": self.currency,
             "notes": self.notes,
             "status": self.status,
+            "owner_id": self.owner_id,
+            "owner": self.owner_name,
+        }
+
+
+@dataclass
+class Expense:
+    """Eine einmalige Ausgabe (Modul B - Finanzen)."""
+    description: str
+    amount: float
+    category: str = "sonstiges"
+    spent_on: Optional[date] = None
+    owner_id: Optional[int] = None
+    owner_name: str = ""
+    id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "description": self.description,
+            "amount": self.amount,
+            "category": self.category,
+            "spent_on": self.spent_on.isoformat() if self.spent_on else None,
+            "owner_id": self.owner_id,
+            "owner": self.owner_name,
         }
 
 
 @dataclass
 class Deadline:
-    """Eine errechnete Frist, die zu einem Vertrag gehoert."""
+    """In-memory: errechnete Frist zu einem Vertrag (wird nicht persistiert)."""
     contract_id: int
     type: str                           # cancellation | renewal | price_change
     due_date: date
     title: str
     resolved: bool = False
     id: Optional[int] = None
-    # nur fuer die Anzeige, nicht persistiert:
     contract_name: str = ""
     days_remaining: Optional[int] = None
 
@@ -75,26 +101,6 @@ class Deadline:
         }
 
 
-@dataclass
-class Expense:
-    """Eine einmalige Ausgabe (Modul B - Finanzen)."""
-    description: str
-    amount: float
-    category: str = "sonstiges"         # lebensmittel | freizeit | mobilitaet ...
-    spent_on: Optional[date] = None
-    id: Optional[int] = None
-    created_at: Optional[datetime] = None
-
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "description": self.description,
-            "amount": self.amount,
-            "category": self.category,
-            "spent_on": self.spent_on.isoformat() if self.spent_on else None,
-        }
-
-
 def classify_urgency(days_remaining: int) -> str:
     """Leitet aus den verbleibenden Tagen eine Dringlichkeitsstufe ab."""
     if days_remaining <= 14:
@@ -106,17 +112,12 @@ def classify_urgency(days_remaining: int) -> str:
 
 @dataclass
 class Event:
-    """
-    Ein anstehendes Ereignis fuer das Dashboard - modul-uebergreifend.
-
-    Jedes Modul liefert seine Ereignisse in genau diesem Format. Das
-    Dashboard kann sie dadurch zusammenfuehren, ohne die Module zu kennen.
-    """
+    """Ein anstehendes Ereignis fuer das Dashboard - modul-uebergreifend."""
     title: str
     due_date: date
     module_id: str
     module_name: str
-    category: str = "erinnerung"        # frist | zahlung | review | erinnerung
+    category: str = "erinnerung"
     detail: str = ""
     days_remaining: int = 0
 
@@ -141,29 +142,29 @@ class Event:
 class FamilyMember:
     """Ein Haushaltsmitglied (Modul D)."""
     name: str
-    role: str = "erwachsen"             # erwachsen | kind | sonstiges
+    role: str = "erwachsen"
+    birthday: Optional[date] = None      # fuer Geburtstags-Reminder
     id: Optional[int] = None
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "name": self.name, "role": self.role}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "role": self.role,
+            "birthday": self.birthday.isoformat() if self.birthday else None,
+        }
 
 
 @dataclass
 class HouseholdTask:
-    """
-    Eine wiederkehrende Haushaltsaufgabe mit Rotation (Modul D).
-
-    'rotation' ist die Reihenfolge der Mitglieder-IDs; 'current_index'
-    zeigt auf das aktuell zustaendige Mitglied. Beim Abhaken rueckt der
-    Index weiter und 'next_due' wird um 'interval_days' verschoben.
-    """
+    """Wiederkehrende Haushaltsaufgabe mit Rotation (Modul D)."""
     title: str
-    interval_days: int = 7              # Wiederholungsintervall
+    interval_days: int = 7
     next_due: Optional[date] = None
-    rotation: list[int] = field(default_factory=list)   # Mitglieder-IDs
+    rotation: list[int] = field(default_factory=list)
     current_index: int = 0
     id: Optional[int] = None
-    current_assignee_name: str = ""     # nur Anzeige, nicht persistiert
+    current_assignee_name: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -178,18 +179,14 @@ class HouseholdTask:
 
 @dataclass
 class HouseholdOrder:
-    """
-    Ein einmaliger Auftrag (Modul D) - gezielt einer Person zugewiesen,
-    mit Termin und Status. Abgrenzung zu HouseholdTask: einmalig + gezielt
-    statt wiederkehrend + rotierend.
-    """
+    """Einmaliger Auftrag (Modul D) - gezielt zugewiesen."""
     title: str
     assignee_id: Optional[int] = None
     due_date: Optional[date] = None
     description: str = ""
-    status: str = "offen"               # offen | erledigt
+    status: str = "offen"
     id: Optional[int] = None
-    assignee_name: str = ""             # nur Anzeige
+    assignee_name: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -203,20 +200,33 @@ class HouseholdOrder:
 
 
 @dataclass
-class Proposal:
-    """
-    Ein Vorschlag in der zentralen Vorschlags-Ablage.
+class ShoppingItem:
+    """Eintrag auf der gemeinsamen Einkaufsliste (Modul D)."""
+    name: str
+    quantity: str = ""
+    added_by_id: Optional[int] = None
+    bought: bool = False
+    id: Optional[int] = None
+    added_by_name: str = ""
 
-    Entsteht z.B. aus einer Mail-Analyse. Er nennt eine Ziel-Capability
-    und die fertige Nutzlast. Bei Bestaetigung wird genau diese Capability
-    aufgerufen - das zustaendige Modul prueft und uebernimmt die Daten.
-    Nichts wird ungeprueft ins System geschrieben.
-    """
-    source: str                         # z.B. "mail"
-    summary: str                        # menschenlesbare Kurzbeschreibung
-    target_capability: str              # z.B. "contracts.add"
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "quantity": self.quantity,
+            "added_by": self.added_by_name,
+            "bought": self.bought,
+        }
+
+
+@dataclass
+class Proposal:
+    """Vorschlag in der zentralen Vorschlags-Ablage."""
+    source: str
+    summary: str
+    target_capability: str
     payload: dict = field(default_factory=dict)
-    status: str = "offen"               # offen | uebernommen | abgelehnt
+    status: str = "offen"
     id: Optional[int] = None
     created_at: Optional[datetime] = None
 
@@ -229,3 +239,88 @@ class Proposal:
             "payload": self.payload,
             "status": self.status,
         }
+
+
+@dataclass
+class CalendarEvent:
+    """
+    Ein Termin im Modul C (Termine & Kalender).
+
+    Deckt: Behoerdentermine, Garantien, TUEV, Steuerfristen, allgemeine
+    Erinnerungen, wiederkehrende Geburtstage (technisch gleich).
+    """
+    title: str
+    due_date: date
+    category: str = "termin"            # termin | garantie | tuev | steuer | geburtstag | sonstiges
+    description: str = ""
+    recurrence_days: Optional[int] = None    # z.B. 365 fuer jaehrlich
+    person_id: Optional[int] = None     # betroffene Person, optional
+    person_name: str = ""
+    id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "due_date": self.due_date.isoformat(),
+            "category": self.category,
+            "description": self.description,
+            "recurrence_days": self.recurrence_days,
+            "person_id": self.person_id,
+            "person": self.person_name,
+        }
+
+
+@dataclass
+class SocialContact:
+    """
+    Ein wichtiger Mensch im Modul E (Soziale Pflege).
+
+    'cadence_days' definiert, wie haeufig man sich melden moechte.
+    """
+    name: str
+    relation: str = ""                  # Familie | Freund | Kollege | ...
+    cadence_days: int = 30
+    last_contacted: Optional[date] = None
+    notes: str = ""
+    id: Optional[int] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "relation": self.relation,
+            "cadence_days": self.cadence_days,
+            "last_contacted": (self.last_contacted.isoformat()
+                                if self.last_contacted else None),
+            "notes": self.notes,
+        }
+
+
+@dataclass
+class PriceMemory:
+    """Preisgedaechtnis fuer wiederkehrende Einkaeufe (Modul B)."""
+    product: str
+    last_price: float
+    last_seen: Optional[date] = None
+    category: str = "sonstiges"
+    id: Optional[int] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "product": self.product,
+            "last_price": self.last_price,
+            "last_seen": self.last_seen.isoformat() if self.last_seen else None,
+            "category": self.category,
+        }
+
+
+@dataclass
+class AssistantLogEntry:
+    """Persistente Spur einer Nutzer-Anfrage und der Antwort des Assistenten."""
+    role: str                           # user | assistant
+    content: str
+    id: Optional[int] = None
+    created_at: Optional[datetime] = None

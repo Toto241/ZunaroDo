@@ -1,101 +1,111 @@
-# Alltagshelfer – Prototyp
+# Alltagshelfer
 
-Lauffähiger Prototyp des datenschutzfreundlichen Alltagsassistenten mit
-**vier Fachmodulen**, einem **Dashboard**, einem **Ausgabedienst** und
-**drei Schnittstellen**, über die alle Teile miteinander interagieren.
+Lauffähiger Prototyp eines datenschutzfreundlichen Alltagsassistenten mit
+**sieben Fachmodulen**, einem **Dashboard**, einem **Ausgabedienst**, einem
+**proaktiven Scheduler** und **drei Schnittstellen**, über die alle Teile
+miteinander interagieren.
 
 ## Schnellstart
 
 ```bash
-cd alltagshelfer
-python main.py        # Konsolen-Demo (zeigt alle Module und Schnittstellen)
-python gui.py         # grafische Oberflaeche mit Dashboard + Posteingang
+pip install -r requirements.txt
+python main.py        # Konsolen-Demo (zeigt alles End-to-End)
+python gui.py         # GUI mit allen Tabs
 
-# optional mit echtem LLM statt Offline-Router:
+# optional mit echtem LLM:
 ANTHROPIC_API_KEY=sk-... python main.py
+
+# optional Mails per IMAP:
+ALLTAGSHELFER_IMAP_HOST=imap.example.com \
+ALLTAGSHELFER_IMAP_USER=... \
+ALLTAGSHELFER_IMAP_PASS=... \
+python gui.py
 ```
 
-Abhängigkeiten: `pip install customtkinter fpdf2`
+Tests: `python -m unittest discover tests`
 
 ## Module
 
 | Modul | Name | Aufgabe |
-|---|---|---|
-| A | Vertrags- & Fristenmanager | Verträge, Kündigungsfristen, **Kündigungsschreiben**, Preisänderungen |
-| B | Finanz-Cockpit | Ausgaben + monatliche Belastung |
-| D | Familie & Haushalt | Mitglieder, wiederkehrende Aufgaben (Rotation), **einmalige Aufträge** |
-| – | Posteingang & Vorschläge | **Mail-Analyse** und zentrale **Vorschlags-Ablage** |
-
-Der **Ausgabedienst** (`services/output.py`) ist kein Fachmodul, sondern
-Infrastruktur: er erzeugt druckbare PDFs und Mail-Entwürfe (`.eml`). So
-muss kein Modul selbst Drucker- oder SMTP-Logik nachbauen.
+| --- | --- | --- |
+| A | Vertrags- & Fristenmanager | Verträge, Kündigungsfristen, **Kündigungsschreiben** (PDF + Mail-Entwurf + Druck), Preisänderungen, **Person-Zuordnung** |
+| B | Finanz-Cockpit | Ausgaben (mit Person), monatliche Belastung, **Aggregate pro Person/Kategorie**, **Preisgedächtnis**, **OCR für Kassenbons** |
+| C | Termine & Kalender | Termine, Garantien, TÜV, **Steuerfristen**, Geburtstage (aus Modul D) |
+| D | Familie & Haushalt | Mitglieder (mit Geburtstag), Aufgaben (Rotation), Aufträge (gezielt), **Einkaufsliste** |
+| E | Soziale Pflege | Wichtige Kontakte mit Wunsch-Rhythmus, Nachrichten-Entwurf |
+| – | Tagesstruktur | Scaffold: Energie-Tagebuch, einfache Empfehlung |
+| – | Posteingang | Mail-Analyse (Text, **.eml**, **IMAP** optional), zentrale Vorschlags-Ablage |
 
 ## Die drei Schnittstellen
 
-1. **Front-End ↔ Modul** – `ModuleRegistry.dispatch(name, args)`.
-   Assistent und GUI rufen Modul-Funktionen generisch im Tool-Use-Format auf.
-2. **Modul ↔ Modul** – `ModuleContext.call(...)`. Ein Modul nutzt
-   Funktionen anderer Module, ohne sie zu kennen (lose Kopplung).
-3. **Dashboard** – `ModuleRegistry.collect_events(...)`. Jedes Modul
-   liefert über `get_events()` anstehende Ereignisse; sie werden
-   chronologisch zusammengeführt.
+1. **Front-End ↔ Modul** – `ModuleRegistry.dispatch(name, args)`
+2. **Modul ↔ Modul** – `ModuleContext.call(...)` (lose Kopplung)
+3. **Dashboard** – `ModuleRegistry.collect_events(...)` aggregiert über alle Module
 
-## Die vier umgesetzten Funktionen
+## Infrastruktur-Dienste (kein Fachmodul)
 
-**1 – Kündigungsschreiben.** `contracts.generate_cancellation` erzeugt aus
-den Vertragsdaten ein fristgerechtes Schreiben mit berechnetem
-Kündigungstermin – als druckbares **PDF** und als **Mail-Entwurf**, beides
-über den Ausgabedienst.
+- [services/output.py](services/output.py) – PDF-Erzeugung, Mail-Entwurf (.eml), echter **SMTP-Versand** (mit `SmtpConfig`), **Drucken** über `print_file()` (OS-spezifisch)
+- [services/ocr.py](services/ocr.py) – Tesseract-basierte Kassenbon-Erkennung (optional)
+- [services/notifier.py](services/notifier.py) – Desktop-Notifikationen (plyer + Fallback)
+- [services/scheduler.py](services/scheduler.py) – proaktiver Hintergrund-Scheduler (APScheduler + Thread-Fallback)
 
-**2 – Aufträge mit gezielter Verteilung.** Modul D kennt jetzt zwei
-Aufgabentypen: wiederkehrende Haushaltsaufgaben *mit Rotation* und
-einmalige **Aufträge**, die gezielt einer Person zugewiesen werden
-(`family.add_order`, `family.orders`, `family.complete_order`). Offene
-Aufträge erscheinen automatisch im Dashboard.
+## Person-Zuordnung als Querschnitt
 
-**3 – Mail-Analyse.** Das Modul Posteingang analysiert eingefügten
-Mail-Text (`inbox.analyze_mail`) und erkennt regelbasiert Muster wie
-Preiserhöhungen oder neue Verträge.
+`family.members` ist die zentrale Personen-Quelle. Verträge (`contracts.add owner_id=…`) und Ausgaben (`finance.add_expense owner_id=…`) referenzieren Mitglieder darüber – ohne dass A oder B Modul D direkt kennen. Die Aggregate `finance.expenses_by_person` und `finance.expenses_by_category` werten das aus.
 
-**4 – Zentrale Vorschlags-Ablage.** Erkannte Muster werden **nicht
-automatisch eingetragen**, sondern als *Vorschlag* abgelegt. Jeder
-Vorschlag trägt eine Ziel-Capability. Erst beim Bestätigen
-(`inbox.accept_proposal`) wird diese aufgerufen – das zuständige Modul
-prüft und übernimmt die Daten. Der Mensch entscheidet vor dem Schreiben.
+## Posteingang & Vorschlags-Ablage
 
+```text
+Mail (Text / .eml / IMAP)  ->  Analyse  ->  Vorschlag in der Ablage
+                                              |
+                                Nutzer prueft (uebernehmen / ablehnen)
+                                              |
+                  uebernehmen  ->  Ziel-Capability  ->  Modul traegt ein
 ```
-Mail-Text -> Analyse -> Vorschlag in der Ablage
-                            |
-               Nutzer prueft (uebernehmen / ablehnen)
-                            |
-        uebernehmen -> Ziel-Capability -> zustaendiges Modul traegt ein
-```
+
+Nichts wird ungeprüft eingetragen. Jeder Vorschlag trägt eine Ziel-Capability; das zuständige Modul prüft beim Übernehmen.
 
 ## Projektstruktur
 
-```
-alltagshelfer/
-├── models.py            Datenklassen (inkl. HouseholdOrder, Proposal)
-├── database.py          SQLite-Schema + Repositories
-├── core/interface.py    Die drei Schnittstellen
+```text
+.
+├── models.py                   Datenklassen
+├── database.py                 SQLite-Schema + Repositories (+ Migrations-Hilfe)
+├── core/
+│   ├── interface.py            Die drei Schnittstellen
 ├── modules/
-│   ├── contracts.py     Modul A (+ Kündigungsschreiben)
-│   ├── finance.py       Modul B
-│   ├── family.py        Modul D (+ Aufträge)
-│   └── inbox.py         Modul Posteingang (Mail-Analyse + Vorschläge)
+│   ├── contracts.py            Modul A (+ Kündigung + Person)
+│   ├── finance.py              Modul B (+ Aggregate + Preisgedächtnis + OCR)
+│   ├── family.py               Modul D (+ Aufträge + Einkaufsliste + Geburtstag)
+│   ├── calendar.py             Modul C (+ Steuerfristen, Geburtstag-Sync)
+│   ├── social.py               Modul E
+│   ├── daystructure.py         Tagesstruktur-Scaffold
+│   └── inbox.py                Mail-Analyse + .eml + IMAP + Vorschläge
 ├── services/
-│   └── output.py        Ausgabedienst (PDF + Mail-Entwurf)
-├── assistant.py         KI-Assistent (API- oder Offline-Modus)
-├── gui.py               Oberfläche: Dashboard, Posteingang, Assistent
-└── main.py              Konsolen-Demo
+│   ├── output.py               PDF, Mail-Entwurf, SMTP, Druck
+│   ├── ocr.py                  Kassenbon-OCR (optional)
+│   ├── notifier.py             Desktop-Notifikation
+│   └── scheduler.py            Proaktiver Hintergrund-Check
+├── assistant.py                KI-Assistent (API- oder Offline-Modus, mit Log)
+├── gui.py                      CTk-GUI: 8 Tabs
+├── main.py                     Konsolen-Demo
+├── tests/
+│   └── test_smoke.py           Smoke-Tests
+└── requirements.txt
 ```
 
-## Status & Grenzen des Prototyps
+## Neues Modul hinzufügen
 
-- Der Posteingang analysiert **eingefügten** Mail-Text bzw. `.eml`-Dateien.
-  Ein echter IMAP-Postfachzugriff wäre ein späterer, separater Schritt.
-- Die Mail-Analyse ist regelbasiert (Stichworte, Beträge, Datum). Im
-  API-Modus ließe sich die Erkennung durch das LLM ersetzen.
-- Erzeugte PDFs/Mail-Entwürfe liegen im Ordner `ausgaben/`.
-- Modul C (Termine/Kalender) ist als Platz im Raster vorgesehen, aber
-  noch nicht umgesetzt.
+1. Klasse von `ModuleInterface` ableiten, `module_id` + `display_name` + `get_capabilities()` setzen
+2. Optional `get_events()` für Dashboard-Einträge implementieren
+3. Optional `on_register(context)` überschreiben, um auf andere Module zuzugreifen
+4. In [main.py:build_registry](main.py) eine Zeile ergänzen – fertig
+
+Weder [assistant.py](assistant.py) noch [gui.py](gui.py) müssen angefasst werden; das neue Modul erscheint automatisch in Sidebar, Dashboard und Assistenten-Capability-Liste.
+
+## Bewusst offen gelassen
+
+- **SQLCipher-Verschlüsselung** der DB – auf Windows aufwendig zu installieren; im Code als Kommentar dokumentiert
+- **Mehrgeräte-Synchronisation** für Familie – Single-Device-Modell deckt 80 % ab, ein Sync wäre ein Architekturschritt für sich
+- **LLM-basierte Mail-Analyse** – aktuell regelbasiert; ein API-Mode-Ersatz in [modules/inbox.py](modules/inbox.py) ist absichtlich kompakt gehalten
+- **GUI-Modul-Verwaltung** über die Sidebar (z. B. Modul deaktivieren) – nicht eingebaut

@@ -1,5 +1,5 @@
 """
-Demo - fuehrt alle Module und Schnittstellen End-to-End vor.
+Konsolen-Demo - fuehrt alle Module und Schnittstellen End-to-End vor.
 
 Gezeigt werden:
   - Schnittstelle 1: Assistent/GUI <-> Modul   (registry.dispatch)
@@ -7,6 +7,8 @@ Gezeigt werden:
   - Schnittstelle 3: Dashboard                 (registry.collect_events)
   - Ausgabedienst:   Kuendigungsschreiben als PDF + Mail-Entwurf
   - Vorschlags-Ablage: Mail-Analyse -> Vorschlag -> Uebernahme
+  - Modul C, D, E:    Termine, Familie, Soziales
+  - Scheduler:        proaktive Notifikationen (einmaliger Check)
 
 So startest du:  python main.py
 Optional mit echtem LLM:  ANTHROPIC_API_KEY=... python main.py
@@ -17,13 +19,19 @@ from datetime import date, timedelta
 
 from assistant import Assistant
 from core.interface import ModuleRegistry
-from database import (ContractRepository, Database, ExpenseRepository,
-                      FamilyRepository, ProposalRepository)
+from database import (AssistantLogRepository, CalendarRepository,
+                      ContractRepository, Database, ExpenseRepository,
+                      FamilyRepository, PriceMemoryRepository,
+                      ProposalRepository, ShoppingRepository, SocialRepository)
+from modules.calendar import CalendarModule
 from modules.contracts import ContractModule
+from modules.daystructure import DayStructureModule
 from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
+from modules.social import SocialModule
 from services.output import OutputService
+from services.scheduler import ProactiveScheduler
 
 SAMPLE_MAIL = """Betreff: Wichtige Information zu Ihrem Netflix-Abo
 
@@ -42,61 +50,113 @@ def trenner(titel: str) -> None:
     print(f"\n{'=' * 64}\n  {titel}\n{'=' * 64}")
 
 
+def build_registry(db: Database, output: OutputService) -> ModuleRegistry:
+    """Steckt alle Module ein - dieselbe Funktion nutzt auch die GUI."""
+    registry = ModuleRegistry()
+    registry.register(ContractModule(ContractRepository(db), output))
+    registry.register(FinanceModule(ExpenseRepository(db),
+                                     PriceMemoryRepository(db)))
+    registry.register(FamilyModule(FamilyRepository(db),
+                                    ShoppingRepository(db)))
+    registry.register(CalendarModule(CalendarRepository(db)))
+    registry.register(SocialModule(SocialRepository(db)))
+    registry.register(DayStructureModule())
+    registry.register(InboxModule(ProposalRepository(db)))
+    return registry
+
+
 def main() -> None:
-    # --- 1. Datenschicht + Ausgabedienst -----------------------------
     db = Database("alltagshelfer_demo.db")
     output = OutputService("ausgaben")
-
-    # --- 2. Registry + alle Module einstecken ------------------------
-    registry = ModuleRegistry()
-    registry.register(ContractModule(ContractRepository(db), output))   # A
-    registry.register(FinanceModule(ExpenseRepository(db)))             # B
-    registry.register(FamilyModule(FamilyRepository(db)))               # D
-    registry.register(InboxModule(ProposalRepository(db)))              # Posteingang
-
-    assistant = Assistant(registry)
+    registry = build_registry(db, output)
+    assistant = Assistant(registry, log=AssistantLogRepository(db))
 
     trenner("System gestartet")
     print(f"Assistent-Modus: {assistant.mode}")
-    for cap in registry.all_capabilities():
-        print(f"  - {cap.name:30s} <- Modul '{cap.module_id}'")
+    print(f"Module: {len(registry.modules())}, "
+          f"Capabilities: {len(registry.all_capabilities())}")
 
-    # --- 3. Beispieldaten anlegen ------------------------------------
+    # --- Beispieldaten ------------------------------------------------
     trenner("Beispieldaten anlegen (via registry.dispatch)")
+
+    # Familie zuerst - die anderen Module beziehen sich darauf
+    for name, role, bday in [
+        ("Anna", "erwachsen", "1989-07-12"),
+        ("Bernd", "erwachsen", "1986-03-04"),
+        ("Mia", "kind", "2018-11-22"),
+    ]:
+        registry.dispatch("family.add_member",
+                            {"name": name, "role": role, "birthday": bday})
+    anna_id = registry.dispatch(
+        "family.members", {})["members"][0]["id"]
+    print("  Modul D: 3 Mitglieder mit Geburtstagen angelegt")
+
+    # Vertraege - mit Person-Zuordnung
     for v in [
         dict(name="Handyvertrag", category="mobilfunk", provider="Telekom",
              customer_number="DE-4471180", start_date="2024-06-01",
              minimum_term_months=24, notice_period_months=3,
-             auto_renew_months=12, monthly_cost=39.99),
+             auto_renew_months=12, monthly_cost=39.99, owner_id=anna_id),
         dict(name="Streaming-Abo", category="streaming", provider="Netflix",
              customer_number="NF-99213", start_date="2025-11-01",
              minimum_term_months=1, notice_period_months=1,
-             auto_renew_months=1, monthly_cost=13.99),
+             auto_renew_months=1, monthly_cost=13.99, owner_id=anna_id),
     ]:
         registry.dispatch("contracts.add", v)
-    print("  Modul A: 2 Vertraege angelegt")
+    print("  Modul A: 2 Vertraege, beide Anna zugeordnet")
 
-    for name, role in [("Anna", "erwachsen"), ("Bernd", "erwachsen"),
-                        ("Mia", "kind")]:
-        registry.dispatch("family.add_member", {"name": name, "role": role})
+    # Aufgaben + Auftrag
     registry.dispatch("family.add_task", {
         "title": "Muell rausbringen", "interval_days": 7,
         "assignees": ["Anna", "Bernd"],
         "first_due": (date.today() + timedelta(days=2)).isoformat()})
-    print("  Modul D: 3 Mitglieder, 1 wiederkehrende Aufgabe angelegt")
-
-    # einmaliger Auftrag, gezielt zugewiesen
-    res = registry.dispatch("family.add_order", {
+    registry.dispatch("family.add_order", {
         "title": "Auto zur Inspektion bringen", "assignee": "Bernd",
         "due_date": (date.today() + timedelta(days=5)).isoformat(),
         "description": "Termin bei der Werkstatt ist vereinbart."})
-    print(f"  Modul D: Auftrag '{res['order']['title']}' "
-          f"-> {res['order']['assignee']}")
+    print("  Modul D: 1 wiederkehrende Aufgabe, 1 Auftrag")
 
-    # --- 4. Kuendigungsschreiben (Modul A + Ausgabedienst) -----------
+    # Einkaufsliste
+    for item in [("Milch", "1 L", "Anna"), ("Apfel", "1 kg", "Bernd")]:
+        registry.dispatch("family.shopping_add",
+                            {"name": item[0], "quantity": item[1],
+                             "added_by": item[2]})
+    print("  Modul D: Einkaufsliste mit 2 Eintraegen")
+
+    # Termine - Garantie + TUEV
+    registry.dispatch("calendar.add_event", {
+        "title": "TUEV Familienauto",
+        "due_date": (date.today() + timedelta(days=45)).isoformat(),
+        "category": "tuev", "person_id": anna_id})
+    registry.dispatch("calendar.add_event", {
+        "title": "Garantie Geschirrspueler",
+        "due_date": (date.today() + timedelta(days=120)).isoformat(),
+        "category": "garantie",
+        "description": "Bei Defekt vorher pruefen lassen."})
+    print("  Modul C: 2 Termine (TUEV + Garantie)")
+
+    # Soziale Kontakte
+    registry.dispatch("social.add_contact",
+                        {"name": "Oma", "relation": "Familie",
+                         "cadence_days": 14})
+    registry.dispatch("social.add_contact",
+                        {"name": "Tobias", "relation": "Freund",
+                         "cadence_days": 30})
+    print("  Modul E: 2 Kontakte")
+
+    # Ausgaben (Modul B) - mit Person + Preis-Gedaechtnis
+    registry.dispatch("finance.add_expense",
+                        {"description": "Wocheneinkauf", "amount": 84.20,
+                         "category": "lebensmittel", "owner_id": anna_id})
+    registry.dispatch("finance.remember_price",
+                        {"product": "Vollmilch 1L", "price": 1.39,
+                         "category": "lebensmittel"})
+    print("  Modul B: 1 Ausgabe (Anna), 1 Preisgedaechtnis-Eintrag")
+
+    # --- Kuendigungsschreiben ----------------------------------------
     trenner("Kuendigungsschreiben erstellen (PDF + Mail-Entwurf)")
     res = registry.dispatch("contracts.generate_cancellation", {
-        "contract_id": 2,                       # Streaming-Abo
+        "contract_id": 2,
         "sender_name": "Anna Beispiel",
         "sender_address": "Musterstrasse 1, 44135 Dortmund",
         "sender_city": "Dortmund",
@@ -107,42 +167,46 @@ def main() -> None:
     print(f"  PDF zum Drucken:   {res.get('pdf_path')}")
     print(f"  Mail-Entwurf:      {res.get('email_draft_path')}")
 
-    # --- 5. Mail-Analyse -> Vorschlag -> Uebernahme ------------------
+    # --- Mail-Analyse + Vorschlag -------------------------------------
     trenner("Mail-Analyse und zentrale Vorschlags-Ablage")
-    analyse = registry.dispatch("inbox.analyze_mail", {"mail_text": SAMPLE_MAIL})
-    print(f"  Mail analysiert -> {analyse['found']} Vorschlag/Vorschlaege")
-
+    analyse = registry.dispatch("inbox.analyze_mail",
+                                  {"mail_text": SAMPLE_MAIL})
+    print(f"  -> {analyse['found']} Vorschlag/Vorschlaege")
     offen = registry.dispatch("inbox.proposals", {})
-    for p in offen["proposals"]:
-        print(f"  Vorschlag #{p['id']}: {p['summary']}")
-        print(f"     Ziel-Capability: {p['target_capability']}")
-
     if offen["proposals"]:
         pid = offen["proposals"][0]["id"]
-        alt = registry.dispatch("contracts.list", {})["contracts"][1]["monthly_cost"]
-        print(f"\n  Preis vor Uebernahme:  {alt:.2f} EUR")
-        uebern = registry.dispatch("inbox.accept_proposal", {"proposal_id": pid})
-        neu = registry.dispatch("contracts.list", {})["contracts"][1]["monthly_cost"]
-        print(f"  Vorschlag uebernommen -> Ziel '{uebern['target']}' aufgerufen")
-        print(f"  Preis nach Uebernahme: {neu:.2f} EUR")
+        registry.dispatch("inbox.accept_proposal", {"proposal_id": pid})
+        preis = registry.dispatch("contracts.list", {})["contracts"][1]["monthly_cost"]
+        print(f"  Streaming-Preis nach Uebernahme: {preis:.2f} EUR")
 
-    # --- 6. Dashboard ------------------------------------------------
-    trenner("Dashboard - registry.collect_events() ueber alle Module")
+    # --- Dashboard ----------------------------------------------------
+    trenner("Dashboard - registry.collect_events()")
     for ev in registry.collect_events(horizon_days=120):
         mark = {"hoch": "[!!!]", "mittel": "[ ! ]", "normal": "[   ]"}[ev.urgency]
         d = ev.days_remaining
         when = (f"in {d} Tagen" if d > 0 else "heute faellig" if d == 0
-                else f"{-d} Tag(e) ueberfaellig")
+                else f"{-d} Tage ueberfaellig")
         print(f"  {mark} {ev.due_date}  {ev.title}  ({when})")
 
-    # --- 7. Kontext-Ueberblick ---------------------------------------
+    # --- Proaktiver Scheduler (einmaliger Check) ----------------------
+    trenner("Proaktiver Scheduler - einmaliger Check")
+    scheduler = ProactiveScheduler(registry, warn_within_days=14)
+    triggered = scheduler.check_now()
+    print(f"  Notifikationen ausgeloest: {len(triggered)}")
+    for title in triggered:
+        print(f"    - {title}")
+
+    # --- Kontext-Ueberblick ------------------------------------------
     trenner("Kontext-Ueberblick aller Module")
     print(registry.context_overview())
 
-    # --- 8. Nutzerfragen an den Assistenten --------------------------
-    for frage in ["Was steht als naechstes an?",
-                   "Welche Auftraege gibt es?",
-                   "Gibt es offene Vorschlaege im Posteingang?"]:
+    # --- Beispielfragen an den Assistenten ---------------------------
+    for frage in [
+        "Was steht als naechstes an?",
+        "Welche Termine kommen?",
+        "Wer wartet auf einen Anruf?",
+        "Was steht auf der Einkaufsliste?",
+    ]:
         trenner(f"Nutzer: {frage}")
         print(assistant.ask(frage))
 

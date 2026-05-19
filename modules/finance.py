@@ -18,7 +18,7 @@ from __future__ import annotations
 from datetime import date
 
 from core.interface import Capability, ModuleContext, ModuleInterface
-from database import ExpenseRepository
+from database import ExpenseRepository, PriceMemoryRepository
 from models import Event, Expense
 
 _MONTHS_DE = ["Januar", "Februar", "Maerz", "April", "Mai", "Juni",
@@ -28,8 +28,10 @@ _MONTHS_DE = ["Januar", "Februar", "Maerz", "April", "Mai", "Juni",
 class FinanceModule(ModuleInterface):
     """Modul B als steckbares Fachmodul."""
 
-    def __init__(self, repo: ExpenseRepository):
+    def __init__(self, repo: ExpenseRepository,
+                 price_memory: PriceMemoryRepository | None = None):
         self.repo = repo
+        self.price_memory = price_memory
         self._ctx: ModuleContext | None = None
 
     # ---- Pflichtangaben des Interface ---------------------------------
@@ -97,8 +99,31 @@ class FinanceModule(ModuleInterface):
                     "spent_on": {"type": "string",
                                  "description": "Datum ISO (YYYY-MM-DD), "
                                                 "Standard: heute"},
+                    "owner_id": {"type": "integer",
+                                 "description": "Optional: Person, der die "
+                                                "Ausgabe zugeordnet wird "
+                                                "(siehe family.members)"},
                 },
                 handler=self._cap_add_expense,
+            ),
+            Capability(
+                name="finance.expenses_by_category",
+                description="Aggregiert die Ausgaben pro Kategorie.",
+                parameters={
+                    "month": {"type": "string",
+                              "description": "Optional: 'YYYY-MM', sonst alle"},
+                },
+                handler=self._cap_by_category,
+            ),
+            Capability(
+                name="finance.expenses_by_person",
+                description="Aggregiert die Ausgaben pro Haushaltsmitglied "
+                            "(loest die owner_id ueber family.members auf).",
+                parameters={
+                    "month": {"type": "string",
+                              "description": "Optional: 'YYYY-MM', sonst alle"},
+                },
+                handler=self._cap_by_person,
             ),
             Capability(
                 name="finance.list_expenses",
@@ -114,20 +139,121 @@ class FinanceModule(ModuleInterface):
                 parameters={},
                 handler=self._cap_monthly_overview,
             ),
+            Capability(
+                name="finance.remember_price",
+                description="Merkt sich den aktuellen Preis eines Produkts "
+                            "(Preis-Gedaechtnis fuer wiederkehrende Einkaeufe).",
+                parameters={
+                    "product": {"type": "string", "_required": True,
+                                "description": "Bezeichnung des Produkts"},
+                    "price": {"type": "number", "_required": True,
+                              "description": "Aktueller Preis in EUR"},
+                    "category": {"type": "string",
+                                 "description": "Kategorie, z.B. 'lebensmittel'"},
+                },
+                handler=self._cap_remember_price,
+            ),
+            Capability(
+                name="finance.price_memory",
+                description="Listet die gespeicherten Preise wiederkehrender "
+                            "Produkte auf.",
+                parameters={},
+                handler=self._cap_price_memory,
+            ),
+            Capability(
+                name="finance.scan_receipt",
+                description="Liest einen Kassenbon per OCR ein und extrahiert "
+                            "Posten und Summe (erfordert pytesseract + Tesseract; "
+                            "ohne Installation gibt es einen klaren Hinweis).",
+                parameters={
+                    "image_path": {"type": "string", "_required": True,
+                                   "description": "Pfad zur Bilddatei "
+                                                  "(jpg / png)"},
+                },
+                handler=self._cap_scan_receipt,
+            ),
         ]
 
     # ---- Handler -------------------------------------------------------
     def _cap_add_expense(self, description: str, amount: float,
                          category: str = "sonstiges",
-                         spent_on: str | None = None) -> dict:
+                         spent_on: str | None = None,
+                         owner_id: int | None = None) -> dict:
         e = Expense(
             description=description,
             amount=amount,
             category=category,
             spent_on=date.fromisoformat(spent_on) if spent_on else date.today(),
+            owner_id=owner_id if owner_id else None,
         )
         saved = self.repo.add(e)
+        # owner_name nachladen (kommt aus dem JOIN bei list_all)
+        for ex in self.repo.list_all():
+            if ex.id == saved.id:
+                saved = ex
+                break
         return {"status": "erfasst", "expense": saved.to_dict()}
+
+    def _cap_by_category(self, month: str | None = None) -> dict:
+        ausgaben = self._select_expenses(month)
+        sums: dict[str, float] = {}
+        for e in ausgaben:
+            sums[e.category] = sums.get(e.category, 0.0) + e.amount
+        return {"month": month or "alle",
+                "categories": [{"category": k, "total": round(v, 2)}
+                                for k, v in sorted(sums.items(),
+                                                    key=lambda kv: -kv[1])]}
+
+    def _cap_by_person(self, month: str | None = None) -> dict:
+        ausgaben = self._select_expenses(month)
+        sums: dict[str, float] = {}
+        for e in ausgaben:
+            key = e.owner_name or "(keine Zuordnung)"
+            sums[key] = sums.get(key, 0.0) + e.amount
+        return {"month": month or "alle",
+                "persons": [{"person": k, "total": round(v, 2)}
+                             for k, v in sorted(sums.items(),
+                                                 key=lambda kv: -kv[1])]}
+
+    # ---- Preis-Gedaechtnis ---------------------------------------------
+    def _cap_remember_price(self, product: str, price: float,
+                            category: str = "sonstiges") -> dict:
+        if self.price_memory is None:
+            return {"error": "Preis-Gedaechtnis nicht verfuegbar"}
+        previous = next((p for p in self.price_memory.list_all()
+                          if p.product.lower() == product.lower()), None)
+        saved = self.price_memory.remember(product, price, category)
+        diff = None if previous is None else round(price - previous.last_price, 2)
+        return {"status": "gemerkt",
+                "product": saved.product,
+                "price": saved.last_price,
+                "previous_price": previous.last_price if previous else None,
+                "difference": diff,
+                "category": saved.category}
+
+    def _cap_price_memory(self) -> dict:
+        if self.price_memory is None:
+            return {"count": 0, "products": []}
+        eintraege = self.price_memory.list_all()
+        return {"count": len(eintraege),
+                "products": [p.to_dict() for p in eintraege]}
+
+    # ---- OCR fuer Kassenbons -------------------------------------------
+    def _cap_scan_receipt(self, image_path: str) -> dict:
+        try:
+            from services.ocr import scan_receipt
+        except Exception as exc:                       # pragma: no cover
+            return {"error": f"OCR-Dienst nicht geladen: {exc}"}
+        return scan_receipt(image_path)
+
+    def _select_expenses(self, month: str | None) -> list[Expense]:
+        if month:
+            try:
+                year, mon = month.split("-")
+                return self.repo.list_in_month(int(year), int(mon))
+            except (ValueError, AttributeError):
+                return []
+        return self.repo.list_all()
 
     def _cap_list_expenses(self) -> dict:
         ausgaben = self.repo.list_all()

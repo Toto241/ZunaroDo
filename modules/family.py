@@ -18,15 +18,18 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from core.interface import Capability, ModuleContext, ModuleInterface
-from database import FamilyRepository
-from models import Event, FamilyMember, HouseholdOrder, HouseholdTask
+from database import FamilyRepository, ShoppingRepository
+from models import (Event, FamilyMember, HouseholdOrder, HouseholdTask,
+                    ShoppingItem)
 
 
 class FamilyModule(ModuleInterface):
     """Modul D als steckbares Fachmodul."""
 
-    def __init__(self, repo: FamilyRepository):
+    def __init__(self, repo: FamilyRepository,
+                 shopping: ShoppingRepository | None = None):
         self.repo = repo
+        self.shopping = shopping
         self._ctx: ModuleContext | None = None
 
     # ---- Pflichtangaben des Interface ---------------------------------
@@ -114,12 +117,17 @@ class FamilyModule(ModuleInterface):
             ),
             Capability(
                 name="family.add_member",
-                description="Fuegt ein Haushaltsmitglied hinzu.",
+                description="Fuegt ein Haushaltsmitglied hinzu, optional mit "
+                            "Geburtstag (Termin landet automatisch im "
+                            "Kalender-Modul).",
                 parameters={
                     "name": {"type": "string", "_required": True,
                              "description": "Name der Person"},
                     "role": {"type": "string",
                              "description": "erwachsen, kind oder sonstiges"},
+                    "birthday": {"type": "string",
+                                 "description": "Geburtstag ISO (YYYY-MM-DD), "
+                                                "optional"},
                 },
                 handler=self._cap_add_member,
             ),
@@ -192,6 +200,43 @@ class FamilyModule(ModuleInterface):
                 },
                 handler=self._cap_complete_order,
             ),
+            Capability(
+                name="family.shopping_add",
+                description="Setzt einen Eintrag auf die gemeinsame Einkaufsliste.",
+                parameters={
+                    "name": {"type": "string", "_required": True,
+                             "description": "Was soll gekauft werden"},
+                    "quantity": {"type": "string",
+                                 "description": "Menge / Einheit"},
+                    "added_by": {"type": "string",
+                                 "description": "Name der Person, die "
+                                                "den Eintrag setzt"},
+                },
+                handler=self._cap_shopping_add,
+            ),
+            Capability(
+                name="family.shopping_list",
+                description="Listet die Eintraege der Einkaufsliste.",
+                parameters={
+                    "include_bought": {"type": "boolean",
+                                        "description": "Bereits gekaufte "
+                                                       "Eintraege einbeziehen"},
+                },
+                handler=self._cap_shopping_list,
+            ),
+            Capability(
+                name="family.shopping_mark",
+                description="Hakt einen Eintrag auf der Einkaufsliste ab "
+                            "(oder setzt ihn zurueck).",
+                parameters={
+                    "item_id": {"type": "integer", "_required": True,
+                                "description": "ID des Eintrags"},
+                    "bought": {"type": "boolean",
+                                "description": "True = gekauft (Standard), "
+                                               "False = wieder offen"},
+                },
+                handler=self._cap_shopping_mark,
+            ),
         ]
 
     # ---- Handler -------------------------------------------------------
@@ -200,9 +245,41 @@ class FamilyModule(ModuleInterface):
         return {"count": len(members),
                 "members": [m.to_dict() for m in members]}
 
-    def _cap_add_member(self, name: str, role: str = "erwachsen") -> dict:
-        saved = self.repo.add_member(FamilyMember(name=name, role=role))
+    def _cap_add_member(self, name: str, role: str = "erwachsen",
+                        birthday: str | None = None) -> dict:
+        m = FamilyMember(
+            name=name, role=role,
+            birthday=date.fromisoformat(birthday) if birthday else None,
+        )
+        saved = self.repo.add_member(m)
         return {"status": "hinzugefuegt", "member": saved.to_dict()}
+
+    # ---- Einkaufsliste -------------------------------------------------
+    def _cap_shopping_add(self, name: str, quantity: str = "",
+                          added_by: str = "") -> dict:
+        if self.shopping is None:
+            return {"error": "Einkaufsliste nicht verfuegbar"}
+        added_by_id = None
+        if added_by:
+            member = self.repo.find_member_by_name(added_by)
+            added_by_id = member.id if member else None
+        item = ShoppingItem(name=name, quantity=quantity,
+                            added_by_id=added_by_id)
+        saved = self.shopping.add(item)
+        return {"status": "auf Liste", "item": saved.to_dict()}
+
+    def _cap_shopping_list(self, include_bought: bool = False) -> dict:
+        if self.shopping is None:
+            return {"count": 0, "items": []}
+        items = self.shopping.list(include_bought=include_bought)
+        return {"count": len(items),
+                "items": [i.to_dict() for i in items]}
+
+    def _cap_shopping_mark(self, item_id: int, bought: bool = True) -> dict:
+        if self.shopping is None:
+            return {"error": "Einkaufsliste nicht verfuegbar"}
+        self.shopping.mark_bought(item_id, bought)
+        return {"status": "aktualisiert", "item_id": item_id, "bought": bought}
 
     def _cap_add_task(self, title: str, assignees: list[str],
                       interval_days: int = 7,
