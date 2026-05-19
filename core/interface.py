@@ -56,19 +56,7 @@ class Capability:
         return properties
 
     def to_tool_schema(self) -> dict:
-        """Tool-Use-Schema fuer die Anthropic-API."""
-        return {
-            "name": self.name,
-            "description": self.description,
-            "input_schema": {
-                "type": "object",
-                "properties": self._properties(),
-                "required": self.required_params(),
-            },
-        }
-
-    def to_provider_neutral_schema(self) -> dict:
-        """OpenAPI-Stil-Schema (von Gemini/OpenAI direkt nutzbar)."""
+        """OpenAPI-Stil-Schema (von Gemini direkt nutzbar)."""
         return {
             "name": self.name,
             "description": self.description,
@@ -228,7 +216,11 @@ class ModuleRegistry:
         return result if isinstance(result, dict) else {"result": result}
 
     def has_capability(self, capability_name: str) -> bool:
-        return capability_name in self._capabilities
+        """True nur, wenn die Capability existiert UND ihr Modul aktiv ist."""
+        cap = self._capabilities.get(capability_name)
+        if cap is None:
+            return False
+        return cap.module_id not in self._disabled
 
     # ---- Auflistung / Schemata ---------------------------------------
     def all_capabilities(self,
@@ -242,13 +234,8 @@ class ModuleRegistry:
         return list(self._modules.values())
 
     def tool_schemas(self) -> list[dict]:
-        """Tool-Use-Schemata im Anthropic-Stil (nur aktive Module)."""
+        """Tool-Schemata fuer Gemini (nur aktive Module)."""
         return [c.to_tool_schema() for c in self.all_capabilities()]
-
-    def gemini_tool_specs(self) -> list[dict]:
-        """Tool-Schemata im provider-neutralen Stil (Gemini/OpenAI)."""
-        return [c.to_provider_neutral_schema()
-                for c in self.all_capabilities()]
 
     def destructive_capability_names(self) -> set[str]:
         return {c.name for c in self.all_capabilities() if c.destructive}

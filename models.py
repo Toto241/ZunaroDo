@@ -320,7 +320,16 @@ class PriceMemory:
 @dataclass
 class AssistantLogEntry:
     """Persistente Spur einer Nutzer-Anfrage und der Antwort des Assistenten."""
-    role: str                           # user | assistant
+    role: str                           # user | assistant | meta
     content: str
     id: Optional[int] = None
     created_at: Optional[datetime] = None
+
+
+@dataclass
+class DayEntry:
+    """Persistierter Tagebuch-Eintrag des Tagesstruktur-Moduls."""
+    day: date
+    level: int                          # 1..5
+    note: str = ""
+    id: Optional[int] = None

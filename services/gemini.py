@@ -39,7 +39,7 @@ def _resolve_api_key() -> Optional[str]:
 def _try_import():
     """Versucht 'google-generativeai' zu laden."""
     try:
-        import google.generativeai as genai
+        import google.generativeai as genai     # type: ignore[import-untyped]
         return genai
     except Exception:
         return None
@@ -50,13 +50,14 @@ class GeminiClient:
 
     name = "gemini"
 
-    def __init__(self, model: str = "gemini-2.5-flash"):
+    def __init__(self, model: str = "gemini-2.5-flash",
+                 api_key: Optional[str] = None):
         self.model = model
         self._genai = _try_import()
-        api_key = _resolve_api_key()
-        self._enabled = bool(self._genai and api_key)
+        key = api_key or _resolve_api_key()
+        self._enabled = bool(self._genai and key)
         if self._enabled:
-            self._genai.configure(api_key=api_key)
+            self._genai.configure(api_key=key)
 
     @property
     def is_available(self) -> bool:
@@ -115,22 +116,44 @@ class GeminiClient:
 
         message_for_next_turn: object = user_message
         for _ in range(max_iterations):
-            response = chat.send_message(
-                message_for_next_turn,
-                generation_config={"max_output_tokens": max_output_tokens},
-            )
-            usage.add(self._extract_usage(response))
-
-            function_calls: list = []
+            # Streaming, wenn ein Callback gesetzt ist. Sonst klassischer
+            # Einmal-Aufruf.
             text_parts: list[str] = []
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, "function_call") and part.function_call.name:
-                    function_calls.append(part.function_call)
-                elif hasattr(part, "text") and part.text:
-                    text_parts.append(part.text)
+            function_calls: list = []
+            if stream_callback is not None:
+                stream = chat.send_message(
+                    message_for_next_turn,
+                    generation_config={"max_output_tokens": max_output_tokens},
+                    stream=True,
+                )
+                aggregate = None
+                for chunk in stream:
+                    aggregate = chunk
+                    try:
+                        for part in chunk.candidates[0].content.parts:
+                            if (hasattr(part, "function_call")
+                                    and part.function_call.name):
+                                function_calls.append(part.function_call)
+                            elif hasattr(part, "text") and part.text:
+                                text_parts.append(part.text)
+                                stream_callback(part.text)
+                    except (IndexError, AttributeError):
+                        continue
+                response = aggregate
+            else:
+                response = chat.send_message(
+                    message_for_next_turn,
+                    generation_config={"max_output_tokens": max_output_tokens},
+                )
+                for part in response.candidates[0].content.parts:
+                    if (hasattr(part, "function_call")
+                            and part.function_call.name):
+                        function_calls.append(part.function_call)
+                    elif hasattr(part, "text") and part.text:
+                        text_parts.append(part.text)
 
-            if stream_callback and text_parts:
-                stream_callback("".join(text_parts))
+            if response is not None:
+                usage.add(self._extract_usage(response))
 
             if not function_calls:
                 # Modell ist fertig

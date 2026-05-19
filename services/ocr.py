@@ -1,55 +1,90 @@
 """
 OCR-Dienst fuer Kassenbons (Modul B).
 
-Bewusst optional: erfordert 'pytesseract' + Pillow + eine lokale
-Tesseract-Installation. Wenn nichts davon vorhanden ist, gibt der Dienst
-einen klar lesbaren Hinweis zurueck statt zu crashen.
+Versuche in dieser Reihenfolge - alle LOKAL, keine Cloud:
+  1. pytesseract (+ Tesseract-Engine) - sehr robust fuer Quittungen
+  2. easyocr                          - alternative reine Python-Bibliothek
+  3. ohne OCR                         - klarer Hinweis statt Crash
 
-Die Erkennung ist robust gehalten: sie zieht aus dem erkannten Text
-Posten (Zeile mit Betrag am Ende) und eine Endsumme heraus.
+Cloud-OCR-Anbieter (Google Vision, AWS Textract, Azure Computer Vision)
+sind BEWUSST nicht eingebaut: die App ist datenschutzfreundlich angelegt,
+und Belege koennen sehr persoenliche Informationen enthalten (Apotheke,
+Kontoauszug u. a.).
 """
 from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Optional
 
 
 _PRICE_PATTERN = re.compile(r"(\d+[.,]\d{2})\s*$")
 _SUM_HINTS = ("summe", "gesamt", "total", "zu zahlen", "betrag", "endbetrag")
 
 
-def _try_import():
-    """Versucht pytesseract + Pillow zu laden. None bei Fehler."""
+# -----------------------------------------------------------------
+#  Engine-Auswahl
+# -----------------------------------------------------------------
+def _try_tesseract():
     try:
-        import pytesseract
-        from PIL import Image
-        return pytesseract, Image
+        import pytesseract                                   # type: ignore[import-not-found]
+        from PIL import Image                                # type: ignore[import-not-found]
+
+        def run(path: Path) -> str:
+            return pytesseract.image_to_string(Image.open(path), lang="deu")
+        return run
     except Exception:
         return None
 
 
+def _try_easyocr():
+    try:
+        import easyocr                                       # type: ignore[import-not-found]
+        reader = easyocr.Reader(["de"], gpu=False)
+
+        def run(path: Path) -> str:
+            return "\n".join(reader.readtext(str(path), detail=0))
+        return run
+    except Exception:
+        return None
+
+
+def _select_engine() -> Optional[tuple[str, object]]:
+    """Liefert (Name, Aufruf) der ersten verfuegbaren OCR-Engine."""
+    engine = _try_tesseract()
+    if engine is not None:
+        return "tesseract", engine
+    engine = _try_easyocr()
+    if engine is not None:
+        return "easyocr", engine
+    return None
+
+
+# -----------------------------------------------------------------
+#  Public-API
+# -----------------------------------------------------------------
 def scan_receipt(image_path: str) -> dict:
-    """Liest einen Kassenbon als Bild ein und liefert Posten + Summe."""
+    """Liest einen Kassenbon und liefert Posten + Summe + Roh-Text."""
     path = Path(image_path)
     if not path.exists():
         return {"error": f"Bild '{image_path}' nicht gefunden"}
 
-    loaded = _try_import()
-    if loaded is None:
+    selected = _select_engine()
+    if selected is None:
         return {
-            "error": "OCR-Bibliothek fehlt",
-            "hinweis": ("Installiere 'pytesseract' und 'Pillow' sowie eine "
-                         "Tesseract-Engine. Auf Windows z.B. das Installer-"
-                         "Paket von github.com/UB-Mannheim/tesseract."),
+            "error": "OCR-Engine fehlt",
+            "hinweis": ("Installiere entweder 'pytesseract' + Tesseract-Engine "
+                         "ODER 'easyocr'. Cloud-OCR wird aus Datenschutzgruenden "
+                         "bewusst nicht angeboten."),
         }
-    pytesseract, Image = loaded
+    engine_name, runner = selected
     try:
-        text = pytesseract.image_to_string(Image.open(path), lang="deu")
-    except Exception as exc:                            # pragma: no cover
-        return {"error": f"OCR-Fehler: {exc}"}
+        text = runner(path)
+    except Exception as exc:                                # pragma: no cover
+        return {"error": f"OCR-Fehler ({engine_name}): {exc}"}
 
     items: list[dict] = []
-    total: float | None = None
+    total: Optional[float] = None
     for raw in text.splitlines():
         line = raw.strip()
         if not line:
@@ -67,7 +102,18 @@ def scan_receipt(image_path: str) -> dict:
             items.append({"label": label, "price": price})
     return {
         "status": "Kassenbon analysiert",
+        "engine": engine_name,
         "items": items,
         "total": total,
         "raw_text": text,
     }
+
+
+def available_engines() -> list[str]:
+    """Liefert eine Liste der hier verfuegbaren OCR-Engines (zur Diagnose)."""
+    out: list[str] = []
+    if _try_tesseract() is not None:
+        out.append("tesseract")
+    if _try_easyocr() is not None:
+        out.append("easyocr")
+    return out

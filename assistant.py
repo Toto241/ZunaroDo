@@ -121,19 +121,26 @@ class Assistant:
                     + self.registry.context_overview()
                     + "\n\nAnstehende Ereignisse:\n" + agenda_txt)
 
-        result: LLMAnswer = self.llm.ask_with_tools(
-            user_message=user_message,
-            system_prompt_static=SYSTEM_PROMPT_STATIC,
-            system_prompt_dynamic=dynamic,
-            tool_specs=self.registry.gemini_tool_specs(),
-            destructive_tool_names=self.registry.destructive_capability_names(),
-            dispatcher=lambda name, args: self.registry.dispatch(name, args),
-            history=self._history,
-            max_iterations=self.max_iterations,
-            max_output_tokens=self.max_output_tokens,
-            confirm=self._confirm,
-            stream_callback=stream_callback,
-        )
+        try:
+            result: LLMAnswer = self.llm.ask_with_tools(
+                user_message=user_message,
+                system_prompt_static=SYSTEM_PROMPT_STATIC,
+                system_prompt_dynamic=dynamic,
+                tool_specs=self.registry.tool_schemas(),
+                destructive_tool_names=self.registry.destructive_capability_names(),
+                dispatcher=lambda name, args: self.registry.dispatch(name, args),
+                history=self._history,
+                max_iterations=self.max_iterations,
+                max_output_tokens=self.max_output_tokens,
+                confirm=self._confirm,
+                stream_callback=stream_callback,
+            )
+        except Exception as exc:                            # noqa: BLE001
+            # Netz, Rate-Limit, Schema-Fehler etc. - wir lassen die GUI
+            # nicht haengen, sondern liefern eine klare Meldung.
+            return (f"Der KI-Aufruf an Gemini ist fehlgeschlagen: {exc}. "
+                    "Versuch es erneut oder schalte zurueck in den "
+                    "Offline-Modus, indem du GOOGLE_API_KEY entfernst.")
         self._usage.add(result.usage)
         if self.log is not None:
             self.log.append(

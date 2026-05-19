@@ -16,6 +16,7 @@ Start:  python gui.py
 """
 from __future__ import annotations
 
+import os
 import threading
 from datetime import date, timedelta
 from typing import Callable
@@ -26,12 +27,15 @@ from pathlib import Path
 
 from assistant import Assistant
 from core.interface import ModuleRegistry
-from database import AssistantLogRepository, Database
-from main import build_registry
+from database import (AssistantLogRepository, Database, ModuleStateRepository,
+                      SettingsRepository)
+from main import apply_persisted_module_states, build_registry, make_sync_provider
+from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
+                              load_config, save_value)
 from services.gemini import GeminiClient
 from services.output import OutputService
 from services.scheduler import ProactiveScheduler
-from services.sync import FileSyncProvider, install_sync_hook
+from services.sync import PeriodicSyncWorker, install_sync_hook
 
 SAMPLE_MAIL = (
     "Betreff: Information zu Ihrem Netflix-Abo\n\n"
@@ -87,20 +91,39 @@ def _seed_if_empty(registry: ModuleRegistry) -> None:
                          "cadence_days": 14})
 
 
-def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, object]:
+def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
+                          SettingsRepository, ModuleStateRepository, object]:
     db = Database("alltagshelfer_gui.db")
+    settings = SettingsRepository(db)
+    config = load_config(settings)
+
     output = OutputService("ausgaben")
-    llm = GeminiClient()
+    llm = GeminiClient(model=config.gemini_model,
+                       api_key=config.gemini_api_key or None)
     active_llm = llm if llm.is_available else None
     registry = build_registry(db, output, llm=active_llm)
-    _seed_if_empty(registry)
-    assistant = Assistant(registry, llm=active_llm,
-                           log=AssistantLogRepository(db))
 
-    sync = FileSyncProvider.from_env(Path(".alltagshelfer-state"))
-    if sync is not None:
-        install_sync_hook(registry, sync).apply_remote()
-    return db, registry, assistant, sync
+    module_states = ModuleStateRepository(db)
+    apply_persisted_module_states(registry, module_states)
+
+    _seed_if_empty(registry)
+    assistant = Assistant(
+        registry, log=AssistantLogRepository(db), llm=active_llm,
+        max_iterations=config.gemini_max_iterations,
+        max_output_tokens=config.gemini_max_tokens,
+    )
+
+    provider = make_sync_provider(Path(".alltagshelfer-state")) \
+        if config.sync_enabled != "false" else None
+    synced = None
+    if provider is not None:
+        synced = install_sync_hook(registry, provider)
+        try:
+            provider.compact_if_needed()
+        except Exception:
+            pass
+        synced.apply_remote()
+    return db, registry, assistant, config, settings, module_states, synced
 
 
 # ---------------------------------------------------------------------
@@ -126,11 +149,23 @@ def _clear(frame) -> None:
 # ---------------------------------------------------------------------
 class AlltagshelferGUI(ctk.CTk):
 
-    def __init__(self, registry: ModuleRegistry, assistant: Assistant):
+    def __init__(self, registry: ModuleRegistry, assistant: Assistant,
+                 config: AppConfig,
+                 settings_repo: SettingsRepository,
+                 module_states: ModuleStateRepository,
+                 synced=None):
         super().__init__()
         self.registry = registry
         self.assistant = assistant
-        self.scheduler = ProactiveScheduler(registry, warn_within_days=14)
+        self.config = config
+        self.settings_repo = settings_repo
+        self.module_states = module_states
+        self.synced = synced
+        self.scheduler = ProactiveScheduler(
+            registry, warn_within_days=config.notify_warn_within_days)
+        self.sync_worker = PeriodicSyncWorker(
+            synced, interval_seconds=config.sync_interval_seconds) \
+            if synced is not None else None
 
         self.title("Alltagshelfer")
         self.geometry("1080x720")
@@ -152,6 +187,7 @@ class AlltagshelferGUI(ctk.CTk):
             "Posteingang": self._build_inbox,
             "Assistent": self._build_chat,
             "Module": self._build_module_admin,
+            "Einstellungen": self._build_settings,
         }
         for name, builder in self.tab_builders.items():
             builder(self.tabs.add(name))
@@ -825,11 +861,28 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_status()
 
     def _fetch_imap(self) -> None:
-        result = self.registry.dispatch("inbox.fetch_imap", {})
+        # IMAP-Verbindung kann mehrere Sekunden brauchen - im Thread.
+        self.inbox_info.configure(text="IMAP wird abgefragt ...")
+
+        def worker():
+            result = self.registry.dispatch("inbox.fetch_imap", {})
+            self.after(0, lambda: self._on_imap_done(result))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_imap_done(self, result: dict) -> None:
         if result.get("status") == "uebersprungen":
+            self.inbox_info.configure(text="IMAP nicht konfiguriert")
             self._show_dialog("IMAP nicht konfiguriert",
                                 result.get("hinweis", ""))
             return
+        if result.get("status") == "fehler":
+            self.inbox_info.configure(
+                text=f"IMAP-Fehler: {result.get('error', '?')}")
+            return
+        self.inbox_info.configure(
+            text=f"IMAP: {result.get('checked', 0)} Mails geprueft, "
+                  f"{result.get('found', 0)} neue Vorschlaege")
         self._refresh_all()
 
     def _refresh_inbox(self, keep_info: bool = False) -> None:
@@ -1035,8 +1088,115 @@ class AlltagshelferGUI(ctk.CTk):
             ).pack(anchor="w", pady=(4, 0))
 
     def _toggle_module(self, module_id: str, var) -> None:
-        self.registry.set_module_enabled(module_id, bool(var.get()))
+        enabled = bool(var.get())
+        self.registry.set_module_enabled(module_id, enabled)
+        self.module_states.set_enabled(module_id, enabled)
         self._refresh_all()
+
+    # ================================================================
+    #  Einstellungen
+    # ================================================================
+    SETTING_FIELDS: list[tuple[str, str, str]] = [
+        # (config-Key, Label, Hilfetext)
+        ("gemini.model", "Gemini-Modell",
+         "z.B. gemini-2.5-flash oder gemini-2.5-pro"),
+        ("gemini.max_iterations", "Max. Tool-Iterationen", "Sicherheitslimit"),
+        ("gemini.max_tokens", "Max. Antwort-Tokens", ""),
+        ("imap.host", "IMAP-Host",
+         "Leer = aus. Login ueber Env (ALLTAGSHELFER_IMAP_PASS)."),
+        ("imap.user", "IMAP-Benutzer", ""),
+        ("imap.folder", "IMAP-Ordner", "Standard: INBOX"),
+        ("smtp.host", "SMTP-Host", "Leer = aus"),
+        ("smtp.port", "SMTP-Port", ""),
+        ("smtp.user", "SMTP-Benutzer", ""),
+        ("smtp.sender", "SMTP-Absender", ""),
+        ("smtp.starttls", "SMTP STARTTLS", "true / false"),
+        ("sync.dir", "Sync-Ordner",
+         "Pfad zum geteilten Ordner (z.B. OneDrive)"),
+        ("sync.enabled", "Sync aktiv",
+         "auto | true | false (greift erst beim Neustart)"),
+        ("sync.interval_seconds", "Sync-Intervall (s)", ""),
+        ("notify.warn_within_days", "Notifikationen ab Tagen", ""),
+    ]
+
+    def _build_settings(self, parent) -> None:
+        parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(1, weight=1)
+
+        ctk.CTkLabel(parent, text="Einstellungen",
+                     font=ctk.CTkFont(size=18, weight="bold")
+                     ).grid(row=0, column=0, sticky="w", pady=(6, 6))
+
+        info = ("Werte werden in der DB persistiert. Geheime Felder "
+                "(API-Schluessel, Passwoerter) liest die App ausschliesslich "
+                "aus Umgebungsvariablen, sie werden NICHT in der DB "
+                "gespeichert.")
+        ctk.CTkLabel(parent, text=info, text_color="gray",
+                     wraplength=720, justify="left"
+                     ).grid(row=0, column=0, sticky="sw", pady=(0, 6))
+
+        body = ctk.CTkScrollableFrame(parent, fg_color="transparent")
+        body.grid(row=1, column=0, sticky="nsew")
+
+        self.setting_inputs: dict[str, ctk.CTkEntry] = {}
+        for key, label, helptext in self.SETTING_FIELDS:
+            row = ctk.CTkFrame(body, fg_color="transparent")
+            row.pack(fill="x", pady=4)
+            ctk.CTkLabel(row, text=label, width=200, anchor="w"
+                          ).pack(side="left")
+            current = self.settings_repo.get(key, DEFAULTS.get(key, ""))
+            entry = ctk.CTkEntry(row, width=320)
+            entry.insert(0, current or "")
+            entry.pack(side="left", padx=(0, 8))
+            self.setting_inputs[key] = entry
+            if helptext:
+                ctk.CTkLabel(row, text=helptext, text_color="gray",
+                             font=ctk.CTkFont(size=10)
+                             ).pack(side="left", fill="x", expand=True)
+
+        # Sekundaere Geheim-Felder: Hinweis, aber kein Input
+        secrets_info = ctk.CTkFrame(body, fg_color="transparent")
+        secrets_info.pack(fill="x", pady=(20, 4))
+        ctk.CTkLabel(
+            secrets_info, text="Geheimnisse (nur per Umgebungsvariable):",
+            font=ctk.CTkFont(size=12, weight="bold")
+        ).pack(anchor="w")
+        for key in sorted(SECRET_KEYS):
+            env = ENV_MAP.get(key, "(kein Env-Mapping)")
+            set_text = "gesetzt" if os.environ.get(env) else "nicht gesetzt"
+            ctk.CTkLabel(
+                secrets_info,
+                text=f"  {key}  ->  {env}   [{set_text}]",
+                text_color="gray", font=ctk.CTkFont(size=11)
+            ).pack(anchor="w")
+
+        actions = ctk.CTkFrame(parent, fg_color="transparent")
+        actions.grid(row=2, column=0, sticky="ew", pady=8)
+        ctk.CTkButton(actions, text="Speichern (Neustart noetig)",
+                      command=self._save_settings
+                      ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(actions, text="Auf Default zuruecksetzen",
+                      fg_color="transparent", border_width=1,
+                      command=self._reset_settings
+                      ).pack(side="left")
+        self.settings_status = ctk.CTkLabel(actions, text="", text_color="gray")
+        self.settings_status.pack(side="right")
+
+    def _save_settings(self) -> None:
+        saved = 0
+        for key, entry in self.setting_inputs.items():
+            value = entry.get().strip()
+            save_value(self.settings_repo, key, value)
+            saved += 1
+        self.settings_status.configure(
+            text=f"{saved} Werte gespeichert. Neustart fuer einige Felder.")
+
+    def _reset_settings(self) -> None:
+        for key, entry in self.setting_inputs.items():
+            entry.delete(0, "end")
+            entry.insert(0, DEFAULTS.get(key, ""))
+            save_value(self.settings_repo, key, DEFAULTS.get(key, ""))
+        self.settings_status.configure(text="Auf Defaults zurueckgesetzt.")
 
     # ================================================================
     #  Destruktiv-Bestaetigung (vom Assistant aufgerufen)
@@ -1062,14 +1222,19 @@ class AlltagshelferGUI(ctk.CTk):
 def main() -> None:
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
-    db, registry, assistant, sync = bootstrap()
-    app = AlltagshelferGUI(registry, assistant)
-    # Scheduler im Hintergrund - meldet sich, wenn etwas akut wird
+    db, registry, assistant, config, settings, module_states, synced = bootstrap()
+    app = AlltagshelferGUI(registry, assistant, config,
+                             settings, module_states, synced)
+    # Hintergrund-Dienste starten
     app.scheduler.start()
+    if app.sync_worker is not None:
+        app.sync_worker.start()
     try:
         app.mainloop()
     finally:
         app.scheduler.stop()
+        if app.sync_worker is not None:
+            app.sync_worker.stop()
         db.close()
 
 

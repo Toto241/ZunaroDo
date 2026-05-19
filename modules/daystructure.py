@@ -1,34 +1,23 @@
 """
-Modul - Tagesstruktur & Energie (Scaffold).
+Modul Tagesstruktur & Energie.
 
-Im urspruenglichen Konzept eines der Module, das aber nicht starr
-Pomodoro-Timer sein soll, sondern Energie-Level und Gewohnheiten
-lernen koennte. Dies hier ist ein bewusst schlankes Scaffold:
-
-  - tagebuch_eintrag: kurzer Energie-/Stimmungseintrag mit Skala 1-5
-  - tagestruktur:     liefert eine einfache Empfehlung auf Basis der
-                      letzten Eintraege (Durchschnitt, Trend)
-  - get_events:       liefert eine taegliche Erinnerung "Tagesreflexion"
-
-So bleibt das Modul von Anfang an im System sichtbar, ohne unfertige
-Versprechen. Spaeter koennen Wetter-/Schlaf-Quellen ergaenzt werden.
+Bewusst schlank: Energie-/Stimmungs-Tagebuch mit Skala 1-5 und einer
+einfachen Empfehlung. Persistent in der DB (DayEntryRepository).
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
-from typing import Optional
+from datetime import date
 
 from core.interface import Capability, ModuleInterface
-from models import Event
+from database import DayEntryRepository
+from models import DayEntry, Event
 
 
 class DayStructureModule(ModuleInterface):
-    """In-Memory-Scaffold ohne eigene DB-Tabelle (bewusst klein)."""
+    """Steckbares Fachmodul mit persistenten Tageseintraegen."""
 
-    def __init__(self) -> None:
-        # Liste der Eintraege - bewusst nicht persistiert; das soll nicht
-        # ausarten, solange das Modul nicht ausgereift ist.
-        self._entries: list[tuple[date, int, str]] = []
+    def __init__(self, repo: DayEntryRepository):
+        self.repo = repo
 
     @property
     def module_id(self) -> str:
@@ -36,18 +25,18 @@ class DayStructureModule(ModuleInterface):
 
     @property
     def display_name(self) -> str:
-        return "Tagesstruktur (Vorschau)"
+        return "Tagesstruktur"
 
     def get_context_summary(self) -> str:
-        if not self._entries:
+        recent = self.repo.list_recent(limit=7)
+        if not recent:
             return "Noch keine Eintraege. Bewertung 1-5 ueber 'day.log_energy'."
-        recent = self._entries[-7:]
-        avg = sum(level for _, level, _ in recent) / len(recent)
+        avg = sum(e.level for e in recent) / len(recent)
         return f"Energie-Schnitt der letzten {len(recent)} Tage: {avg:.1f}/5."
 
     def get_events(self, horizon_days: int = 90) -> list[Event]:
         today = date.today()
-        if any(d == today for d, _, _ in self._entries):
+        if self.repo.has_entry_for(today):
             return []
         return [Event(
             title="Tagesreflexion: Energie eintragen",
@@ -64,7 +53,8 @@ class DayStructureModule(ModuleInterface):
             Capability(
                 name="day.log_energy",
                 description="Bewertet den heutigen Tag (1=ausgelaugt ... "
-                            "5=top) und legt einen Eintrag an.",
+                            "5=top) und legt einen Eintrag an oder ersetzt "
+                            "den heutigen.",
                 parameters={
                     "level": {"type": "integer", "_required": True,
                               "description": "Skala 1-5"},
@@ -73,9 +63,18 @@ class DayStructureModule(ModuleInterface):
                 handler=self._cap_log_energy,
             ),
             Capability(
+                name="day.recent_entries",
+                description="Listet die letzten Tageseintraege auf.",
+                parameters={
+                    "limit": {"type": "integer",
+                               "description": "Maximal so viele (Standard: 30)"},
+                },
+                handler=self._cap_recent,
+            ),
+            Capability(
                 name="day.recommendation",
                 description="Liefert eine einfache Empfehlung auf Basis der "
-                            "letzten Eintraege (Pausen, Tagesplanung).",
+                            "letzten Eintraege.",
                 parameters={},
                 handler=self._cap_recommendation,
             ),
@@ -85,17 +84,21 @@ class DayStructureModule(ModuleInterface):
     def _cap_log_energy(self, level: int, note: str = "") -> dict:
         if not 1 <= level <= 5:
             return {"error": "level muss zwischen 1 und 5 liegen"}
-        # gleicher Tag - ersetzen
-        self._entries = [e for e in self._entries if e[0] != date.today()]
-        self._entries.append((date.today(), level, note))
+        self.repo.upsert(DayEntry(day=date.today(), level=level, note=note))
         return {"status": "Eintrag gespeichert", "level": level}
 
+    def _cap_recent(self, limit: int = 30) -> dict:
+        entries = self.repo.list_recent(limit=limit)
+        return {"count": len(entries),
+                "entries": [{"day": e.day.isoformat(), "level": e.level,
+                              "note": e.note} for e in entries]}
+
     def _cap_recommendation(self) -> dict:
-        if not self._entries:
+        recent = self.repo.list_recent(limit=7)
+        if not recent:
             return {"recommendation": ("Noch zu wenige Daten - trag ein paar "
                                         "Tage lang dein Energie-Level ein.")}
-        recent = self._entries[-7:]
-        avg = sum(level for _, level, _ in recent) / len(recent)
+        avg = sum(e.level for e in recent) / len(recent)
         if avg < 2.5:
             tip = ("Niedrige Energie zuletzt - heute lieber kuerzere Bloecke, "
                    "frueh ins Bett, weniger Termine.")

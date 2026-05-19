@@ -22,9 +22,9 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Optional
 
-from models import (AssistantLogEntry, CalendarEvent, Contract, Expense,
-                    FamilyMember, HouseholdOrder, HouseholdTask, PriceMemory,
-                    Proposal, ShoppingItem, SocialContact)
+from models import (AssistantLogEntry, CalendarEvent, Contract, DayEntry,
+                    Expense, FamilyMember, HouseholdOrder, HouseholdTask,
+                    PriceMemory, Proposal, ShoppingItem, SocialContact)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS contracts (
@@ -160,6 +160,26 @@ CREATE TABLE IF NOT EXISTS assistant_log (
     role       TEXT,
     content    TEXT,
     created_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS module_states (
+    module_id  TEXT PRIMARY KEY,
+    enabled    INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS day_entries (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    day        TEXT NOT NULL UNIQUE,
+    level      INTEGER NOT NULL,
+    note       TEXT DEFAULT '',
+    created_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT,
+    updated_at TEXT
 );
 """
 
@@ -709,7 +729,11 @@ class CalendarRepository:
         return [self._row_to_event(r) for r in rows]
 
     def list_upcoming(self, horizon_days: int = 90) -> list[CalendarEvent]:
-        # Liefert alle (auch ueberfaellige) bis horizon_days in der Zukunft.
+        """
+        Liefert die naechsten Auftreten aller Termine. Read-only:
+        eine Kopie mit verschobener due_date wird zurueckgegeben - das
+        Originalobjekt bleibt unveraendert.
+        """
         events: list[CalendarEvent] = []
         today = date.today()
         for e in self.list_all():
@@ -718,8 +742,12 @@ class CalendarRepository:
                 continue
             days = (next_occurrence - today).days
             if days <= horizon_days:
-                e.due_date = next_occurrence    # auf naechstes Auftreten setzen
-                events.append(e)
+                events.append(CalendarEvent(
+                    id=e.id, title=e.title, due_date=next_occurrence,
+                    category=e.category, description=e.description,
+                    recurrence_days=e.recurrence_days,
+                    person_id=e.person_id, person_name=e.person_name,
+                ))
         events.sort(key=lambda x: x.due_date)
         return events
 
@@ -802,8 +830,17 @@ class SocialRepository:
 #  Assistenten-Log
 # =====================================================================
 class AssistantLogRepository:
-    def __init__(self, db: Database):
+    """
+    Persistiert Gespraeche mit dem Assistenten.
+
+    Rotation: 'append' loescht alte Eintraege, sobald die Tabelle die
+    weiche Obergrenze 'max_entries' uebersteigt. Standard ist 5000, ein
+    Wert, der auch nach mehreren Monaten Alltagsbetrieb klein bleibt.
+    """
+
+    def __init__(self, db: Database, max_entries: int = 5000):
         self.db = db
+        self.max_entries = max_entries
 
     def append(self, role: str, content: str) -> AssistantLogEntry:
         now = datetime.now().isoformat(timespec="seconds")
@@ -811,7 +848,20 @@ class AssistantLogRepository:
             "INSERT INTO assistant_log (role, content, created_at)"
             " VALUES (?,?,?)", (role, content, now))
         self.db.conn.commit()
+        self._rotate()
         return AssistantLogEntry(id=cur.lastrowid, role=role, content=content)
+
+    def _rotate(self) -> None:
+        count = self.db.conn.execute(
+            "SELECT COUNT(*) AS n FROM assistant_log").fetchone()["n"]
+        if count <= self.max_entries:
+            return
+        to_drop = count - self.max_entries
+        self.db.conn.execute(
+            "DELETE FROM assistant_log WHERE id IN ("
+            " SELECT id FROM assistant_log ORDER BY id ASC LIMIT ?)",
+            (to_drop,))
+        self.db.conn.commit()
 
     def tail(self, limit: int = 20) -> list[AssistantLogEntry]:
         rows = self.db.conn.execute(
@@ -822,3 +872,89 @@ class AssistantLogRepository:
             out.append(AssistantLogEntry(
                 id=r["id"], role=r["role"], content=r["content"]))
         return list(reversed(out))
+
+
+class ModuleStateRepository:
+    """Persistiert den Aktivierungszustand der Module."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def disabled_modules(self) -> set[str]:
+        rows = self.db.conn.execute(
+            "SELECT module_id FROM module_states WHERE enabled=0")
+        return {r["module_id"] for r in rows}
+
+    def set_enabled(self, module_id: str, enabled: bool) -> None:
+        now = datetime.now().isoformat(timespec="seconds")
+        self.db.conn.execute(
+            "INSERT INTO module_states (module_id, enabled, updated_at)"
+            " VALUES (?,?,?)"
+            " ON CONFLICT(module_id) DO UPDATE SET"
+            " enabled=excluded.enabled, updated_at=excluded.updated_at",
+            (module_id, int(bool(enabled)), now))
+        self.db.conn.commit()
+
+
+class DayEntryRepository:
+    """Persistente Energie-Eintraege (Modul Tagesstruktur)."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def upsert(self, entry: DayEntry) -> DayEntry:
+        now = datetime.now().isoformat(timespec="seconds")
+        self.db.conn.execute(
+            "INSERT INTO day_entries (day, level, note, created_at)"
+            " VALUES (?,?,?,?)"
+            " ON CONFLICT(day) DO UPDATE SET"
+            " level=excluded.level, note=excluded.note",
+            (entry.day.isoformat(), entry.level, entry.note, now))
+        self.db.conn.commit()
+        return entry
+
+    def list_recent(self, limit: int = 30) -> list[DayEntry]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM day_entries ORDER BY day DESC LIMIT ?",
+            (limit,))
+        return [DayEntry(id=r["id"],
+                          day=date.fromisoformat(r["day"]),
+                          level=r["level"], note=r["note"])
+                for r in rows]
+
+    def has_entry_for(self, day: date) -> bool:
+        r = self.db.conn.execute(
+            "SELECT 1 FROM day_entries WHERE day=?", (day.isoformat(),)
+        ).fetchone()
+        return r is not None
+
+
+class SettingsRepository:
+    """Einfacher Key-Value-Speicher fuer App-Einstellungen."""
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        r = self.db.conn.execute(
+            "SELECT value FROM app_settings WHERE key=?", (key,)
+        ).fetchone()
+        return r["value"] if r else default
+
+    def set(self, key: str, value: Optional[str]) -> None:
+        now = datetime.now().isoformat(timespec="seconds")
+        if value is None:
+            self.db.conn.execute(
+                "DELETE FROM app_settings WHERE key=?", (key,))
+        else:
+            self.db.conn.execute(
+                "INSERT INTO app_settings (key, value, updated_at)"
+                " VALUES (?,?,?)"
+                " ON CONFLICT(key) DO UPDATE SET"
+                " value=excluded.value, updated_at=excluded.updated_at",
+                (key, value, now))
+        self.db.conn.commit()
+
+    def all(self) -> dict[str, str]:
+        rows = self.db.conn.execute("SELECT key, value FROM app_settings")
+        return {r["key"]: r["value"] for r in rows}
