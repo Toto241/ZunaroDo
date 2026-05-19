@@ -1,0 +1,1 @@
+"""Kernschnittstellen des Alltagshelfers."""

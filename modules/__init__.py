@@ -1,0 +1,1 @@
+"""Fachmodule (steckbar ueber ModuleInterface)."""
