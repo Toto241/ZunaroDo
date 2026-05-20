@@ -109,7 +109,7 @@ def _parse_junit(path: Path) -> list[dict]:
     return records
 
 
-def _classify(records: list[dict]) -> dict:
+def _classify(records: list[dict]) -> dict[str, dict]:
     """Bucketed Auswertung pro Datei + Gesamtstatistik."""
     by_file: dict[str, dict] = {}
     totals = {"passed": 0, "failed": 0, "error": 0, "skipped": 0,
@@ -143,6 +143,11 @@ def _stats_by_marker(records: list[dict]) -> dict[str, dict]:
         "test_md_to_html":            "release_gate",
         "test_playstore_sync":        "playstore",
         "test_build_status":          "release_gate",
+        "test_control_panel":         "release_gate",
+        "test_gui_refresh_guards":    "release_gate",
+        "test_gui_widget_guards":     "release_gate",
+        "test_gui_free_tier_boot":    "release_gate",
+        "test_gitignore_completeness": "release_gate",
         "test_negative_inputs":       "negative",
         "test_negative_network":      "negative",
         "test_negative_security":     "security",

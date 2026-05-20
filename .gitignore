@@ -1,20 +1,102 @@
+# =====================================================================
+#  Python
+# =====================================================================
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+*.egg-info/
 .venv/
-.vscode/
-.idea/
+venv/
 .env
+.env.*
+!.env.example
 .mypy_cache/
 .pytest_cache/
-*.egg-info/
+.coverage
+.coverage.*
+htmlcov/
 
-# Generierte Daten (lokal, nicht committen)
+# =====================================================================
+#  IDEs
+# =====================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+
+# =====================================================================
+#  Generierte Anwendungs-/Test-Daten (lokal, niemals committen)
+# =====================================================================
 *.db
 *.db-journal
+*.sqlite
+*.sqlite3
 ausgaben/
 mail_inbox/
+backups/
+logs/
+.alltagshelfer-state*/
 
-# Test-Artefakte
-.coverage
-htmlcov/
+# Mock-Backend des Play-Store-Sync-Tools (lokaler Spiegel)
+playstore.local.json
+
+# =====================================================================
+#  Desktop-Build (PyInstaller)
+#  Beide Verzeichnisse werden bei jedem Lauf neu erzeugt - 100+ MB
+#  Wheels, DLLs, dist-info-Ordner, _internal/-Baum etc. gehoeren NIE
+#  ins Repo.
+# =====================================================================
+build/
+dist/
+
+# Native Bauwaren / Bibliotheken (PyInstaller, OS-spezifisch)
+*.exe
+*.dll
+*.dylib
+*.so
+*.lib
+*.a
+*.app/
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+*.msi
+*.spec.bak
+
+# =====================================================================
+#  Android-Build (Buildozer / python-for-android)
+#  .buildozer/ kann > 1 GB werden (SDK, NDK, Sources).
+# =====================================================================
+.buildozer/
+bin/
+*.apk
+*.aab
+*.keystore
+*.jks
+local.properties
+
+# =====================================================================
+#  iOS-Build (kivy-ios / Xcode)
+# =====================================================================
+*.ipa
+*.xcarchive
+*.xcuserstate
+xcuserdata/
+DerivedData/
+Pods/
+*.pbxproj.backup
+
+# =====================================================================
+#  Sonstiges
+# =====================================================================
+# Plattform-OS-Cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporaere Snapshot-Exports (regenerierbar via tools.playstore_sync)
+release/playstore-snapshot-*.md

@@ -693,6 +693,8 @@ class AlltagshelferGUI(ctk.CTk):
         self.dash_list.grid(row=1, column=0, sticky="nsew")
 
     def _refresh_dashboard(self) -> None:
+        if not hasattr(self, "dash_list"):
+            return
         _clear(self.dash_list)
         t = self.i18n.t
         horizon = {
@@ -807,6 +809,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_contracts(self) -> None:
+        if not hasattr(self, "contract_list"):
+            return
         _clear(self.contract_list)
         contracts = self.registry.dispatch("contracts.list",
                                              {}).get("contracts", [])
@@ -903,6 +907,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_members(self) -> None:
+        if not hasattr(self, "member_list"):
+            return
         _clear(self.member_list)
         for m in self.registry.dispatch("family.members",
                                           {}).get("members", []):
@@ -957,6 +963,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_tasks(self) -> None:
+        if not hasattr(self, "task_list"):
+            return
         _clear(self.task_list)
         for t in self.registry.dispatch("family.tasks",
                                           {}).get("tasks", []):
@@ -1003,6 +1011,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_orders(self) -> None:
+        if not hasattr(self, "order_list"):
+            return
         _clear(self.order_list)
         for o in self.registry.dispatch("family.orders",
                                            {}).get("orders", []):
@@ -1047,6 +1057,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_shopping(self) -> None:
+        if not hasattr(self, "shopping_list"):
+            return
         _clear(self.shopping_list)
         items = self.registry.dispatch(
             "family.shopping_list",
@@ -1126,6 +1138,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_finance(self) -> None:
+        if not hasattr(self, "expense_list"):
+            return
         _clear(self.expense_list)
         over = self.registry.dispatch("finance.monthly_overview", {})
         self.finance_summary.configure(
@@ -1196,6 +1210,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_calendar(self) -> None:
+        if not hasattr(self, "calendar_list"):
+            return
         _clear(self.calendar_list)
         t = self.i18n.t
         events = self.registry.dispatch("calendar.list_events",
@@ -1265,6 +1281,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_social(self) -> None:
+        if not hasattr(self, "social_list"):
+            return
         _clear(self.social_list)
         t = self.i18n.t
         contacts = self.registry.dispatch("social.contacts",
@@ -1387,6 +1405,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._refresh_all()
 
     def _refresh_inbox(self, keep_info: bool = False) -> None:
+        if not hasattr(self, "proposal_list"):
+            return
         _clear(self.proposal_list)
         t = self.i18n.t
         data = self.registry.dispatch("inbox.proposals", {})
@@ -1649,6 +1669,8 @@ class AlltagshelferGUI(ctk.CTk):
         Setzt einen Tk-Mark an die Einfuegestelle. Tk-Marks bewegen sich
         bei Inserts automatisch - kein String-Akkumulieren mehr.
         """
+        if not hasattr(self, "chat"):
+            return
         self.chat.configure(state="normal")
         label = self.i18n.t("common.assistant")
         self.chat.insert("end", f"{label}:\n")
@@ -1665,6 +1687,8 @@ class AlltagshelferGUI(ctk.CTk):
     def _append_to_stream(self, chunk: str) -> None:
         """Haengt einen Streaming-Chunk an der Tk-Mark an."""
         if not chunk:
+            return
+        if not hasattr(self, "chat"):
             return
         try:
             if not self.winfo_exists():
@@ -1696,12 +1720,16 @@ class AlltagshelferGUI(ctk.CTk):
                               lambda c=chunk: self._append_to_stream(c))
 
     def _append_chat(self, who: str, text: str) -> None:
+        if not hasattr(self, "chat"):
+            return
         self.chat.configure(state="normal")
         self.chat.insert("end", f"{who}:\n{text}\n\n")
         self.chat.see("end")
         self.chat.configure(state="disabled")
 
     def _replace_last_chat(self, answer: str) -> None:
+        if not hasattr(self, "chat"):
+            return
         self.chat.configure(state="normal")
         content = self.chat.get("1.0", "end-1c")
         assistant_label = self.i18n.t("common.assistant")
@@ -1717,6 +1745,8 @@ class AlltagshelferGUI(ctk.CTk):
     #  Aktualisierung
     # ================================================================
     def _refresh_status(self) -> None:
+        if not hasattr(self, "status_box"):
+            return
         self.status_box.configure(state="normal")
         self.status_box.delete("1.0", "end")
         self.status_box.insert("end", self.registry.context_overview())
@@ -2319,6 +2349,8 @@ class AlltagshelferGUI(ctk.CTk):
         self.history_text.configure(state="disabled")
 
     def _refresh_history(self) -> None:
+        if not hasattr(self, "history_text"):
+            return
         # Vorhandenes Log-Repository des Assistenten weiterverwenden -
         # neu zu konstruieren wuerde die DB-Referenz unnoetig duplizieren
         # (und mypy laesst keinen Optional-Database durchgehen).
