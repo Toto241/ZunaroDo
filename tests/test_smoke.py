@@ -3018,6 +3018,81 @@ class TestLicensing(unittest.TestCase):
         self.assertIsNone(result.token_str)
         self.assertEqual(sent, [])
 
+    # ---- Affiliate-Empfehlungen im Vertragsmodul -------------------
+    def test_cancellation_includes_affiliate_suggestions(self) -> None:
+        from services.licensing import AFFILIATE_PARTNERS
+        db, registry, _, tmpname = _build_system()
+        try:
+            registry.dispatch("contracts.add", dict(
+                name="Netflix", category="streaming", provider="Netflix",
+                start_date="2025-01-01", minimum_term_months=1,
+                notice_period_months=1, auto_renew_months=1,
+                monthly_cost=13.99))
+            ids = [c["id"] for c
+                    in registry.dispatch("contracts.list", {})["contracts"]]
+            result = registry.dispatch("contracts.generate_cancellation", {
+                "contract_id": ids[0],
+                "sender_name": "Max Mustermann",
+                "sender_address": "Musterweg 1",
+                "sender_city": "Berlin",
+            })
+            self.assertIn("affiliate_suggestions", result)
+            partners = result["affiliate_suggestions"]
+            self.assertGreater(len(partners), 0)
+            urls = {p["url"] for p in partners}
+            allowed = set(AFFILIATE_PARTNERS.values())
+            self.assertTrue(urls.issubset(allowed),
+                              f"Unbekannte URLs in Affiliate-Liste: {urls - allowed}")
+        finally:
+            db.close()
+            try:
+                os.unlink(tmpname)
+            except OSError:
+                pass
+
+    def test_affiliate_block_in_letter_text_is_static(self) -> None:
+        # Affiliate-Block taucht im PDF auf, NICHT im reinen letter_text.
+        db, registry, _, tmpname = _build_system()
+        try:
+            registry.dispatch("contracts.add", dict(
+                name="Spotify", category="streaming", provider="Spotify",
+                start_date="2025-01-01", minimum_term_months=1,
+                notice_period_months=1, auto_renew_months=12,
+                monthly_cost=9.99))
+            ids = [c["id"] for c
+                    in registry.dispatch("contracts.list", {})["contracts"]]
+            result = registry.dispatch("contracts.generate_cancellation", {
+                "contract_id": ids[0],
+                "sender_name": "X", "sender_address": "Y",
+                "sender_city": "Z",
+            })
+            # letter_text ist reiner Brief - kein Affiliate
+            self.assertNotIn("verbraucherzentrale", result["letter_text"])
+            self.assertNotIn("nicht getrackt", result["letter_text"])
+            # affiliate_suggestions im Response vorhanden
+            self.assertGreaterEqual(len(result["affiliate_suggestions"]), 1)
+        finally:
+            db.close()
+            try:
+                os.unlink(tmpname)
+            except OSError:
+                pass
+
+    def test_affiliate_block_format(self) -> None:
+        from modules.contracts import (_affiliate_suggestions,
+                                          _format_affiliate_block)
+        from models import Contract
+        c = Contract(name="Test", category="streaming")
+        suggestions = _affiliate_suggestions(c)
+        text = _format_affiliate_block(suggestions)
+        self.assertIn("nicht getrackt", text)
+        self.assertIn("Verbraucherzentrale", text)
+
+    def test_affiliate_block_empty_when_no_partners(self) -> None:
+        # Kontrapunkt: leere Liste -> leerer String, kein Crash
+        from modules.contracts import _format_affiliate_block
+        self.assertEqual(_format_affiliate_block([]), "")
+
     def test_format_quote_de_mentions_savings(self) -> None:
         text = format_quote_de(calculate_price(4, Tier.PRO_ANNUAL))
         self.assertIn("EUR/Jahr", text)

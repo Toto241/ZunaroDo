@@ -85,6 +85,43 @@ def build_cancellation_letter(contract: Contract, deadline: date | None,
     )
 
 
+# ---------------------------------------------------------------------
+#  Affiliate-Empfehlungen (statisch, kein Tracking)
+# ---------------------------------------------------------------------
+# Schluessel-Worte im Vertragsnamen / Kategorie / Anbieter -> Liste
+# von Partner-IDs aus services.licensing.AFFILIATE_PARTNERS.
+# Bewusst pauschal gehalten: bei Kuendigung kommen immer beide
+# allgemeinen Anlaufstellen (Verbraucherzentrale + Stiftung Warentest)
+# - das ist der unaufdringliche Mittelweg zwischen 'gar keine Hilfe'
+# und 'Affiliate-Spam'.
+_DEFAULT_PARTNER_KEYS: tuple[str, ...] = ("verbraucherzentrale",
+                                            "stiftung_warentest")
+
+
+def _affiliate_suggestions(contract: Contract) -> list[dict]:
+    """Liefert eine kleine Liste von Tarifvergleichs-Empfehlungen."""
+    from services.licensing import AFFILIATE_PARTNERS
+    return [{"name": k.replace("_", " ").title(),
+             "url": AFFILIATE_PARTNERS[k]}
+            for k in _DEFAULT_PARTNER_KEYS
+            if k in AFFILIATE_PARTNERS]
+
+
+def _format_affiliate_block(suggestions: list[dict]) -> str:
+    """Fuegt einen kurzen, deutlich abgesetzten Hinweisblock an Brief/PDF."""
+    if not suggestions:
+        return ""
+    lines = ["--",
+             "Wenn du nach einem Nachfolge-Tarif suchst, hilft dir bei",
+             "unabhaengigen Vergleichen z.B.:"]
+    for s in suggestions:
+        lines.append(f"  * {s['name']}: {s['url']}")
+    lines.append("")
+    lines.append("(Diese Hinweise sind nicht personalisiert und werden")
+    lines.append(" nicht getrackt - sie stehen statisch in der App.)")
+    return "\n".join(lines)
+
+
 class ContractModule(ModuleInterface):
     """Modul A als steckbares Fachmodul."""
 
@@ -369,11 +406,13 @@ class ContractModule(ModuleInterface):
         deadline = next_cancellation_date(contract)
         letter = build_cancellation_letter(
             contract, deadline, sender_name, sender_address, sender_city)
+        suggestions = _affiliate_suggestions(contract)
         result: dict = {
             "status": "Kuendigungsschreiben erstellt",
             "contract": contract.name,
             "cancellation_date": deadline.isoformat() if deadline else None,
             "letter_text": letter,
+            "affiliate_suggestions": suggestions,
         }
 
         # Ausgabe ueber den OutputService (Drucken / Mail)
@@ -384,12 +423,17 @@ class ContractModule(ModuleInterface):
 
         base = f"kuendigung_{slugify(contract.name)}"
         title = f"Kündigung {contract.name}"
+        # Affiliate-Block ans PDF und an die Mail anhaengen - statische
+        # Empfehlungen ohne Tracking, passt zur Privacy-Positionierung.
+        body = letter
+        if suggestions:
+            body = letter + "\n\n" + _format_affiliate_block(suggestions)
         if channel in ("pdf", "both"):
             result["pdf_path"] = self.output.write_pdf(
-                title, letter, base + ".pdf")
+                title, body, base + ".pdf")
         if channel in ("email", "both"):
             result["email_draft_path"] = self.output.write_email_draft(
-                recipient_email, title, letter, base + ".eml")
+                recipient_email, title, body, base + ".eml")
         return result
 
     def _cap_deadlines(self, within_days: int | None = None) -> dict:
