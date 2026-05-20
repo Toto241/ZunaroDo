@@ -100,10 +100,15 @@ def calculate_price(persons: int, tier: Tier) -> PriceQuote:
     list_monthly = (PRICE_BASE_MONTHLY_EUR
                     + extra * PRICE_PER_EXTRA_PERSON_MONTHLY_EUR)
     if tier == Tier.PRO_ANNUAL:
-        effective_monthly = round(list_monthly * (1 - ANNUAL_DISCOUNT_RATE), 2)
+        # Erst den Jahresbetrag berechnen und runden, dann den
+        # informativen Monatspreis ableiten - sonst akkumuliert die
+        # Cent-Rundung im Monatspreis ueber 12 Monate eine sichtbare
+        # Differenz (z.B. 105,36 statt 105,31 fuer eine 4-Personen-Familie).
+        total_annual = round(list_monthly * 12 * (1 - ANNUAL_DISCOUNT_RATE), 2)
+        effective_monthly = round(total_annual / 12, 2)
         return PriceQuote(persons=persons, tier=tier,
                           monthly_eur=effective_monthly,
-                          total_eur=round(effective_monthly * 12, 2),
+                          total_eur=total_annual,
                           period="annual",
                           list_monthly_eur=round(list_monthly, 2),
                           discount_rate=ANNUAL_DISCOUNT_RATE)
@@ -186,6 +191,6 @@ def format_quote_de(quote: PriceQuote) -> str:
     if quote.tier == Tier.PRO_ANNUAL:
         return (f"{quote.total_eur:.2f} EUR/Jahr "
                 f"(entspricht {quote.monthly_eur:.2f} EUR/Monat, "
-                f"{int(quote.discount_rate * 100)} % Rabatt, "
+                f"{round(quote.discount_rate * 100)} % Rabatt, "
                 f"Ersparnis {quote.savings_eur():.2f} EUR)")
     return f"{quote.monthly_eur:.2f} EUR/Monat"

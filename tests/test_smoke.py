@@ -2473,19 +2473,28 @@ class TestLicensing(unittest.TestCase):
         self.assertAlmostEqual(q.monthly_eur, PRICE_BASE_MONTHLY_EUR)
 
     def test_annual_applies_20_percent_discount(self) -> None:
+        # Berechnung: Jahresgesamtbetrag zuerst, daraus den Monatspreis -
+        # sonst akkumuliert die Cent-Rundung im Monatspreis ueber 12 Monate.
         q = calculate_price(2, Tier.PRO_ANNUAL)
-        expected_monthly = round(PRICE_BASE_MONTHLY_EUR
-                                  * (1 - ANNUAL_DISCOUNT_RATE), 2)
-        self.assertAlmostEqual(q.monthly_eur, expected_monthly)
-        self.assertAlmostEqual(q.total_eur, round(expected_monthly * 12, 2))
+        expected_total = round(PRICE_BASE_MONTHLY_EUR * 12
+                                * (1 - ANNUAL_DISCOUNT_RATE), 2)
+        self.assertAlmostEqual(q.total_eur, expected_total)
+        self.assertAlmostEqual(q.monthly_eur, round(expected_total / 12, 2))
         self.assertEqual(q.discount_rate, ANNUAL_DISCOUNT_RATE)
 
     def test_annual_savings_vs_monthly(self) -> None:
-        # Vier-Personen-Familie: Monatsabo 10,97/Monat -> Jahr ohne Rabatt 131,64
-        # mit 20% Rabatt: 8,78/Monat -> 105,31/Jahr -> ~26,32 EUR Ersparnis
+        # Vier-Personen-Familie: Listenpreis 10,97/Monat -> 131,64 EUR/Jahr,
+        # mit 20 % Rabatt: 105,31 EUR/Jahr (8,78 EUR/Monat) -> 26,33 EUR Ersparnis.
+        # Exakte Werte pruefen, damit Rundungs-Drift sofort auffaellt.
         q = calculate_price(4, Tier.PRO_ANNUAL)
-        self.assertGreater(q.savings_eur(), 25.0)
-        self.assertLess(q.savings_eur(), 27.0)
+        self.assertAlmostEqual(q.total_eur, 105.31)
+        self.assertAlmostEqual(q.monthly_eur, 8.78)
+        self.assertAlmostEqual(q.savings_eur(), 26.33)
+
+    def test_annual_total_matches_readme_base_tier(self) -> None:
+        # README-Beispiel: 67,10 EUR/Jahr fuer Basis (bis 2 Personen).
+        q = calculate_price(2, Tier.PRO_ANNUAL)
+        self.assertAlmostEqual(q.total_eur, 67.10)
 
     def test_invalid_persons_rejected(self) -> None:
         with self.assertRaises(ValueError):
