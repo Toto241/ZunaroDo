@@ -255,8 +255,14 @@ class AlltagshelferGUI(ctk.CTk):
         # beim Fenster-Close - frueher lazy, jetzt explizit (F2).
         self._after_ids: set[str] = set()
         self._streaming_active: bool = False
+        from services.license_events import license_event_source
+        from services.licensing import load_license as _load_license_for_sched
         self.scheduler = ProactiveScheduler(
-            registry, warn_within_days=config.notify_warn_within_days)
+            registry, warn_within_days=config.notify_warn_within_days,
+            extra_event_sources=[
+                license_event_source(
+                    lambda: _load_license_for_sched(self.settings_repo)),
+            ])
         self.sync_worker = PeriodicSyncWorker(
             synced, interval_seconds=config.sync_interval_seconds) \
             if synced is not None else None

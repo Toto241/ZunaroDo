@@ -13,10 +13,18 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Iterable, Optional
+from typing import Callable, Iterable, Optional
 
 from core.interface import ModuleRegistry
+from models import Event
 from services.notifier import Notifier
+
+
+# Signatur eines Extra-Event-Sources: bekommt warn_within_days,
+# liefert eine Liste von Event-Objekten. Wird z.B. von
+# services.license_events.license_event_source genutzt, um
+# Renewal-/Karenz-Warnungen einzuspielen.
+EventSource = Callable[[int], list[Event]]
 
 
 class ProactiveScheduler:
@@ -25,11 +33,13 @@ class ProactiveScheduler:
     def __init__(self, registry: ModuleRegistry,
                  notifier: Optional[Notifier] = None,
                  warn_within_days: int = 14,
-                 interval_seconds: int = 3600):
+                 interval_seconds: int = 3600,
+                 extra_event_sources: Optional[Iterable[EventSource]] = None):
         self.registry = registry
         self.notifier = notifier or Notifier()
         self.warn_within_days = warn_within_days
         self.interval_seconds = interval_seconds
+        self._extra_sources: list[EventSource] = list(extra_event_sources or [])
         self._seen: set[tuple[str, str]] = set()
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -61,7 +71,13 @@ class ProactiveScheduler:
     def check_now(self) -> list[str]:
         """Einmaliger Check. Liefert die ausgeloesten Notifikations-Titel."""
         triggered: list[str] = []
-        for ev in self.registry.collect_events(self.warn_within_days):
+        events = list(self.registry.collect_events(self.warn_within_days))
+        for source in self._extra_sources:
+            try:
+                events.extend(source(self.warn_within_days))
+            except Exception:                          # pragma: no cover
+                continue
+        for ev in events:
             key = (ev.module_id, ev.title)
             if key in self._seen:
                 continue

@@ -348,8 +348,14 @@ def main() -> None:
 
     # --- Proaktiver Scheduler (einmaliger Check) ----------------------
     trenner("Proaktiver Scheduler - einmaliger Check")
+    from services.license_events import license_event_source
     scheduler = ProactiveScheduler(
-        registry, warn_within_days=config.notify_warn_within_days)
+        registry,
+        warn_within_days=config.notify_warn_within_days,
+        extra_event_sources=[
+            license_event_source(lambda: load_license(settings)),
+        ],
+    )
     triggered = scheduler.check_now()
     print(f"  Notifikationen ausgeloest: {len(triggered)}")
 
