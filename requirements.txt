@@ -5,9 +5,10 @@ fpdf2>=2.7.0
 # Proaktive Benachrichtigungen
 APScheduler>=3.10.0
 
-# Sichere Geraetekopplung (services/pairing/) - Ed25519 + Secure-Store
+# Sichere Geraetekopplung (services/pairing/) - Ed25519 + Secure-Store + SPAKE2
 cryptography>=42.0.0
 keyring>=24.0.0
+spake2>=0.8
 
 # Optional: Desktop-Notifikationen (faellt sanft auf print zurueck)
 plyer>=2.1.0

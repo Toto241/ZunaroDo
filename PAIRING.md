@@ -14,10 +14,12 @@ konkrete Implementierung erfolgt schrittweise in mehreren PRs.
 | Kapitel | Komponente                          | Status                                |
 |---------|-------------------------------------|---------------------------------------|
 | 4       | Geraete-Identitaet (Ed25519, Fingerprint) | implementiert in `services/pairing/identity.py` |
+| 5       | Transcript (kanonische Serialisierung) | implementiert in `services/pairing/transcript.py` |
+| 5       | HKDF-SHA-256 (RFC 5869)             | implementiert in `services/pairing/kdf.py` |
+| 5       | Pairing-Handshake (SPAKE2 + Transcript-Signatur + sync_psk) | implementiert in `services/pairing/session.py` |
 | 7       | Secure-Store-Abstraktion (Desktop)  | implementiert in `services/pairing/secure_store.py` |
 | 7       | Secure-Store: Windows DPAPI / macOS Keychain / Linux SecretService | via `keyring` (Default-Backend)  |
 | 7       | Secure-Store: Android Keystore / iOS Keychain | offen - eigener Mobile-Bridge-PR |
-| 5       | Pairing-Handshake (SPAKE2 + Ed25519-Transcript) | offen                              |
 | 6.1     | QR-Code-Pairing-Weg                 | offen                                 |
 | 6.2     | USB-Pairing-Weg                     | offen                                 |
 | 6.3     | SMS-Link-Pairing-Weg                | offen                                 |
