@@ -188,6 +188,59 @@ class ActionResult:
     license: Optional[License] = None
 
 
+# ---------------------------------------------------------------------
+# 'Mein Abo'-Block: zeigt Vertragsdaten + Kuendigungs-Link
+# ---------------------------------------------------------------------
+@dataclass(frozen=True)
+class SubscriptionInfo:
+    """Was die GUI im 'Mein Abo'-Block anzeigt."""
+    has_subscription: bool
+    tier_label: str
+    persons: int
+    purchased_at_iso: Optional[str]
+    expires_at_iso: Optional[str]
+    days_remaining: Optional[int]
+    in_grace_period: bool
+    manage_url: str           # leer wenn keine Manage-URL konfiguriert
+
+
+def make_subscription_info(lic: License,
+                            *,
+                            manage_url: str = "",
+                            now: Optional[datetime] = None
+                            ) -> SubscriptionInfo:
+    """Baut die 'Mein Abo'-Anzeigedaten aus License + Config."""
+    now = now or datetime.now(timezone.utc)
+    has_sub = lic.tier in (Tier.PRO_MONTHLY, Tier.PRO_ANNUAL,
+                            Tier.PRO_FAMILY)
+    if not has_sub:
+        return SubscriptionInfo(
+            has_subscription=False,
+            tier_label=_tier_label(lic.tier),
+            persons=lic.persons,
+            purchased_at_iso=None,
+            expires_at_iso=None,
+            days_remaining=None,
+            in_grace_period=False,
+            manage_url="",
+        )
+    days = None
+    if lic.expires_at is not None:
+        days = (lic.expires_at - now).days
+    return SubscriptionInfo(
+        has_subscription=True,
+        tier_label=_tier_label(lic.tier),
+        persons=lic.persons,
+        purchased_at_iso=(lic.purchased_at.date().isoformat()
+                           if lic.purchased_at else None),
+        expires_at_iso=(lic.expires_at.date().isoformat()
+                         if lic.expires_at else None),
+        days_remaining=days,
+        in_grace_period=lic.is_in_grace_period(now),
+        manage_url=manage_url,
+    )
+
+
 def action_start_trial(repo: SettingsRepository,
                         *,
                         now: Optional[datetime] = None) -> ActionResult:

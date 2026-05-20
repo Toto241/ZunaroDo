@@ -3369,6 +3369,127 @@ class TestLicensing(unittest.TestCase):
             os.unlink(tmp.name)
 
     # ---- Token (Ed25519-Tamper-Schutz) ------------------------------
+    # ---- #3 Revocation-Liste ---------------------------------------
+    def test_sign_token_auto_assigns_token_id(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              generate_keypair, sign_token,
+                                              verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=2,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=365),
+                            customer_id="alice@example.com")
+        self.assertEqual(tok.token_id, "")
+        token_str = sign_token(tok, priv)
+        # token_id wird beim sign() automatisch gesetzt
+        self.assertNotEqual(tok.token_id, "")
+        # ... und in der Payload mit signiert
+        verified = verify_token(token_str, pub, now=now)
+        self.assertEqual(verified.token_id, tok.token_id)
+
+    def test_revoked_token_is_rejected(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              TokenError, generate_keypair,
+                                              sign_token, verify_token)
+        import services.license_token as _tok_mod
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_MONTHLY, persons=2,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=30),
+                            customer_id="leaked@example.com")
+        token_str = sign_token(tok, priv)
+        # Vorher: gueltig
+        verify_token(token_str, pub, now=now)
+        # Token-ID auf die Revocation-Liste setzen
+        original = _tok_mod.REVOKED_TOKEN_IDS
+        _tok_mod.REVOKED_TOKEN_IDS = frozenset({tok.token_id})
+        try:
+            with self.assertRaises(TokenError) as ctx:
+                verify_token(token_str, pub, now=now)
+            self.assertIn("widerrufen", str(ctx.exception))
+        finally:
+            _tok_mod.REVOKED_TOKEN_IDS = original
+
+    def test_revocation_supersedes_grace_period(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              TokenError, TokenExpired,
+                                              generate_keypair, sign_token,
+                                              verify_token)
+        import services.license_token as _tok_mod
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=2,
+                            purchased_at=now - timedelta(days=400),
+                            expires_at=now - timedelta(days=10),
+                            customer_id="x")
+        token_str = sign_token(tok, priv)
+        original = _tok_mod.REVOKED_TOKEN_IDS
+        _tok_mod.REVOKED_TOKEN_IDS = frozenset({tok.token_id})
+        try:
+            # Revoked geht VOR Expired: keine Grace-Period fuer
+            # widerrufene Tokens.
+            with self.assertRaises(TokenError) as ctx:
+                verify_token(token_str, pub, now=now)
+            self.assertNotIsInstance(ctx.exception, TokenExpired)
+        finally:
+            _tok_mod.REVOKED_TOKEN_IDS = original
+
+    # ---- #1 'Mein Abo'-Sektion -------------------------------------
+    def test_subscription_info_for_free_has_no_subscription(self) -> None:
+        from services.license_ui import make_subscription_info
+        info = make_subscription_info(License())
+        self.assertFalse(info.has_subscription)
+
+    def test_subscription_info_for_pro_shows_dates(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_ui import make_subscription_info
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_ANNUAL, persons=4,
+                       purchased_at=now - timedelta(days=30),
+                       expires_at=now + timedelta(days=335))
+        info = make_subscription_info(lic, manage_url="https://pay.example/portal",
+                                        now=now)
+        self.assertTrue(info.has_subscription)
+        self.assertEqual(info.persons, 4)
+        self.assertEqual(info.days_remaining, 335)
+        self.assertEqual(info.manage_url, "https://pay.example/portal")
+        self.assertFalse(info.in_grace_period)
+
+    def test_subscription_info_marks_grace_period(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_ui import make_subscription_info
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_MONTHLY, persons=2,
+                       expires_at=now - timedelta(days=3))
+        info = make_subscription_info(lic, now=now)
+        self.assertTrue(info.in_grace_period)
+
+    # ---- #2 First-Run-Pricing-Reveal -------------------------------
+    def test_pricing_onboarded_flag_persists(self) -> None:
+        from services.licensing import KEY_PRICING_ONBOARDED
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            self.assertIsNone(repo.get(KEY_PRICING_ONBOARDED))
+            repo.set(KEY_PRICING_ONBOARDED, "true")
+            self.assertEqual(repo.get(KEY_PRICING_ONBOARDED), "true")
+        finally:
+            db.close()
+            os.unlink(tmp.name)
+
     def test_token_sign_verify_round_trip(self) -> None:
         from datetime import datetime, timedelta, timezone
         from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,

@@ -525,6 +525,7 @@ def mark_grandfathered(repo: SettingsRepository,
 # Migration gelaufen ist. Verhindert, dass neue Free-Nutzer, die ihre
 # DB spaeter mit Daten fuellen, faelschlich grandfathered werden.
 KEY_GRANDFATHER_MIGRATION_DONE = "license.grandfather_migration_done"
+KEY_PRICING_ONBOARDED = "license.pricing_onboarded"
 
 
 def apply_grandfathering_if_needed(repo: SettingsRepository,

@@ -467,9 +467,124 @@ class AlltagshelferGUI(ctk.CTk):
         return ordered
 
     def _maybe_run_onboarding(self) -> None:
-        """Bei leerer DB einmaligen Dialog zeigen - Demo-Daten oder leer?"""
+        """Bei leerer DB einmaligen Dialog zeigen - Demo-Daten oder leer?
+
+        Vorgeschaltet: einmaliger Pricing-Reveal (Free / Trial / Pro),
+        sobald die DB noch leer UND der Pricing-Reveal noch nicht
+        gezeigt wurde. Beide Dialoge laufen sequenziell.
+        """
         if _has_any_data(self.registry):
             return
+        # Pricing-Reveal nur einmal pro DB
+        from services.licensing import KEY_PRICING_ONBOARDED
+        if not self.settings_repo.get(KEY_PRICING_ONBOARDED):
+            self._show_pricing_reveal(
+                on_done=self._show_demo_data_onboarding)
+            return
+        self._show_demo_data_onboarding()
+
+    def _show_pricing_reveal(self, *, on_done) -> None:
+        """Einmaliger Erst-Start-Dialog: Free / Trial / Pro-Token."""
+        from services.licensing import KEY_PRICING_ONBOARDED
+        from services.license_ui import (action_apply_token,
+                                           action_start_trial)
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("Willkommen bei Alltagshelfer")
+        dlg.geometry("560x460")
+        dlg.transient(self)
+        dlg.grab_set()
+        ctk.CTkLabel(dlg, text="Willkommen bei Alltagshelfer",
+                      font=ctk.CTkFont(size=16, weight="bold")
+                      ).pack(padx=20, pady=(20, 4), anchor="w")
+        ctk.CTkLabel(
+            dlg, wraplength=500, justify="left", anchor="w",
+            text=("Wie willst du starten? Du kannst spaeter im Tab "
+                  "'Einstellungen' jederzeit wechseln."),
+        ).pack(padx=20, pady=(0, 12), anchor="w")
+
+        def _finish(message: str = "") -> None:
+            self.settings_repo.set(KEY_PRICING_ONBOARDED, "true")
+            dlg.destroy()
+            if message:
+                self._show_dialog("Lizenz", message)
+            self._refresh_license_state()
+            on_done()
+
+        def _choose_free():
+            _finish()
+
+        def _choose_trial():
+            result = action_start_trial(self.settings_repo)
+            _finish(result.message)
+
+        def _choose_token():
+            dlg.destroy()
+            self._show_token_paste_dialog(on_done=lambda r: (
+                self.settings_repo.set(KEY_PRICING_ONBOARDED, "true"),
+                self._refresh_license_state(),
+                on_done(),
+            ))
+
+        for label, sub, cmd in (
+            ("Free starten",
+             "1 Person, 2 Module - jederzeit upgradebar.",
+             _choose_free),
+            ("14 Tage Trial",
+             "Voller Pro-Zugriff, einmalig pro Geraet. "
+             "Danach automatisch Free.",
+             _choose_trial),
+            ("Pro-Token einfuegen",
+             "Du hast bereits gekauft und einen Aktivierungs-Token "
+             "per Mail erhalten.",
+             _choose_token),
+        ):
+            row = ctk.CTkFrame(dlg, fg_color="transparent")
+            row.pack(fill="x", padx=20, pady=4)
+            ctk.CTkButton(row, text=label, width=200,
+                          command=cmd).pack(side="left", padx=(0, 12))
+            ctk.CTkLabel(row, text=sub, text_color="gray",
+                          wraplength=320, justify="left", anchor="w",
+                          ).pack(side="left", fill="x", expand=True)
+
+    def _show_token_paste_dialog(self, *, on_done) -> None:
+        """Schlanker Dialog nur fuer Token-Eingabe (Onboarding-Variante)."""
+        from services.license_ui import action_apply_token
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("Pro-Token aktivieren")
+        dlg.geometry("560x220")
+        dlg.transient(self)
+        dlg.grab_set()
+        ctk.CTkLabel(dlg, text="Pro-Token aktivieren",
+                      font=ctk.CTkFont(size=14, weight="bold")
+                      ).pack(padx=20, pady=(20, 4), anchor="w")
+        ctk.CTkLabel(
+            dlg, wraplength=500, justify="left", anchor="w",
+            text=("Fuege den Token aus deiner Kauf-Mail ein. "
+                  "Du kannst dies auch spaeter im Settings-Tab tun."),
+        ).pack(padx=20, pady=(0, 12), anchor="w")
+        entry = ctk.CTkEntry(dlg, placeholder_text="<payload>.<signature>")
+        entry.pack(fill="x", padx=20)
+        btns = ctk.CTkFrame(dlg, fg_color="transparent")
+        btns.pack(fill="x", padx=20, pady=14)
+
+        def _apply():
+            result = action_apply_token(self.settings_repo, entry.get())
+            dlg.destroy()
+            self._show_dialog("Aktivierung", result.message)
+            on_done(result)
+
+        def _skip():
+            dlg.destroy()
+            on_done(None)
+
+        ctk.CTkButton(btns, text="Aktivieren", command=_apply
+                      ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(btns, text="Spaeter",
+                      fg_color="transparent", border_width=1,
+                      command=_skip).pack(side="left")
+
+    def _show_demo_data_onboarding(self) -> None:
+        """Bisheriger Demo/Empty-Dialog - getrennt extrahiert."""
         t = self.i18n.t
         dlg = ctk.CTkToplevel(self)
         dlg.title(t("onboarding.title"))
@@ -2332,6 +2447,9 @@ class AlltagshelferGUI(ctk.CTk):
             justify="left", anchor="w", wraplength=720)
         self._license_status_label.pack(anchor="w", pady=(4, 12), fill="x")
 
+        # 'Mein Abo': sichtbar nur, wenn ein Pro-Abo aktiv ist
+        self._build_subscription_block(section)
+
         # Pricing-Tabelle
         ctk.CTkLabel(section, text="Preise (Brutto, inkl. USt.)",
                      font=ctk.CTkFont(weight="bold")
@@ -2389,6 +2507,51 @@ class AlltagshelferGUI(ctk.CTk):
             section, text="", text_color="gray", wraplength=720,
             justify="left", anchor="w")
         self._license_action_status.pack(anchor="w", pady=(8, 0), fill="x")
+
+    def _build_subscription_block(self, parent) -> None:
+        """'Mein Abo': Vertragsdaten + Kuendigungs-Link beim Provider."""
+        from services.license_ui import make_subscription_info
+        info = make_subscription_info(
+            self._current_license,
+            manage_url=self.config.checkout_manage_url)
+        if not info.has_subscription:
+            return
+        block = ctk.CTkFrame(parent)
+        block.pack(fill="x", pady=(0, 12))
+        ctk.CTkLabel(block, text="Mein Abo",
+                      font=ctk.CTkFont(weight="bold")
+                      ).pack(anchor="w", padx=10, pady=(8, 4))
+        lines = [
+            f"Tier:           {info.tier_label}",
+            f"Personen:       {info.persons}",
+        ]
+        if info.purchased_at_iso:
+            lines.append(f"Gekauft am:     {info.purchased_at_iso}")
+        if info.expires_at_iso:
+            grace_hint = "  (in Karenzzeit)" if info.in_grace_period else ""
+            lines.append(
+                f"Aktiv bis:      {info.expires_at_iso}"
+                f"  ({info.days_remaining} Tag(e)){grace_hint}")
+        ctk.CTkLabel(block, text="\n".join(lines),
+                      justify="left", anchor="w",
+                      font=ctk.CTkFont(family="Courier"),
+                      ).pack(anchor="w", padx=10, pady=(0, 8))
+        if info.manage_url:
+            ctk.CTkButton(
+                block,
+                text="Abo verwalten / kuendigen (oeffnet Browser)",
+                fg_color="transparent", border_width=1,
+                command=lambda u=info.manage_url: self._open_checkout(u),
+            ).pack(anchor="w", padx=10, pady=(0, 8))
+        else:
+            ctk.CTkLabel(
+                block,
+                text=("Zum Kuendigen die Kunden-Mail des Bezahldienst-"
+                      "leisters oeffnen - dort gibt es einen Self-Service-"
+                      "Link zum Abo-Portal."),
+                text_color="gray", wraplength=600, justify="left",
+                anchor="w",
+            ).pack(anchor="w", padx=10, pady=(0, 8))
 
     def _on_start_trial(self) -> None:
         from services.license_ui import action_start_trial

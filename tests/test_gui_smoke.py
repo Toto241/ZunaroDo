@@ -62,12 +62,16 @@ class TestGuiImports(unittest.TestCase):
             if not (cls_name.endswith("App") or cls_name.endswith("GUI")):
                 continue
             for method in ("_build_license_section",
+                            "_build_subscription_block",
                             "_on_start_trial",
                             "_on_apply_token",
                             "_refresh_license_state",
                             "_build_upgrade_panel",
                             "_is_tab_locked",
-                            "_tab_display_label"):
+                            "_tab_display_label",
+                            "_show_pricing_reveal",
+                            "_show_token_paste_dialog",
+                            "_show_demo_data_onboarding"):
                 self.assertTrue(hasattr(cls, method),
                                   f"{cls_name}.{method} fehlt")
             return

@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import base64
 import json
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
@@ -64,6 +65,15 @@ _PLACEHOLDER_PUBLIC_KEY_HEX: str = (
 DEFAULT_PUBLIC_KEY_HEX: str = _PLACEHOLDER_PUBLIC_KEY_HEX
 
 
+# Revocation-Liste: token_ids, die als kompromittiert gelten und vom
+# Verifier abgewiesen werden. Wird beim Release in der App hinterlegt -
+# der Anbieter pflegt diese Liste, wenn ein Token z.B. in einem
+# Forum auftaucht oder ein Refund stattgefunden hat. Tokens ohne
+# token_id (alte Tokens vor diesem Field) koennen nicht widerrufen
+# werden - bei einem Leak hilft nur ein neuer Pubkey-Release.
+REVOKED_TOKEN_IDS: frozenset[str] = frozenset()
+
+
 @dataclass
 class LicenseToken:
     tier: Tier
@@ -72,6 +82,10 @@ class LicenseToken:
     expires_at: datetime
     customer_id: str
     platform: Platform = Platform.DESKTOP
+    # Eindeutige ID pro Ausstellung. Wird beim sign_token() automatisch
+    # gesetzt, wenn leer. Erlaubt Revocation einzelner Tokens, ohne
+    # alle Tokens desselben Kunden zu invalidieren.
+    token_id: str = ""
 
     def to_payload(self) -> dict:
         return {
@@ -81,6 +95,7 @@ class LicenseToken:
             "expires_at": _to_iso(self.expires_at),
             "customer_id": self.customer_id,
             "platform": self.platform.value,
+            "token_id": self.token_id,
         }
 
     @classmethod
@@ -92,6 +107,7 @@ class LicenseToken:
             expires_at=_parse_iso(data["expires_at"]),
             customer_id=str(data["customer_id"]),
             platform=Platform(data.get("platform", "desktop")),
+            token_id=str(data.get("token_id", "")),
         )
 
 
@@ -155,9 +171,17 @@ def generate_keypair() -> tuple[str, str]:
 
 
 def sign_token(token: LicenseToken, private_key_hex: str) -> str:
-    """Signiert ein Token mit dem Anbieter-Private-Key."""
+    """
+    Signiert ein Token mit dem Anbieter-Private-Key.
+
+    Generiert beim ersten Sign eine token_id (UUID4), wenn keine
+    gesetzt ist - so kann jedes Token spaeter einzeln widerrufen
+    werden, ohne alle Tokens desselben Kunden zu invalidieren.
+    """
     if not CRYPTO_AVAILABLE:
         raise TokenError("'cryptography' nicht installiert")
+    if not token.token_id:
+        token.token_id = str(uuid.uuid4())
     sk = Ed25519PrivateKey.from_private_bytes(bytes.fromhex(private_key_hex))
     payload = _canonical_json(token.to_payload())
     signature = sk.sign(payload)
@@ -204,6 +228,13 @@ def verify_token(token_str: str,
         token = LicenseToken.from_payload(payload)
     except (ValueError, KeyError) as exc:
         raise TokenError(f"Payload kaputt: {exc}")
+
+    # Revocation: kompromittierte oder zurueckerstattete Tokens werden
+    # zentral abgewiesen. Geprueft NACH Signatur (sonst gibt's einen
+    # Oracle, ob token_id existiert) und VOR Expiry-Check (revoked
+    # bleibt revoked auch in der Grace-Period).
+    if token.token_id and token.token_id in REVOKED_TOKEN_IDS:
+        raise TokenError(f"Token {token.token_id} wurde widerrufen")
 
     now = now or datetime.now(timezone.utc)
     if token.expires_at < now:
