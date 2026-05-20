@@ -217,17 +217,20 @@ def action_apply_token(repo: SettingsRepository,
     from services.license_token import (CRYPTO_AVAILABLE, TokenError,
                                           TokenExpired, apply_token_to_repo,
                                           verify_token)
-    if not CRYPTO_AVAILABLE:
-        return ActionResult(
-            success=False,
-            message="Krypto-Bibliothek nicht installiert - "
-                    "Token-Aktivierung nicht moeglich.",
-        )
+    # Input-Validierung ZUERST - sonst sieht ein Nutzer, der nichts
+    # eingibt, die kryptische 'Krypto-Bibliothek fehlt'-Meldung statt
+    # des erwarteten 'Kein Token eingegeben'.
     token_str = (token_str or "").strip()
     if not token_str:
         return ActionResult(
             success=False,
             message="Kein Token eingegeben.",
+        )
+    if not CRYPTO_AVAILABLE:
+        return ActionResult(
+            success=False,
+            message="Krypto-Bibliothek nicht installiert - "
+                    "Token-Aktivierung nicht moeglich.",
         )
     try:
         token = verify_token(token_str, public_key_hex, now=now)
