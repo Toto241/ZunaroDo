@@ -39,6 +39,12 @@ from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
 from services.config import DEFAULTS, load_config, save_value
+from services.licensing import (ANNUAL_DISCOUNT_RATE, FREE_MAX_PERSONS,
+                                 FREE_MODULES_DEFAULT,
+                                 PRICE_BASE_MONTHLY_EUR,
+                                 PRICE_PER_EXTRA_PERSON_MONTHLY_EUR,
+                                 License, Tier, all_quotes, calculate_price,
+                                 format_quote_de, load_license, save_license)
 from services.llm import LLMAnswer, ToolCall, TokenUsage
 from services.output import OutputService
 from services.sync import (DEFAULT_SYNCED_CAPABILITIES, FileSyncProvider,
@@ -2438,6 +2444,125 @@ class TestProposalsFlow(unittest.TestCase):
             self.registry.dispatch("contracts.list",
                                     {})["contracts"][0]["monthly_cost"],
             15.99)
+
+
+class TestLicensing(unittest.TestCase):
+    """Pricing-Modell Variante B - 6,99 EUR Basis, 1,99 EUR/extra, 20 %/Jahr."""
+
+    def test_free_tier_is_zero(self) -> None:
+        q = calculate_price(1, Tier.FREE)
+        self.assertEqual(q.total_eur, 0.0)
+        self.assertEqual(q.monthly_eur, 0.0)
+        self.assertEqual(q.period, "forever")
+
+    def test_monthly_base_two_persons(self) -> None:
+        q = calculate_price(2, Tier.PRO_MONTHLY)
+        self.assertAlmostEqual(q.monthly_eur, PRICE_BASE_MONTHLY_EUR)
+        self.assertAlmostEqual(q.total_eur, PRICE_BASE_MONTHLY_EUR)
+        self.assertEqual(q.period, "monthly")
+
+    def test_monthly_charges_extra_persons(self) -> None:
+        q = calculate_price(4, Tier.PRO_MONTHLY)
+        expected = PRICE_BASE_MONTHLY_EUR + 2 * PRICE_PER_EXTRA_PERSON_MONTHLY_EUR
+        self.assertAlmostEqual(q.monthly_eur, round(expected, 2))
+
+    def test_single_person_pays_base_price(self) -> None:
+        # Eine Person zahlt denselben Basispreis wie zwei - bewusst, weil
+        # der Wert "Familie verwalten" auch fuer Singles greift (Vertraege etc.)
+        q = calculate_price(1, Tier.PRO_MONTHLY)
+        self.assertAlmostEqual(q.monthly_eur, PRICE_BASE_MONTHLY_EUR)
+
+    def test_annual_applies_20_percent_discount(self) -> None:
+        q = calculate_price(2, Tier.PRO_ANNUAL)
+        expected_monthly = round(PRICE_BASE_MONTHLY_EUR
+                                  * (1 - ANNUAL_DISCOUNT_RATE), 2)
+        self.assertAlmostEqual(q.monthly_eur, expected_monthly)
+        self.assertAlmostEqual(q.total_eur, round(expected_monthly * 12, 2))
+        self.assertEqual(q.discount_rate, ANNUAL_DISCOUNT_RATE)
+
+    def test_annual_savings_vs_monthly(self) -> None:
+        # Vier-Personen-Familie: Monatsabo 10,97/Monat -> Jahr ohne Rabatt 131,64
+        # mit 20% Rabatt: 8,78/Monat -> 105,31/Jahr -> ~26,32 EUR Ersparnis
+        q = calculate_price(4, Tier.PRO_ANNUAL)
+        self.assertGreater(q.savings_eur(), 25.0)
+        self.assertLess(q.savings_eur(), 27.0)
+
+    def test_invalid_persons_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            calculate_price(0, Tier.PRO_MONTHLY)
+
+    def test_all_quotes_returns_all_tiers(self) -> None:
+        quotes = all_quotes(3)
+        self.assertEqual(set(quotes.keys()), set(Tier))
+        # Jahresabo immer guenstiger pro Monat als Monatsabo
+        self.assertLess(quotes[Tier.PRO_ANNUAL].monthly_eur,
+                        quotes[Tier.PRO_MONTHLY].monthly_eur)
+
+    def test_free_license_restricts_modules(self) -> None:
+        lic = License()
+        self.assertEqual(lic.tier, Tier.FREE)
+        self.assertTrue(lic.allows_module("contracts"))
+        self.assertFalse(lic.allows_module("finance"))
+        self.assertFalse(lic.allows_ai())
+        self.assertFalse(lic.allows_sync())
+        self.assertEqual(lic.max_persons(), FREE_MAX_PERSONS)
+
+    def test_pro_license_unlocks_everything(self) -> None:
+        lic = License(tier=Tier.PRO_ANNUAL, persons=4)
+        for mid in ("contracts", "finance", "calendar", "family",
+                    "social", "inbox", "statistics", "daystructure"):
+            self.assertTrue(lic.allows_module(mid))
+        self.assertTrue(lic.allows_ai())
+        self.assertTrue(lic.allows_sync())
+        self.assertEqual(lic.max_persons(), 4)
+
+    def test_license_round_trip(self) -> None:
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            save_license(repo, License(tier=Tier.PRO_ANNUAL, persons=3,
+                                        enabled_modules=FREE_MODULES_DEFAULT))
+            loaded = load_license(repo)
+            self.assertEqual(loaded.tier, Tier.PRO_ANNUAL)
+            self.assertEqual(loaded.persons, 3)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_load_license_defaults_to_free(self) -> None:
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            lic = load_license(repo)
+            self.assertEqual(lic.tier, Tier.FREE)
+            self.assertEqual(lic.persons, 1)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_load_license_handles_corrupt_values(self) -> None:
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            repo.set("license.tier", "nonsense")
+            repo.set("license.persons", "not-a-number")
+            lic = load_license(repo)
+            self.assertEqual(lic.tier, Tier.FREE)
+            self.assertEqual(lic.persons, 1)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_format_quote_de_mentions_savings(self) -> None:
+        text = format_quote_de(calculate_price(4, Tier.PRO_ANNUAL))
+        self.assertIn("EUR/Jahr", text)
+        self.assertIn("20 %", text)
 
 
 if __name__ == "__main__":

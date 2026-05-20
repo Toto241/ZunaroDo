@@ -206,6 +206,40 @@ Alle internen Zeitstempel (`created_at`, `updated_at`, `changed_at` etc.) werden
 
 Im GUI-Daten-Tab steht zusätzlich ein „Backup jetzt erstellen"-Button.
 
+## Preismodell und Lizenz
+
+[services/licensing.py](services/licensing.py) definiert das Preismodell. Es
+gibt drei Tiers — keinen werbefinanzierten Tier, weil Display-Ads frontal mit
+der Privacy-Positionierung kollidieren würden und im DACH-Markt für Apps mit
+Finanz-/Vertrags-/Familiendaten unüblich sind.
+
+| Tier | Preis (brutto, inkl. USt.) | Umfang |
+| --- | --- | --- |
+| **Free** | 0 € | 1 Person, 2 Module (Verträge + Familie), kein KI, kein Sync |
+| **Pro monatlich** | **6,99 €/Monat** (bis 2 Personen) + **1,99 €/Monat** je weiterer Person | Alle acht Module, Gemini-KI, Mehrgeräte-Sync, SQLCipher, OCR |
+| **Pro jährlich** | wie monatlich, **20 % Rabatt** auf den effektiven Monatspreis | Identisch zu Pro monatlich |
+
+Beispielrechnung für eine vierköpfige Familie:
+
+- Pro monatlich: 6,99 € + 2 × 1,99 € = **10,97 €/Monat** → 131,64 €/Jahr
+- Pro jährlich: 8,78 €/Monat → **105,31 €/Jahr** (Ersparnis ~26,33 €)
+
+Statt Werbung gibt es bewusst kontextuelle, statische Affiliate-Empfehlungen
+(Verbraucherzentrale, Stiftung Warentest) im Vertragsmodul — keine Tracking-Ads,
+kein Cookie-Banner-Theater, DSGVO-sauber.
+
+```python
+from services.licensing import Tier, calculate_price, format_quote_de
+print(format_quote_de(calculate_price(persons=4, tier=Tier.PRO_ANNUAL)))
+# 105.31 EUR/Jahr (entspricht 8.78 EUR/Monat, 20 % Rabatt, Ersparnis 26.33 EUR)
+```
+
+Persistiert wird die aktive Lizenz über `load_license` / `save_license` in
+denselben App-Settings wie die übrige Konfiguration. Die Durchsetzung
+(Sperren von Tabs, Verstecken des KI-Buttons) bleibt Sache der GUI/CLI —
+das Modul liefert nur die Wahrheit darüber, was erlaubt ist (analog zum
+Modul-Enable/Disable in der `ModuleRegistry`).
+
 ## Onboarding
 
 Beim ersten Start einer neuen DB zeigt die GUI einen Dialog mit zwei Optionen:
