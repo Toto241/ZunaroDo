@@ -39,6 +39,40 @@ class TestGuiImports(unittest.TestCase):
         self.assertTrue(gui_classes,
                           "Keine GUI-Hauptklasse in gui.py gefunden")
 
+    def test_license_ui_helpers_callable_headless(self) -> None:
+        """Lizenz-UI-Helfer muessen ohne Tk-Display funktionieren."""
+        from services.license_ui import (build_pricing_rows,
+                                            make_tier_status,
+                                            sidebar_indicator)
+        from services.licensing import License, Tier
+        st = make_tier_status(License())
+        self.assertEqual(st.tier, Tier.FREE)
+        self.assertEqual(sidebar_indicator(License()), "Tier: Free")
+        rows = build_pricing_rows(2)
+        self.assertGreater(len(rows), 0)
+
+    def test_gui_has_license_section_methods(self) -> None:
+        """Sicherstellen, dass die Aktivierungs-UI-Methoden existieren -
+        verhindert dass die Bindings in __init__ ins Leere zeigen."""
+        import gui
+        for cls_name in dir(gui):
+            cls = getattr(gui, cls_name)
+            if not isinstance(cls, type):
+                continue
+            if not (cls_name.endswith("App") or cls_name.endswith("GUI")):
+                continue
+            for method in ("_build_license_section",
+                            "_on_start_trial",
+                            "_on_apply_token",
+                            "_refresh_license_state",
+                            "_build_upgrade_panel",
+                            "_is_tab_locked",
+                            "_tab_display_label"):
+                self.assertTrue(hasattr(cls, method),
+                                  f"{cls_name}.{method} fehlt")
+            return
+        self.fail("Keine GUI-Hauptklasse gefunden, um Hooks zu pruefen")
+
 
 class TestMainImports(unittest.TestCase):
 

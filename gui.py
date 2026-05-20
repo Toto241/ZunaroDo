@@ -274,6 +274,11 @@ class AlltagshelferGUI(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
+        # Lizenz vor Sidebar laden, damit der Tier-Indikator gleich
+        # mit dem aktuellen Stand gefuellt werden kann.
+        from services.licensing import load_license as _load_license
+        self._current_license = _load_license(self.settings_repo)
+
         self._build_sidebar()
 
         self.tabs = ctk.CTkTabview(self)
@@ -281,10 +286,7 @@ class AlltagshelferGUI(ctk.CTk):
                        padx=(0, 10), pady=10)
         # Tab-Labels durch i18n - Reihenfolge bleibt fest (Werte sind die
         # Builder-Funktionen, Schluessel die uebersetzten Labels).
-        # Aktuelle Lizenz wird hier einmal geladen - fuer Schloss-Marker
-        # auf gesperrten Tabs (Pro-only).
-        from services.licensing import load_license as _load_license
-        self._current_license = _load_license(self.settings_repo)
+        # self._current_license wurde bereits in __init__ geladen.
         t = self.i18n.t
         # Tab-Label -> (Builder, gated_module_id). gated_module_id ist None
         # fuer immer offene Tabs, sonst die Modul-ID, gegen die License
@@ -327,7 +329,13 @@ class AlltagshelferGUI(ctk.CTk):
         ordered = self._resolve_tab_order(self.tab_builders, t)
         for name, builder in ordered:
             display = self._tab_display_label(name)
-            builder(self.tabs.add(display))
+            tab_widget = self.tabs.add(display)
+            # Wenn der Tab durch Lizenz gesperrt ist, kommt statt der
+            # normalen UI ein Upgrade-Panel mit Pricing + CTA.
+            if self._is_tab_locked(name):
+                self._build_upgrade_panel(tab_widget, plain_label=name)
+            else:
+                builder(tab_widget)
 
         # Assistant bei destruktiven Aufrufen den Nutzer fragen lassen
         self.assistant.set_confirm_callback(self._confirm_destructive)
@@ -344,13 +352,86 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _tab_display_label(self, plain_label: str) -> str:
         """Schloss-Marker vor Tab-Labels von Modulen, die die Lizenz sperrt."""
+        return (f"[Pro] {plain_label}" if self._is_tab_locked(plain_label)
+                else plain_label)
+
+    def _is_tab_locked(self, plain_label: str) -> bool:
+        """True wenn der Tab durch den aktuellen Tier gesperrt ist."""
         gated_id = self.tab_gating.get(plain_label)
         if gated_id is None:
-            return plain_label
+            return False
         lic = self._current_license
-        allowed = (lic.allows_ai() if gated_id == "assistant_ai"
-                   else lic.allows_module(gated_id))
-        return plain_label if allowed else f"[Pro] {plain_label}"
+        if gated_id == "assistant_ai":
+            return not lic.allows_ai()
+        return not lic.allows_module(gated_id)
+
+    def _build_upgrade_panel(self, parent, *, plain_label: str) -> None:
+        """Stand-In fuer gesperrte Tabs: erklaert, was Pro freischaltet."""
+        from services.license_ui import (build_pricing_rows, make_tier_status)
+        from services.licensing import recommended_tier
+
+        parent.grid_columnconfigure(0, weight=1)
+        wrap = ctk.CTkFrame(parent, fg_color="transparent")
+        wrap.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+
+        ctk.CTkLabel(
+            wrap,
+            text=f"{plain_label} ist eine Pro-Funktion",
+            font=ctk.CTkFont(size=18, weight="bold")
+        ).pack(anchor="w", pady=(0, 6))
+
+        st = make_tier_status(self._current_license)
+        ctk.CTkLabel(
+            wrap, justify="left", wraplength=720, anchor="w",
+            text=(f"Aktueller Tier: {st.headline}\n"
+                  f"{st.detail}\n\n"
+                  "Pro-Funktionen umfassen alle acht Module, "
+                  "den KI-Assistenten, Mehrgeraete-Sync, OCR und "
+                  "SQLCipher-Verschluesselung. "
+                  "Die Aktivierung erfolgt im Tab 'Einstellungen' - "
+                  "entweder per Trial oder per Pro-Lizenz-Token."),
+        ).pack(anchor="w", pady=(0, 12))
+
+        persons = max(1, self._current_license.persons)
+        rec = recommended_tier(persons)
+        ctk.CTkLabel(wrap, text="Preise (Brutto):",
+                      font=ctk.CTkFont(weight="bold")
+                      ).pack(anchor="w", pady=(4, 4))
+        for row in build_pricing_rows(persons, recommended=rec):
+            marker = "  > " if row.is_recommended else "    "
+            ctk.CTkLabel(wrap,
+                          text=f"{marker}{row.label:24} {row.price_text}",
+                          justify="left", anchor="w",
+                          font=ctk.CTkFont(family="Courier")
+                          ).pack(anchor="w")
+
+        cta = ctk.CTkFrame(wrap, fg_color="transparent")
+        cta.pack(anchor="w", pady=(16, 0))
+        if st.can_start_trial:
+            ctk.CTkButton(cta, text="14 Tage kostenlos testen",
+                          command=self._on_start_trial_from_upgrade
+                          ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(
+            cta, text="Zu den Einstellungen",
+            fg_color="transparent", border_width=1,
+            command=self._switch_to_settings_tab
+        ).pack(side="left")
+
+    def _on_start_trial_from_upgrade(self) -> None:
+        """Trial-Start vom Upgrade-Panel aus."""
+        from services.license_ui import action_start_trial
+        result = action_start_trial(self.settings_repo)
+        self._current_license_msg = result.message
+        self._refresh_license_state()
+        # Hinweis fuer den Nutzer - mit einer Toplevel-Message, weil
+        # die Pricing-Panels keine eigene Status-Zeile haben.
+        self._show_dialog("Trial", result.message)
+
+    def _switch_to_settings_tab(self) -> None:
+        try:
+            self.tabs.set(self.i18n.t("tab.settings"))
+        except Exception:
+            pass
 
     def _resolve_tab_order(self, builders: dict, t) -> list[tuple[str, Callable]]:
         """Wendet eine vom Nutzer hinterlegte Tab-Reihenfolge an.
@@ -443,7 +524,15 @@ class AlltagshelferGUI(ctk.CTk):
             bar,
             text=f"{t('sidebar.profile')}: "
                   f"{self.profile or t('sidebar.profile.default')}",
-            text_color="gray").pack(padx=20, pady=(0, 14))
+            text_color="gray").pack(padx=20, pady=(0, 4))
+
+        # Tier-Indikator (Free / Trial XYd / Pro XYd / Karenz)
+        from services.license_ui import sidebar_indicator
+        self.tier_indicator = ctk.CTkLabel(
+            bar,
+            text=sidebar_indicator(self._current_license),
+            text_color="gray")
+        self.tier_indicator.pack(padx=20, pady=(0, 14))
 
         ctk.CTkLabel(bar, text=t("sidebar.module_status"),
                      font=ctk.CTkFont(weight="bold")
@@ -2209,6 +2298,9 @@ class AlltagshelferGUI(ctk.CTk):
                 text_color="gray", font=ctk.CTkFont(size=11)
             ).pack(anchor="w")
 
+        # Lizenz-Sektion: Status + Pricing + Trial + Token-Paste
+        self._build_license_section(body)
+
         actions = ctk.CTkFrame(parent, fg_color="transparent")
         actions.grid(row=2, column=0, sticky="ew", pady=8)
         ctk.CTkButton(actions, text=t("settings.save"),
@@ -2220,6 +2312,112 @@ class AlltagshelferGUI(ctk.CTk):
                       ).pack(side="left")
         self.settings_status = ctk.CTkLabel(actions, text="", text_color="gray")
         self.settings_status.pack(side="right")
+
+    # ----------------------------------------------------------------
+    #  Lizenz-Sektion (Settings-Tab)
+    # ----------------------------------------------------------------
+    def _build_license_section(self, body) -> None:
+        from services.license_ui import (build_pricing_rows, make_tier_status)
+        from services.licensing import recommended_tier
+
+        section = ctk.CTkFrame(body, fg_color="transparent")
+        section.pack(fill="x", pady=(24, 6))
+        ctk.CTkLabel(section, text="Lizenz",
+                     font=ctk.CTkFont(size=14, weight="bold")
+                     ).pack(anchor="w")
+
+        st = make_tier_status(self._current_license)
+        self._license_status_label = ctk.CTkLabel(
+            section, text=f"Aktueller Tier: {st.headline}\n{st.detail}",
+            justify="left", anchor="w", wraplength=720)
+        self._license_status_label.pack(anchor="w", pady=(4, 12), fill="x")
+
+        # Pricing-Tabelle
+        ctk.CTkLabel(section, text="Preise (Brutto, inkl. USt.)",
+                     font=ctk.CTkFont(weight="bold")
+                     ).pack(anchor="w", pady=(4, 4))
+        persons = max(1, self._current_license.persons)
+        rec = recommended_tier(persons)
+        for row in build_pricing_rows(persons, recommended=rec):
+            marker = "  > " if row.is_recommended else "    "
+            text = f"{marker}{row.label:24} {row.price_text}"
+            ctk.CTkLabel(section, text=text, justify="left",
+                          anchor="w", font=ctk.CTkFont(family="Courier")
+                          ).pack(anchor="w")
+            ctk.CTkLabel(section, text=f"      {row.description}",
+                          text_color="gray",
+                          font=ctk.CTkFont(family="Courier", size=10),
+                          ).pack(anchor="w", pady=(0, 2))
+
+        # Trial-Button
+        actions_frame = ctk.CTkFrame(section, fg_color="transparent")
+        actions_frame.pack(fill="x", pady=(12, 4))
+        trial_btn = ctk.CTkButton(
+            actions_frame,
+            text=("14 Tage Trial starten"
+                  if st.can_start_trial else "Trial nicht verfuegbar"),
+            command=self._on_start_trial,
+            state="normal" if st.can_start_trial else "disabled")
+        trial_btn.pack(side="left", padx=(0, 8))
+
+        # Token-Paste
+        token_frame = ctk.CTkFrame(section, fg_color="transparent")
+        token_frame.pack(fill="x", pady=(12, 4))
+        ctk.CTkLabel(token_frame, text="Pro-Lizenz-Token einfuegen:"
+                     ).pack(anchor="w")
+        entry_row = ctk.CTkFrame(token_frame, fg_color="transparent")
+        entry_row.pack(fill="x", pady=(2, 0))
+        self._license_token_entry = ctk.CTkEntry(entry_row,
+                                                    placeholder_text="<payload>.<signature>")
+        self._license_token_entry.pack(side="left", fill="x", expand=True,
+                                          padx=(0, 8))
+        ctk.CTkButton(entry_row, text="Aktivieren",
+                      command=self._on_apply_token
+                      ).pack(side="left")
+        self._license_action_status = ctk.CTkLabel(
+            section, text="", text_color="gray", wraplength=720,
+            justify="left", anchor="w")
+        self._license_action_status.pack(anchor="w", pady=(8, 0), fill="x")
+
+    def _on_start_trial(self) -> None:
+        from services.license_ui import action_start_trial
+        result = action_start_trial(self.settings_repo)
+        self._license_action_status.configure(text=result.message)
+        if result.success:
+            self._refresh_license_state()
+
+    def _on_apply_token(self) -> None:
+        from services.license_ui import action_apply_token
+        token_str = self._license_token_entry.get().strip()
+        result = action_apply_token(self.settings_repo, token_str)
+        self._license_action_status.configure(text=result.message)
+        if result.success:
+            self._license_token_entry.delete(0, "end")
+            self._refresh_license_state()
+
+    def _refresh_license_state(self) -> None:
+        """Lizenz neu laden, Tier-Indikator + Tab-Decorations updaten."""
+        from services.licensing import load_license as _load_license
+        from services.license_ui import (make_tier_status,
+                                           sidebar_indicator)
+        self._current_license = _load_license(self.settings_repo)
+        try:
+            self.tier_indicator.configure(
+                text=sidebar_indicator(self._current_license))
+        except Exception:
+            pass
+        try:
+            st = make_tier_status(self._current_license)
+            self._license_status_label.configure(
+                text=f"Aktueller Tier: {st.headline}\n{st.detail}")
+        except Exception:
+            pass
+        # Hinweis: Tab-Labels neu zu setzen erfordert in CTkTabview einen
+        # Rebuild - wir zeigen den Hinweis im Status statt zu spammen.
+        if self._current_license.is_pro():
+            self._license_action_status.configure(
+                text=(self._license_action_status.cget("text")
+                      + "  Tipp: Neustart laedt gesperrte Tabs neu."))
 
     def _save_settings(self) -> None:
         saved = 0
