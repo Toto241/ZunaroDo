@@ -203,8 +203,9 @@ def main() -> None:
                 return True
             if registry.dispatch("family.members", {}).get("count", 0):
                 return True
-        except Exception:
-            pass
+        except Exception as exc:                          # noqa: BLE001
+            log.warning("Grandfathering-Check konnte nicht auf Daten "
+                        "zugreifen: %s", exc)
         return False
     apply_grandfathering_if_needed(settings, _has_any_data)
 

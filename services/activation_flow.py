@@ -17,6 +17,7 @@ Dialog-Fenster.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, Optional
@@ -24,6 +25,8 @@ from typing import Callable, Optional
 from database import SettingsRepository
 from services.licensing import (KEY_WITHDRAWAL_WAIVED, License, Tier,
                                   activate_pro, load_license)
+
+log = logging.getLogger(__name__)
 
 
 # Text der drei Bestaetigungen - die GUI rendert sie als Checkboxen,
@@ -75,6 +78,8 @@ def request_activation(repo: SettingsRepository,
     try:
         confirmed = bool(confirm_callback(request, CONFIRMATIONS_DE))
     except Exception as exc:                            # noqa: BLE001
+        log.exception("Confirm-Callback in request_activation hat eine "
+                      "Ausnahme ausgeloest")
         return ActivationResult(success=False,
                                   error=f"Confirm-Callback hat geworfen: {exc}")
 
@@ -88,5 +93,5 @@ def request_activation(repo: SettingsRepository,
     # Verzicht im Setting markieren - so kann spaeter rechtlich
     # nachgewiesen werden, wann die App den Verzicht eingeholt hat.
     repo.set(KEY_WITHDRAWAL_WAIVED, "true")
-    lic = load_license(repo)
+    lic.withdrawal_waived = True
     return ActivationResult(success=True, license=lic)

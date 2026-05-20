@@ -348,13 +348,9 @@ class AlltagshelferGUI(ctk.CTk):
         if gated_id is None:
             return plain_label
         lic = self._current_license
-        if gated_id == "assistant_ai":
-            if lic.allows_ai():
-                return plain_label
-            return f"[Pro] {plain_label}"
-        if lic.allows_module(gated_id):
-            return plain_label
-        return f"[Pro] {plain_label}"
+        allowed = (lic.allows_ai() if gated_id == "assistant_ai"
+                   else lic.allows_module(gated_id))
+        return plain_label if allowed else f"[Pro] {plain_label}"
 
     def _resolve_tab_order(self, builders: dict, t) -> list[tuple[str, Callable]]:
         """Wendet eine vom Nutzer hinterlegte Tab-Reihenfolge an.

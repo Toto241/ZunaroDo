@@ -37,12 +37,15 @@ liefert nur die Wahrheit darueber, was erlaubt ist.
 from __future__ import annotations
 
 import enum
+import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from database import SettingsRepository
+
+log = logging.getLogger(__name__)
 
 
 # ---- Preis-Konstanten (Variante B, brutto, inkl. 19 % USt.) ----------
@@ -375,19 +378,40 @@ def load_license(repo: Optional[SettingsRepository]) -> License:
     """
     if repo is None:
         return License(platform=detect_platform())
-    # Token-basierte Re-Verifikation (Tamper-Schutz)
+    # Token-basierte Re-Verifikation (Tamper-Schutz). Wichtig:
+    # - Gueltiges Token -> Pro mit Token-Daten
+    # - Abgelaufenes Token (Signatur OK) -> Pro mit Token-Daten,
+    #   Grace-Period entscheidet im effective_tier(), ob der Tier
+    #   noch greift. Token NICHT loeschen, sonst geht expires_at
+    #   verloren und die Grace-Period waere nie anwendbar.
+    # - Manipuliertes / kaputtes Token -> Token loeschen, Fallback
+    #   auf Settings (die ohne gueltiges Token nichts wert sind -
+    #   die Tier-Felder werden im Falle eines Tampering-Versuchs
+    #   einfach mit FREE als Default ueberschrieben werden, weil
+    #   keine Pro-Aktivierung ohne Token entstehen kann).
     token_str = repo.get(KEY_TOKEN)
     if token_str:
+        from services.license_token import (TokenError, TokenExpired,
+                                              verify_token)
         try:
-            from services.license_token import verify_token
             tok = verify_token(token_str)
+        except TokenExpired as exc:
+            # Signatur stimmt, nur expires_at vorbei. Token behalten,
+            # damit Grace-Period in effective_tier() greifen kann.
+            tok = exc.token
+        except TokenError:
+            # Signatur falsch oder Payload kaputt -> sicher loeschen.
+            # In diesem Fall ist die Lizenz nicht mehr glaubhaft;
+            # weiter mit Settings-Fallback (typischerweise FREE).
+            repo.set(KEY_TOKEN, None)
+            tok = None
+        if tok is not None:
             return License(
                 tier=tok.tier,
                 persons=tok.persons,
                 purchased_at=tok.purchased_at,
                 expires_at=tok.expires_at,
                 platform=tok.platform,
-                # Modul- und Trial-Felder bleiben aus den Settings
                 enabled_modules=_parse_modules(repo.get(KEY_MODULES) or "")
                                 or FREE_MODULES_DEFAULT,
                 trial_started_at=_parse_iso(repo.get(KEY_TRIAL_STARTED_AT)),
@@ -395,10 +419,6 @@ def load_license(repo: Optional[SettingsRepository]) -> License:
                 withdrawal_waived=_bool_from_raw(
                     repo.get(KEY_WITHDRAWAL_WAIVED)),
             )
-        except Exception:
-            # Token kaputt oder abgelaufen -> Token loeschen, dann
-            # auf Settings-basierten Fallback zurueckfallen.
-            repo.set(KEY_TOKEN, None)
 
     try:
         tier = Tier((repo.get(KEY_TIER) or Tier.FREE.value).lower())
@@ -530,7 +550,9 @@ def apply_grandfathering_if_needed(repo: SettingsRepository,
         return None
     try:
         has_data = bool(has_data_fn())
-    except Exception:
+    except Exception as exc:                            # noqa: BLE001
+        log.warning("Pruefung auf Bestandsdaten fuer Grandfathering "
+                    "fehlgeschlagen: %s", exc)
         has_data = False
     if not has_data:
         return None

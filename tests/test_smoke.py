@@ -2896,6 +2896,119 @@ class TestLicensing(unittest.TestCase):
         with self.assertRaises(TokenError):
             verify_token(tampered, pub, now=now)
 
+    def test_token_expired_raises_subclass_with_payload(self) -> None:
+        # Critical-Fix: abgelaufenes Token muss als TokenExpired-Subklasse
+        # geworfen werden und den geparsten Token mitliefern, damit
+        # load_license die Grace-Period anwenden kann statt das Token
+        # zu verwerfen.
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              TokenError, TokenExpired,
+                                              generate_keypair, sign_token,
+                                              verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=2,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=30),
+                            customer_id="x")
+        token_str = sign_token(tok, priv)
+        try:
+            verify_token(token_str, pub, now=now + timedelta(days=40))
+        except TokenExpired as exc:
+            self.assertIsInstance(exc, TokenError)
+            self.assertEqual(exc.token.tier, Tier.PRO_ANNUAL)
+            self.assertEqual(exc.token.expires_at,
+                             now + timedelta(days=30))
+        else:
+            self.fail("TokenExpired wurde nicht geworfen")
+
+    def test_load_license_keeps_expired_token_for_grace(self) -> None:
+        # Critical-Fix: load_license darf abgelaufenes Token NICHT loeschen.
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              DEFAULT_PUBLIC_KEY_HEX,
+                                              LicenseToken,
+                                              generate_keypair, sign_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        import services.license_token as token_module
+        priv, pub = generate_keypair()
+        # Test-Pubkey temporaer setzen, sonst lehnt verify_token alles ab
+        original_pub = token_module.DEFAULT_PUBLIC_KEY_HEX
+        token_module.DEFAULT_PUBLIC_KEY_HEX = pub
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            past = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=2,
+                                purchased_at=past - timedelta(days=400),
+                                expires_at=past,
+                                customer_id="x")
+            token_str = sign_token(tok, priv)
+            from services.licensing import KEY_TOKEN
+            repo.set(KEY_TOKEN, token_str)
+            lic = load_license(repo)
+            # Token darf NICHT geloescht worden sein
+            self.assertEqual(repo.get(KEY_TOKEN), token_str)
+            # Lizenz traegt expires_at -> Grace-Period kann greifen
+            self.assertIsNotNone(lic.expires_at)
+        finally:
+            db.close()
+            token_module.DEFAULT_PUBLIC_KEY_HEX = original_pub
+            os.unlink(tmp.name)
+
+    def test_load_license_drops_tampered_token(self) -> None:
+        # Manipuliertes Token wird geloescht, weil die Signatur ungueltig ist
+        from services.licensing import KEY_TOKEN
+        from services.license_token import CRYPTO_AVAILABLE
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            repo.set(KEY_TOKEN, "garbage.token")
+            load_license(repo)
+            self.assertIsNone(repo.get(KEY_TOKEN))
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_apply_token_persists_token_string(self) -> None:
+        # High-Fix: apply_token_to_repo MUSS den Token-String unter
+        # KEY_TOKEN ablegen, sonst greift Tamper-Schutz beim naechsten
+        # Start nicht.
+        from datetime import datetime, timedelta, timezone
+        from services.licensing import KEY_TOKEN
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              apply_token_to_repo,
+                                              generate_keypair, sign_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, _ = generate_keypair()
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            tok = LicenseToken(tier=Tier.PRO_MONTHLY, persons=2,
+                                purchased_at=now,
+                                expires_at=now + timedelta(days=30),
+                                customer_id="x")
+            token_str = sign_token(tok, priv)
+            apply_token_to_repo(repo, token_str, tok)
+            self.assertEqual(repo.get(KEY_TOKEN), token_str)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
     def test_token_rejects_expired(self) -> None:
         from datetime import datetime, timedelta, timezone
         from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,

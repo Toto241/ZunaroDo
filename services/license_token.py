@@ -50,12 +50,18 @@ except ImportError:                                    # pragma: no cover
 from services.licensing import Platform, Tier
 
 
+# Placeholder-Sentinel: erkennt, ob ueberhaupt ein echter Anbieter-Key
+# hinterlegt wurde. Vergleicht verify_token() pk_hex damit, statt mit
+# DEFAULT_PUBLIC_KEY_HEX direkt - so kann man DEFAULT_PUBLIC_KEY_HEX
+# zur Laufzeit/in Tests monkey-patchen, ohne den Sentinel-Check zu brechen.
+_PLACEHOLDER_PUBLIC_KEY_HEX: str = (
+    "0000000000000000000000000000000000000000000000000000000000000000"
+)
+
 # Oeffentlicher Schluessel des Anbieters (Hex). MUSS im Release durch
 # den echten Schluessel ersetzt werden, der per 'tools/gen_license.py'
 # beim Erstellen des Private-Keys mit ausgegeben wird.
-DEFAULT_PUBLIC_KEY_HEX: str = (
-    "0000000000000000000000000000000000000000000000000000000000000000"
-)
+DEFAULT_PUBLIC_KEY_HEX: str = _PLACEHOLDER_PUBLIC_KEY_HEX
 
 
 @dataclass
@@ -123,6 +129,21 @@ class TokenError(Exception):
     """Verifikation oder Parsing fehlgeschlagen."""
 
 
+class TokenExpired(TokenError):
+    """
+    Token ist syntaktisch korrekt und korrekt signiert, aber
+    sein expires_at liegt in der Vergangenheit.
+
+    Diese Subklasse erlaubt dem Aufrufer, abgelaufene Tokens
+    bewusst anders zu behandeln als ungueltige (z.B. Grace-Period
+    statt Token-Loeschung).
+    """
+
+    def __init__(self, token: "LicenseToken", message: str):
+        super().__init__(message)
+        self.token = token
+
+
 def generate_keypair() -> tuple[str, str]:
     """Erzeugt ein neues Ed25519-Keypair (private_hex, public_hex)."""
     if not CRYPTO_AVAILABLE:
@@ -158,7 +179,7 @@ def verify_token(token_str: str,
     if not CRYPTO_AVAILABLE:
         raise TokenError("'cryptography' nicht installiert")
     pk_hex = (public_key_hex or DEFAULT_PUBLIC_KEY_HEX).strip()
-    if pk_hex == DEFAULT_PUBLIC_KEY_HEX:
+    if pk_hex == _PLACEHOLDER_PUBLIC_KEY_HEX:
         # Kein echter Anbieter-Key konfiguriert - jede Validierung
         # waere ein false-positive. Lieber sauber abweisen.
         raise TokenError("Kein Anbieter-Public-Key konfiguriert")
@@ -186,28 +207,35 @@ def verify_token(token_str: str,
 
     now = now or datetime.now(timezone.utc)
     if token.expires_at < now:
-        # Wir signalisieren das als TokenError, damit der Aufrufer
-        # entscheiden kann, ob Grace-Period angewendet wird.
-        raise TokenError(
+        # Signatur stimmt, nur expires_at liegt zurueck. Wir werfen
+        # TokenExpired (TokenError-Subklasse) mit dem geparsten Token,
+        # damit der Aufrufer Grace-Period anwenden kann statt das
+        # Token zu verwerfen.
+        raise TokenExpired(
+            token,
             f"Token am {token.expires_at.isoformat()} abgelaufen")
 
     return token
 
 
-def apply_token_to_repo(repo, token: LicenseToken) -> None:
+def apply_token_to_repo(repo,
+                         token_str: str,
+                         token: LicenseToken) -> None:
     """
     Schreibt die verifizierten Token-Daten in das SettingsRepository
     der App - damit gilt der Tier ab sofort.
+
+    Persistiert den Token-STRING zusaetzlich unter KEY_TOKEN, damit
+    load_license beim naechsten Start die Signatur erneut pruefen
+    kann (Tamper-Schutz). Ohne diesen Schritt wuerde die App jedem
+    glauben, der per SQL-Editor 'license.tier=pro_annual' setzt.
     """
     from services.licensing import (KEY_EXPIRES_AT, KEY_PERSONS,
                                       KEY_PLATFORM, KEY_PURCHASED_AT,
                                       KEY_TIER, KEY_TOKEN)
+    repo.set(KEY_TOKEN, token_str)
     repo.set(KEY_TIER, token.tier.value)
     repo.set(KEY_PERSONS, str(token.persons))
     repo.set(KEY_PURCHASED_AT, _to_iso(token.purchased_at))
     repo.set(KEY_EXPIRES_AT, _to_iso(token.expires_at))
     repo.set(KEY_PLATFORM, token.platform.value)
-    # Token selbst speichern - so kann beim naechsten Start nochmal
-    # verifiziert werden, ob jemand die Settings manuell manipuliert hat.
-    # (Re-Verifikation passiert in services/licensing.load_license -
-    #  hier ist nur die Persistenz.)

@@ -12,10 +12,13 @@ lose gekoppelt und beliebig erweiterbar.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Optional
 
 from models import Event
+
+log = logging.getLogger(__name__)
 
 
 # =====================================================================
@@ -223,6 +226,8 @@ class ModuleRegistry:
                 blocked = self._pre_dispatch_hook(capability_name, kwargs,
                                                     capability=cap)
             except Exception as exc:                       # noqa: BLE001
+                log.exception("Pre-Dispatch-Hook hat versagt fuer %s",
+                              capability_name)
                 return {"error": f"Pre-Dispatch-Hook hat versagt: {exc}"}
             if isinstance(blocked, dict):
                 return blocked
