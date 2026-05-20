@@ -1,0 +1,4700 @@
+{
+  "records": [
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-01]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-01]",
+      "time_s": 0.507,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-02]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-02]",
+      "time_s": 0.839,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-03]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-03]",
+      "time_s": 1.822,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-04]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-04]",
+      "time_s": 3.368,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-05]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-05]",
+      "time_s": 4.297,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-06]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-06]",
+      "time_s": 6.415,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-07]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-07]",
+      "time_s": 4.596,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-08]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-08]",
+      "time_s": 0.652,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M_can_seed_profile[M-09]",
+      "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-09]",
+      "time_s": 1.121,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M01_single_owner_no_rotation",
+      "id": "tests.concept.test_members_scenarios::test_M01_single_owner_no_rotation",
+      "time_s": 0.387,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M02_minimal_team_two_members",
+      "id": "tests.concept.test_members_scenarios::test_M02_minimal_team_two_members",
+      "time_s": 0.76,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M05_meets_play_minimum_12",
+      "id": "tests.concept.test_members_scenarios::test_M05_meets_play_minimum_12",
+      "time_s": 4.374,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M06_scales_to_twenty_plus",
+      "id": "tests.concept.test_members_scenarios::test_M06_scales_to_twenty_plus",
+      "time_s": 6.218,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M07_mixed_status_distribution",
+      "id": "tests.concept.test_members_scenarios::test_M07_mixed_status_distribution",
+      "time_s": 4.543,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M08_invited_only_owner_active",
+      "id": "tests.concept.test_members_scenarios::test_M08_invited_only_owner_active",
+      "time_s": 0.618,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_M09_reactivation_restores_member",
+      "id": "tests.concept.test_members_scenarios::test_M09_reactivation_restores_member",
+      "time_s": 1.28,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_remove_and_readd_preserves_distinct_id",
+      "id": "tests.concept.test_members_scenarios::test_remove_and_readd_preserves_distinct_id",
+      "time_s": 1.773,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_members_scenarios",
+      "name": "test_get_events_handles_all_sizes",
+      "id": "tests.concept.test_members_scenarios::test_get_events_handles_all_sizes",
+      "time_s": 23.807,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_matrix_is_deterministic",
+      "id": "tests.concept.test_pairwise_matrix::test_matrix_is_deterministic",
+      "time_s": 1.689,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_matrix_respects_constraints",
+      "id": "tests.concept.test_pairwise_matrix::test_matrix_respects_constraints",
+      "time_s": 0.867,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_matrix_has_acceptable_size",
+      "id": "tests.concept.test_pairwise_matrix::test_matrix_has_acceptable_size",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_matrix_covers_at_least_95_percent_of_pairs",
+      "id": "tests.concept.test_pairwise_matrix::test_matrix_covers_at_least_95_percent_of_pairs",
+      "time_s": 0.022,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[0]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[0]",
+      "time_s": 0.19,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[25]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[25]",
+      "time_s": 0.2,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[50]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[50]",
+      "time_s": 0.254,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[75]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[75]",
+      "time_s": 0.281,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[100]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[100]",
+      "time_s": 0.221,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[125]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[125]",
+      "time_s": 0.227,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[150]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[150]",
+      "time_s": 0.305,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_sampled_cases_persist_in_real_repo[175]",
+      "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[175]",
+      "time_s": 0.27,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_pairwise_matrix",
+      "name": "test_artifact_tsv_written",
+      "id": "tests.concept.test_pairwise_matrix::test_artifact_tsv_written",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P1_rotation_advances_one_step",
+      "id": "tests.concept.test_properties_concept::test_P1_rotation_advances_one_step",
+      "time_s": 3.885,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P2_overdue_task_rolls_forward_to_future",
+      "id": "tests.concept.test_properties_concept::test_P2_overdue_task_rolls_forward_to_future",
+      "time_s": 4.016,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[GROUP_CREATE]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[GROUP_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[GROUP_DELETE]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[GROUP_DELETE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[OWNERSHIP_TRANSFER]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[OWNERSHIP_TRANSFER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[MEMBER_INVITE]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[MEMBER_INVITE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[MEMBER_REMOVE]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[MEMBER_REMOVE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[MEMBER_CHANGE_ROLE]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[MEMBER_CHANGE_ROLE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[TASK_CREATE]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[TASK_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[TASK_ASSIGN_OTHER]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[TASK_ASSIGN_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[TASK_CLOSE_OTHER]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[TASK_CLOSE_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P3_guest_cannot_perform_destructive[DATA_EXPORT]",
+      "id": "tests.concept.test_properties_concept::test_P3_guest_cannot_perform_destructive[DATA_EXPORT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[GROUP_CREATE]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[GROUP_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[GROUP_DELETE]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[GROUP_DELETE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[OWNERSHIP_TRANSFER]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[OWNERSHIP_TRANSFER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[MEMBER_INVITE]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[MEMBER_INVITE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[MEMBER_REMOVE]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[MEMBER_REMOVE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[MEMBER_CHANGE_ROLE]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[MEMBER_CHANGE_ROLE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[TASK_CREATE]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[TASK_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[TASK_ASSIGN_SELF]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[TASK_ASSIGN_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[TASK_ASSIGN_OTHER]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[TASK_ASSIGN_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[TASK_CLOSE_OWN]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[TASK_CLOSE_OWN]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[TASK_CLOSE_OTHER]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[TASK_CLOSE_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[TASK_VIEW]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[TASK_VIEW]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[COMMENT]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[COMMENT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[PUSH_SETTINGS_SELF]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[PUSH_SETTINGS_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P4_owner_allowed_everything[DATA_EXPORT]",
+      "id": "tests.concept.test_properties_concept::test_P4_owner_allowed_everything[DATA_EXPORT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P5_classify_urgency_is_monotonic",
+      "id": "tests.concept.test_properties_concept::test_P5_classify_urgency_is_monotonic",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_properties_concept",
+      "name": "test_P6_pairwise_deterministic",
+      "id": "tests.concept.test_properties_concept::test_P6_pairwise_deterministic",
+      "time_s": 1.764,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_protocol_generator",
+      "name": "test_protocol_parses_junit",
+      "id": "tests.concept.test_protocol_generator::test_protocol_parses_junit",
+      "time_s": 0.011,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_protocol_generator",
+      "name": "test_protocol_classifies_and_decides",
+      "id": "tests.concept.test_protocol_generator::test_protocol_classifies_and_decides",
+      "time_s": 0.003,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_protocol_generator",
+      "name": "test_protocol_formats_markdown",
+      "id": "tests.concept.test_protocol_generator::test_protocol_formats_markdown",
+      "time_s": 0.033,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_protocol_generator",
+      "name": "test_protocol_artifacts_present_after_run",
+      "id": "tests.concept.test_protocol_generator::test_protocol_artifacts_present_after_run",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J1_version_code_is_positive_integer",
+      "id": "tests.concept.test_release_gate::test_J1_version_code_is_positive_integer",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J2_privacy_documents_present",
+      "id": "tests.concept.test_release_gate::test_J2_privacy_documents_present",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J3_license_file_present",
+      "id": "tests.concept.test_release_gate::test_J3_license_file_present",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J4_playstore_doc_present",
+      "id": "tests.concept.test_release_gate::test_J4_playstore_doc_present",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J5_testing_doc_present",
+      "id": "tests.concept.test_release_gate::test_J5_testing_doc_present",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J6_concept_modules_import",
+      "id": "tests.concept.test_release_gate::test_J6_concept_modules_import",
+      "time_s": 0.0,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J7_pairwise_matrix_has_full_coverage",
+      "id": "tests.concept.test_release_gate::test_J7_pairwise_matrix_has_full_coverage",
+      "time_s": 0.902,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J8_permission_matrix_is_complete",
+      "id": "tests.concept.test_release_gate::test_J8_permission_matrix_is_complete",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J9_member_profiles_present",
+      "id": "tests.concept.test_release_gate::test_J9_member_profiles_present",
+      "time_s": 0.0,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_release_gate",
+      "name": "test_J10_full_module_registry_assembles",
+      "id": "tests.concept.test_release_gate::test_J10_full_module_registry_assembles",
+      "time_s": 0.143,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__GROUP_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__GROUP_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__GROUP_DELETE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__GROUP_DELETE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__OWNERSHIP_TRANSFER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__OWNERSHIP_TRANSFER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__MEMBER_INVITE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__MEMBER_INVITE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__MEMBER_REMOVE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__MEMBER_REMOVE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__MEMBER_CHANGE_ROLE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__MEMBER_CHANGE_ROLE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__TASK_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__TASK_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__TASK_ASSIGN_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__TASK_ASSIGN_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__TASK_ASSIGN_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__TASK_ASSIGN_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__TASK_CLOSE_OWN]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__TASK_CLOSE_OWN]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__TASK_CLOSE_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__TASK_CLOSE_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__TASK_VIEW]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__TASK_VIEW]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__COMMENT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__COMMENT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__PUSH_SETTINGS_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__PUSH_SETTINGS_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[OWNER__DATA_EXPORT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[OWNER__DATA_EXPORT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__GROUP_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__GROUP_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__GROUP_DELETE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__GROUP_DELETE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__OWNERSHIP_TRANSFER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__OWNERSHIP_TRANSFER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__MEMBER_INVITE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__MEMBER_INVITE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__MEMBER_REMOVE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__MEMBER_REMOVE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__MEMBER_CHANGE_ROLE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__MEMBER_CHANGE_ROLE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__TASK_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__TASK_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__TASK_ASSIGN_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__TASK_ASSIGN_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__TASK_ASSIGN_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__TASK_ASSIGN_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__TASK_CLOSE_OWN]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__TASK_CLOSE_OWN]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__TASK_CLOSE_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__TASK_CLOSE_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__TASK_VIEW]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__TASK_VIEW]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__COMMENT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__COMMENT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__PUSH_SETTINGS_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__PUSH_SETTINGS_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[ADMIN__DATA_EXPORT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[ADMIN__DATA_EXPORT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__GROUP_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__GROUP_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__GROUP_DELETE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__GROUP_DELETE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__OWNERSHIP_TRANSFER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__OWNERSHIP_TRANSFER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__MEMBER_INVITE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__MEMBER_INVITE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__MEMBER_REMOVE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__MEMBER_REMOVE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__MEMBER_CHANGE_ROLE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__MEMBER_CHANGE_ROLE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__TASK_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__TASK_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__TASK_ASSIGN_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__TASK_ASSIGN_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__TASK_ASSIGN_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__TASK_ASSIGN_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__TASK_CLOSE_OWN]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__TASK_CLOSE_OWN]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__TASK_CLOSE_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__TASK_CLOSE_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__TASK_VIEW]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__TASK_VIEW]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__COMMENT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__COMMENT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__PUSH_SETTINGS_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__PUSH_SETTINGS_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[MEMBER__DATA_EXPORT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[MEMBER__DATA_EXPORT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__GROUP_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__GROUP_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__GROUP_DELETE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__GROUP_DELETE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__OWNERSHIP_TRANSFER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__OWNERSHIP_TRANSFER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__MEMBER_INVITE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__MEMBER_INVITE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__MEMBER_REMOVE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__MEMBER_REMOVE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__MEMBER_CHANGE_ROLE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__MEMBER_CHANGE_ROLE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__TASK_CREATE]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__TASK_CREATE]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__TASK_ASSIGN_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__TASK_ASSIGN_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__TASK_ASSIGN_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__TASK_ASSIGN_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__TASK_CLOSE_OWN]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__TASK_CLOSE_OWN]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__TASK_CLOSE_OTHER]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__TASK_CLOSE_OTHER]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__TASK_VIEW]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__TASK_VIEW]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__COMMENT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__COMMENT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__PUSH_SETTINGS_SELF]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__PUSH_SETTINGS_SELF]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_concept_matrix_complete[GUEST__DATA_EXPORT]",
+      "id": "tests.concept.test_roles_permissions::test_concept_matrix_complete[GUEST__DATA_EXPORT]",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_owner_can_do_everything",
+      "id": "tests.concept.test_roles_permissions::test_owner_can_do_everything",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_guest_cannot_modify_data",
+      "id": "tests.concept.test_roles_permissions::test_guest_cannot_modify_data",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_admin_can_invite_but_not_delete_group",
+      "id": "tests.concept.test_roles_permissions::test_admin_can_invite_but_not_delete_group",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_member_can_self_assign_but_not_other",
+      "id": "tests.concept.test_roles_permissions::test_member_can_self_assign_but_not_other",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_destructive_capabilities_have_marker",
+      "id": "tests.concept.test_roles_permissions::test_destructive_capabilities_have_marker",
+      "time_s": 0.181,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_license_gate_blocks_ai_in_free",
+      "id": "tests.concept.test_roles_permissions::test_license_gate_blocks_ai_in_free",
+      "time_s": 0.157,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_license_gate_passes_family_in_free",
+      "id": "tests.concept.test_roles_permissions::test_license_gate_passes_family_in_free",
+      "time_s": 0.168,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_license_gate_blocks_finance_writes_in_free",
+      "id": "tests.concept.test_roles_permissions::test_license_gate_blocks_finance_writes_in_free",
+      "time_s": 0.17,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.concept.test_roles_permissions",
+      "name": "test_owner_concept_role_maps_to_pro_license",
+      "id": "tests.concept.test_roles_permissions::test_owner_concept_role_maps_to_pro_license",
+      "time_s": 0.173,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestGuiImports",
+      "name": "test_geometry_helpers",
+      "id": "tests.test_gui_smoke.TestGuiImports::test_geometry_helpers",
+      "time_s": 0.082,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestGuiImports",
+      "name": "test_gui_has_license_section_methods",
+      "id": "tests.test_gui_smoke.TestGuiImports::test_gui_has_license_section_methods",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestGuiImports",
+      "name": "test_gui_module_imports",
+      "id": "tests.test_gui_smoke.TestGuiImports::test_gui_module_imports",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestGuiImports",
+      "name": "test_license_ui_helpers_callable_headless",
+      "id": "tests.test_gui_smoke.TestGuiImports::test_license_ui_helpers_callable_headless",
+      "time_s": 0.012,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestGuiImports",
+      "name": "test_main_app_class_exists",
+      "id": "tests.test_gui_smoke.TestGuiImports::test_main_app_class_exists",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestMainImports",
+      "name": "test_build_registry_signature",
+      "id": "tests.test_gui_smoke.TestMainImports::test_build_registry_signature",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_gui_smoke.TestMainImports",
+      "name": "test_main_module_imports",
+      "id": "tests.test_gui_smoke.TestMainImports::test_main_module_imports",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestSmtpVersand",
+      "name": "test_send_smtp_calls_protocol",
+      "id": "tests.test_integration.TestSmtpVersand::test_send_smtp_calls_protocol",
+      "time_s": 0.008,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestSmtpVersand",
+      "name": "test_send_smtp_handles_server_error",
+      "id": "tests.test_integration.TestSmtpVersand::test_send_smtp_handles_server_error",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestSmtpVersand",
+      "name": "test_send_smtp_skips_starttls_when_disabled",
+      "id": "tests.test_integration.TestSmtpVersand::test_send_smtp_skips_starttls_when_disabled",
+      "time_s": 0.003,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestSmtpVersand",
+      "name": "test_send_smtp_without_config_returns_skip",
+      "id": "tests.test_integration.TestSmtpVersand::test_send_smtp_without_config_returns_skip",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestImapAbruf",
+      "name": "test_fetch_imap_loops_through_unseen",
+      "id": "tests.test_integration.TestImapAbruf::test_fetch_imap_loops_through_unseen",
+      "time_s": 0.195,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestOcrParsing",
+      "name": "test_missing_engine_returns_hint",
+      "id": "tests.test_integration.TestOcrParsing::test_missing_engine_returns_hint",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestOcrParsing",
+      "name": "test_receipt_text_extraction",
+      "id": "tests.test_integration.TestOcrParsing::test_receipt_text_extraction",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestPrinten",
+      "name": "test_print_file_calls_lpr_on_macos",
+      "id": "tests.test_integration.TestPrinten::test_print_file_calls_lpr_on_macos",
+      "time_s": 0.005,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestPrinten",
+      "name": "test_print_file_calls_subprocess_on_unix",
+      "id": "tests.test_integration.TestPrinten::test_print_file_calls_subprocess_on_unix",
+      "time_s": 0.005,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestPrinten",
+      "name": "test_print_file_missing_returns_error",
+      "id": "tests.test_integration.TestPrinten::test_print_file_missing_returns_error",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestHttpsSyncServer",
+      "name": "test_tls_handshake_with_self_signed_cert",
+      "id": "tests.test_integration.TestHttpsSyncServer::test_tls_handshake_with_self_signed_cert",
+      "time_s": 0.766,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_integration.TestSqlCipherRealRoundTrip",
+      "name": "test_encrypt_write_close_reopen",
+      "id": "tests.test_integration.TestSqlCipherRealRoundTrip::test_encrypt_write_close_reopen",
+      "time_s": 0.001,
+      "status": "skipped",
+      "message": "sqlcipher3 fehlt - Real-Test ausgelassen"
+    },
+    {
+      "classname": "tests.test_integration.TestGeminiRealApi",
+      "name": "test_simple_ask_returns_text",
+      "id": "tests.test_integration.TestGeminiRealApi::test_simple_ask_returns_text",
+      "time_s": 0.0,
+      "status": "skipped",
+      "message": "GOOGLE_API_KEY nicht gesetzt - Gemini-Real-Test ausgelassen"
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestFormatCurrency",
+      "name": "test_invalid",
+      "id": "tests.test_mobile_helpers.TestFormatCurrency::test_invalid",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestFormatCurrency",
+      "name": "test_normal",
+      "id": "tests.test_mobile_helpers.TestFormatCurrency::test_normal",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestFormatCurrency",
+      "name": "test_other_currency",
+      "id": "tests.test_mobile_helpers.TestFormatCurrency::test_other_currency",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestFormatCurrency",
+      "name": "test_thousands_separator",
+      "id": "tests.test_mobile_helpers.TestFormatCurrency::test_thousands_separator",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestFormatCurrency",
+      "name": "test_zero",
+      "id": "tests.test_mobile_helpers.TestFormatCurrency::test_zero",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDaysUntil",
+      "name": "test_future",
+      "id": "tests.test_mobile_helpers.TestDaysUntil::test_future",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDaysUntil",
+      "name": "test_invalid",
+      "id": "tests.test_mobile_helpers.TestDaysUntil::test_invalid",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDaysUntil",
+      "name": "test_past",
+      "id": "tests.test_mobile_helpers.TestDaysUntil::test_past",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDaysUntil",
+      "name": "test_today",
+      "id": "tests.test_mobile_helpers.TestDaysUntil::test_today",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestRelativeWhen",
+      "name": "test_future",
+      "id": "tests.test_mobile_helpers.TestRelativeWhen::test_future",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestRelativeWhen",
+      "name": "test_invalid_returns_empty",
+      "id": "tests.test_mobile_helpers.TestRelativeWhen::test_invalid_returns_empty",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestRelativeWhen",
+      "name": "test_past",
+      "id": "tests.test_mobile_helpers.TestRelativeWhen::test_past",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestRelativeWhen",
+      "name": "test_today",
+      "id": "tests.test_mobile_helpers.TestRelativeWhen::test_today",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestRelativeWhen",
+      "name": "test_tomorrow",
+      "id": "tests.test_mobile_helpers.TestRelativeWhen::test_tomorrow",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestRelativeWhen",
+      "name": "test_yesterday",
+      "id": "tests.test_mobile_helpers.TestRelativeWhen::test_yesterday",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestUrgencyColor",
+      "name": "test_far_future_is_normal",
+      "id": "tests.test_mobile_helpers.TestUrgencyColor::test_far_future_is_normal",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestUrgencyColor",
+      "name": "test_none_is_normal",
+      "id": "tests.test_mobile_helpers.TestUrgencyColor::test_none_is_normal",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestUrgencyColor",
+      "name": "test_overdue_is_error",
+      "id": "tests.test_mobile_helpers.TestUrgencyColor::test_overdue_is_error",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestUrgencyColor",
+      "name": "test_within_month_is_warning",
+      "id": "tests.test_mobile_helpers.TestUrgencyColor::test_within_month_is_warning",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestUrgencyColor",
+      "name": "test_within_week_is_error",
+      "id": "tests.test_mobile_helpers.TestUrgencyColor::test_within_week_is_error",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestTruncate",
+      "name": "test_empty",
+      "id": "tests.test_mobile_helpers.TestTruncate::test_empty",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestTruncate",
+      "name": "test_long_gets_ellipsis",
+      "id": "tests.test_mobile_helpers.TestTruncate::test_long_gets_ellipsis",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestTruncate",
+      "name": "test_short_unchanged",
+      "id": "tests.test_mobile_helpers.TestTruncate::test_short_unchanged",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestGroupByModule",
+      "name": "test_groups_by_module_id",
+      "id": "tests.test_mobile_helpers.TestGroupByModule::test_groups_by_module_id",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestGroupByModule",
+      "name": "test_unknown_falls_back",
+      "id": "tests.test_mobile_helpers.TestGroupByModule::test_unknown_falls_back",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDashboardSummary",
+      "name": "test_aggregates_three_sources",
+      "id": "tests.test_mobile_helpers.TestDashboardSummary::test_aggregates_three_sources",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDashboardSummary",
+      "name": "test_robust_against_errors",
+      "id": "tests.test_mobile_helpers.TestDashboardSummary::test_robust_against_errors",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_mobile_helpers.TestDashboardSummary",
+      "name": "test_truncates_to_phone_friendly_count",
+      "id": "tests.test_mobile_helpers.TestDashboardSummary::test_truncates_to_phone_friendly_count",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_generate_identity_accepts_custom_name",
+      "id": "tests.test_pairing.TestIdentity::test_generate_identity_accepts_custom_name",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_generate_identity_returns_valid_pair",
+      "id": "tests.test_pairing.TestIdentity::test_generate_identity_returns_valid_pair",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_sign_verify_roundtrip",
+      "id": "tests.test_pairing.TestIdentity::test_sign_verify_roundtrip",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_two_identities_are_distinct",
+      "id": "tests.test_pairing.TestIdentity::test_two_identities_are_distinct",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_verify_rejects_tampered_message",
+      "id": "tests.test_pairing.TestIdentity::test_verify_rejects_tampered_message",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_verify_rejects_wrong_public_key",
+      "id": "tests.test_pairing.TestIdentity::test_verify_rejects_wrong_public_key",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestIdentity",
+      "name": "test_verify_returns_false_for_garbage_signature",
+      "id": "tests.test_pairing.TestIdentity::test_verify_returns_false_for_garbage_signature",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestFingerprint",
+      "name": "test_fingerprint_bits_constant_matches_format",
+      "id": "tests.test_pairing.TestFingerprint::test_fingerprint_bits_constant_matches_format",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestFingerprint",
+      "name": "test_fingerprint_differs_for_different_keys",
+      "id": "tests.test_pairing.TestFingerprint::test_fingerprint_differs_for_different_keys",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestFingerprint",
+      "name": "test_fingerprint_format",
+      "id": "tests.test_pairing.TestFingerprint::test_fingerprint_format",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestFingerprint",
+      "name": "test_fingerprint_is_deterministic",
+      "id": "tests.test_pairing.TestFingerprint::test_fingerprint_is_deterministic",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestFingerprint",
+      "name": "test_fingerprint_known_vector",
+      "id": "tests.test_pairing.TestFingerprint::test_fingerprint_known_vector",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestFingerprint",
+      "name": "test_fingerprint_rejects_wrong_length",
+      "id": "tests.test_pairing.TestFingerprint::test_fingerprint_rejects_wrong_length",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_delete_makes_key_disappear",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_delete_makes_key_disappear",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_delete_missing_is_silent",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_delete_missing_is_silent",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_get_missing_returns_none",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_get_missing_returns_none",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_list_keys_filters_by_prefix",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_list_keys_filters_by_prefix",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_overwrite_replaces_value",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_overwrite_replaces_value",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_protocol_runtime_check",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_protocol_runtime_check",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_rejects_non_bytes",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_rejects_non_bytes",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestInMemorySecureStore",
+      "name": "test_set_and_get_roundtrip",
+      "id": "tests.test_pairing.TestInMemorySecureStore::test_set_and_get_roundtrip",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestKeyringSecureStore",
+      "name": "test_delete_removes_from_list",
+      "id": "tests.test_pairing.TestKeyringSecureStore::test_delete_removes_from_list",
+      "time_s": 0.028,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestKeyringSecureStore",
+      "name": "test_list_keys_returns_set_keys",
+      "id": "tests.test_pairing.TestKeyringSecureStore::test_list_keys_returns_set_keys",
+      "time_s": 0.045,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestKeyringSecureStore",
+      "name": "test_manifest_key_is_reserved",
+      "id": "tests.test_pairing.TestKeyringSecureStore::test_manifest_key_is_reserved",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestKeyringSecureStore",
+      "name": "test_roundtrip",
+      "id": "tests.test_pairing.TestKeyringSecureStore::test_roundtrip",
+      "time_s": 0.02,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestDefaultSecureStore",
+      "name": "test_env_override_to_memory",
+      "id": "tests.test_pairing.TestDefaultSecureStore::test_env_override_to_memory",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing.TestDefaultSecureStore",
+      "name": "test_returns_some_secure_store",
+      "id": "tests.test_pairing.TestDefaultSecureStore::test_returns_some_secure_store",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestHkdf",
+      "name": "test_default_length_32",
+      "id": "tests.test_pairing_handshake.TestHkdf::test_default_length_32",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestHkdf",
+      "name": "test_deterministic",
+      "id": "tests.test_pairing_handshake.TestHkdf::test_deterministic",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestHkdf",
+      "name": "test_distinct_inputs_distinct_outputs",
+      "id": "tests.test_pairing_handshake.TestHkdf::test_distinct_inputs_distinct_outputs",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestHkdf",
+      "name": "test_rejects_bad_length",
+      "id": "tests.test_pairing_handshake.TestHkdf::test_rejects_bad_length",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_deterministic",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_deterministic",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_field_swap_does_not_collide",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_field_swap_does_not_collide",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_method_change_changes_transcript",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_method_change_changes_transcript",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_rejects_empty_method_or_sid",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_rejects_empty_method_or_sid",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_rejects_negative_or_huge_exp",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_rejects_negative_or_huge_exp",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_rejects_wrong_pubkey_length",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_rejects_wrong_pubkey_length",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestTranscript",
+      "name": "test_transcript_hash_is_32_bytes",
+      "id": "tests.test_pairing_handshake.TestTranscript::test_transcript_hash_is_32_bytes",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingHappyPath",
+      "name": "test_both_sides_derive_same_psk",
+      "id": "tests.test_pairing_handshake.TestPairingHappyPath::test_both_sides_derive_same_psk",
+      "time_s": 0.023,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingHappyPath",
+      "name": "test_each_side_learns_the_other_public_key",
+      "id": "tests.test_pairing_handshake.TestPairingHappyPath::test_each_side_learns_the_other_public_key",
+      "time_s": 0.022,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingHappyPath",
+      "name": "test_psk_symmetric_under_role_swap",
+      "id": "tests.test_pairing_handshake.TestPairingHappyPath::test_psk_symmetric_under_role_swap",
+      "time_s": 0.044,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingFailures",
+      "name": "test_calls_in_wrong_order_raise",
+      "id": "tests.test_pairing_handshake.TestPairingFailures::test_calls_in_wrong_order_raise",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingFailures",
+      "name": "test_initiator_cannot_make_proof_before_learning_responder_key",
+      "id": "tests.test_pairing_handshake.TestPairingFailures::test_initiator_cannot_make_proof_before_learning_responder_key",
+      "time_s": 0.021,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingFailures",
+      "name": "test_rejects_bad_signature_length",
+      "id": "tests.test_pairing_handshake.TestPairingFailures::test_rejects_bad_signature_length",
+      "time_s": 0.022,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingFailures",
+      "name": "test_responder_with_wrong_initiator_pubkey_in_invitation",
+      "id": "tests.test_pairing_handshake.TestPairingFailures::test_responder_with_wrong_initiator_pubkey_in_invitation",
+      "time_s": 0.022,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestPairingFailures",
+      "name": "test_wrong_ot_secret_breaks_handshake",
+      "id": "tests.test_pairing_handshake.TestPairingFailures::test_wrong_ot_secret_breaks_handshake",
+      "time_s": 0.022,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_pairing_handshake.TestSecretsDoNotLeak",
+      "name": "test_result_only_exposes_safe_fields",
+      "id": "tests.test_pairing_handshake.TestSecretsDoNotLeak::test_result_only_exposes_safe_fields",
+      "time_s": 0.022,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_performance.TestBulkInsertPerformance",
+      "name": "test_insert_500_contracts_under_15s",
+      "id": "tests.test_performance.TestBulkInsertPerformance::test_insert_500_contracts_under_15s",
+      "time_s": 2.722,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_performance.TestBulkInsertPerformance",
+      "name": "test_insert_500_expenses_under_15s",
+      "id": "tests.test_performance.TestBulkInsertPerformance::test_insert_500_expenses_under_15s",
+      "time_s": 2.789,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_performance.TestBulkInsertPerformance",
+      "name": "test_list_200_contracts_under_2s",
+      "id": "tests.test_performance.TestBulkInsertPerformance::test_list_200_contracts_under_2s",
+      "time_s": 1.149,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_performance.TestDeadlineCalculationPerformance",
+      "name": "test_deadline_calculation_scales",
+      "id": "tests.test_performance.TestDeadlineCalculationPerformance::test_deadline_calculation_scales",
+      "time_s": 0.126,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_performance.TestNotesListingPerformance",
+      "name": "test_list_attached_in_large_dataset",
+      "id": "tests.test_performance.TestNotesListingPerformance::test_list_attached_in_large_dataset",
+      "time_s": 5.533,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestParseBuildozerSpec",
+      "name": "test_extracts_app_block",
+      "id": "tests.test_playstore_check.TestParseBuildozerSpec::test_extracts_app_block",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestParseBuildozerSpec",
+      "name": "test_handles_missing_file",
+      "id": "tests.test_playstore_check.TestParseBuildozerSpec::test_handles_missing_file",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestParseBuildozerSpec",
+      "name": "test_ignores_comments_and_blanks",
+      "id": "tests.test_playstore_check.TestParseBuildozerSpec::test_ignores_comments_and_blanks",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckSdkLevels",
+      "name": "test_fails_below_min_target",
+      "id": "tests.test_playstore_check.TestCheckSdkLevels::test_fails_below_min_target",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckSdkLevels",
+      "name": "test_flags_too_low_minapi",
+      "id": "tests.test_playstore_check.TestCheckSdkLevels::test_flags_too_low_minapi",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckSdkLevels",
+      "name": "test_passes_at_or_above_target",
+      "id": "tests.test_playstore_check.TestCheckSdkLevels::test_passes_at_or_above_target",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckPermissions",
+      "name": "test_denied_permission_fails",
+      "id": "tests.test_playstore_check.TestCheckPermissions::test_denied_permission_fails",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckPermissions",
+      "name": "test_empty_permissions_passes",
+      "id": "tests.test_playstore_check.TestCheckPermissions::test_empty_permissions_passes",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckPermissions",
+      "name": "test_unknown_permission_warns",
+      "id": "tests.test_playstore_check.TestCheckPermissions::test_unknown_permission_warns",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckPermissions",
+      "name": "test_whitelisted_passes",
+      "id": "tests.test_playstore_check.TestCheckPermissions::test_whitelisted_passes",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckVersioning",
+      "name": "test_invalid_warns",
+      "id": "tests.test_playstore_check.TestCheckVersioning::test_invalid_warns",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckVersioning",
+      "name": "test_missing_fails",
+      "id": "tests.test_playstore_check.TestCheckVersioning::test_missing_fails",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckVersioning",
+      "name": "test_semver_passes",
+      "id": "tests.test_playstore_check.TestCheckVersioning::test_semver_passes",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckSecrets",
+      "name": "test_clean_repo_passes",
+      "id": "tests.test_playstore_check.TestCheckSecrets::test_clean_repo_passes",
+      "time_s": 0.007,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckSecrets",
+      "name": "test_detects_google_api_key",
+      "id": "tests.test_playstore_check.TestCheckSecrets::test_detects_google_api_key",
+      "time_s": 0.005,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckDemoData",
+      "name": "test_fails_when_db_missing",
+      "id": "tests.test_playstore_check.TestCheckDemoData::test_fails_when_db_missing",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCheckDemoData",
+      "name": "test_passes_when_db_and_sqlite_excluded",
+      "id": "tests.test_playstore_check.TestCheckDemoData::test_passes_when_db_and_sqlite_excluded",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCodeSmells",
+      "name": "test_print_only_in_mobile_path",
+      "id": "tests.test_playstore_check.TestCodeSmells::test_print_only_in_mobile_path",
+      "time_s": 0.005,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestCodeSmells",
+      "name": "test_requests_verify_false_is_smell",
+      "id": "tests.test_playstore_check.TestCodeSmells::test_requests_verify_false_is_smell",
+      "time_s": 0.006,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestReportFormats",
+      "name": "test_json_format_valid",
+      "id": "tests.test_playstore_check.TestReportFormats::test_json_format_valid",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestReportFormats",
+      "name": "test_summary_counts",
+      "id": "tests.test_playstore_check.TestReportFormats::test_summary_counts",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestRunChecksIntegration",
+      "name": "test_runs_without_exception",
+      "id": "tests.test_playstore_check.TestRunChecksIntegration::test_runs_without_exception",
+      "time_s": 0.113,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_playstore_check.TestRunChecksIntegration",
+      "name": "test_subset_only",
+      "id": "tests.test_playstore_check.TestRunChecksIntegration::test_subset_only",
+      "time_s": 0.004,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_property.TestPropertyBasedSkipped",
+      "name": "test_skipped",
+      "id": "tests.test_property.TestPropertyBasedSkipped::test_skipped",
+      "time_s": 0.001,
+      "status": "skipped",
+      "message": "hypothesis nicht installiert"
+    },
+    {
+      "classname": "tests.test_smoke.TestRegistry",
+      "name": "test_capabilities_registered",
+      "id": "tests.test_smoke.TestRegistry::test_capabilities_registered",
+      "time_s": 0.152,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRegistry",
+      "name": "test_module_to_module_via_context",
+      "id": "tests.test_smoke.TestRegistry::test_module_to_module_via_context",
+      "time_s": 0.183,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRegistry",
+      "name": "test_unknown_capability_returns_error",
+      "id": "tests.test_smoke.TestRegistry::test_unknown_capability_returns_error",
+      "time_s": 0.187,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestHasCapabilityHonorsDisabled",
+      "name": "test_has_capability_false_when_disabled",
+      "id": "tests.test_smoke.TestHasCapabilityHonorsDisabled::test_has_capability_false_when_disabled",
+      "time_s": 0.19,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestHasCapabilityHonorsDisabled",
+      "name": "test_has_capability_returns_after_enable",
+      "id": "tests.test_smoke.TestHasCapabilityHonorsDisabled::test_has_capability_returns_after_enable",
+      "time_s": 0.195,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCalendarNoMutation",
+      "name": "test_recurring_event_not_mutated_in_db",
+      "id": "tests.test_smoke.TestCalendarNoMutation::test_recurring_event_not_mutated_in_db",
+      "time_s": 0.178,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDestructiveFlags",
+      "name": "test_critical_capabilities_are_marked",
+      "id": "tests.test_smoke.TestDestructiveFlags::test_critical_capabilities_are_marked",
+      "time_s": 0.194,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestModuleStatePersistence",
+      "name": "test_disabled_module_id_persists",
+      "id": "tests.test_smoke.TestModuleStatePersistence::test_disabled_module_id_persists",
+      "time_s": 0.216,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDayStructurePersistence",
+      "name": "test_entry_persists",
+      "id": "tests.test_smoke.TestDayStructurePersistence::test_entry_persists",
+      "time_s": 0.209,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestAssistantLogRotation",
+      "name": "test_log_does_not_grow_unbounded",
+      "id": "tests.test_smoke.TestAssistantLogRotation::test_log_does_not_grow_unbounded",
+      "time_s": 0.326,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSettings",
+      "name": "test_db_value_overrides_default",
+      "id": "tests.test_smoke.TestSettings::test_db_value_overrides_default",
+      "time_s": 0.156,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSettings",
+      "name": "test_defaults_when_empty",
+      "id": "tests.test_smoke.TestSettings::test_defaults_when_empty",
+      "time_s": 0.188,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSettings",
+      "name": "test_env_overrides_db",
+      "id": "tests.test_smoke.TestSettings::test_env_overrides_db",
+      "time_s": 0.185,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSettings",
+      "name": "test_secret_is_not_persisted",
+      "id": "tests.test_smoke.TestSettings::test_secret_is_not_persisted",
+      "time_s": 0.18,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSyncExpandedCapabilities",
+      "name": "test_contract_replays_on_other_device",
+      "id": "tests.test_smoke.TestSyncExpandedCapabilities::test_contract_replays_on_other_device",
+      "time_s": 0.412,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSyncCompaction",
+      "name": "test_compact_drops_oldest",
+      "id": "tests.test_smoke.TestSyncCompaction::test_compact_drops_oldest",
+      "time_s": 0.032,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestHttpSyncRoundTrip",
+      "name": "test_http_provider_append_and_fetch",
+      "id": "tests.test_smoke.TestHttpSyncRoundTrip::test_http_provider_append_and_fetch",
+      "time_s": 0.528,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestGeminiAssistantStub",
+      "name": "test_mode_reports_llm",
+      "id": "tests.test_smoke.TestGeminiAssistantStub::test_mode_reports_llm",
+      "time_s": 0.207,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestGeminiAssistantStub",
+      "name": "test_token_usage_accumulates",
+      "id": "tests.test_smoke.TestGeminiAssistantStub::test_token_usage_accumulates",
+      "time_s": 0.184,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestEncryption",
+      "name": "test_encryption_requires_sqlcipher3",
+      "id": "tests.test_smoke.TestEncryption::test_encryption_requires_sqlcipher3",
+      "time_s": 0.003,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestEncryption",
+      "name": "test_plain_mode_when_no_key",
+      "id": "tests.test_smoke.TestEncryption::test_plain_mode_when_no_key",
+      "time_s": 0.137,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestThreadSafety",
+      "name": "test_concurrent_dispatch",
+      "id": "tests.test_smoke.TestThreadSafety::test_concurrent_dispatch",
+      "time_s": 0.641,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestConversationHistory",
+      "name": "test_history_grows_across_calls",
+      "id": "tests.test_smoke.TestConversationHistory::test_history_grows_across_calls",
+      "time_s": 0.206,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSmtpWiring",
+      "name": "test_smtp_config_from_app_config",
+      "id": "tests.test_smoke.TestSmtpWiring::test_smtp_config_from_app_config",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSyncReentry",
+      "name": "test_non_synced_outer_lets_nested_log",
+      "id": "tests.test_smoke.TestSyncReentry::test_non_synced_outer_lets_nested_log",
+      "time_s": 0.235,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSyncReentry",
+      "name": "test_synced_outer_suppresses_synced_nested",
+      "id": "tests.test_smoke.TestSyncReentry::test_synced_outer_suppresses_synced_nested",
+      "time_s": 0.209,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRecurrenceValidation",
+      "name": "test_invalid_date_rejected",
+      "id": "tests.test_smoke.TestRecurrenceValidation::test_invalid_date_rejected",
+      "time_s": 0.206,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRecurrenceValidation",
+      "name": "test_negative_recurrence_rejected",
+      "id": "tests.test_smoke.TestRecurrenceValidation::test_negative_recurrence_rejected",
+      "time_s": 0.191,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRecurrenceValidation",
+      "name": "test_none_recurrence_ok",
+      "id": "tests.test_smoke.TestRecurrenceValidation::test_none_recurrence_ok",
+      "time_s": 0.173,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRecurrenceValidation",
+      "name": "test_positive_recurrence_ok",
+      "id": "tests.test_smoke.TestRecurrenceValidation::test_positive_recurrence_ok",
+      "time_s": 0.16,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRecurrenceValidation",
+      "name": "test_zero_recurrence_rejected",
+      "id": "tests.test_smoke.TestRecurrenceValidation::test_zero_recurrence_rejected",
+      "time_s": 0.159,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSyncServerCompaction",
+      "name": "test_server_drops_oldest_when_over_limit",
+      "id": "tests.test_smoke.TestSyncServerCompaction::test_server_drops_oldest_when_over_limit",
+      "time_s": 0.583,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestUtcTimestamps",
+      "name": "test_event_timestamp_has_utc_marker",
+      "id": "tests.test_smoke.TestUtcTimestamps::test_event_timestamp_has_utc_marker",
+      "time_s": 0.387,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInboxExtractText",
+      "name": "test_empty_payload_returns_empty_string",
+      "id": "tests.test_smoke.TestInboxExtractText::test_empty_payload_returns_empty_string",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInboxExtractText",
+      "name": "test_multipart_without_textplain_returns_empty",
+      "id": "tests.test_smoke.TestInboxExtractText::test_multipart_without_textplain_returns_empty",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSqlCipherValidation",
+      "name": "test_nul_byte_rejected",
+      "id": "tests.test_smoke.TestSqlCipherValidation::test_nul_byte_rejected",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSqlCipherValidation",
+      "name": "test_too_short_rejected",
+      "id": "tests.test_smoke.TestSqlCipherValidation::test_too_short_rejected",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCompleteTaskCatchUp",
+      "name": "test_overdue_task_advances_rotation_multiple_times",
+      "id": "tests.test_smoke.TestCompleteTaskCatchUp::test_overdue_task_advances_rotation_multiple_times",
+      "time_s": 0.463,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestPrintFileNoShell",
+      "name": "test_missing_file_returns_error",
+      "id": "tests.test_smoke.TestPrintFileNoShell::test_missing_file_returns_error",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestPrintFileNoShell",
+      "name": "test_path_with_spaces_handled",
+      "id": "tests.test_smoke.TestPrintFileNoShell::test_path_with_spaces_handled",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmJsonParsing",
+      "name": "test_fenced_json",
+      "id": "tests.test_smoke.TestLlmJsonParsing::test_fenced_json",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmJsonParsing",
+      "name": "test_fenced_without_lang",
+      "id": "tests.test_smoke.TestLlmJsonParsing::test_fenced_without_lang",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmJsonParsing",
+      "name": "test_invalid_returns_empty",
+      "id": "tests.test_smoke.TestLlmJsonParsing::test_invalid_returns_empty",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmJsonParsing",
+      "name": "test_plain_json",
+      "id": "tests.test_smoke.TestLlmJsonParsing::test_plain_json",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmJsonParsing",
+      "name": "test_prose_with_embedded_json",
+      "id": "tests.test_smoke.TestLlmJsonParsing::test_prose_with_embedded_json",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDeleteCapabilities",
+      "name": "test_delete_caps_are_destructive",
+      "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_caps_are_destructive",
+      "time_s": 0.474,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDeleteCapabilities",
+      "name": "test_delete_contract_round_trip",
+      "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_contract_round_trip",
+      "time_s": 0.404,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDeleteCapabilities",
+      "name": "test_delete_member_keeps_orphan_contracts",
+      "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_member_keeps_orphan_contracts",
+      "time_s": 0.353,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDeleteCapabilities",
+      "name": "test_delete_unknown_returns_error",
+      "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_unknown_returns_error",
+      "time_s": 0.298,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInputValidation",
+      "name": "test_calendar_unknown_category_normalizes",
+      "id": "tests.test_smoke.TestInputValidation::test_calendar_unknown_category_normalizes",
+      "time_s": 0.356,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInputValidation",
+      "name": "test_family_task_rejects_zero_interval",
+      "id": "tests.test_smoke.TestInputValidation::test_family_task_rejects_zero_interval",
+      "time_s": 0.59,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInputValidation",
+      "name": "test_finance_rejects_bad_date",
+      "id": "tests.test_smoke.TestInputValidation::test_finance_rejects_bad_date",
+      "time_s": 0.584,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInputValidation",
+      "name": "test_finance_rejects_negative_amount",
+      "id": "tests.test_smoke.TestInputValidation::test_finance_rejects_negative_amount",
+      "time_s": 0.74,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInputValidation",
+      "name": "test_social_rejects_empty_name",
+      "id": "tests.test_smoke.TestInputValidation::test_social_rejects_empty_name",
+      "time_s": 0.403,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestInputValidation",
+      "name": "test_social_rejects_non_positive_cadence",
+      "id": "tests.test_smoke.TestInputValidation::test_social_rejects_non_positive_cadence",
+      "time_s": 0.762,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmProposalValidation",
+      "name": "test_missing_required_dropped",
+      "id": "tests.test_smoke.TestLlmProposalValidation::test_missing_required_dropped",
+      "time_s": 0.834,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLlmProposalValidation",
+      "name": "test_unknown_target_capability_dropped",
+      "id": "tests.test_smoke.TestLlmProposalValidation::test_unknown_target_capability_dropped",
+      "time_s": 0.961,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDisabledModuleSurfaced",
+      "name": "test_disabled_contracts_yields_warning_in_finance_events",
+      "id": "tests.test_smoke.TestDisabledModuleSurfaced::test_disabled_contracts_yields_warning_in_finance_events",
+      "time_s": 0.752,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestDiagnose",
+      "name": "test_collect_returns_expected_shape",
+      "id": "tests.test_smoke.TestDiagnose::test_collect_returns_expected_shape",
+      "time_s": 1.066,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBackupAndRestore",
+      "name": "test_list_backups_sorted_newest_first",
+      "id": "tests.test_smoke.TestBackupAndRestore::test_list_backups_sorted_newest_first",
+      "time_s": 1.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBackupAndRestore",
+      "name": "test_online_backup_creates_readable_copy",
+      "id": "tests.test_smoke.TestBackupAndRestore::test_online_backup_creates_readable_copy",
+      "time_s": 0.562,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBackupAndRestore",
+      "name": "test_restore_overwrites_live_db",
+      "id": "tests.test_smoke.TestBackupAndRestore::test_restore_overwrites_live_db",
+      "time_s": 0.838,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCsvExport",
+      "name": "test_export_all_writes_five_files",
+      "id": "tests.test_smoke.TestCsvExport::test_export_all_writes_five_files",
+      "time_s": 0.722,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCsvExport",
+      "name": "test_export_contracts_writes_csv",
+      "id": "tests.test_smoke.TestCsvExport::test_export_contracts_writes_csv",
+      "time_s": 0.328,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSearch",
+      "name": "test_no_hit",
+      "id": "tests.test_smoke.TestSearch::test_no_hit",
+      "time_s": 0.829,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSearch",
+      "name": "test_search_finds_multiple_sources",
+      "id": "tests.test_smoke.TestSearch::test_search_finds_multiple_sources",
+      "time_s": 0.259,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSearch",
+      "name": "test_short_query_rejected",
+      "id": "tests.test_smoke.TestSearch::test_short_query_rejected",
+      "time_s": 0.217,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProposalUpdate",
+      "name": "test_update_blocked_after_accept",
+      "id": "tests.test_smoke.TestProposalUpdate::test_update_blocked_after_accept",
+      "time_s": 0.207,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProposalUpdate",
+      "name": "test_update_payload_replaces_value",
+      "id": "tests.test_smoke.TestProposalUpdate::test_update_payload_replaces_value",
+      "time_s": 0.205,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProposalUpdate",
+      "name": "test_update_then_accept_uses_new_payload",
+      "id": "tests.test_smoke.TestProposalUpdate::test_update_then_accept_uses_new_payload",
+      "time_s": 0.165,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRegistryGetCapability",
+      "name": "test_returns_capability_object",
+      "id": "tests.test_smoke.TestRegistryGetCapability::test_returns_capability_object",
+      "time_s": 0.151,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRegistryGetCapability",
+      "name": "test_returns_none_for_disabled_module",
+      "id": "tests.test_smoke.TestRegistryGetCapability::test_returns_none_for_disabled_module",
+      "time_s": 0.173,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestRegistryGetCapability",
+      "name": "test_returns_none_for_unknown",
+      "id": "tests.test_smoke.TestRegistryGetCapability::test_returns_none_for_unknown",
+      "time_s": 0.182,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestI18n",
+      "name": "test_default_german",
+      "id": "tests.test_smoke.TestI18n::test_default_german",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestI18n",
+      "name": "test_en_missing_key_falls_back_to_de",
+      "id": "tests.test_smoke.TestI18n::test_en_missing_key_falls_back_to_de",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestI18n",
+      "name": "test_english_translation",
+      "id": "tests.test_smoke.TestI18n::test_english_translation",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestI18n",
+      "name": "test_missing_key_returns_key",
+      "id": "tests.test_smoke.TestI18n::test_missing_key_returns_key",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestI18n",
+      "name": "test_missing_key_with_default",
+      "id": "tests.test_smoke.TestI18n::test_missing_key_with_default",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestI18n",
+      "name": "test_unknown_language_falls_back_to_default",
+      "id": "tests.test_smoke.TestI18n::test_unknown_language_falls_back_to_default",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBackupSqlCipherPath",
+      "name": "test_sqlcipher_path_rejects_short_key",
+      "id": "tests.test_smoke.TestBackupSqlCipherPath::test_sqlcipher_path_rejects_short_key",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBackupSqlCipherPath",
+      "name": "test_sqlcipher_path_requires_key",
+      "id": "tests.test_smoke.TestBackupSqlCipherPath::test_sqlcipher_path_requires_key",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestSyncServerTls",
+      "name": "test_serve_with_bad_cert_path_raises",
+      "id": "tests.test_smoke.TestSyncServerTls::test_serve_with_bad_cert_path_raises",
+      "time_s": 0.004,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCsvImportRoundTrip",
+      "name": "test_export_then_import_reproduces_data",
+      "id": "tests.test_smoke.TestCsvImportRoundTrip::test_export_then_import_reproduces_data",
+      "time_s": 0.476,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCsvImportRoundTrip",
+      "name": "test_invalid_dates_dont_crash",
+      "id": "tests.test_smoke.TestCsvImportRoundTrip::test_invalid_dates_dont_crash",
+      "time_s": 0.214,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestCsvImportRoundTrip",
+      "name": "test_missing_csv_files_are_skipped",
+      "id": "tests.test_smoke.TestCsvImportRoundTrip::test_missing_csv_files_are_skipped",
+      "time_s": 0.241,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestStatistics",
+      "name": "test_contracts_overview_top_3",
+      "id": "tests.test_smoke.TestStatistics::test_contracts_overview_top_3",
+      "time_s": 0.226,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestStatistics",
+      "name": "test_expenses_per_category_aggregates",
+      "id": "tests.test_smoke.TestStatistics::test_expenses_per_category_aggregates",
+      "time_s": 0.216,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestStatistics",
+      "name": "test_expenses_per_month_returns_buckets",
+      "id": "tests.test_smoke.TestStatistics::test_expenses_per_month_returns_buckets",
+      "time_s": 0.217,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestStatistics",
+      "name": "test_rejects_zero_months",
+      "id": "tests.test_smoke.TestStatistics::test_rejects_zero_months",
+      "time_s": 0.223,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestStatistics",
+      "name": "test_yearly_summary",
+      "id": "tests.test_smoke.TestStatistics::test_yearly_summary",
+      "time_s": 0.24,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestUtcTimestampsInDb",
+      "name": "test_assistant_log_uses_utc",
+      "id": "tests.test_smoke.TestUtcTimestampsInDb::test_assistant_log_uses_utc",
+      "time_s": 0.218,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestUtcTimestampsInDb",
+      "name": "test_contract_created_at_uses_utc",
+      "id": "tests.test_smoke.TestUtcTimestampsInDb::test_contract_created_at_uses_utc",
+      "time_s": 0.203,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_db_path_default",
+      "id": "tests.test_smoke.TestProfile::test_db_path_default",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_db_path_with_profile",
+      "id": "tests.test_smoke.TestProfile::test_db_path_with_profile",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_explicit_overrides_env",
+      "id": "tests.test_smoke.TestProfile::test_explicit_overrides_env",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_resolve_profile_uses_env",
+      "id": "tests.test_smoke.TestProfile::test_resolve_profile_uses_env",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_sanitize_profile",
+      "id": "tests.test_smoke.TestProfile::test_sanitize_profile",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_state_dir_default_and_profile",
+      "id": "tests.test_smoke.TestProfile::test_state_dir_default_and_profile",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProfile",
+      "name": "test_two_profiles_use_separate_files",
+      "id": "tests.test_smoke.TestProfile::test_two_profiles_use_separate_files",
+      "time_s": 0.371,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestAutoBackup",
+      "name": "test_prune_old_backups_keeps_newest",
+      "id": "tests.test_smoke.TestAutoBackup::test_prune_old_backups_keeps_newest",
+      "time_s": 0.231,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestAutoBackup",
+      "name": "test_run_once_creates_backup_and_prunes",
+      "id": "tests.test_smoke.TestAutoBackup::test_run_once_creates_backup_and_prunes",
+      "time_s": 0.288,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestIcalExport",
+      "name": "test_export_creates_valid_ical",
+      "id": "tests.test_smoke.TestIcalExport::test_export_creates_valid_ical",
+      "time_s": 0.194,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestVCardExport",
+      "name": "test_export_creates_valid_vcard",
+      "id": "tests.test_smoke.TestVCardExport::test_export_creates_valid_vcard",
+      "time_s": 0.187,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestYearlyPdfReport",
+      "name": "test_pdf_report_produced",
+      "id": "tests.test_smoke.TestYearlyPdfReport::test_pdf_report_produced",
+      "time_s": 0.198,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestNotesModule",
+      "name": "test_add_list_update_attach_delete",
+      "id": "tests.test_smoke.TestNotesModule::test_add_list_update_attach_delete",
+      "time_s": 0.189,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestNotesModule",
+      "name": "test_empty_title_rejected",
+      "id": "tests.test_smoke.TestNotesModule::test_empty_title_rejected",
+      "time_s": 0.197,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestNotesModule",
+      "name": "test_invalid_entity_type_rejected",
+      "id": "tests.test_smoke.TestNotesModule::test_invalid_entity_type_rejected",
+      "time_s": 0.199,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestNotesModule",
+      "name": "test_search_finds_notes",
+      "id": "tests.test_smoke.TestNotesModule::test_search_finds_notes",
+      "time_s": 0.192,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestIcalImportRoundTrip",
+      "name": "test_import_missing_file_returns_error",
+      "id": "tests.test_smoke.TestIcalImportRoundTrip::test_import_missing_file_returns_error",
+      "time_s": 0.178,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestIcalImportRoundTrip",
+      "name": "test_roundtrip",
+      "id": "tests.test_smoke.TestIcalImportRoundTrip::test_roundtrip",
+      "time_s": 0.478,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestVCardImportRoundTrip",
+      "name": "test_roundtrip_preserves_rhythmus",
+      "id": "tests.test_smoke.TestVCardImportRoundTrip::test_roundtrip_preserves_rhythmus",
+      "time_s": 0.365,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLamportCrdt",
+      "name": "test_clock_ticks_monotonically",
+      "id": "tests.test_smoke.TestLamportCrdt::test_clock_ticks_monotonically",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLamportCrdt",
+      "name": "test_events_get_lamport_counter",
+      "id": "tests.test_smoke.TestLamportCrdt::test_events_get_lamport_counter",
+      "time_s": 0.192,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLamportCrdt",
+      "name": "test_replay_order_uses_lamport",
+      "id": "tests.test_smoke.TestLamportCrdt::test_replay_order_uses_lamport",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBulkOperations",
+      "name": "test_bulk_complete_overdue_tasks",
+      "id": "tests.test_smoke.TestBulkOperations::test_bulk_complete_overdue_tasks",
+      "time_s": 0.255,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBulkOperations",
+      "name": "test_bulk_delete_archived",
+      "id": "tests.test_smoke.TestBulkOperations::test_bulk_delete_archived",
+      "time_s": 0.232,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestBulkOperations",
+      "name": "test_bulk_reject_open_proposals",
+      "id": "tests.test_smoke.TestBulkOperations::test_bulk_reject_open_proposals",
+      "time_s": 0.248,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_assistant_ask_lock_serializes",
+      "id": "tests.test_smoke.TestReviewFixes::test_assistant_ask_lock_serializes",
+      "time_s": 0.158,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_bulk_complete_overdue_dispatches_individual_tasks",
+      "id": "tests.test_smoke.TestReviewFixes::test_bulk_complete_overdue_dispatches_individual_tasks",
+      "time_s": 0.194,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_bulk_delete_archived_uses_repository_method",
+      "id": "tests.test_smoke.TestReviewFixes::test_bulk_delete_archived_uses_repository_method",
+      "time_s": 0.218,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_deleting_contract_cleans_attached_notes",
+      "id": "tests.test_smoke.TestReviewFixes::test_deleting_contract_cleans_attached_notes",
+      "time_s": 0.205,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_geometry_validation",
+      "id": "tests.test_smoke.TestReviewFixes::test_geometry_validation",
+      "time_s": 0.188,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_http_provider_has_read_all",
+      "id": "tests.test_smoke.TestReviewFixes::test_http_provider_has_read_all",
+      "time_s": 4.253,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_ical_export_folds_at_byte_boundary",
+      "id": "tests.test_smoke.TestReviewFixes::test_ical_export_folds_at_byte_boundary",
+      "time_s": 0.28,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_ical_import_rejects_nonexistent",
+      "id": "tests.test_smoke.TestReviewFixes::test_ical_import_rejects_nonexistent",
+      "time_s": 0.233,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_ical_import_rejects_path_outside_or_bad_extension",
+      "id": "tests.test_smoke.TestReviewFixes::test_ical_import_rejects_path_outside_or_bad_extension",
+      "time_s": 0.237,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_ical_import_validates_recurrence",
+      "id": "tests.test_smoke.TestReviewFixes::test_ical_import_validates_recurrence",
+      "time_s": 0.186,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_initial_lamport_ignores_other_devices",
+      "id": "tests.test_smoke.TestReviewFixes::test_initial_lamport_ignores_other_devices",
+      "time_s": 0.138,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_internal_capabilities_hidden_from_llm",
+      "id": "tests.test_smoke.TestReviewFixes::test_internal_capabilities_hidden_from_llm",
+      "time_s": 0.145,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_notes_entity_id_zero_preserved",
+      "id": "tests.test_smoke.TestReviewFixes::test_notes_entity_id_zero_preserved",
+      "time_s": 0.166,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_rrule_uses_yearly_for_365",
+      "id": "tests.test_smoke.TestReviewFixes::test_rrule_uses_yearly_for_365",
+      "time_s": 0.189,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_sync_event_args_deep_copy",
+      "id": "tests.test_smoke.TestReviewFixes::test_sync_event_args_deep_copy",
+      "time_s": 0.181,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_unescape_preserves_real_null_bytes",
+      "id": "tests.test_smoke.TestReviewFixes::test_unescape_preserves_real_null_bytes",
+      "time_s": 0.169,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_vcard_import_clamps_cadence",
+      "id": "tests.test_smoke.TestReviewFixes::test_vcard_import_clamps_cadence",
+      "time_s": 0.197,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestReviewFixes",
+      "name": "test_vcard_import_rejects_too_large",
+      "id": "tests.test_smoke.TestReviewFixes::test_vcard_import_rejects_too_large",
+      "time_s": 0.201,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestProposalsFlow",
+      "name": "test_price_change_round_trip",
+      "id": "tests.test_smoke.TestProposalsFlow::test_price_change_round_trip",
+      "time_s": 0.226,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_action_apply_token_rejects_empty",
+      "id": "tests.test_smoke.TestLicensing::test_action_apply_token_rejects_empty",
+      "time_s": 0.195,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_action_apply_token_rejects_garbage",
+      "id": "tests.test_smoke.TestLicensing::test_action_apply_token_rejects_garbage",
+      "time_s": 0.147,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_action_apply_token_round_trip",
+      "id": "tests.test_smoke.TestLicensing::test_action_apply_token_round_trip",
+      "time_s": 0.202,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_action_start_trial_success_then_blocked",
+      "id": "tests.test_smoke.TestLicensing::test_action_start_trial_success_then_blocked",
+      "time_s": 0.179,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_activate_pro_sets_year_for_annual",
+      "id": "tests.test_smoke.TestLicensing::test_activate_pro_sets_year_for_annual",
+      "time_s": 0.301,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_activation_rejects_free_tier",
+      "id": "tests.test_smoke.TestLicensing::test_activation_rejects_free_tier",
+      "time_s": 0.196,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_activation_requires_withdrawal_waiver",
+      "id": "tests.test_smoke.TestLicensing::test_activation_requires_withdrawal_waiver",
+      "time_s": 0.349,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_affiliate_block_empty_when_no_partners",
+      "id": "tests.test_smoke.TestLicensing::test_affiliate_block_empty_when_no_partners",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_affiliate_block_format",
+      "id": "tests.test_smoke.TestLicensing::test_affiliate_block_format",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_affiliate_block_in_letter_text_is_static",
+      "id": "tests.test_smoke.TestLicensing::test_affiliate_block_in_letter_text_is_static",
+      "time_s": 0.273,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_all_quotes_returns_pricing_tiers",
+      "id": "tests.test_smoke.TestLicensing::test_all_quotes_returns_pricing_tiers",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_annual_applies_20_percent_discount",
+      "id": "tests.test_smoke.TestLicensing::test_annual_applies_20_percent_discount",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_annual_savings_vs_monthly",
+      "id": "tests.test_smoke.TestLicensing::test_annual_savings_vs_monthly",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_annual_total_matches_readme_base_tier",
+      "id": "tests.test_smoke.TestLicensing::test_annual_total_matches_readme_base_tier",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_apply_token_persists_token_string",
+      "id": "tests.test_smoke.TestLicensing::test_apply_token_persists_token_string",
+      "time_s": 0.227,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_build_pricing_rows_marks_recommended",
+      "id": "tests.test_smoke.TestLicensing::test_build_pricing_rows_marks_recommended",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_build_pricing_rows_skips_family_above_cap",
+      "id": "tests.test_smoke.TestLicensing::test_build_pricing_rows_skips_family_above_cap",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_cancellation_includes_affiliate_suggestions",
+      "id": "tests.test_smoke.TestLicensing::test_cancellation_includes_affiliate_suggestions",
+      "time_s": 0.223,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_chf_conversion_applies_swiss_vat",
+      "id": "tests.test_smoke.TestLicensing::test_chf_conversion_applies_swiss_vat",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_family_tier_flat_price",
+      "id": "tests.test_smoke.TestLicensing::test_family_tier_flat_price",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_family_tier_rejects_too_many_persons",
+      "id": "tests.test_smoke.TestLicensing::test_family_tier_rejects_too_many_persons",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_format_quote_de_mentions_savings",
+      "id": "tests.test_smoke.TestLicensing::test_format_quote_de_mentions_savings",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_free_license_restricts_modules",
+      "id": "tests.test_smoke.TestLicensing::test_free_license_restricts_modules",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_free_tier_is_zero",
+      "id": "tests.test_smoke.TestLicensing::test_free_tier_is_zero",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_gate_allows_everything_for_pro",
+      "id": "tests.test_smoke.TestLicensing::test_gate_allows_everything_for_pro",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_gate_blocks_ai_capability_for_free",
+      "id": "tests.test_smoke.TestLicensing::test_gate_blocks_ai_capability_for_free",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_gate_blocks_pro_module_for_free",
+      "id": "tests.test_smoke.TestLicensing::test_gate_blocks_pro_module_for_free",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_gate_open_modules_always_accessible",
+      "id": "tests.test_smoke.TestLicensing::test_gate_open_modules_always_accessible",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_grandfathered_keeps_read_but_blocks_write",
+      "id": "tests.test_smoke.TestLicensing::test_grandfathered_keeps_read_but_blocks_write",
+      "time_s": 0.182,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_grandfathering_migration_runs_once",
+      "id": "tests.test_smoke.TestLicensing::test_grandfathering_migration_runs_once",
+      "time_s": 0.192,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_grandfathering_skipped_for_empty_db",
+      "id": "tests.test_smoke.TestLicensing::test_grandfathering_skipped_for_empty_db",
+      "time_s": 0.161,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_invalid_persons_rejected",
+      "id": "tests.test_smoke.TestLicensing::test_invalid_persons_rejected",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_issuer_signs_token_and_sends_mail",
+      "id": "tests.test_smoke.TestLicensing::test_issuer_signs_token_and_sends_mail",
+      "time_s": 0.01,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_issuer_skips_cancellations",
+      "id": "tests.test_smoke.TestLicensing::test_issuer_skips_cancellations",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_lemon_signature_and_parse",
+      "id": "tests.test_smoke.TestLicensing::test_lemon_signature_and_parse",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_lemon_uninteresting_event_returns_none",
+      "id": "tests.test_smoke.TestLicensing::test_lemon_uninteresting_event_returns_none",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_license_round_trip",
+      "id": "tests.test_smoke.TestLicensing::test_license_round_trip",
+      "time_s": 0.2,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_load_license_defaults_to_free",
+      "id": "tests.test_smoke.TestLicensing::test_load_license_defaults_to_free",
+      "time_s": 0.194,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_load_license_drops_tampered_token",
+      "id": "tests.test_smoke.TestLicensing::test_load_license_drops_tampered_token",
+      "time_s": 0.199,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_load_license_handles_corrupt_values",
+      "id": "tests.test_smoke.TestLicensing::test_load_license_handles_corrupt_values",
+      "time_s": 0.209,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_load_license_keeps_expired_token_for_grace",
+      "id": "tests.test_smoke.TestLicensing::test_load_license_keeps_expired_token_for_grace",
+      "time_s": 0.217,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_mobile_pricing_has_markup",
+      "id": "tests.test_smoke.TestLicensing::test_mobile_pricing_has_markup",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_monthly_base_two_persons",
+      "id": "tests.test_smoke.TestLicensing::test_monthly_base_two_persons",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_monthly_charges_extra_persons",
+      "id": "tests.test_smoke.TestLicensing::test_monthly_charges_extra_persons",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_paddle_parse_event",
+      "id": "tests.test_smoke.TestLicensing::test_paddle_parse_event",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_paddle_signature_round_trip",
+      "id": "tests.test_smoke.TestLicensing::test_paddle_signature_round_trip",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_paddle_unknown_price_rejected",
+      "id": "tests.test_smoke.TestLicensing::test_paddle_unknown_price_rejected",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_pricing_onboarded_flag_persists",
+      "id": "tests.test_smoke.TestLicensing::test_pricing_onboarded_flag_persists",
+      "time_s": 0.219,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_pro_downgrades_after_grace_period",
+      "id": "tests.test_smoke.TestLicensing::test_pro_downgrades_after_grace_period",
+      "time_s": 0.238,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_pro_license_unlocks_everything",
+      "id": "tests.test_smoke.TestLicensing::test_pro_license_unlocks_everything",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_recommended_tier_picks_family_above_break_even",
+      "id": "tests.test_smoke.TestLicensing::test_recommended_tier_picks_family_above_break_even",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_registry_pre_dispatch_hook_blocks_calls",
+      "id": "tests.test_smoke.TestLicensing::test_registry_pre_dispatch_hook_blocks_calls",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_renewal_event_for_pro_near_expiry",
+      "id": "tests.test_smoke.TestLicensing::test_renewal_event_for_pro_near_expiry",
+      "time_s": 0.003,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_renewal_event_for_trial_near_end",
+      "id": "tests.test_smoke.TestLicensing::test_renewal_event_for_trial_near_end",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_renewal_event_in_grace_period",
+      "id": "tests.test_smoke.TestLicensing::test_renewal_event_in_grace_period",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_renewal_event_outside_warning_window",
+      "id": "tests.test_smoke.TestLicensing::test_renewal_event_outside_warning_window",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_renewal_no_event_for_free",
+      "id": "tests.test_smoke.TestLicensing::test_renewal_no_event_for_free",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_revocation_supersedes_grace_period",
+      "id": "tests.test_smoke.TestLicensing::test_revocation_supersedes_grace_period",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_revoked_token_is_rejected",
+      "id": "tests.test_smoke.TestLicensing::test_revoked_token_is_rejected",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_scheduler_picks_up_extra_event_sources",
+      "id": "tests.test_smoke.TestLicensing::test_scheduler_picks_up_extra_event_sources",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_sidebar_indicator_strings",
+      "id": "tests.test_smoke.TestLicensing::test_sidebar_indicator_strings",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_sign_token_auto_assigns_token_id",
+      "id": "tests.test_smoke.TestLicensing::test_sign_token_auto_assigns_token_id",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_single_person_pays_base_price",
+      "id": "tests.test_smoke.TestLicensing::test_single_person_pays_base_price",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_subscription_info_for_free_has_no_subscription",
+      "id": "tests.test_smoke.TestLicensing::test_subscription_info_for_free_has_no_subscription",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_subscription_info_for_pro_shows_dates",
+      "id": "tests.test_smoke.TestLicensing::test_subscription_info_for_pro_shows_dates",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_subscription_info_marks_grace_period",
+      "id": "tests.test_smoke.TestLicensing::test_subscription_info_marks_grace_period",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_tier_status_for_free",
+      "id": "tests.test_smoke.TestLicensing::test_tier_status_for_free",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_tier_status_for_trial_shows_days_left",
+      "id": "tests.test_smoke.TestLicensing::test_tier_status_for_trial_shows_days_left",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_tier_status_in_grace_period",
+      "id": "tests.test_smoke.TestLicensing::test_tier_status_in_grace_period",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_token_expired_raises_subclass_with_payload",
+      "id": "tests.test_smoke.TestLicensing::test_token_expired_raises_subclass_with_payload",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_token_rejects_expired",
+      "id": "tests.test_smoke.TestLicensing::test_token_rejects_expired",
+      "time_s": 0.002,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_token_rejects_tampered_payload",
+      "id": "tests.test_smoke.TestLicensing::test_token_rejects_tampered_payload",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_token_sign_verify_round_trip",
+      "id": "tests.test_smoke.TestLicensing::test_token_sign_verify_round_trip",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_token_without_configured_pubkey_rejected",
+      "id": "tests.test_smoke.TestLicensing::test_token_without_configured_pubkey_rejected",
+      "time_s": 0.001,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_trial_is_not_reusable",
+      "id": "tests.test_smoke.TestLicensing::test_trial_is_not_reusable",
+      "time_s": 0.273,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_trial_starts_and_expires",
+      "id": "tests.test_smoke.TestLicensing::test_trial_starts_and_expires",
+      "time_s": 0.194,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_webhook_server_end_to_end",
+      "id": "tests.test_smoke.TestLicensing::test_webhook_server_end_to_end",
+      "time_s": 0.52,
+      "status": "passed",
+      "message": ""
+    },
+    {
+      "classname": "tests.test_smoke.TestLicensing",
+      "name": "test_webhook_server_rejects_bad_signature",
+      "id": "tests.test_smoke.TestLicensing::test_webhook_server_rejects_bad_signature",
+      "time_s": 0.518,
+      "status": "passed",
+      "message": ""
+    }
+  ],
+  "totals": {
+    "passed": 478,
+    "failed": 0,
+    "error": 0,
+    "skipped": 3,
+    "duration_s": 140.1590000000012,
+    "count": 481
+  },
+  "by_file": {
+    "test_members_scenarios": {
+      "passed": 18,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 67.377,
+      "count": 18
+    },
+    "test_pairwise_matrix": {
+      "passed": 13,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 4.528,
+      "count": 13
+    },
+    "test_properties_concept": {
+      "passed": 29,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 9.691000000000008,
+      "count": 29
+    },
+    "test_protocol_generator": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.048,
+      "count": 4
+    },
+    "test_release_gate": {
+      "passed": 10,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.051,
+      "count": 10
+    },
+    "test_roles_permissions": {
+      "passed": 69,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.913,
+      "count": 69
+    },
+    "TestGuiImports": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.097,
+      "count": 5
+    },
+    "TestMainImports": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestSmtpVersand": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.014000000000000002,
+      "count": 4
+    },
+    "TestImapAbruf": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.195,
+      "count": 1
+    },
+    "TestOcrParsing": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.003,
+      "count": 2
+    },
+    "TestPrinten": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.012,
+      "count": 3
+    },
+    "TestHttpsSyncServer": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.766,
+      "count": 1
+    },
+    "TestSqlCipherRealRoundTrip": {
+      "passed": 0,
+      "failed": 0,
+      "error": 0,
+      "skipped": 1,
+      "duration_s": 0.001,
+      "count": 1
+    },
+    "TestGeminiRealApi": {
+      "passed": 0,
+      "failed": 0,
+      "error": 0,
+      "skipped": 1,
+      "duration_s": 0.0,
+      "count": 1
+    },
+    "TestFormatCurrency": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.005,
+      "count": 5
+    },
+    "TestDaysUntil": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.004,
+      "count": 4
+    },
+    "TestRelativeWhen": {
+      "passed": 6,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.006,
+      "count": 6
+    },
+    "TestUrgencyColor": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.005,
+      "count": 5
+    },
+    "TestTruncate": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.003,
+      "count": 3
+    },
+    "TestGroupByModule": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestDashboardSummary": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.003,
+      "count": 3
+    },
+    "TestIdentity": {
+      "passed": 7,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.007,
+      "count": 7
+    },
+    "TestFingerprint": {
+      "passed": 6,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.006,
+      "count": 6
+    },
+    "TestInMemorySecureStore": {
+      "passed": 8,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.008,
+      "count": 8
+    },
+    "TestKeyringSecureStore": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.095,
+      "count": 4
+    },
+    "TestDefaultSecureStore": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestHkdf": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.004,
+      "count": 4
+    },
+    "TestTranscript": {
+      "passed": 7,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.007,
+      "count": 7
+    },
+    "TestPairingHappyPath": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.089,
+      "count": 3
+    },
+    "TestPairingFailures": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.088,
+      "count": 5
+    },
+    "TestSecretsDoNotLeak": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.022,
+      "count": 1
+    },
+    "TestBulkInsertPerformance": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 6.66,
+      "count": 3
+    },
+    "TestDeadlineCalculationPerformance": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.126,
+      "count": 1
+    },
+    "TestNotesListingPerformance": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 5.533,
+      "count": 1
+    },
+    "TestParseBuildozerSpec": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.005,
+      "count": 3
+    },
+    "TestCheckSdkLevels": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.003,
+      "count": 3
+    },
+    "TestCheckPermissions": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.004,
+      "count": 4
+    },
+    "TestCheckVersioning": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.003,
+      "count": 3
+    },
+    "TestCheckSecrets": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.012,
+      "count": 2
+    },
+    "TestCheckDemoData": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestCodeSmells": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.011,
+      "count": 2
+    },
+    "TestReportFormats": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestRunChecksIntegration": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.117,
+      "count": 2
+    },
+    "TestPropertyBasedSkipped": {
+      "passed": 0,
+      "failed": 0,
+      "error": 0,
+      "skipped": 1,
+      "duration_s": 0.001,
+      "count": 1
+    },
+    "TestRegistry": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.522,
+      "count": 3
+    },
+    "TestHasCapabilityHonorsDisabled": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.385,
+      "count": 2
+    },
+    "TestCalendarNoMutation": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.178,
+      "count": 1
+    },
+    "TestDestructiveFlags": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.194,
+      "count": 1
+    },
+    "TestModuleStatePersistence": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.216,
+      "count": 1
+    },
+    "TestDayStructurePersistence": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.209,
+      "count": 1
+    },
+    "TestAssistantLogRotation": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.326,
+      "count": 1
+    },
+    "TestSettings": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.7089999999999999,
+      "count": 4
+    },
+    "TestSyncExpandedCapabilities": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.412,
+      "count": 1
+    },
+    "TestSyncCompaction": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.032,
+      "count": 1
+    },
+    "TestHttpSyncRoundTrip": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.528,
+      "count": 1
+    },
+    "TestGeminiAssistantStub": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.391,
+      "count": 2
+    },
+    "TestEncryption": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.14,
+      "count": 2
+    },
+    "TestThreadSafety": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.641,
+      "count": 1
+    },
+    "TestConversationHistory": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.206,
+      "count": 1
+    },
+    "TestSmtpWiring": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.001,
+      "count": 1
+    },
+    "TestSyncReentry": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.44399999999999995,
+      "count": 2
+    },
+    "TestRecurrenceValidation": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.8890000000000001,
+      "count": 5
+    },
+    "TestSyncServerCompaction": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.583,
+      "count": 1
+    },
+    "TestUtcTimestamps": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.387,
+      "count": 1
+    },
+    "TestInboxExtractText": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestSqlCipherValidation": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestCompleteTaskCatchUp": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.463,
+      "count": 1
+    },
+    "TestPrintFileNoShell": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.002,
+      "count": 2
+    },
+    "TestLlmJsonParsing": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.005,
+      "count": 5
+    },
+    "TestDeleteCapabilities": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.529,
+      "count": 4
+    },
+    "TestInputValidation": {
+      "passed": 6,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 3.4349999999999996,
+      "count": 6
+    },
+    "TestLlmProposalValidation": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.795,
+      "count": 2
+    },
+    "TestDisabledModuleSurfaced": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.752,
+      "count": 1
+    },
+    "TestDiagnose": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.066,
+      "count": 1
+    },
+    "TestBackupAndRestore": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 2.402,
+      "count": 3
+    },
+    "TestCsvExport": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.05,
+      "count": 2
+    },
+    "TestSearch": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.3050000000000002,
+      "count": 3
+    },
+    "TestProposalUpdate": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.577,
+      "count": 3
+    },
+    "TestRegistryGetCapability": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.506,
+      "count": 3
+    },
+    "TestI18n": {
+      "passed": 6,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.008,
+      "count": 6
+    },
+    "TestBackupSqlCipherPath": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.004,
+      "count": 2
+    },
+    "TestSyncServerTls": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.004,
+      "count": 1
+    },
+    "TestCsvImportRoundTrip": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.9309999999999999,
+      "count": 3
+    },
+    "TestStatistics": {
+      "passed": 5,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 1.1219999999999999,
+      "count": 5
+    },
+    "TestUtcTimestampsInDb": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.42100000000000004,
+      "count": 2
+    },
+    "TestProfile": {
+      "passed": 7,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.377,
+      "count": 7
+    },
+    "TestAutoBackup": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.519,
+      "count": 2
+    },
+    "TestIcalExport": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.194,
+      "count": 1
+    },
+    "TestVCardExport": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.187,
+      "count": 1
+    },
+    "TestYearlyPdfReport": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.198,
+      "count": 1
+    },
+    "TestNotesModule": {
+      "passed": 4,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.7769999999999999,
+      "count": 4
+    },
+    "TestIcalImportRoundTrip": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.6559999999999999,
+      "count": 2
+    },
+    "TestVCardImportRoundTrip": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.365,
+      "count": 1
+    },
+    "TestLamportCrdt": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.195,
+      "count": 3
+    },
+    "TestBulkOperations": {
+      "passed": 3,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.735,
+      "count": 3
+    },
+    "TestReviewFixes": {
+      "passed": 18,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 7.537999999999999,
+      "count": 18
+    },
+    "TestProposalsFlow": {
+      "passed": 1,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 0.226,
+      "count": 1
+    },
+    "TestLicensing": {
+      "passed": 78,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "duration_s": 5.885000000000001,
+      "count": 78
+    }
+  },
+  "by_marker": {
+    "members": {
+      "passed": 18,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "count": 18,
+      "duration_s": 67.377
+    },
+    "roles": {
+      "passed": 69,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "count": 69,
+      "duration_s": 0.913
+    },
+    "combinatorics": {
+      "passed": 13,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "count": 13,
+      "duration_s": 4.528
+    },
+    "property": {
+      "passed": 29,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "count": 29,
+      "duration_s": 9.691000000000008
+    },
+    "release_gate": {
+      "passed": 10,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "count": 10,
+      "duration_s": 1.051
+    }
+  },
+  "decision": "GO",
+  "reasons": [],
+  "elapsed_s": 141.98499999998603,
+  "generated_at": "2026-05-20T14:30:28.902724+00:00"
+}
