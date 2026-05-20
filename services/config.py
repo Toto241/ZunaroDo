@@ -60,6 +60,12 @@ DEFAULTS: dict[str, str] = {
     # GUI: erlaubt das Hinterlegen einer Tab-Reihenfolge als Komma-
     # separierte Liste der Tab-Keys.
     "gui.tab_order": "",
+    # ----- Bezahl-Flow ----------------------------------------------
+    # Checkout-URLs: in der GUI als Buttons verlinkt - so kommt der
+    # Nutzer auf die hosted Checkout-Seite von Paddle/Lemon Squeezy.
+    "checkout.url_monthly": "",
+    "checkout.url_annual": "",
+    "checkout.url_family": "",
 }
 
 ENV_MAP: dict[str, str] = {
@@ -113,6 +119,9 @@ class AppConfig:
     backup_interval_hours: int = 24
     backup_key: str = ""
     gui_tab_order: str = ""
+    checkout_url_monthly: str = ""
+    checkout_url_annual: str = ""
+    checkout_url_family: str = ""
 
 
 def _coerce(key: str, raw: str, config: AppConfig) -> None:
