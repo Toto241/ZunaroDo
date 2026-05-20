@@ -7,8 +7,21 @@ verwendeten gemeinsamen `--token` in `services/sync_server.py` durch ein
 echtes, geraetegebundenes Schluesselmaterial.
 
 Das Dokument legt fest **was** gebaut wird und **warum** - die
-konkrete Implementierung erfolgt in einem separaten Schritt
-(Schnittstellen, Code-Pfade, Tests).
+konkrete Implementierung erfolgt schrittweise in mehreren PRs.
+
+## Stand der Implementierung
+
+| Kapitel | Komponente                          | Status                                |
+|---------|-------------------------------------|---------------------------------------|
+| 4       | Geraete-Identitaet (Ed25519, Fingerprint) | implementiert in `services/pairing/identity.py` |
+| 7       | Secure-Store-Abstraktion (Desktop)  | implementiert in `services/pairing/secure_store.py` |
+| 7       | Secure-Store: Windows DPAPI / macOS Keychain / Linux SecretService | via `keyring` (Default-Backend)  |
+| 7       | Secure-Store: Android Keystore / iOS Keychain | offen - eigener Mobile-Bridge-PR |
+| 5       | Pairing-Handshake (SPAKE2 + Ed25519-Transcript) | offen                              |
+| 6.1     | QR-Code-Pairing-Weg                 | offen                                 |
+| 6.2     | USB-Pairing-Weg                     | offen                                 |
+| 6.3     | SMS-Link-Pairing-Weg                | offen                                 |
+| 9       | Sync-Integration (Token -> TLS-1.3-PSK + Signaturen) | offen                                 |
 
 ## 1. Ziele und Nicht-Ziele
 
