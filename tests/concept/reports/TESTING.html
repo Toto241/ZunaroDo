@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TESTING</title>
+  <style>
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-muted: #f1f3f7;
+  --border: #e1e4ea;
+  --text: #131720;
+  --text-muted: #54607a;
+  --primary: #0b5fff;
+  --go: #1b873b;
+  --hold: #b54708;
+  --block: #b42318;
+  --unknown: #6b7280;
+  --go-bg: #e7f5ec;
+  --hold-bg: #fdf2e3;
+  --block-bg: #fdecea;
+  --unknown-bg: #eef0f4;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06),
+            0 1px 3px rgba(16, 24, 40, 0.08);
+  --radius: 12px;
+  --mono: 'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #161a23;
+    --surface-muted: #1d2230;
+    --border: #2a3041;
+    --text: #e9edf6;
+    --text-muted: #98a2b8;
+    --primary: #79a6ff;
+    --go: #34a853;
+    --hold: #f9a825;
+    --block: #f87171;
+    --unknown: #9ca3af;
+    --go-bg: #0e2818;
+    --hold-bg: #2a1c08;
+    --block-bg: #2a0f0f;
+    --unknown-bg: #1d2230;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px; line-height: 1.5; margin: 0; padding: 0;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 24px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+header .logo { font-weight: 700; font-size: 16px; }
+header .meta { color: var(--text-muted); font-size: 13px; font-family: var(--mono); }
+main {
+  max-width: 1440px; margin: 0 auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.row { display: flex; gap: 18px; flex-wrap: wrap; }
+.col { flex: 1 1 240px; min-width: 240px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.card .title {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.card .title h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.card .value   { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.card .sub     { font-size: 12px; color: var(--text-muted); }
+.card.span-2   { flex: 2 1 520px; }
+.card.span-3   { flex: 3 1 780px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+}
+.pill::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+}
+.pill.go      { color: var(--go);      background: var(--go-bg); }
+.pill.hold    { color: var(--hold);    background: var(--hold-bg); }
+.pill.block   { color: var(--block);   background: var(--block-bg); }
+.pill.unknown { color: var(--unknown); background: var(--unknown-bg); }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.bar { height: 6px; border-radius: 3px; background: var(--surface-muted); overflow: hidden; }
+.bar > div { height: 100%; background: var(--go); }
+.bar.hold > div { background: var(--hold); }
+.bar.block > div { background: var(--block); }
+
+table {
+  width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+th, td {
+  text-align: left; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); font-size: 13px;
+}
+th { background: var(--surface-muted); color: var(--text-muted);
+     font-weight: 600; text-transform: uppercase; font-size: 11px;
+     letter-spacing: 0.04em; }
+tr:last-child td { border-bottom: none; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.id  { font-family: var(--mono); font-size: 12px; color: var(--text-muted); word-break: break-all; }
+
+.searchbar {
+  display: flex; gap: 8px; align-items: center;
+}
+.searchbar input {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--text);
+  font-size: 13px;
+}
+
+.list { display: flex; flex-direction: column; gap: 0; }
+.list > .row-item {
+  display: grid; grid-template-columns: 100px 1fr 80px;
+  align-items: center; gap: 12px;
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 12px;
+}
+.list > .row-item:last-child { border-bottom: none; }
+.list .col-status { display: flex; }
+.list .col-name { color: var(--text); word-break: break-all; }
+.list .col-time { color: var(--text-muted); text-align: right;
+                  font-variant-numeric: tabular-nums; }
+
+details.failure {
+  background: var(--block-bg); border-left: 4px solid var(--block);
+  border-radius: 6px; padding: 10px 14px;
+}
+details.failure summary { cursor: pointer; font-weight: 600; color: var(--block); }
+details.failure pre {
+  margin: 8px 0 0 0; padding: 10px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+footer {
+  color: var(--text-muted); font-size: 12px; padding: 20px 24px;
+  text-align: center;
+}
+
+nav.toc {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 10px 24px; background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 500;
+  position: sticky; top: 0; z-index: 10;
+}
+nav.toc a {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  color: var(--text-muted); text-decoration: none;
+  border: 1px solid transparent;
+}
+nav.toc a:hover { color: var(--primary); background: var(--surface);
+                  border-color: var(--border); }
+
+.artifacts-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.artifact-link {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface);
+  color: var(--text); text-decoration: none;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+.artifact-link:hover { transform: translateY(-1px);
+                        border-color: var(--primary); }
+.artifact-link .icon { font-size: 18px; line-height: 1; }
+.artifact-link .name { font-weight: 600; font-size: 14px; }
+.artifact-link .desc { font-size: 12px; color: var(--text-muted); }
+.artifact-link.missing { opacity: 0.55; pointer-events: none; }
+.artifact-link.missing .desc::after {
+  content: " (nicht gefunden)"; color: var(--block);
+}
+
+.doc {
+  max-width: 880px; margin: 0 auto; padding: 32px 24px 64px;
+  background: var(--surface); color: var(--text);
+  border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+  color: var(--text); line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+}
+.doc h1 { font-size: 28px; border-bottom: 1px solid var(--border);
+          padding-bottom: 8px; }
+.doc h2 { font-size: 22px; border-bottom: 1px solid var(--border);
+          padding-bottom: 6px; }
+.doc h3 { font-size: 18px; }
+.doc h4 { font-size: 16px; color: var(--text-muted); }
+.doc p  { margin: 0.7em 0; line-height: 1.6; }
+.doc a  { color: var(--primary); text-decoration: none; }
+.doc a:hover { text-decoration: underline; }
+.doc ul, .doc ol { padding-left: 24px; line-height: 1.6; }
+.doc li { margin: 0.2em 0; }
+.doc hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.doc code {
+  font-family: var(--mono); font-size: 12.5px;
+  background: var(--surface-muted); padding: 2px 6px;
+  border-radius: 4px; border: 1px solid var(--border);
+}
+.doc pre {
+  background: var(--surface-muted); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+}
+.doc pre code { background: transparent; border: none; padding: 0; }
+.doc blockquote {
+  margin: 0.7em 0; padding: 8px 14px;
+  border-left: 3px solid var(--primary);
+  background: var(--surface-muted); color: var(--text);
+  border-radius: 0 8px 8px 0;
+}
+.doc table {
+  width: 100%; border-collapse: collapse; margin: 1em 0;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  background: var(--surface);
+}
+.doc th, .doc td {
+  text-align: left; padding: 8px 12px; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.doc th { background: var(--surface-muted); color: var(--text-muted);
+          font-weight: 600; text-transform: uppercase;
+          font-size: 11px; letter-spacing: 0.04em; }
+.doc tr:last-child td { border-bottom: none; }
+.doc img { max-width: 100%; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <div style="max-width:880px;margin:16px auto 0;padding:0 24px;"><a href="dashboard.html" style="color:var(--primary);text-decoration:none;">← zurueck zum Dashboard</a></div>
+  <main style="padding:24px;">
+    <article class="doc">
+      <h1 id="testkonzept-android-app-kotlin-jetpack-compose-firebase-play-console"><a href="#testkonzept-android-app-kotlin-jetpack-compose-firebase-play-console" style="color:inherit;text-decoration:none">Testkonzept Android-App (Kotlin / Jetpack Compose / Firebase / Play Console)</a></h1>
+<p>Stand: 2026-05-20. Stack-Annahme: Kotlin 2.x, Android Gradle Plugin 8.x, Jetpack Compose (Material 3), Firebase (Auth, Firestore oder Realtime DB, Cloud Messaging, Crashlytics, Remote Config, Analytics), Hilt/Koin als DI, Coroutines/Flow, Room für Offline-Cache, WorkManager, Google Play Console mit Closed-Testing- Track.</p>
+<p>Dieses Dokument ist normativ: Es definiert <em>was</em> getestet wird, <em>wie</em> es automatisiert wird, <em>wer</em> manuell testet und <em>wann</em> eine Veröffentlichung freigegeben wird. Jede Abweichung muss im Release-Protokoll begründet werden.</p>
+<hr />
+<h2 id="inhalt"><a href="#inhalt" style="color:inherit;text-decoration:none">Inhalt</a></h2>
+<ol><li><a href="#1-testziel">Testziel</a></li><li><a href="#2-testszenarien-mit-unterschiedlicher-mitgliederanzahl">Testszenarien mit unterschiedlicher Mitgliederanzahl</a></li><li><a href="#3-kombinatorische-tests-von-aufgaben-und-funktionen">Kombinatorische Tests von Aufgaben und Funktionen</a></li><li><a href="#4-vollautomatische-teststrategie">Vollautomatische Teststrategie</a></li><li><a href="#5-testdaten-und-testnutzer">Testdaten und Testnutzer</a></li><li><a href="#6-google-play-closed-testing">Google-Play Closed Testing</a></li><li><a href="#7-14-tage-testplan">14-Tage-Testplan</a></li><li><a href="#8-automatisierte-kombinatorik">Automatisierte Kombinatorik</a></li><li><a href="#9-cicd-integration">CI/CD-Integration</a></li><li><a href="#10-ergebnisformat-ak">Ergebnisformat A–K</a></li></ol>
+<ul><li><a href="#a-vollstandiges-testkonzept-ubersicht">A. Vollständiges Testkonzept (Übersicht)</a></li><li><a href="#b-automatisierte-testarchitektur">B. Automatisierte Testarchitektur</a></li><li><a href="#c-kombinatorische-testmatrix">C. Kombinatorische Testmatrix</a></li><li><a href="#d-rollen--und-mitglieder-testfalle">D. Rollen- und Mitglieder-Testfälle</a></li><li><a href="#e-aufgaben--und-funktions-testfalle">E. Aufgaben- und Funktions-Testfälle</a></li><li><a href="#f-14-tage-testplan-fur--12-tester">F. 14-Tage-Testplan für ≥ 12 Tester</a></li><li><a href="#g-tester-onboarding-vorlage">G. Tester-Onboarding-Vorlage</a></li><li><a href="#h-feedback--und-fehlerberichts-vorlagen">H. Feedback- und Fehlerberichts-Vorlagen</a></li><li><a href="#i-cicd-testpipeline">I. CI/CD-Testpipeline</a></li><li><a href="#j-go--no-go-kriterien-fur-play-store-veroffentlichung">J. Go-/No-Go-Kriterien für Play-Store-Veröffentlichung</a></li><li><a href="#k-massnahmenplan-bei-fehlern-oder-google-ablehnung">K. Maßnahmenplan bei Fehlern oder Google-Ablehnung</a></li></ul>
+<hr />
+<h2 id="1-testziel"><a href="#1-testziel" style="color:inherit;text-decoration:none">1. Testziel</a></h2>
+<h3 id="11-übergeordnete-ziele"><a href="#11-übergeordnete-ziele" style="color:inherit;text-decoration:none">1.1 Übergeordnete Ziele</a></h3>
+<table><thead><tr><th>Nr.</th><th>Ziel</th><th>Mess­barer Nachweis</th></tr></thead><tbody><tr><td>Z1</td><td><strong>Technische Stabilität</strong></td><td>Crash-Free-Users ≥ 99,5 % über 7 Tage in Crashlytics; ANR-Rate &lt; 0,47 % (Google-Schwelle: 0,47 %)</td></tr><tr><td>Z2</td><td><strong>Fachliche Korrektheit</strong></td><td>100 % der akzeptierten User-Stories haben grüne Integrationstests; Pareto-90-% der manuellen Akzeptanztests bestanden</td></tr><tr><td>Z3</td><td><strong>Rollen &amp; Berechtigungen korrekt</strong></td><td>Berechtigungsmatrix-Test deckt 100 % der Rolle×Aktion-Paare; 0 unerwartet erlaubte Aktionen</td></tr><tr><td>Z4</td><td><strong>Aufgaben-/Funktionskombinationen</strong></td><td>Pairwise-Matrix abgedeckt (≥ 95 % der 2-fach-Kombinationen); Property-Tests grün</td></tr><tr><td>Z5</td><td><strong>Google-Play-Readiness</strong></td><td>Pre-Launch Report ohne kritische Crashes; Data-Safety-Form aktuell; Closed Test ≥ 14 Tage / ≥ 12 Tester nachgewiesen</td></tr><tr><td>Z6</td><td><strong>Nachweisbare Qualität</strong></td><td>Vollständiger Test-Audit-Trail (CI-Logs, Crashlytics, Firebase Test Lab, Tester-Feedback) für 30 Tage archiviert</td></tr></tbody></table>
+<h3 id="12-nicht-ziele-out-of-scope"><a href="#12-nicht-ziele-out-of-scope" style="color:inherit;text-decoration:none">1.2 Nicht-Ziele (Out of Scope)</a></h3>
+<ul><li>Performance-Optimierung jenseits gemessener Engpässe.</li><li>Lokalisierungs-Qualität (Übersetzungen) — separater LQA-Prozess.</li><li>Penetrationstest durch externes Red-Team (separates Mandat).</li></ul>
+<h3 id="13-definition-of-done-für-testbereit"><a href="#13-definition-of-done-für-testbereit" style="color:inherit;text-decoration:none">1.3 Definition of Done für „testbereit“</a></h3>
+<p>Ein Build gilt als testbereit, wenn:</p>
+<ul><li>alle Unit-, Integrations- und UI-Tests in CI grün sind,</li><li>statische Analyse (Lint, Detekt, Ktlint) keine Errors meldet,</li><li>Code-Coverage <strong>Domain ≥ 80 %</strong>, <strong>Data-Layer ≥ 70 %</strong>, <strong>UI ≥ 50 %</strong> (gemessen mit Kover/JaCoCo),</li><li>der Smoke-Test auf Firebase Test Lab (4 Referenzgeräte) durchläuft,</li><li>Crashlytics für die letzte interne Build-Version keine ungeklärten Crashes mit &gt; 5 Vorkommen zeigt.</li></ul>
+<hr />
+<h2 id="2-testszenarien-mit-unterschiedlicher-mitgliederanzahl"><a href="#2-testszenarien-mit-unterschiedlicher-mitgliederanzahl" style="color:inherit;text-decoration:none">2. Testszenarien mit unterschiedlicher Mitgliederanzahl</a></h2>
+<p>Eine <strong>Gruppe</strong> (Workspace/Familie/Team) ist die organisatorische Einheit mit beliebig vielen Mitgliedern. Jede Mitglied­schaft hat eine <strong>Rolle</strong> (<code>OWNER</code>, <code>ADMIN</code>, <code>MEMBER</code>, <code>GUEST</code>) und einen <strong>Status</strong> (<code>INVITED</code>, <code>ACTIVE</code>, <code>INACTIVE</code>, <code>REMOVED</code>).</p>
+<h3 id="21-mitglieder-szenario-matrix"><a href="#21-mitglieder-szenario-matrix" style="color:inherit;text-decoration:none">2.1 Mitglieder-Szenario-Matrix</a></h3>
+<table><thead><tr><th>ID</th><th>Mitglieder</th><th>Verteilung Rollen</th><th>Zweck</th></tr></thead><tbody><tr><td>M-01</td><td>1 (nur Owner)</td><td>OWNER:1</td><td>Einzelperson-Modus, kein Sharing, keine Berechtigungslogik</td></tr><tr><td>M-02</td><td>2</td><td>OWNER:1, MEMBER:1</td><td>minimaler Mehrnutzerfall, 1:1-Sync</td></tr><tr><td>M-03</td><td>3–5</td><td>OWNER:1, ADMIN:1, MEMBER:n</td><td>typische Familie/Kleinteam</td></tr><tr><td>M-04</td><td>6–11</td><td>OWNER:1, ADMIN:2, MEMBER:n, GUEST:1</td><td>mittleres Team mit Gast</td></tr><tr><td>M-05</td><td>12</td><td>OWNER:1, ADMIN:2, MEMBER:8, GUEST:1</td><td>exakt Play-Mindesttester­zahl</td></tr><tr><td>M-06</td><td>20+</td><td>OWNER:1, ADMIN:3, MEMBER:15, GUEST:3</td><td>Skalierungs-/Last-Test</td></tr><tr><td>M-07</td><td>gemischter Status</td><td>ACTIVE:60 %, INVITED:20 %, INACTIVE:10 %, REMOVED:10 %</td><td>Realität: nicht alle aktiv</td></tr><tr><td>M-08</td><td>nur INVITED</td><td>INVITED:5, OWNER:1</td><td>Pending-State, Gruppe „leer aktiv“</td></tr><tr><td>M-09</td><td>REMOVED-Reactivation</td><td>REMOVED:1 wird re-invited</td><td>Edge: Daten-Recovery / Rechte</td></tr></tbody></table>
+<h3 id="22-geprüfte-aspekte-je-szenario"><a href="#22-geprüfte-aspekte-je-szenario" style="color:inherit;text-decoration:none">2.2 Geprüfte Aspekte je Szenario</a></h3>
+<p>Für jedes M-Szenario laufen folgende Prüfungen automatisiert + ggf. manuell:</p>
+<table><thead><tr><th>Aspekt</th><th>Automatisiert</th><th>Manuell</th><th>Werkzeug</th></tr></thead><tbody><tr><td>Einladung erzeugen (Deep-Link, E-Mail, Code)</td><td>✅</td><td>✅</td><td>Espresso + Firebase Dynamic-Links Emulator</td></tr><tr><td>Registrierung (E-Mail/Pass, Google-SSO)</td><td>✅</td><td>✅</td><td>Auth-Emulator</td></tr><tr><td>Login (1./2./n. Gerät)</td><td>✅</td><td>✅</td><td>UI-Test + reales Gerät</td></tr><tr><td>Rollenvergabe (Owner → andere)</td><td>✅</td><td>✅</td><td>Firestore-Emulator + Espresso</td></tr><tr><td>Rechteprüfung (Berechtigungsmatrix)</td><td>✅</td><td>–</td><td>parametrisierter JUnit5-Test</td></tr><tr><td>Aufgabenverteilung (assign, reassign)</td><td>✅</td><td>✅</td><td>Compose-UI-Test</td></tr><tr><td>Synchronisierung (Realtime + offline merge)</td><td>✅</td><td>✅</td><td>Firestore-Emulator + Test Lab</td></tr><tr><td>Push-Benachrichtigungen</td><td>✅</td><td>✅</td><td>FCM-Test-API + Maestro</td></tr><tr><td>Konflikte (gleichzeitige Edits)</td><td>✅</td><td>✅</td><td>Property-Test + 2-Gerät-Maestro-Flow</td></tr><tr><td>Entfernen + erneut Hinzufügen</td><td>✅</td><td>✅</td><td>Integrationstest</td></tr></tbody></table>
+<h3 id="23-detail-konflikt-test-bei-gleichzeitiger-nutzung"><a href="#23-detail-konflikt-test-bei-gleichzeitiger-nutzung" style="color:inherit;text-decoration:none">2.3 Detail: Konflikt-Test bei gleichzeitiger Nutzung</a></h3>
+<pre><code class="lang-kotlin">@Test
+fun simultaneousEditOnSameTask_lastWriteWins_withConflictBanner() = runTest {
+    val task = seed.createTask(group = G_M05, assignee = aliceId)
+    coroutineScope {
+        launch { simulate(alice).editTitle(task.id, &quot;Title-A&quot;) }
+        launch { simulate(bob).editTitle(task.id, &quot;Title-B&quot;) }
+    }
+    awaitSync()
+    val final = repo.task(task.id)
+    assertThat(final.title).isAnyOf(&quot;Title-A&quot;, &quot;Title-B&quot;)
+    assertThat(events.last()).isInstanceOf(ConflictResolved::class.java)
+}</code></pre>
+<p>Erwartung: <strong>Letzter-schreibt-gewinnt</strong> mit sichtbarem Konflikt-Banner und nachvollziehbarem Audit-Log in <code>task_history/</code>.</p>
+<hr />
+<h2 id="3-kombinatorische-tests-von-aufgaben-und-funktionen"><a href="#3-kombinatorische-tests-von-aufgaben-und-funktionen" style="color:inherit;text-decoration:none">3. Kombinatorische Tests von Aufgaben und Funktionen</a></h2>
+<h3 id="31-aufgaben-dimensionen"><a href="#31-aufgaben-dimensionen" style="color:inherit;text-decoration:none">3.1 Aufgaben-Dimensionen</a></h3>
+<table><thead><tr><th>Dimension</th><th>Werte</th></tr></thead><tbody><tr><td>Art</td><td><code>STANDARD</code>, <code>CHECKLIST</code>, <code>APPROVAL</code>, <code>EVENT</code></td></tr><tr><td>Wiederholung</td><td><code>ONE_OFF</code>, <code>DAILY</code>, <code>WEEKLY</code>, <code>MONTHLY</code>, <code>CUSTOM_RRULE</code></td></tr><tr><td>Priorität</td><td><code>LOW</code>, <code>NORMAL</code>, <code>HIGH</code>, <code>URGENT</code></td></tr><tr><td>Frist</td><td><code>NONE</code>, <code>FUTURE</code>, <code>TODAY</code>, <code>OVERDUE</code></td></tr><tr><td>Erinnerung</td><td><code>OFF</code>, <code>15M</code>, <code>1H</code>, <code>1D</code>, <code>CUSTOM</code></td></tr><tr><td>Bestätigung</td><td><code>NONE</code>, <code>SELF</code>, <code>OWNER_CONFIRM</code></td></tr><tr><td>Belohnung/Bewertung</td><td><code>NONE</code>, <code>POINTS</code>, <code>STARS_1_5</code></td></tr><tr><td>Status</td><td><code>OPEN</code>, <code>IN_PROGRESS</code>, <code>BLOCKED</code>, <code>DONE</code>, <code>CANCELED</code>, <code>OVERDUE</code>, <code>REASSIGNED</code></td></tr></tbody></table>
+<h3 id="32-funktions-dimensionen-kontext"><a href="#32-funktions-dimensionen-kontext" style="color:inherit;text-decoration:none">3.2 Funktions-Dimensionen (Kontext)</a></h3>
+<table><thead><tr><th>Dimension</th><th>Werte</th></tr></thead><tbody><tr><td>Rolle</td><td><code>OWNER</code>, <code>ADMIN</code>, <code>MEMBER</code>, <code>GUEST</code></td></tr><tr><td>Mitgliederanzahl</td><td><code>1</code>, <code>2</code>, <code>3–5</code>, <code>6–11</code>, <code>12</code>, <code>20+</code></td></tr><tr><td>Gerätezustand</td><td><code>FOREGROUND</code>, <code>BACKGROUND</code>, <code>DOZE</code>, <code>KILLED</code></td></tr><tr><td>Netz</td><td><code>ONLINE</code>, <code>OFFLINE</code>, <code>SLOW_2G</code>, <code>FLAKY</code></td></tr><tr><td>Push</td><td><code>ENABLED</code>, <code>DISABLED</code>, <code>BLOCKED_OS</code></td></tr><tr><td>Sync</td><td><code>INSTANT</code>, <code>BATCHED</code>, <code>OFFLINE_QUEUE</code></td></tr><tr><td>App-Lifecycle</td><td><code>COLD_START</code>, <code>WARM_START</code>, <code>PROCESS_DEATH_RESTORE</code></td></tr><tr><td>Gerätewechsel</td><td><code>SAME_DEVICE</code>, <code>NEW_DEVICE_SAME_USER</code>, <code>TRANSFER</code></td></tr><tr><td>Android-Version</td><td><code>8 (API 26)</code>, <code>10 (29)</code>, <code>12 (31)</code>, <code>14 (34)</code>, <code>15 (35)</code></td></tr><tr><td>Bildschirmgröße</td><td><code>compact</code>, <code>medium</code>, <code>expanded</code>, <code>large</code>, <code>foldable</code></td></tr></tbody></table>
+<h3 id="33-kombinatorische-reduktion"><a href="#33-kombinatorische-reduktion" style="color:inherit;text-decoration:none">3.3 Kombinatorische Reduktion</a></h3>
+<p>Volle Kombination: 4·5·4·4·5·3·3·8 · 4·6·4·4·3·3·3·3·5·5 = <strong>9,4 Mrd.</strong> Nicht testbar. Daher:</p>
+<ul><li><strong>Pairwise Testing (allpairs/PICT/Jenny)</strong> auf alle Aufgaben×Funktion-Dimensionen → ~ 320 Testfälle.</li><li><strong>Risikopriorisierung</strong>: Rolle/Frist/Sync sind Risiko-Hot-Spots → 3-fach-Coverage statt 2-fach.</li><li><strong>Property-Based Tests (Kotest-property)</strong> auf Domain-Logik (Recurrence, Permission, Conflict-Resolution).</li><li><strong>Szenario-Tests</strong> für 25 reale End-to-End-Stories (siehe E).</li></ul>
+<p>Siehe auch <a href="#8-automatisierte-kombinatorik">Abschnitt 8</a> und <a href="#c-kombinatorische-testmatrix">Anhang C</a>.</p>
+<hr />
+<h2 id="4-vollautomatische-teststrategie"><a href="#4-vollautomatische-teststrategie" style="color:inherit;text-decoration:none">4. Vollautomatische Teststrategie</a></h2>
+<h3 id="41-testpyramide-sollverteilung"><a href="#41-testpyramide-sollverteilung" style="color:inherit;text-decoration:none">4.1 Testpyramide (Sollverteilung)</a></h3>
+<pre><code>        ┌───────────────────┐
+        │   E2E / Maestro   │   ~5 %    (≤ 60 Flows, Test Lab + Maestro)
+        ├───────────────────┤
+        │  UI / Compose UI  │   ~15 %   (Screen- und Navigation-Tests)
+        ├───────────────────┤
+        │  Integration      │   ~30 %   (Repo+Emulator, ViewModel+Flow)
+        ├───────────────────┤
+        │  Unit             │   ~50 %   (Domain, Mapper, Use-Cases)
+        └───────────────────┘</code></pre>
+<h3 id="42-test-layer-und-werkzeuge"><a href="#42-test-layer-und-werkzeuge" style="color:inherit;text-decoration:none">4.2 Test-Layer und Werkzeuge</a></h3>
+<table><thead><tr><th>Layer</th><th>Werkzeug</th><th>Lauf-Umgebung</th><th>Trigger</th></tr></thead><tbody><tr><td><strong>Unit</strong></td><td>JUnit 5, Kotest, MockK, Turbine, kotlinx-coroutines-test</td><td>JVM</td><td>jeder Commit</td></tr><tr><td><strong>Robolectric-Unit</strong></td><td>Robolectric 4.x</td><td>JVM</td><td>jeder Commit</td></tr><tr><td><strong>Integration</strong></td><td>Firebase Emulator Suite (Auth, Firestore, Functions, FCM, Storage), Room in-memory, Hilt-Test-Module</td><td>JVM/Android</td><td>jeder PR</td></tr><tr><td><strong>UI</strong></td><td>Compose-UI-Test (<code>createComposeRule</code>), Espresso für AndroidView-Interop, Accessibility-Test über <code>SemanticsNode</code></td><td>Android, Gradle Managed Devices</td><td>jeder PR</td></tr><tr><td><strong>E2E</strong></td><td>Maestro Flows (yaml), Firebase Test Lab (Robo + Instrumented)</td><td>Cloud-Devices</td><td>nightly + Pre-Release</td></tr><tr><td><strong>API/Backend</strong></td><td>JUnit + Firebase Functions Emulator + Firestore-Security-Rules Test (<code>@firebase/rules-unit-testing</code>)</td><td>Node + JVM</td><td>jeder PR</td></tr><tr><td><strong>Lasttests</strong></td><td>k6 (gegen Functions), Firebase Performance, manueller 30-Gerät-Test im Test Lab</td><td>Cloud</td><td>nightly</td></tr><tr><td><strong>Statisch</strong></td><td>Android Lint, Detekt, Ktlint, Spotless</td><td>JVM</td><td>jeder Commit</td></tr><tr><td><strong>Coverage</strong></td><td>Kover (oder JaCoCo)</td><td>JVM</td><td>jeder PR</td></tr><tr><td><strong>Sicherheit</strong></td><td>dependencycheck, OWASP Mobile Top-10-Checklist, Firebase App Check</td><td>–</td><td>Pre-Release</td></tr></tbody></table>
+<h3 id="43-konkrete-beispiel-snippets"><a href="#43-konkrete-beispiel-snippets" style="color:inherit;text-decoration:none">4.3 Konkrete Beispiel-Snippets</a></h3>
+<p><strong>Domain-Unit (Recurrence):</strong></p>
+<pre><code class="lang-kotlin">class RecurrenceEngineTest : FunSpec({
+    test(&quot;WEEKLY MON,WED produces next 4 dates&quot;) {
+        val r = Recurrence(rule = &quot;FREQ=WEEKLY;BYDAY=MO,WE&quot;)
+        r.nextN(from = LocalDate.parse(&quot;2026-05-18&quot;), n = 4) shouldBe listOf(
+            LocalDate.parse(&quot;2026-05-18&quot;),
+            LocalDate.parse(&quot;2026-05-20&quot;),
+            LocalDate.parse(&quot;2026-05-25&quot;),
+            LocalDate.parse(&quot;2026-05-27&quot;),
+        )
+    }
+})</code></pre>
+<p><strong>Property-Test (Berechtigung):</strong></p>
+<pre><code class="lang-kotlin">class PermissionPropertyTest : FunSpec({
+    test(&quot;GUEST darf niemals andere Mitglieder entfernen&quot;) {
+        checkAll(Arb.member(role = Arb.of(Role.GUEST)), Arb.member()) { actor, target -&gt;
+            permission.canRemove(actor, target) shouldBe false
+        }
+    }
+})</code></pre>
+<p><strong>Compose-UI-Test:</strong></p>
+<pre><code class="lang-kotlin">@get:Rule val compose = createAndroidComposeRule&lt;MainActivity&gt;()
+
+@Test fun taskList_showsOverdueBadge_whenDueInPast() {
+    seed.with { task(due = yesterday) }
+    compose.onNodeWithTag(&quot;task-row&quot;).assertContentDescriptionContains(&quot;überfällig&quot;)
+}</code></pre>
+<p><strong>Firestore-Security-Rules-Test (Node-Seite):</strong></p>
+<pre><code class="lang-js">testEnv.authenticatedContext(&#x27;guestUid&#x27;).firestore()
+  .doc(&#x27;groups/g1/tasks/t1&#x27;).delete()
+  .then(() =&gt; fail(&#x27;GUEST darf keine Tasks löschen&#x27;))
+  .catch(() =&gt; pass());</code></pre>
+<h3 id="44-pflichtgeräte-gradle-managed-devices"><a href="#44-pflichtgeräte-gradle-managed-devices" style="color:inherit;text-decoration:none">4.4 Pflichtgeräte (Gradle Managed Devices)</a></h3>
+<pre><code class="lang-kotlin">testOptions {
+  managedDevices {
+    devices {
+      maybeCreate&lt;ManagedVirtualDevice&gt;(&quot;pixel2_api26&quot;).apply { device = &quot;Pixel 2&quot;; apiLevel = 26; systemImageSource = &quot;aosp&quot; }
+      maybeCreate&lt;ManagedVirtualDevice&gt;(&quot;pixel5_api31&quot;).apply { device = &quot;Pixel 5&quot;; apiLevel = 31; systemImageSource = &quot;aosp-atd&quot; }
+      maybeCreate&lt;ManagedVirtualDevice&gt;(&quot;pixel7_api34&quot;).apply { device = &quot;Pixel 7&quot;; apiLevel = 34; systemImageSource = &quot;google-atd&quot; }
+      maybeCreate&lt;ManagedVirtualDevice&gt;(&quot;foldable_api34&quot;).apply { device = &quot;Pixel Fold&quot;; apiLevel = 34; systemImageSource = &quot;google-atd&quot; }
+      maybeCreate&lt;ManagedVirtualDevice&gt;(&quot;tablet_api34&quot;).apply { device = &quot;Pixel Tablet&quot;; apiLevel = 34; systemImageSource = &quot;google-atd&quot; }
+    }
+    groups { maybeCreate(&quot;ci_smoke&quot;).targetDevices.addAll(listOf(devices[&quot;pixel5_api31&quot;], devices[&quot;pixel7_api34&quot;])) }
+  }
+}</code></pre>
+<h3 id="45-release-gate-tests"><a href="#45-release-gate-tests" style="color:inherit;text-decoration:none">4.5 Release-Gate-Tests</a></h3>
+<p>Vor jedem Upload in Play Console (Internal/Closed/Production) <strong>muss</strong> der Release-Gate-Job durchlaufen (siehe <a href="#i-cicd-testpipeline">I</a>):</p>
+<ol><li>Volle Test-Pyramide grün.</li><li>Coverage-Schwellen erreicht.</li><li>Lint/Detekt: 0 Errors, ≤ 5 Warnings (Whitelist im Repo).</li><li>Firebase Test Lab Robo + Instrumented Smoke grün.</li><li>Maestro Pre-Release-Suite (15 Flows) grün.</li><li>Pre-Launch Report durchgelaufen, 0 kritische Crashes.</li><li>APK/AAB signiert, ProGuard/R8 ohne unerwartete Drops.</li><li>Datenschutz-Manifest und Data-Safety-Form unverändert oder reviewt.</li></ol>
+<hr />
+<h2 id="5-testdaten-und-testnutzer"><a href="#5-testdaten-und-testnutzer" style="color:inherit;text-decoration:none">5. Testdaten und Testnutzer</a></h2>
+<h3 id="51-synthetische-testnutzer"><a href="#51-synthetische-testnutzer" style="color:inherit;text-decoration:none">5.1 Synthetische Testnutzer</a></h3>
+<p>Ein Kotlin-Modul <code>:test-fixtures</code> erzeugt deterministische Nutzer:</p>
+<pre><code class="lang-kotlin">object Fixtures {
+    fun group(size: Int, seed: Long = 42L): GroupFixture = ...
+    fun user(role: Role = MEMBER, status: Status = ACTIVE): User = ...
+    fun tasks(group: GroupFixture, n: Int, rng: Random): List&lt;Task&gt; = ...
+}</code></pre>
+<p>Profile (entspricht M-01..M-09):</p>
+<table><thead><tr><th>Profil</th><th>Größe</th><th>Rollen</th><th>Aufgaben</th></tr></thead><tbody><tr><td><code>SOLO</code></td><td>1</td><td>OWNER</td><td>10 ONE_OFF</td></tr><tr><td><code>COUPLE</code></td><td>2</td><td>OWNER, MEMBER</td><td>30 gemischt</td></tr><tr><td><code>FAMILY_5</code></td><td>5</td><td>OWNER, ADMIN, 3×MEMBER (2 Kinder = GUEST)</td><td>80</td></tr><tr><td><code>TEAM_11</code></td><td>11</td><td>OWNER, 2×ADMIN, 7×MEMBER, GUEST</td><td>150</td></tr><tr><td><code>BETA_12</code></td><td>12</td><td>analog Closed-Test-Verteilung</td><td>200</td></tr><tr><td><code>STRESS_50</code></td><td>50</td><td>breit gemischt</td><td>5 000</td></tr></tbody></table>
+<h3 id="52-realistische-nutzungsdaten"><a href="#52-realistische-nutzungsdaten" style="color:inherit;text-decoration:none">5.2 Realistische Nutzungsdaten</a></h3>
+<ul><li>Aufgabenverteilung folgt einer Power-Law (wenige Power-Nutzer, viele Gelegenheitsnutzer).</li><li>Zeitstempel werden in Wochenrhythmen (Werktage vs. Wochenende) verteilt.</li><li>Push-Reactions: 30 % öffnen, 50 % swipen weg, 20 % ignorieren.</li></ul>
+<h3 id="53-seed-reset-isolation"><a href="#53-seed-reset-isolation" style="color:inherit;text-decoration:none">5.3 Seed, Reset, Isolation</a></h3>
+<ul><li>Jeder Integrationstest startet mit <code>firebase emulators:exec</code> und einem frischen Snapshot.</li><li>Snapshots liegen unter <code>test-fixtures/snapshots/&lt;profile&gt;.json</code> und werden via <code>firebase firestore:import</code> geladen.</li><li><code>TestApplication</code> bindet Hilt-Test-Module → keine echten Netz-/Auth-Aufrufe.</li><li>Trennung <code>staging</code> vs. <code>production</code>:</li><li>separate <strong>Firebase-Projekte</strong> (<code>zunarodo-staging</code>, <code>zunarodo-prod</code>),</li><li>separate <strong>Play-Console-Apps</strong> für Closed Testing (Internal-App-Sharing),</li><li>separate Crashlytics-Streams und Analytics-Properties.</li></ul>
+<h3 id="54-sensitive-daten"><a href="#54-sensitive-daten" style="color:inherit;text-decoration:none">5.4 Sensitive Daten</a></h3>
+<ul><li>Testdaten enthalten <strong>keine echten PII</strong>.</li><li>Bilder sind Lizenz-freie Avatare (<code>https://api.dicebear.com/...</code>).</li><li>E-Mails verwenden die Domain <code>@tester.zunarodo.app</code> (eigene Catch-All-Inbox).</li></ul>
+<hr />
+<h2 id="6-google-play-closed-testing"><a href="#6-google-play-closed-testing" style="color:inherit;text-decoration:none">6. Google-Play Closed Testing</a></h2>
+<h3 id="61-anforderungen-offiziell-stand-2026-05"><a href="#61-anforderungen-offiziell-stand-2026-05" style="color:inherit;text-decoration:none">6.1 Anforderungen (offiziell, Stand 2026-05)</a></h3>
+<ul><li>Closed-Testing-Track in der Play Console.</li><li><strong>Mindestens 12 Tester</strong>, die dem Test aktiv beitreten (Opt-in via Link).</li><li><strong>Mindestens 14 zusammenhängende Tage</strong> ununterbrochen aktiver Test.</li><li>Tester müssen die App <strong>tatsächlich nutzen</strong> (Google misst Installation und Engagement).</li><li>App muss alle Inhaltsrichtlinien erfüllen, Data-Safety-Form ausgefüllt sein.</li><li>Nach Abschluss: „Apply for production access“ in der Play Console.</li></ul>
+<h3 id="62-tester-pool-und-verteilung"><a href="#62-tester-pool-und-verteilung" style="color:inherit;text-decoration:none">6.2 Tester-Pool und Verteilung</a></h3>
+<ul><li>Eine <strong>Google-Group</strong> <code>zunarodo-closed-testers@googlegroups.com</code> als Tester-Liste.</li><li>Tester treten dem Test über den <strong>Opt-in-Link</strong> (Closed-Testing-Track) bei.</li><li>Builds werden über den <strong>Internal-App-Sharing-Link</strong> zusätzlich verteilt (für Hotfixes).</li></ul>
+<h3 id="63-übersicht-der-lieferobjekte"><a href="#63-übersicht-der-lieferobjekte" style="color:inherit;text-decoration:none">6.3 Übersicht der Lieferobjekte</a></h3>
+<table><thead><tr><th>Objekt</th><th>Ort</th><th>Verantwortlich</th></tr></thead><tbody><tr><td>Tester-Onboarding</td><td><a href="#g-tester-onboarding-vorlage">G</a></td><td>Test-Lead</td></tr><tr><td>Einladungstext</td><td><a href="#g2-einladungstext-e-mail">G.2</a></td><td>Test-Lead</td></tr><tr><td>Testanleitung</td><td><a href="#g3-testanleitung-1-pager">G.3</a></td><td>Test-Lead</td></tr><tr><td>Tägliche Testaufgaben</td><td><a href="#f-14-tage-testplan-fur--12-tester">F</a></td><td>Test-Lead</td></tr><tr><td>Feedbackformular</td><td><a href="#h1-feedbackformular">H.1</a></td><td>Tester</td></tr><tr><td>Fehlerbericht-Vorlage</td><td><a href="#h2-fehlerbericht-vorlage">H.2</a></td><td>Tester</td></tr><tr><td>Testkalender 14 Tage</td><td><a href="#f-14-tage-testplan-fur--12-tester">F</a></td><td>Test-Lead</td></tr><tr><td>Mindestnutzungsszenarien</td><td><a href="#g4-mindestnutzungsszenarien-pro-tester">G.4</a></td><td>Tester</td></tr><tr><td>Nachweisdokumentation</td><td><a href="#j-go--no-go-kriterien-fur-play-store-veroffentlichung">J</a></td><td>Test-Lead</td></tr><tr><td>Kriterien Produktionsreife</td><td><a href="#j-go--no-go-kriterien-fur-play-store-veroffentlichung">J</a></td><td>Test-Lead</td></tr></tbody></table>
+<h3 id="64-nachweispflicht-gegenüber-google"><a href="#64-nachweispflicht-gegenüber-google" style="color:inherit;text-decoration:none">6.4 Nachweispflicht gegenüber Google</a></h3>
+<p>Google verlangt bei Production-Antrag <em>implizit</em>, dass der Test echt stattgefunden hat (Engagement-Metriken). Wir dokumentieren zusätzlich freiwillig:</p>
+<ul><li>Liste der Tester (Pseudonym + Beitrittsdatum + Engagement-Tage).</li><li>Anzahl Sessions/Tester pro Tag (Firebase Analytics).</li><li>Crash-Free-Users-Verlauf (Crashlytics-Export).</li><li>Feedback-Threads (Formular-Export).</li><li>Build-Liste (Versionscodes) und Release-Notes je Build.</li></ul>
+<p>Diese Dokumentation wird im Repo unter <code>release/closed-test-&lt;datum&gt;/</code> versioniert.</p>
+<hr />
+<h2 id="7-14-tage-testplan"><a href="#7-14-tage-testplan" style="color:inherit;text-decoration:none">7. 14-Tage-Testplan</a></h2>
+<p>Detailliert in <a href="#f-14-tage-testplan-fur--12-tester">Anhang F</a>. Kurzform:</p>
+<table><thead><tr><th>Tag</th><th>Fokus</th><th>Mind. Aktion pro Tester</th><th>Erfolgs-KPI</th></tr></thead><tbody><tr><td>1</td><td>Installation, Registrierung, Profil, erste Aufgabe</td><td>5 Schritte</td><td>≥ 12 Tester onboarded</td></tr><tr><td>2</td><td>Mitglieder einladen, Rollen vergeben</td><td>1 Einladung, 1 Annahme</td><td>≥ 10 Gruppen mit ≥ 2 Mitgliedern</td></tr><tr><td>3</td><td>Aufgaben zuweisen</td><td>3 Tasks, davon 1 fremd zugewiesen</td><td>≥ 90 % Zustellung</td></tr><tr><td>4</td><td>Erinnerungen testen</td><td>1 Reminder, 1 Benachrichtigung quittieren</td><td>Push-Zustellrate ≥ 95 %</td></tr><tr><td>5</td><td>Fristen, wiederkehrende Aufgaben</td><td>1 wiederkehrend, 1 mit Frist</td><td>Recurrence läuft korrekt</td></tr><tr><td>6</td><td>Offline-Modus</td><td>5 Aktionen offline</td><td>Sync ohne Verlust</td></tr><tr><td>7</td><td>Synchronisierung, App-Neustart</td><td>App killen, neu starten</td><td>Daten konsistent</td></tr><tr><td>8</td><td>parallele Nutzung mehrerer Mitglieder</td><td>2 Tester editieren gleichzeitig</td><td>Konfliktbanner sichtbar</td></tr><tr><td>9</td><td>Konflikte, Reassign</td><td>Aufgabe neu zuweisen</td><td>Audit-Log korrekt</td></tr><tr><td>10</td><td>Geräte/Android-Versionen</td><td>Test auf 2. Gerät</td><td>UI ok, Sync ok</td></tr><tr><td>11</td><td>Dark Mode, Barrierefreiheit, TalkBack</td><td>5 Minuten TalkBack</td><td>A11y-Score ≥ 90</td></tr><tr><td>12</td><td>Fehlerberichte, Logs</td><td>Crashlytics-Ausweitung</td><td>0 P0-Crashes übrig</td></tr><tr><td>13</td><td>Fix-Validierung, Regression</td><td>Re-Test der gemeldeten Bugs</td><td>100 % der P0/P1 verifiziert</td></tr><tr><td>14</td><td>Abschluss-Feedback, Go-/No-Go</td><td>Tester füllt End-Survey</td><td>Go-Quote ≥ 80 % der Tester</td></tr></tbody></table>
+<hr />
+<h2 id="8-automatisierte-kombinatorik"><a href="#8-automatisierte-kombinatorik" style="color:inherit;text-decoration:none">8. Automatisierte Kombinatorik</a></h2>
+<h3 id="81-pairwise-mit-pict"><a href="#81-pairwise-mit-pict" style="color:inherit;text-decoration:none">8.1 Pairwise mit PICT</a></h3>
+<p>Eingabedatei <code>tests/combinatorics/tasks.pict</code>:</p>
+<pre><code>Role:         OWNER, ADMIN, MEMBER, GUEST
+Members:      1, 2, 5, 11, 12, 20
+TaskKind:     STANDARD, CHECKLIST, APPROVAL, EVENT
+Recurrence:   ONE_OFF, DAILY, WEEKLY, MONTHLY, CUSTOM
+Priority:     LOW, NORMAL, HIGH, URGENT
+Due:          NONE, FUTURE, TODAY, OVERDUE
+Reminder:     OFF, 15M, 1H, 1D, CUSTOM
+Confirm:      NONE, SELF, OWNER
+Reward:       NONE, POINTS, STARS
+Device:       phone_compact, phone_medium, foldable, tablet
+Api:          26, 29, 31, 34, 35
+Network:      ONLINE, OFFLINE, SLOW, FLAKY
+Push:         ON, OFF, BLOCKED
+Lifecycle:    FOREGROUND, BACKGROUND, DOZE, KILLED
+
+# Constraints (offensichtlich unsinnige Kombinationen ausschließen)
+IF [Role] = &quot;GUEST&quot; THEN [Confirm] &lt;&gt; &quot;OWNER&quot;;
+IF [Push] = &quot;BLOCKED&quot; THEN [Reminder] = &quot;OFF&quot;;
+IF [Recurrence] = &quot;ONE_OFF&quot; THEN [Due] &lt;&gt; &quot;NONE&quot;;</code></pre>
+<p>Erzeugt ~ 320 Testfälle, die als parametrisierte JUnit5-Tests gegen einen <strong>Headless-Simulator</strong> laufen.</p>
+<h3 id="82-property-based-testing-kotest-property"><a href="#82-property-based-testing-kotest-property" style="color:inherit;text-decoration:none">8.2 Property-Based Testing (Kotest-property)</a></h3>
+<ul><li><strong>Recurrence-Engine</strong>: Property „für jeden gültigen RRULE liefert</li></ul>
+<p><code>next()</code> Monoton-Wachsende, vom Start unabhängige Daten“.</p>
+<ul><li><strong>Permission-Engine</strong>: Property „kein GUEST kann jemals destruktive</li></ul>
+<p>Aktion ausführen“.</p>
+<ul><li><strong>Conflict-Resolver</strong>: Property „bei beliebiger Edit-Reihenfolge ist das</li></ul>
+<p>Endergebnis von der Reihenfolge unabhängig, wenn keine echten Konflikte   bestehen“ (Konvergenz-Eigenschaft).</p>
+<h3 id="83-risikopriorisierung"><a href="#83-risikopriorisierung" style="color:inherit;text-decoration:none">8.3 Risikopriorisierung</a></h3>
+<table><thead><tr><th>Risiko-Cluster</th><th>2-fach</th><th>3-fach</th></tr></thead><tbody><tr><td>Auth × Sync × Netz</td><td>–</td><td>✅</td></tr><tr><td>Rolle × Aktion × Resource</td><td>–</td><td>✅</td></tr><tr><td>Recurrence × Zeitzone × DST</td><td>–</td><td>✅</td></tr><tr><td>Push × Doze × Foreground</td><td>✅</td><td>–</td></tr><tr><td>Bildschirm × Android-Version</td><td>✅</td><td>–</td></tr><tr><td>Dark Mode × Sprache</td><td>✅</td><td>–</td></tr></tbody></table>
+<h3 id="84-grenzwerte-und-äquivalenzklassen"><a href="#84-grenzwerte-und-äquivalenzklassen" style="color:inherit;text-decoration:none">8.4 Grenzwerte und Äquivalenzklassen</a></h3>
+<table><thead><tr><th>Eingabe</th><th>Äquivalenzklassen</th><th>Grenzwerte</th></tr></thead><tbody><tr><td>Titel-Länge</td><td>leer / 1–80 / &gt; 80</td><td>0, 1, 80, 81</td></tr><tr><td>Mitglieder pro Gruppe</td><td>0, 1, 12, max (50)</td><td>0, 1, 11, 12, 49, 50, 51</td></tr><tr><td>Frist (Δ Tage)</td><td>&lt; 0, 0, &gt; 0</td><td>-1, 0, 1, 365</td></tr><tr><td>Recurrence-Schritt</td><td>1..n</td><td>1, 2, 100, 999</td></tr></tbody></table>
+<h3 id="85-zufallsbasierte-tests-fuzzing"><a href="#85-zufallsbasierte-tests-fuzzing" style="color:inherit;text-decoration:none">8.5 Zufallsbasierte Tests (Fuzzing)</a></h3>
+<ul><li><code>runBlocking { fuzz(5_000) { simulate(randomGroup(), randomAction()) } }</code></li></ul>
+<p>täglich nightly auf einer separaten Test-Lab-VM, Coverage-getrackt mit   Kover-IC.</p>
+<hr />
+<h2 id="9-cicd-integration"><a href="#9-cicd-integration" style="color:inherit;text-decoration:none">9. CI/CD-Integration</a></h2>
+<h3 id="91-jobs-und-trigger"><a href="#91-jobs-und-trigger" style="color:inherit;text-decoration:none">9.1 Jobs und Trigger</a></h3>
+<table><thead><tr><th>Job</th><th>Trigger</th><th>Inhalt</th><th>Dauer-Budget</th></tr></thead><tbody><tr><td><code>verify-fast</code></td><td>jeder Commit auf jedem Branch</td><td>Lint, Detekt, Ktlint, Unit, Robolectric</td><td>≤ 6 min</td></tr><tr><td><code>verify-pr</code></td><td>jeder PR auf <code>main</code>/<code>develop</code></td><td>+ Integration (Emulator), Compose-UI, Coverage</td><td>≤ 20 min</td></tr><tr><td><code>nightly</code></td><td>täglich 02:00 UTC</td><td>+ Maestro-Suite (alle 60 Flows), Pairwise-Suite, Fuzz, Lasttests</td><td>≤ 90 min</td></tr><tr><td><code>pre-release</code></td><td>manuell + Tag <code>release/*</code></td><td>+ Firebase Test Lab (Robo + Instrumented), Lighthouse-/Compose-Perf</td><td>≤ 120 min</td></tr><tr><td><code>closed-test-upload</code></td><td>Tag <code>closed/*</code></td><td>pre-release + AAB-Signatur + Play-Console-Upload (Internal → Closed)</td><td>≤ 60 min</td></tr><tr><td><code>production-upload</code></td><td>manuell, nach Go-Entscheidung</td><td>closed-test-upload + Promote-Track</td><td>≤ 30 min</td></tr></tbody></table>
+<h3 id="92-blockier-regeln"><a href="#92-blockier-regeln" style="color:inherit;text-decoration:none">9.2 Blockier-Regeln</a></h3>
+<p>Ein Build wird <strong>blockiert</strong>, wenn:</p>
+<ul><li>Unit-/Integration-/UI-Tests fehlschlagen.</li><li>Coverage unter Schwelle fällt (Δ &lt; -1 % gegenüber <code>main</code>).</li><li>Lint-Errors &gt; 0 oder Detekt-Errors &gt; 0.</li><li>Firebase Test Lab kritischen Crash meldet.</li><li>ANR/Crash-Rate der letzten 24 h (Crashlytics) &gt; Schwelle in <code>pre-release</code>.</li><li>Play-Pre-Launch-Report Severity-„blocker“ liefert.</li><li>AAB-Signatur fehlt oder Versions-Code nicht inkrementiert.</li><li>Data-Safety-Form-Hash sich ohne Review geändert hat (siehe <code>tools/check-datasafety.kts</code>).</li></ul>
+<h3 id="93-github-actions-beispiel-githubworkflowsandroidyml"><a href="#93-github-actions-beispiel-githubworkflowsandroidyml" style="color:inherit;text-decoration:none">9.3 GitHub-Actions-Beispiel (<code>.github/workflows/android.yml</code>)</a></h3>
+<pre><code class="lang-yaml">name: android-verify
+on:
+  push:
+    branches: [main, develop, &quot;release/**&quot;, &quot;closed/**&quot;]
+  pull_request:
+jobs:
+  verify-fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: gradle/actions/setup-gradle@v3
+      - run: ./gradlew ktlintCheck detekt lint testDebugUnitTest koverXmlReport
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage, path: &quot;**/kover/report.xml&quot; }
+
+  verify-pr:
+    needs: verify-fast
+    if: github.event_name == &#x27;pull_request&#x27;
+    runs-on: ubuntu-latest
+    services:
+      firebase:
+        image: andreysenov/firebase-tools
+        ports: [9099:9099, 8080:8080, 9199:9199, 5001:5001]
+    steps:
+      - uses: actions/checkout@v4
+      - run: firebase emulators:exec --only auth,firestore,functions,storage \
+                 &quot;./gradlew connectedDebugAndroidTest pixel5_api31Group&quot;
+
+  nightly:
+    if: github.event_name == &#x27;schedule&#x27;
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./gradlew :app:assembleDebugAndroidTest
+      - run: gcloud firebase test android run \
+                 --type instrumentation \
+                 --app app/build/outputs/apk/debug/app-debug.apk \
+                 --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+                 --device model=Pixel7,version=34 \
+                 --device model=Pixel2,version=26
+      - run: maestro test maestro/flows --include-tags=nightly
+
+  pre-release:
+    if: startsWith(github.ref, &#x27;refs/tags/release/&#x27;)
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./gradlew :app:bundleRelease
+      - run: ./scripts/release-gate.sh
+      - run: ./gradlew publishBundleToInternalTrack    # gradle-play-publisher</code></pre>
+<h3 id="94-pre-release-gate-skript-auszug"><a href="#94-pre-release-gate-skript-auszug" style="color:inherit;text-decoration:none">9.4 Pre-Release-Gate-Skript (Auszug)</a></h3>
+<pre><code class="lang-bash">#!/usr/bin/env bash
+set -euo pipefail
+./gradlew connectedReleaseAndroidTest
+./gradlew kover-verify  # bricht ab, wenn Schwellen unterschritten
+maestro test maestro/flows --include-tags=release-gate
+./tools/check-datasafety.kts
+./tools/check-anr-budget.kts
+./tools/check-crashfree.kts --threshold 99.5</code></pre>
+<hr />
+<h2 id="10-ergebnisformat-ak"><a href="#10-ergebnisformat-ak" style="color:inherit;text-decoration:none">10. Ergebnisformat A–K</a></h2>
+<h3 id="a-vollständiges-testkonzept-übersicht"><a href="#a-vollständiges-testkonzept-übersicht" style="color:inherit;text-decoration:none">A. Vollständiges Testkonzept (Übersicht)</a></h3>
+<p>Dieses Dokument <strong>ist</strong> das Testkonzept. Im Repo gepflegt als <code>TESTING.md</code> mit verlinkten Anhängen unter <code>tests/concept/</code> (Markdown + PICT-Inputs). Versionierung über Git; Änderungen am Konzept laufen über PR-Review (mind. ein Reviewer aus QA, ein Reviewer aus Engineering).</p>
+<p>Kapitel-Mapping:</p>
+<table><thead><tr><th>Kapitel</th><th>Inhalt</th><th>Verantwortlich</th></tr></thead><tbody><tr><td>1 Testziel</td><td>Was, warum, wie gemessen</td><td>QA-Lead</td></tr><tr><td>2 Mitglieder-Szenarien</td><td>Gruppengrößen, Rollen</td><td>Engineering + QA</td></tr><tr><td>3 Aufgaben/Funktions-Kombinatorik</td><td>Dimensionen, Reduktion</td><td>QA</td></tr><tr><td>4 Teststrategie</td><td>Pyramide, Tools, Layer</td><td>Engineering</td></tr><tr><td>5 Testdaten</td><td>Fixtures, Seeds, Isolation</td><td>Engineering</td></tr><tr><td>6 Closed Testing</td><td>Play-Anforderung, Pool</td><td>Test-Lead</td></tr><tr><td>7 14-Tage-Plan</td><td>Tester-Tagesplan</td><td>Test-Lead</td></tr><tr><td>8 Auto-Kombinatorik</td><td>Pairwise, Property, Fuzz</td><td>QA</td></tr><tr><td>9 CI/CD</td><td>Jobs, Gates</td><td>DevOps</td></tr><tr><td>10/A–K</td><td>Anhänge</td><td>je nach Anhang</td></tr></tbody></table>
+<h3 id="b-automatisierte-testarchitektur"><a href="#b-automatisierte-testarchitektur" style="color:inherit;text-decoration:none">B. Automatisierte Testarchitektur</a></h3>
+<h4 id="b1-modul-layout"><a href="#b1-modul-layout" style="color:inherit;text-decoration:none">B.1 Modul-Layout</a></h4>
+<pre><code>app/                       # Android-App (UI)
+core-domain/               # Pure Kotlin, Use-Cases, Models, Rules
+core-data/                 # Repos, Room, Firebase-Adapter
+core-ui/                   # gemeinsame Compose-Komponenten
+feature-tasks/             # Tasks-Feature
+feature-groups/            # Gruppen &amp; Rollen
+feature-notifications/     # FCM + Reminders
+test-fixtures/             # Seed-Daten, Faker, Profile
+test-rules/                # JUnit-Rules (Hilt, Coroutine, Firebase)
+maestro/                   # E2E-Flows (yaml)
+tests/concept/             # PICT-Files, Generators, Reports
+tools/                     # Release-Gate-Skripte</code></pre>
+<h4 id="b2-test-module-dependencies-auszug-appbuildgradlekts"><a href="#b2-test-module-dependencies-auszug-appbuildgradlekts" style="color:inherit;text-decoration:none">B.2 Test-Module-Dependencies (Auszug <code>app/build.gradle.kts</code>)</a></h4>
+<pre><code class="lang-kotlin">dependencies {
+    // Pyramide
+    testImplementation(&quot;org.junit.jupiter:junit-jupiter:5.10.2&quot;)
+    testImplementation(&quot;io.mockk:mockk:1.13.10&quot;)
+    testImplementation(&quot;io.kotest:kotest-runner-junit5:5.8.0&quot;)
+    testImplementation(&quot;io.kotest:kotest-property:5.8.0&quot;)
+    testImplementation(&quot;app.cash.turbine:turbine:1.0.0&quot;)
+    testImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0&quot;)
+    testImplementation(&quot;org.robolectric:robolectric:4.12&quot;)
+
+    androidTestImplementation(&quot;androidx.compose.ui:ui-test-junit4:1.6.7&quot;)
+    androidTestImplementation(&quot;androidx.test.ext:junit:1.1.5&quot;)
+    androidTestImplementation(&quot;androidx.test.espresso:espresso-core:3.5.1&quot;)
+    androidTestImplementation(&quot;com.google.dagger:hilt-android-testing:2.51&quot;)
+    androidTestImplementation(&quot;com.google.firebase:firebase-firestore-ktx&quot;) // mit Emulator
+}</code></pre>
+<h4 id="b3-berechtigungs-engine-als-testobjekt"><a href="#b3-berechtigungs-engine-als-testobjekt" style="color:inherit;text-decoration:none">B.3 Berechtigungs-Engine als Testobjekt</a></h4>
+<pre><code class="lang-kotlin">data class Permission(val role: Role, val action: Action, val target: Target)
+
+class PermissionEngine {
+    fun isAllowed(p: Permission): Boolean = when (p.role) {
+        OWNER -&gt; true
+        ADMIN -&gt; p.action !in setOf(Action.DELETE_GROUP, Action.TRANSFER_OWNERSHIP)
+        MEMBER -&gt; p.action in MEMBER_ALLOWED
+        GUEST  -&gt; p.action in GUEST_ALLOWED
+    }
+}</code></pre>
+<p>Parametrisierter Test deckt <strong>Rolle × Action × Target</strong> zu 100 % ab.</p>
+<h4 id="b4-test-runner-konfiguration"><a href="#b4-test-runner-konfiguration" style="color:inherit;text-decoration:none">B.4 Test-Runner-Konfiguration</a></h4>
+<ul><li><code>useJUnitPlatform()</code> aktiviert in Gradle.</li><li><code>@HiltAndroidTest</code> für Android-Tests; Test-Module ersetzen Firebase-</li></ul>
+<p>Bindings durch Emulator-Bindings.</p>
+<ul><li><code>TestApplication</code> registriert in Manifest-Stub unter</li></ul>
+<p><code>app/src/androidTest/AndroidManifest.xml</code>.</p>
+<h3 id="c-kombinatorische-testmatrix"><a href="#c-kombinatorische-testmatrix" style="color:inherit;text-decoration:none">C. Kombinatorische Testmatrix</a></h3>
+<p>Vollständiger Generator (Auszug, Pseudo-Format der PICT-Ausgabe):</p>
+<table><thead><tr><th>#</th><th>Role</th><th>Members</th><th>TaskKind</th><th>Recur</th><th>Prio</th><th>Due</th><th>Remind</th><th>Confirm</th><th>Reward</th><th>Device</th><th>API</th><th>Net</th><th>Push</th><th>Life</th></tr></thead><tbody><tr><td>1</td><td>OWNER</td><td>1</td><td>STANDARD</td><td>ONE_OFF</td><td>NORMAL</td><td>TODAY</td><td>OFF</td><td>NONE</td><td>NONE</td><td>phone_medium</td><td>34</td><td>ONLINE</td><td>ON</td><td>FG</td></tr><tr><td>2</td><td>OWNER</td><td>12</td><td>CHECKLIST</td><td>WEEKLY</td><td>HIGH</td><td>FUTURE</td><td>1H</td><td>SELF</td><td>POINTS</td><td>foldable</td><td>31</td><td>OFFLINE</td><td>ON</td><td>BG</td></tr><tr><td>3</td><td>ADMIN</td><td>5</td><td>APPROVAL</td><td>MONTHLY</td><td>URGENT</td><td>OVERDUE</td><td>1D</td><td>OWNER</td><td>STARS</td><td>tablet</td><td>35</td><td>FLAKY</td><td>OFF</td><td>DOZE</td></tr><tr><td>4</td><td>MEMBER</td><td>2</td><td>EVENT</td><td>CUSTOM</td><td>LOW</td><td>NONE</td><td>OFF</td><td>NONE</td><td>NONE</td><td>phone_compact</td><td>26</td><td>SLOW</td><td>BLOCKED</td><td>KILLED</td></tr><tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr><tr><td>320</td><td>GUEST</td><td>20</td><td>STANDARD</td><td>DAILY</td><td>NORMAL</td><td>TODAY</td><td>15M</td><td>NONE</td><td>NONE</td><td>phone_medium</td><td>34</td><td>ONLINE</td><td>ON</td><td>FG</td></tr></tbody></table>
+<p>Die Datei <code>tests/concept/pict/tasks.pict</code> ist die normative Quelle. Der Generator-Befehl im Repo:</p>
+<pre><code class="lang-bash">pict tests/concept/pict/tasks.pict /o:3 &gt; tests/concept/pict/matrix-3wise.tsv</code></pre>
+<p>Eine JUnit5-<code>@ParameterizedTest</code> liest die TSV und führt die Fälle gegen einen Headless-Simulator und gegen den Emulator-Stack aus.</p>
+<h3 id="d-rollen--und-mitglieder-testfälle"><a href="#d-rollen--und-mitglieder-testfälle" style="color:inherit;text-decoration:none">D. Rollen- und Mitglieder-Testfälle</a></h3>
+<h4 id="d1-berechtigungsmatrix-soll"><a href="#d1-berechtigungsmatrix-soll" style="color:inherit;text-decoration:none">D.1 Berechtigungsmatrix (Soll)</a></h4>
+<table><thead><tr><th>Aktion</th><th>OWNER</th><th>ADMIN</th><th>MEMBER</th><th>GUEST</th></tr></thead><tbody><tr><td>Gruppe erstellen</td><td>✅</td><td>–</td><td>–</td><td>–</td></tr><tr><td>Gruppe löschen</td><td>✅</td><td>–</td><td>–</td><td>–</td></tr><tr><td>Eigentum übertragen</td><td>✅</td><td>–</td><td>–</td><td>–</td></tr><tr><td>Mitglied einladen</td><td>✅</td><td>✅</td><td>–</td><td>–</td></tr><tr><td>Mitglied entfernen</td><td>✅</td><td>✅</td><td>–</td><td>–</td></tr><tr><td>Rolle ändern</td><td>✅</td><td>✅ (nicht OWNER)</td><td>–</td><td>–</td></tr><tr><td>Aufgabe erstellen</td><td>✅</td><td>✅</td><td>✅</td><td>–</td></tr><tr><td>Aufgabe zuweisen</td><td>✅</td><td>✅</td><td>✅ (sich selbst)</td><td>–</td></tr><tr><td>Aufgabe schließen</td><td>✅</td><td>✅</td><td>✅ (eigene/zugewiesene)</td><td>–</td></tr><tr><td>Aufgabe sehen</td><td>✅</td><td>✅</td><td>✅</td><td>✅ (markiert „public“)</td></tr><tr><td>Kommentar</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>Push-Settings ändern</td><td>✅ (für sich)</td><td>✅ (für sich)</td><td>✅ (für sich)</td><td>✅ (für sich)</td></tr><tr><td>Daten exportieren</td><td>✅</td><td>✅</td><td>–</td><td>–</td></tr></tbody></table>
+<h4 id="d2-testfall-beispiele"><a href="#d2-testfall-beispiele" style="color:inherit;text-decoration:none">D.2 Testfall-Beispiele</a></h4>
+<table><thead><tr><th>ID</th><th>Vorbedingung</th><th>Aktion</th><th>Erwartung</th></tr></thead><tbody><tr><td>TC-R-001</td><td>M-03, ADMIN aktiv</td><td>ADMIN versucht OWNER-Rolle einem anderen zu geben</td><td>abgelehnt mit <code>ERR_FORBIDDEN_TRANSFER</code></td></tr><tr><td>TC-R-014</td><td>M-05, INVITED</td><td>INVITED öffnet App</td><td>Onboarding zur Annahme der Einladung</td></tr><tr><td>TC-R-022</td><td>M-06, REMOVED</td><td>REMOVED öffnet Deep-Link</td><td>Hinweis „Zugriff entzogen“ + Re-Invite möglich</td></tr><tr><td>TC-R-031</td><td>M-04, GUEST</td><td>GUEST versucht Task zu löschen</td><td>UI-Button ausgegraut + Server-side verweigert</td></tr><tr><td>TC-R-040</td><td>M-02</td><td>OWNER 1 löscht eigenes Konto</td><td>Gruppe übergeht an ADMIN oder wird archiviert</td></tr><tr><td>TC-R-051</td><td>M-07, 60 % aktiv</td><td>OWNER sieht Mitgliederliste</td><td>Active/Inactive/Invited sortiert nach Status</td></tr><tr><td>TC-R-060</td><td>M-09</td><td>REMOVED wird re-invited</td><td>alte Aufgabenzuweisungen bleiben anonymisiert</td></tr></tbody></table>
+<p>(Vollständige Liste: 80 TCs unter <code>tests/concept/cases/roles.csv</code>.)</p>
+<h3 id="e-aufgaben--und-funktions-testfälle"><a href="#e-aufgaben--und-funktions-testfälle" style="color:inherit;text-decoration:none">E. Aufgaben- und Funktions-Testfälle</a></h3>
+<h4 id="e1-funktions-slices"><a href="#e1-funktions-slices" style="color:inherit;text-decoration:none">E.1 Funktions-Slices</a></h4>
+<p>Jede Funktion hat <strong>vier Slice-Typen</strong>:</p>
+<ol><li><strong>Happy Path</strong> (UI + Domain + Sync)</li><li><strong>Edge</strong> (Grenzwerte, Sonderzeichen, große Mengen)</li><li><strong>Error</strong> (Netz weg, Server 500, Rechte fehlen)</li><li><strong>Offline-Recovery</strong> (Aktion offline, Sync später)</li></ol>
+<h4 id="e2-auswahl-wichtiger-testfälle"><a href="#e2-auswahl-wichtiger-testfälle" style="color:inherit;text-decoration:none">E.2 Auswahl wichtiger Testfälle</a></h4>
+<table><thead><tr><th>ID</th><th>Funktion</th><th>Slice</th><th>Vorbedingung</th><th>Schritte</th><th>Erwartung</th></tr></thead><tbody><tr><td>TC-F-101</td><td>Aufgabe erstellen</td><td>Happy</td><td>M-03, MEMBER</td><td>„Neue Aufgabe“ → Titel → Speichern</td><td>Aufgabe sichtbar in &lt; 1 s; Push an Assignee</td></tr><tr><td>TC-F-102</td><td>Aufgabe erstellen</td><td>Edge</td><td>Titel = 80 Zeichen + Emoji</td><td>Speichern</td><td>gespeichert; korrekt gerendert</td></tr><tr><td>TC-F-103</td><td>Aufgabe erstellen</td><td>Error</td><td>Offline + Konflikt</td><td>Speichern offline, Edit auf 2. Gerät</td><td>Konfliktbanner; LWW; History-Eintrag</td></tr><tr><td>TC-F-110</td><td>Wiederkehrende Aufgabe</td><td>Happy</td><td>weekly Mo+Mi</td><td>4 Wochen vorspulen (Testtaktung)</td><td>8 Instanzen erzeugt</td></tr><tr><td>TC-F-111</td><td>Wiederkehrende Aufgabe</td><td>DST</td><td>März-DST</td><td>Recurrence läuft über DST-Wechsel</td><td>keine Doppel-/Ausfall-Instanz</td></tr><tr><td>TC-F-120</td><td>Frist + Erinnerung</td><td>Happy</td><td>Reminder 1 h vor Frist</td><td>Frist auf t+1h</td><td>Push exakt zur Erinnerungs­zeit</td></tr><tr><td>TC-F-121</td><td>Frist</td><td>Edge</td><td>Frist gleich Now</td><td>–</td><td>sofort „überfällig“ markiert</td></tr><tr><td>TC-F-130</td><td>Bestätigung</td><td>OWNER_CONFIRM</td><td>MEMBER schließt</td><td>–</td><td>Status „warten auf OWNER“; Owner bekommt Push</td></tr><tr><td>TC-F-140</td><td>Belohnung Sterne</td><td>Happy</td><td>nach Abschluss bewerten</td><td>1–5 Sterne</td><td>gespeichert + Verlauf</td></tr><tr><td>TC-F-150</td><td>Parallel</td><td>Happy</td><td>2 Tester ändern Status</td><td>–</td><td>finaler Status gewinnt LWW; beide sehen identisch</td></tr><tr><td>TC-F-160</td><td>Reassign</td><td>Happy</td><td>MEMBER → ADMIN</td><td>–</td><td>alte Push entfernt, neue Push gesendet</td></tr><tr><td>TC-F-170</td><td>Abbrechen</td><td>Happy</td><td>OWNER bricht ab</td><td>–</td><td>Status <code>CANCELED</code>, kein Reminder mehr</td></tr><tr><td>TC-F-180</td><td>Überfällig</td><td>Happy</td><td>Frist überschritten</td><td>–</td><td>Banner rot; tägliche Erinnerung optional</td></tr><tr><td>TC-F-190</td><td>Push deaktiviert OS</td><td>–</td><td>Push BLOCKED</td><td>Reminder fällig</td><td>App-interner Hinweis statt Push; kein Crash</td></tr><tr><td>TC-F-200</td><td>App Cold Start nach Process Death</td><td>–</td><td>Process killed nach Edit</td><td>App neu öffnen</td><td>letzte Aktion sichtbar + sync</td></tr></tbody></table>
+<p>(Vollständig: 220 TCs unter <code>tests/concept/cases/tasks.csv</code>.)</p>
+<h3 id="f-14-tage-testplan-für-12-tester"><a href="#f-14-tage-testplan-für-12-tester" style="color:inherit;text-decoration:none">F. 14-Tage-Testplan für ≥ 12 Tester</a></h3>
+<p>Allgemeine Regeln:</p>
+<ul><li>Jeder Tester legt einen <strong>Account auf einem realen Gerät</strong> an.</li><li>Tagesaktionen dauern realistisch 5–15 Minuten.</li><li>Jede Aktion ist im Feedbackformular zu quittieren (Bullet: erledigt /</li></ul>
+<p>Problem / Frage).</p>
+<h4 id="tag-1-onboarding"><a href="#tag-1-onboarding" style="color:inherit;text-decoration:none">Tag 1 — Onboarding</a></h4>
+<ul><li>App über Closed-Testing-Link installieren.</li><li>Konto erstellen (E-Mail oder Google-SSO).</li><li>Profil ausfüllen (Name, Avatar).</li><li>Erste Aufgabe „Testkalender öffnen“ erstellen.</li><li>Push-Berechtigung erteilen.</li><li>KPIs: Crash-Free 100 %, Onboarding &lt; 3 min.</li></ul>
+<h4 id="tag-2"><a href="#tag-2" style="color:inherit;text-decoration:none">Tag 2</a></h4>
+<ul><li>Eine andere Testperson per E-Mail einladen.</li><li>Eingehende Einladung annehmen.</li><li>Rolle ADMIN an eine Person vergeben.</li><li>KPIs: Einladung-Zustellung ≥ 95 %.</li></ul>
+<h4 id="tag-3"><a href="#tag-3" style="color:inherit;text-decoration:none">Tag 3</a></h4>
+<ul><li>Drei Aufgaben erstellen (eigene + 2 zugewiesen).</li><li>Eine Aufgabe an ADMIN-Tester zuweisen.</li><li>Eine Aufgabe schließen.</li></ul>
+<h4 id="tag-4"><a href="#tag-4" style="color:inherit;text-decoration:none">Tag 4</a></h4>
+<ul><li>Eine Aufgabe mit Erinnerung 15 min anlegen.</li><li>Push aktiv quittieren.</li><li>Eine Aufgabe mit Frist <code>+1d</code> erstellen.</li></ul>
+<h4 id="tag-5"><a href="#tag-5" style="color:inherit;text-decoration:none">Tag 5</a></h4>
+<ul><li>Eine wiederkehrende Aufgabe (täglich) anlegen.</li><li>Über 2 Tage beobachten, ob Instanzen erscheinen (Tag 5+6).</li><li>Eine Aufgabe stornieren.</li></ul>
+<h4 id="tag-6"><a href="#tag-6" style="color:inherit;text-decoration:none">Tag 6</a></h4>
+<ul><li>App auf Flugmodus stellen.</li><li>5 Aktionen (Erstellen, Schließen, Kommentieren) offline ausführen.</li><li>Flugmodus ausschalten.</li><li>KPI: keine verlorenen Aktionen.</li></ul>
+<h4 id="tag-7"><a href="#tag-7" style="color:inherit;text-decoration:none">Tag 7</a></h4>
+<ul><li>App in den Hintergrund schieben.</li><li>Gerät neu starten.</li><li>App öffnen → Daten konsistent?</li><li>Manueller Sync („Pull-to-Refresh“).</li></ul>
+<h4 id="tag-8"><a href="#tag-8" style="color:inherit;text-decoration:none">Tag 8</a></h4>
+<ul><li>Zu zweit gleichzeitig dieselbe Aufgabe editieren (Titel/Notiz).</li><li>Beobachten: Konfliktbanner, finaler Zustand identisch.</li></ul>
+<h4 id="tag-9"><a href="#tag-9" style="color:inherit;text-decoration:none">Tag 9</a></h4>
+<ul><li>Aufgabe neu zuweisen.</li><li>Aufgabe abbrechen.</li><li>Aufgabe überfällig werden lassen (Frist gestern).</li></ul>
+<h4 id="tag-10"><a href="#tag-10" style="color:inherit;text-decoration:none">Tag 10</a></h4>
+<ul><li>Wenn möglich: App auf zweitem Gerät installieren (Tablet/anderes Handy).</li><li>Anmelden, Daten prüfen.</li><li>Eine Aktion auf Gerät A, eine auf Gerät B, abgleichen.</li></ul>
+<h4 id="tag-11"><a href="#tag-11" style="color:inherit;text-decoration:none">Tag 11</a></h4>
+<ul><li>Dark Mode aktivieren.</li><li>TalkBack (Android-Screenreader) für 5 Minuten testen.</li><li>Schriftgröße auf „Sehr groß“ stellen.</li><li>Notiert: Lesbarkeit, Tap-Targets.</li></ul>
+<h4 id="tag-12"><a href="#tag-12" style="color:inherit;text-decoration:none">Tag 12</a></h4>
+<ul><li>Letzte aufgetretene Probleme melden (Formular <a href="#h2-fehlerbericht-vorlage">H.2</a>).</li><li>Crashes auflisten (Crashlytics-Stream wird zusammengeführt).</li><li>KPI: keine ungeklärten P0-Crashes.</li></ul>
+<h4 id="tag-13"><a href="#tag-13" style="color:inherit;text-decoration:none">Tag 13</a></h4>
+<ul><li>Fixes wurden im Testtrack als neue Version verteilt.</li><li>Tester verifizieren ihre vorher gemeldeten Bugs.</li><li>Re-Test der relevanten Flows.</li></ul>
+<h4 id="tag-14"><a href="#tag-14" style="color:inherit;text-decoration:none">Tag 14</a></h4>
+<ul><li>Abschluss-Survey (Feedbackformular).</li><li>Go-/No-Go-Stimme pro Tester.</li><li>Test-Lead aggregiert Engagement, Crashes, Feedback → Entscheidung.</li></ul>
+<h3 id="g-tester-onboarding-vorlage"><a href="#g-tester-onboarding-vorlage" style="color:inherit;text-decoration:none">G. Tester-Onboarding-Vorlage</a></h3>
+<h4 id="g1-tester-steckbrief-vor-annahme"><a href="#g1-tester-steckbrief-vor-annahme" style="color:inherit;text-decoration:none">G.1 Tester-Steckbrief (vor Annahme)</a></h4>
+<pre><code>Name / Pseudonym:
+Gerät (Modell + Android-Version):
+Bildschirmgröße:
+Sprache:
+Verfügbarkeit nächste 14 Tage:
+Vorerfahrung mit Beta-Tests:
+Bereit, 15 min/Tag aktiv zu nutzen?  [ ja / nein ]</code></pre>
+<h4 id="g2-einladungstext-e-mail"><a href="#g2-einladungstext-e-mail" style="color:inherit;text-decoration:none">G.2 Einladungstext (E-Mail)</a></h4>
+<pre><code>Betreff: Du bist eingeladen: Closed-Beta für „Zunarodo“ (14 Tage)
+
+Hallo {Name},
+
+du bist eingeladen, an unserem geschlossenen Test für die Android-App
+„Zunarodo“ teilzunehmen. Der Test dauert 14 Tage (vom {start} bis {end}).
+Wir suchen mindestens 12 Personen, die die App täglich kurz nutzen, um
+Stabilität und Bedienbarkeit nachzuweisen — eine Pflichtanforderung von
+Google Play.
+
+So machst du mit:
+
+1. Tritt unserer Google-Gruppe bei: {google-group-url}
+2. Öffne den Opt-in-Link am Smartphone: {play-optin-url}
+3. Installiere die App über den Play-Store (Test-Track sichtbar nach
+   Annahme).
+4. Folge dem Tagesplan aus diesem Dokument: {testplan-url}
+5. Probleme/Feedback bitte ins Formular: {feedback-url}
+
+Dein Einsatz: ca. 5–15 Minuten pro Tag.
+Vergütung: {…} (oder „keine, Dank in den Credits“).
+Datenschutz: keine personenbezogenen Daten Dritter, Testdaten werden nach
+Abschluss gelöscht (außer aggregierte Statistiken).
+
+Bei Fragen: {kontakt-email}.
+
+Danke!
+{Test-Lead}</code></pre>
+<h4 id="g3-testanleitung-1-pager"><a href="#g3-testanleitung-1-pager" style="color:inherit;text-decoration:none">G.3 Testanleitung (1-Pager)</a></h4>
+<pre><code>1.  Installation: Folge dem Opt-in-Link, dann Play Store. Akzeptiere
+    Push-Berechtigung.
+2.  Pseudonym: Bitte realistisch, aber keine echten Klarnamen Dritter
+    eintragen.
+3.  Tagesplan: siehe 14-Tage-Plan. Lege dir eine Erinnerung um die
+    gleiche Tageszeit.
+4.  Feedback: Nach jeder Sitzung kurz ins Formular.
+5.  Bug melden: Sofort melden, wenn etwas abstürzt, hängt oder unklar
+    ist. Screenshot reicht.
+6.  Datenschutz: Keine echten Daten Dritter eintragen (Namen, Adressen,
+    Konten). Verwende erfundene Test-Daten.
+7.  Notfall: Wenn die App gar nicht startet, schreib uns sofort —
+    Hotfix-Build via Internal-App-Sharing möglich.</code></pre>
+<h4 id="g4-mindestnutzungsszenarien-pro-tester"><a href="#g4-mindestnutzungsszenarien-pro-tester" style="color:inherit;text-decoration:none">G.4 Mindestnutzungsszenarien pro Tester</a></h4>
+<p>Jeder Tester muss in den 14 Tagen mindestens:</p>
+<ul><li>1 Gruppe erstellen oder beitreten,</li><li>5 Aufgaben erstellen,</li><li>3 Aufgaben abschließen,</li><li>1 wiederkehrende Aufgabe anlegen,</li><li>1 Aufgabe zuweisen oder zugewiesen bekommen,</li><li>1 Push-Benachrichtigung erhalten und quittieren,</li><li>1 Offline-Aktion durchführen,</li><li>die App mindestens an 10 von 14 Tagen öffnen.</li></ul>
+<h3 id="h-feedback--und-fehlerberichts-vorlagen"><a href="#h-feedback--und-fehlerberichts-vorlagen" style="color:inherit;text-decoration:none">H. Feedback- und Fehlerberichts-Vorlagen</a></h3>
+<h4 id="h1-feedbackformular"><a href="#h1-feedbackformular" style="color:inherit;text-decoration:none">H.1 Feedbackformular</a></h4>
+<p>Tägliches Kurzformular (Google Forms / Tally / eigener Endpoint):</p>
+<pre><code>Tester-Pseudonym:
+Tag (1–14):
+Aktionen heute: [Mehrfachauswahl]
+   ☐ Onboarding   ☐ Aufgabe erstellt   ☐ Mitglied eingeladen
+   ☐ Rolle vergeben   ☐ Aufgabe abgeschlossen   ☐ Push erhalten
+   ☐ Offline-Aktion   ☐ Sync ausgelöst   ☐ Konflikt erlebt
+Dauer der Nutzung heute (min):
+Probleme aufgetreten?  [ja / nein]
+Falls ja, kurzbeschreibung:
+Subjektives Urteil heute (1–5 Sterne):
+Anmerkung:</code></pre>
+<h4 id="h2-fehlerbericht-vorlage"><a href="#h2-fehlerbericht-vorlage" style="color:inherit;text-decoration:none">H.2 Fehlerbericht-Vorlage</a></h4>
+<pre><code>Titel: &lt;kurz, sprechend&gt;
+Datum/Zeit:
+App-Version (vom „Über“-Screen): z. B. 1.0.0 (build 1234)
+Gerät / Android-Version:
+Reproduktionsschritte:
+   1.
+   2.
+   3.
+Erwartet:
+Tatsächlich:
+Schweregrad: [P0 Crash | P1 Funktion blockiert | P2 Störend | P3 Kosmetik]
+Screenshots / Bildschirmaufnahme: [Anhang]
+Logs (falls aktiviert): [Anhang]
+Tritt reproduzierbar auf? [immer / oft / selten / einmal]
+Workaround gefunden?</code></pre>
+<h4 id="h3-crash-triage"><a href="#h3-crash-triage" style="color:inherit;text-decoration:none">H.3 Crash-Triage</a></h4>
+<table><thead><tr><th>Stufe</th><th>Definition</th><th>Maßnahme</th></tr></thead><tbody><tr><td>P0</td><td>App stürzt sofort beim Start oder bricht zentrale Funktion ab</td><td>Hotfix-Build innerhalb 24 h</td></tr><tr><td>P1</td><td>wichtige Funktion blockiert für ≥ 10 % der Nutzer</td><td>Fix im nächsten Closed-Build</td></tr><tr><td>P2</td><td>störend, Workaround vorhanden</td><td>Fix vor Production</td></tr><tr><td>P3</td><td>kosmetisch</td><td>optional, ggf. Backlog</td></tr></tbody></table>
+<h3 id="i-cicd-testpipeline"><a href="#i-cicd-testpipeline" style="color:inherit;text-decoration:none">I. CI/CD-Testpipeline</a></h3>
+<p>(Detail siehe <a href="#9-cicd-integration">Abschnitt 9</a>.)</p>
+<p>Diagramm:</p>
+<pre><code>   Commit ──► verify-fast (Lint/Detekt/Ktlint/Unit/Robolectric)
+                 │
+                 ▼
+   PR ─────────► verify-pr (+ Integration/Compose-UI/Coverage)
+                 │
+                 ▼
+   merge to develop ─► nightly (Maestro, Pairwise, Fuzz, Lasttests)
+                 │
+                 ▼
+   tag release/* ─► pre-release (Test Lab Robo+Instrumented, Perf, Gate)
+                 │
+                 ▼
+   tag closed/* ──► closed-test-upload (gradle-play-publisher → Closed)
+                 │
+                 ▼
+   manuell ──────► production-upload (Promote-Track)</code></pre>
+<p>Blockier-Logik liegt in <code>scripts/release-gate.sh</code>; jeder Schritt schreibt JSON-Reports nach <code>build/reports/release-gate/&lt;timestamp&gt;/</code>, die als GitHub-Artefakt 90 Tage gespeichert werden.</p>
+<h3 id="j-go-no-go-kriterien-für-play-store-veröffentlichung"><a href="#j-go-no-go-kriterien-für-play-store-veröffentlichung" style="color:inherit;text-decoration:none">J. Go-/No-Go-Kriterien für Play-Store-Veröffentlichung</a></h3>
+<p>Eine Veröffentlichung in Production ist <strong>freigegeben (Go)</strong>, wenn <strong>alle</strong> folgenden Kriterien erfüllt sind. Andernfalls: <strong>No-Go</strong>.</p>
+<table><thead><tr><th>Kriterium</th><th>Schwelle</th><th>Quelle</th></tr></thead><tbody><tr><td>Crash-Free-Users (7 Tage Closed)</td><td>≥ 99,5 %</td><td>Crashlytics</td></tr><tr><td>ANR-Rate</td><td>&lt; 0,47 %</td><td>Play Console / Crashlytics</td></tr><tr><td>Closed-Test-Dauer</td><td>≥ 14 zusammenhängende Tage</td><td>Play Console</td></tr><tr><td>Tester-Mindestzahl</td><td>≥ 12 aktiv beigetreten</td><td>Play Console</td></tr><tr><td>Tester-Engagement</td><td>≥ 70 % der Tester ≥ 10 Tage aktiv</td><td>Analytics</td></tr><tr><td>Pre-Launch Report</td><td>0 „blocker“ / „high“ ungelöst</td><td>Play Console</td></tr><tr><td>Manuelle Akzeptanz</td><td>100 % der P0/P1-Bugs verifiziert geschlossen</td><td>Tracking-System</td></tr><tr><td>Automatisierte Tests</td><td>alle CI-Jobs grün auf Release-Tag</td><td>CI</td></tr><tr><td>Coverage</td><td>Domain ≥ 80 %, Data ≥ 70 %, UI ≥ 50 %</td><td>Kover</td></tr><tr><td>Berechtigungs­matrix</td><td>0 Abweichungen</td><td>Test-Report</td></tr><tr><td>Data-Safety-Form</td><td>aktuell + Hash unverändert oder reviewt</td><td>Repo + Play Console</td></tr><tr><td>Datenschutzerklärung</td><td>online, Link in Play-Listing</td><td>externer Host</td></tr><tr><td>Inhaltsrichtlinien</td><td>Self-Assessment durchlaufen</td><td>Play Console</td></tr><tr><td>Tester-Feedback</td><td>≥ 80 % „Go“-Stimmen im Abschluss-Survey</td><td>Formular</td></tr><tr><td>Lokalisierung</td><td>Deutsch + Englisch vollständig, keine Platzhalter</td><td>i18n-Lint</td></tr><tr><td>Versions-Code</td><td>inkrementiert, signiert</td><td>Gradle</td></tr><tr><td>ProGuard/R8</td><td>keine ungewollten Drops; Mapping in Play hochgeladen</td><td>Build</td></tr><tr><td>App-Bundle-Größe</td><td>&lt; 150 MB (Base-APK &lt; 75 MB)</td><td>Build</td></tr></tbody></table>
+<p>Ein Verstoß gegen <strong>eine</strong> Spalte → <strong>No-Go</strong>, Maßnahmenplan greift (<a href="#k-massnahmenplan-bei-fehlern-oder-google-ablehnung">K</a>).</p>
+<h3 id="k-maßnahmenplan-bei-fehlern-oder-google-ablehnung"><a href="#k-maßnahmenplan-bei-fehlern-oder-google-ablehnung" style="color:inherit;text-decoration:none">K. Maßnahmenplan bei Fehlern oder Google-Ablehnung</a></h3>
+<h4 id="k1-während-des-closed-tests"><a href="#k1-während-des-closed-tests" style="color:inherit;text-decoration:none">K.1 Während des Closed Tests</a></h4>
+<table><thead><tr><th>Symptom</th><th>Sofort-Aktion</th><th>Folge-Aktion</th></tr></thead><tbody><tr><td>P0-Crash bei ≥ 1 Tester</td><td>Build sperren, Crashlytics-Issue P0</td><td>Hotfix in 24 h, neuer Closed-Build, 14-Tage-Zähler läuft <em>nicht</em> zurück, aber Engagement wird neu gewichtet</td></tr><tr><td>Engagement &lt; Schwelle</td><td>Re-Engagement-Mail Tag 7 + 10</td><td>ggf. Tester-Pool erweitern auf 15–18</td></tr><tr><td>Tester-Ausfall (&lt; 12 aktiv)</td><td>nachrekrutieren binnen 72 h</td><td>sicherstellen, dass die letzten 14 Tage ununterbrochen 12 Tester aktiv waren</td></tr><tr><td>Sync-Verlust gemeldet</td><td>Property-Test reproduzieren</td><td>Fix + Regressionstest; History-Audit</td></tr><tr><td>Push nicht zugestellt</td><td>FCM-Konfiguration prüfen, Topic-Subscription</td><td>Re-Test mit „Send to single device“</td></tr></tbody></table>
+<h4 id="k2-bei-google-ablehnung"><a href="#k2-bei-google-ablehnung" style="color:inherit;text-decoration:none">K.2 Bei Google-Ablehnung</a></h4>
+<p>Google teilt Ablehnungsgründe in der Play Console mit. Häufige Kategorien und Antworten:</p>
+<table><thead><tr><th>Ablehnungsgrund</th><th>Maßnahme</th></tr></thead><tbody><tr><td>Nutzerdaten-Richtlinie / Data Safety inkonsistent</td><td>Data-Safety-Form mit tatsächlichen Datentypen abgleichen (Firebase Auth, Firestore-Felder, Crashlytics, Analytics), Datenschutzerklärung anpassen, erneut einreichen</td></tr><tr><td>Hinweis auf irreführende Funktionsbeschreibung</td><td>Store-Listing kürzen/präzisieren; Screenshots aktualisieren</td></tr><tr><td>Berechtigungs-Übersteuerung (z. B. unnötig SMS)</td><td>Permissions aus Manifest entfernen, R8 prüft auf unused</td></tr><tr><td>Crash-Quote zu hoch (Pre-Launch / Vitals)</td><td>crashs aus Vitals exportieren, P0/P1 fixen, neuen Closed-Build verteilen, ≥ 7 Tage warten</td></tr><tr><td>Closed-Test-Anforderungen nicht erfüllt</td><td>Nachweis-Dokumentation ergänzen (Engagement-Liste, Build-Log, Tester-Statements), Production-Antrag wiederholen</td></tr><tr><td>Background-Location o. ä. ohne klaren Use-Case</td><td>Feature entfernen oder klaren Begründungstext + Demo-Video einreichen</td></tr><tr><td>Inhalts-Rating falsch</td><td>erneutes Rating-Assessment, ggf. ältere Altersfreigabe</td></tr></tbody></table>
+<h4 id="k3-rollback-strategie"><a href="#k3-rollback-strategie" style="color:inherit;text-decoration:none">K.3 Rollback-Strategie</a></h4>
+<ul><li><strong>Sofort-Rollback</strong>: Halten des Production-Releases (Staged Rollout 1 %</li></ul>
+<p>als Default; bei Crash-Spike Halt auf 0 %).</p>
+<ul><li><strong>Stop Rollout</strong> + neuer Production-Track mit Hotfix; ProGuard-Mapping</li></ul>
+<p>mitliefern.</p>
+<ul><li>Nutzer-Kommunikation: In-App-Banner (Remote Config Flag</li></ul>
+<p><code>rollback_notice</code>).</p>
+<h4 id="k4-nach-veröffentlichung"><a href="#k4-nach-veröffentlichung" style="color:inherit;text-decoration:none">K.4 Nach Veröffentlichung</a></h4>
+<ul><li><strong>Tägliche Vitals-Überwachung</strong> (Crashlytics-Slack-Webhook).</li><li><strong>Wöchentliche Regressions-Suite</strong> (Maestro) gegen Production-Build.</li><li><strong>Monatliches Test-Konzept-Review</strong> (dieses Dokument).</li><li>Schwellen werden quartalsweise an Google-Vorgaben angepasst.</li></ul>
+<hr />
+<h2 id="anhang-verzeichnisstruktur-tests-im-repo"><a href="#anhang-verzeichnisstruktur-tests-im-repo" style="color:inherit;text-decoration:none">Anhang: Verzeichnisstruktur Tests im Repo</a></h2>
+<pre><code>tests/
+  concept/
+    pict/                    # PICT-Inputs für Pairwise/3-wise
+    cases/                   # CSVs mit TC-IDs (R-, F-, M-)
+    scenarios/               # Maestro-Yamls (referenziert von maestro/)
+    reports/                 # generierte Reports (CI lädt sie hoch)
+  property/                  # Kotest-property-Tests
+  fixtures/                  # Faker, Seeds
+  performance/               # k6, Benchmark-Suites
+maestro/
+  flows/                     # E2E
+release/
+  closed-test-&lt;datum&gt;/       # Nachweis für Google</code></pre>
+<hr />
+<h2 id="glossar"><a href="#glossar" style="color:inherit;text-decoration:none">Glossar</a></h2>
+<ul><li><strong>Closed Testing</strong> — Track in der Play Console, sichtbar nur für</li></ul>
+<p>eingeladene Tester; Pflichtphase für neue persönliche Developer-Accounts.</p>
+<ul><li><strong>Pairwise / 2-wise Coverage</strong> — Testfall-Auswahl, in der jedes</li></ul>
+<p>Wertepaar zweier Dimensionen mindestens einmal vorkommt.</p>
+<ul><li><strong>Robo-Test</strong> — automatisierter explorativer Test von Firebase Test</li></ul>
+<p>Lab, der die UI crawlt.</p>
+<ul><li><strong>Maestro Flow</strong> — deklaratives Yaml-Skript für End-to-End-Mobile-Tests.</li><li><strong>App Check</strong> — Firebase-Mechanismus, der Backend-Aufrufe nur von der</li></ul>
+<p>echten App akzeptiert (gegen Bot-Traffic).</p>
+<ul><li><strong>ANR</strong> — Application Not Responding; Android-Schwelle 5 s</li></ul>
+<p>Main-Thread-Blockade.</p>
+<hr />
+<p><em>Eigentümer dieses Dokuments: QA-Lead. Letzte Review: 2026-05-20. Nächste Pflicht-Review: vor jedem Production-Release.</em></p>
+<hr />
+<h1 id="teil-ii-negativ--datenschutz--und-compliance-konzept"><a href="#teil-ii-negativ--datenschutz--und-compliance-konzept" style="color:inherit;text-decoration:none">Teil II — Negativ-, Datenschutz- und Compliance-Konzept</a></h1>
+<p>Erweitert Teil I (Stack-Konzept) um harte Negativ-, Datenschutz-, Sicherheits- und Play-Compliance-Anforderungen. Ziel: <strong>vor</strong> dem Upload in die Play Console werden technische, datenschutzrechtliche und richtlinienseitige Verstöße automatisiert erkannt und blockiert.</p>
+<h2 id="inhalt-teil-ii"><a href="#inhalt-teil-ii" style="color:inherit;text-decoration:none">Inhalt Teil II</a></h2>
+<ol><li><a href="#11-negativtests">Negativtests</a></li><li><a href="#12-datenschutztests">Datenschutztests</a></li><li><a href="#13-nachweisdokumentation-fur-google-play">Nachweisdokumentation für Google Play</a></li><li><a href="#14-go--no-go-kriterien-erweiterung">Go-/No-Go-Kriterien (Erweiterung)</a></li><li><a href="#15-cicd-integration-erweiterung">CI/CD-Integration (Erweiterung)</a></li><li><a href="#16-ergebnisformat-al">Ergebnisformat A–L</a></li></ol>
+<hr />
+<h2 id="11-negativtests"><a href="#11-negativtests" style="color:inherit;text-decoration:none">11. Negativtests</a></h2>
+<p>Negativtests sind verpflichtend. Eine grüne Negativtest-Suite ist Voraussetzung für jeden Closed-Test- oder Production-Build.</p>
+<h3 id="111-kritikalitätsstufen"><a href="#111-kritikalitätsstufen" style="color:inherit;text-decoration:none">11.1 Kritikalitätsstufen</a></h3>
+<table><thead><tr><th>Stufe</th><th>Bedeutung</th><th>Beispiel</th><th>Build-Wirkung</th></tr></thead><tbody><tr><td><strong>C0 Blocker</strong></td><td>App startet nicht, Daten gehen verloren, Sicherheitslücke</td><td>SQL-Injection im Login</td><td>sofortiger Stop, kein Upload</td></tr><tr><td><strong>C1 Critical</strong></td><td>Kernfunktion bricht ohne Recovery</td><td>Sync löscht lokale Änderungen</td><td>Stop, Hotfix Pflicht</td></tr><tr><td><strong>C2 Major</strong></td><td>Funktion bricht, Workaround existiert</td><td>Falsche Fehlermeldung bei 401</td><td>Fix vor Release</td></tr><tr><td><strong>C3 Minor</strong></td><td>UX-Aussetzer, kein Datenverlust</td><td>Toast-Text vertauscht</td><td>Backlog, optional vor Release</td></tr><tr><td><strong>C4 Cosmetic</strong></td><td>Optik</td><td>Padding falsch</td><td>Backlog</td></tr></tbody></table>
+<h3 id="112-risikomatrix-eintrittswahrscheinlichkeit-schaden"><a href="#112-risikomatrix-eintrittswahrscheinlichkeit-schaden" style="color:inherit;text-decoration:none">11.2 Risikomatrix (Eintritts­wahrscheinlichkeit × Schaden)</a></h3>
+<table><thead><tr><th>Wahrscheinlichkeit \ Schaden</th><th>gering</th><th>mittel</th><th>hoch</th><th>kritisch</th></tr></thead><tbody><tr><td>selten</td><td>C4</td><td>C3</td><td>C2</td><td>C1</td></tr><tr><td>möglich</td><td>C3</td><td>C2</td><td>C1</td><td>C0</td></tr><tr><td>häufig</td><td>C2</td><td>C1</td><td>C0</td><td>C0</td></tr><tr><td>sicher</td><td>C1</td><td>C0</td><td>C0</td><td>C0</td></tr></tbody></table>
+<p>C0 + C1 sind automatisch <strong>No-Go</strong>. C2 ist No-Go ohne dokumentierte Mitigation. C3/C4 sind dokumentationspflichtig.</p>
+<h3 id="113-negativtest-matrix"><a href="#113-negativtest-matrix" style="color:inherit;text-decoration:none">11.3 Negativtest-Matrix</a></h3>
+<h4 id="a-benutzerbezogene-negativtests"><a href="#a-benutzerbezogene-negativtests" style="color:inherit;text-decoration:none">A. Benutzerbezogene Negativtests</a></h4>
+<table><thead><tr><th>ID</th><th>Eingabe / Situation</th><th>Erwartetes Verhalten</th><th>Krit.</th></tr></thead><tbody><tr><td>N-A-01</td><td>Registrierung mit ungültiger E-Mail</td><td>UI-Fehler, kein Auth-Call</td><td>C1</td></tr><tr><td>N-A-02</td><td>Eingabe &gt; 10 000 Zeichen</td><td>gestutzt oder Fehler, kein Crash</td><td>C1</td></tr><tr><td>N-A-03</td><td>Sonderzeichen (Emoji, Steuerzeichen, NUL)</td><td>gespeichert oder verworfen, kein Crash</td><td>C1</td></tr><tr><td>N-A-04</td><td>SQL-Injection in Namensfeld</td><td>gespeichert literal, keine SQL-Ausführung</td><td>C0</td></tr><tr><td>N-A-05</td><td>Doppelter Account (gleiche E-Mail)</td><td>Auth-Server blockt, UI-Fehler</td><td>C1</td></tr><tr><td>N-A-06</td><td>Gesperrter Nutzer logged sich ein</td><td>UI-Fehler „Konto gesperrt“</td><td>C1</td></tr><tr><td>N-A-07</td><td>Gelöschter Nutzer öffnet Deep-Link</td><td>Hinweis + Onboarding für Re-Invite</td><td>C1</td></tr><tr><td>N-A-08</td><td>Abgelaufene Session</td><td>automatischer Logout, sanfter Re-Auth</td><td>C1</td></tr><tr><td>N-A-09</td><td>Paralleler Login (2 Geräte)</td><td>beide aktiv, Konflikte über LWW</td><td>C1</td></tr><tr><td>N-A-10</td><td>Manipulierte Rolle (Client setzt OWNER)</td><td>Server lehnt ab, UI-Fehler</td><td>C0</td></tr><tr><td>N-A-11</td><td>Unvollständiges Profil</td><td>Onboarding blockt Funktion bis Pflichtfeld</td><td>C2</td></tr></tbody></table>
+<h4 id="b-netzwerk--und-synchronisationsfehler"><a href="#b-netzwerk--und-synchronisationsfehler" style="color:inherit;text-decoration:none">B. Netzwerk- und Synchronisationsfehler</a></h4>
+<table><thead><tr><th>ID</th><th>Situation</th><th>Erwartetes Verhalten</th><th>Krit.</th></tr></thead><tbody><tr><td>N-B-01</td><td>kein Internet</td><td>Banner, Offline-Modus</td><td>C1</td></tr><tr><td>N-B-02</td><td>instabile Verbindung</td><td>Retry mit Backoff</td><td>C2</td></tr><tr><td>N-B-03</td><td>sehr langsame Verbindung (2 G)</td><td>Spinner, Timeout &gt; 30 s</td><td>C2</td></tr><tr><td>N-B-04</td><td>Server Timeout 504</td><td>Klare Fehlermeldung</td><td>C2</td></tr><tr><td>N-B-05</td><td>Verbindungsabbruch mitten in PUT</td><td>Retry oder lokale Queue</td><td>C1</td></tr><tr><td>N-B-06</td><td>Offline-Edit → Online-Sync</td><td>Konflikt-Resolution wendet LWW</td><td>C1</td></tr><tr><td>N-B-07</td><td>Paralleles Edit auf 2 Geräten</td><td>Konflikt-Banner, Audit-Eintrag</td><td>C1</td></tr></tbody></table>
+<h4 id="c-gerätebezogene-fehler"><a href="#c-gerätebezogene-fehler" style="color:inherit;text-decoration:none">C. Gerätebezogene Fehler</a></h4>
+<table><thead><tr><th>ID</th><th>Situation</th><th>Erwartetes Verhalten</th><th>Krit.</th></tr></thead><tbody><tr><td>N-C-01</td><td>Speicher voll</td><td>Speichern liefert UI-Fehler, kein Crash</td><td>C1</td></tr><tr><td>N-C-02</td><td>Akku-Sparmodus</td><td>Sync läuft im erlaubten Fenster</td><td>C2</td></tr><tr><td>N-C-03</td><td>App im Hintergrund OOM-killed</td><td>Process-Death-Restore, ViewModel-State</td><td>C1</td></tr><tr><td>N-C-04</td><td>Crash mitten im Schreiben</td><td>DB konsistent (Transaktion)</td><td>C0</td></tr><tr><td>N-C-05</td><td>Geräte-Neustart</td><td>App startet sauber</td><td>C1</td></tr><tr><td>N-C-06</td><td>Android 10–16</td><td>UI funktioniert, keine ANR</td><td>C1</td></tr><tr><td>N-C-07</td><td>Bildschirmgrößen compact–expanded</td><td>Layout responsive</td><td>C2</td></tr><tr><td>N-C-08</td><td>Rotation während Aktion</td><td>State erhalten</td><td>C2</td></tr><tr><td>N-C-09</td><td>Dark Mode</td><td>Kontraste WCAG AA</td><td>C2</td></tr><tr><td>N-C-10</td><td>Sprache RTL / lange Strings</td><td>UI bricht nicht</td><td>C2</td></tr></tbody></table>
+<h4 id="d-sicherheits--und-manipulationstests"><a href="#d-sicherheits--und-manipulationstests" style="color:inherit;text-decoration:none">D. Sicherheits- und Manipulationstests</a></h4>
+<table><thead><tr><th>ID</th><th>Situation</th><th>Erwartetes Verhalten</th><th>Krit.</th></tr></thead><tbody><tr><td>N-D-01</td><td>Root-Gerät</td><td>Hinweis, App Check verweigert sensible Aktionen</td><td>C1</td></tr><tr><td>N-D-02</td><td>Emulator</td><td>App Check verweigert oder loggt</td><td>C1</td></tr><tr><td>N-D-03</td><td>Debugger angehängt</td><td>Sensitive Aktionen sperren</td><td>C1</td></tr><tr><td>N-D-04</td><td>Modifizierte APK / fehlende Signatur</td><td>Integritätsprüfung schlägt fehl</td><td>C0</td></tr><tr><td>N-D-05</td><td>Frida/Hooking</td><td>App Check / Play Integrity verweigert</td><td>C1</td></tr><tr><td>N-D-06</td><td>unsicherer Deep-Link (Daten in URL)</td><td>Validierung, kein blindes Vertrauen</td><td>C0</td></tr><tr><td>N-D-07</td><td>exported Activity ohne Schutz</td><td>nicht vorhanden / explizit dokumentiert</td><td>C0</td></tr><tr><td>N-D-08</td><td>implicit Intent mit Daten</td><td>nur expliziter Intent für sensible Daten</td><td>C1</td></tr><tr><td>N-D-09</td><td>Klartext-Traffic (<code>http://</code>)</td><td>network-security-config blockt</td><td>C0</td></tr><tr><td>N-D-10</td><td>WebView ohne <code>setJavaScriptEnabled=false</code></td><td>nur explizit erlaubt + URL-Whitelist</td><td>C1</td></tr></tbody></table>
+<h4 id="e-api--und-backend-negativtests"><a href="#e-api--und-backend-negativtests" style="color:inherit;text-decoration:none">E. API- und Backend-Negativtests</a></h4>
+<table><thead><tr><th>ID</th><th>Situation</th><th>Erwartetes Verhalten</th><th>Krit.</th></tr></thead><tbody><tr><td>N-E-01</td><td>ungültiger Token</td><td>401 → Re-Auth-Flow</td><td>C1</td></tr><tr><td>N-E-02</td><td>abgelaufener Token</td><td>Refresh, sonst Logout</td><td>C1</td></tr><tr><td>N-E-03</td><td>fehlende Authentifizierung</td><td>Rules verweigern</td><td>C0</td></tr><tr><td>N-E-04</td><td>manipulierter Request-Body</td><td>Server-side-Validierung</td><td>C0</td></tr><tr><td>N-E-05</td><td>fehlende Datenfelder</td><td>Default oder Fehler, kein Crash</td><td>C1</td></tr><tr><td>N-E-06</td><td>unerwartete Server-Antwort (HTML statt JSON)</td><td>sauber abgefangen</td><td>C1</td></tr><tr><td>N-E-07</td><td>DB-Fehler / Constraint-Violation</td><td>Retry oder UI-Fehler</td><td>C1</td></tr><tr><td>N-E-08</td><td>Rate-Limit 429</td><td>Backoff, kein Loop</td><td>C1</td></tr><tr><td>N-E-09</td><td>fehlerhafte Push (FCM-Payload korrupt)</td><td>Crash-frei, optional Log</td><td>C1</td></tr></tbody></table>
+<h3 id="114-automatisierung-in-ci"><a href="#114-automatisierung-in-ci" style="color:inherit;text-decoration:none">11.4 Automatisierung in CI</a></h3>
+<p>Alle N-IDs sind im Repo unter <code>tests/concept/test_negative_*.py</code> als parametrisierte Tests umgesetzt. Pro PR muss die Negativ-Suite grün sein. Nightly läuft zusätzlich Fuzzing (Property-Tests + zufalls­basiert) über Eingabefelder.</p>
+<hr />
+<h2 id="12-datenschutztests"><a href="#12-datenschutztests" style="color:inherit;text-decoration:none">12. Datenschutztests</a></h2>
+<h3 id="121-grundprinzipien"><a href="#121-grundprinzipien" style="color:inherit;text-decoration:none">12.1 Grundprinzipien</a></h3>
+<ul><li><strong>DSGVO-Konformität</strong>: Art. 6 Rechtsgrundlage je Verarbeitung,</li></ul>
+<p>Art. 13/14 Informationspflichten, Art. 15–22 Betroffenenrechte.</p>
+<ul><li><strong>Datensparsamkeit</strong>: nur was nachweislich nötig ist.</li><li><strong>Privacy by Design</strong>: lokal-first, Verschlüsselung, kein Tracking</li></ul>
+<p>ohne aktive Einwilligung.</p>
+<ul><li><strong>Transparenz</strong>: Datenschutzerklärung + In-App-Hinweise.</li></ul>
+<h3 id="122-datenerhebungs-inventar"><a href="#122-datenerhebungs-inventar" style="color:inherit;text-decoration:none">12.2 Datenerhebungs-Inventar</a></h3>
+<table><thead><tr><th>Datenkategorie</th><th>Zweck</th><th>Rechtsgrundlage</th><th>Empfänger</th><th>Aufbewahrung</th></tr></thead><tbody><tr><td>E-Mail (Konto)</td><td>Login, Pwd-Reset</td><td>Vertrag (Art. 6 I b)</td><td>App-Backend</td><td>bis Kontolöschung</td></tr><tr><td>Profilname</td><td>Anzeige in Gruppen</td><td>Vertrag</td><td>App-Backend, Gruppe</td><td>bis Kontolöschung</td></tr><tr><td>Aufgaben, Notizen, Termine</td><td>Kernfunktion</td><td>Vertrag</td><td>App-Backend, Gruppe</td><td>bis Löschung durch Nutzer</td></tr><tr><td>Crashlytics-Reports</td><td>Stabilität</td><td>Berechtigtes Interesse (Art. 6 I f)</td><td>Google</td><td>90 Tage</td></tr><tr><td>Analytics (anonymisiert)</td><td>Produktverbesserung</td><td>Einwilligung (Art. 6 I a)</td><td>Google</td><td>14 Monate</td></tr><tr><td>Push-Token (FCM)</td><td>Benachrichtigung</td><td>Vertrag</td><td>Google FCM</td><td>bis Logout / Token-Refresh</td></tr><tr><td>App-Logs (lokal)</td><td>Debug, Support</td><td>Berechtigtes Interesse</td><td>nur lokal</td><td>rotierend 7 Tage</td></tr><tr><td>App-Check-Token</td><td>Anti-Bot</td><td>Berechtigtes Interesse</td><td>Google</td><td>Session</td></tr></tbody></table>
+<h3 id="123-datenschutz-testmatrix"><a href="#123-datenschutz-testmatrix" style="color:inherit;text-decoration:none">12.3 Datenschutz-Testmatrix</a></h3>
+<h4 id="a-datenerhebung"><a href="#a-datenerhebung" style="color:inherit;text-decoration:none">A. Datenerhebung</a></h4>
+<table><thead><tr><th>ID</th><th>Prüfung</th><th>Methode</th><th>Krit.</th></tr></thead><tbody><tr><td>P-A-01</td><td>Liste der erhobenen Datentypen identisch zu Data-Safety-Form</td><td>manueller Abgleich + CI-Hash</td><td>C0</td></tr><tr><td>P-A-02</td><td>Keine Tracking-IDs ohne Opt-in</td><td>statische Code-Analyse + Init-Reihenfolge-Test</td><td>C0</td></tr><tr><td>P-A-03</td><td>Analytics nur nach <code>consent=granted</code></td><td>Espresso/Compose-Test</td><td>C1</td></tr><tr><td>P-A-04</td><td>Drittanbieter-SDKs in <code>docs/sdk-inventory.md</code> aufgeführt</td><td>CI-Diff</td><td>C1</td></tr></tbody></table>
+<h4 id="b-nutzerrechte"><a href="#b-nutzerrechte" style="color:inherit;text-decoration:none">B. Nutzerrechte</a></h4>
+<table><thead><tr><th>ID</th><th>Prüfung</th><th>Methode</th><th>Krit.</th></tr></thead><tbody><tr><td>P-B-01</td><td>„Konto löschen“ in Settings sichtbar (Play-Pflicht)</td><td>Compose-UI-Test</td><td>C0</td></tr><tr><td>P-B-02</td><td>Kontolöschung entfernt serverseitige + lokale Daten</td><td>Integrationstest</td><td>C0</td></tr><tr><td>P-B-03</td><td>Datenexport liefert valides JSON/CSV</td><td>E2E-Test</td><td>C1</td></tr><tr><td>P-B-04</td><td>Widerruf einer Einwilligung wirkt unmittelbar</td><td>Integrationstest</td><td>C1</td></tr><tr><td>P-B-05</td><td>Profildaten editierbar</td><td>UI-Test</td><td>C2</td></tr><tr><td>P-B-06</td><td>Lokale Daten lassen sich löschen</td><td>Integrationstest</td><td>C1</td></tr></tbody></table>
+<h4 id="c-berechtigungen"><a href="#c-berechtigungen" style="color:inherit;text-decoration:none">C. Berechtigungen</a></h4>
+<table><thead><tr><th>ID</th><th>Prüfung</th><th>Methode</th><th>Krit.</th></tr></thead><tbody><tr><td>P-C-01</td><td>AndroidManifest enthält nur dokumentierte Permissions</td><td>CI-Linter</td><td>C0</td></tr><tr><td>P-C-02</td><td>Laufzeit-Permission-Rationale vor System-Dialog</td><td>UI-Test</td><td>C1</td></tr><tr><td>P-C-03</td><td>Hintergrund-Permissions begründet im Play-Listing</td><td>Doc-Review</td><td>C1</td></tr><tr><td>P-C-04</td><td>Kamera/Mikrofon/Standort nur On-Demand</td><td>UI-Test + Code-Review</td><td>C0</td></tr></tbody></table>
+<h4 id="d-datensicherheit"><a href="#d-datensicherheit" style="color:inherit;text-decoration:none">D. Datensicherheit</a></h4>
+<table><thead><tr><th>ID</th><th>Prüfung</th><th>Methode</th><th>Krit.</th></tr></thead><tbody><tr><td>P-D-01</td><td>HTTPS-only (<code>usesCleartextTraffic=false</code>)</td><td>Manifest-Check</td><td>C0</td></tr><tr><td>P-D-02</td><td>network-security-config aktiv</td><td>Manifest-Check</td><td>C0</td></tr><tr><td>P-D-03</td><td>Token in EncryptedSharedPreferences / Keystore</td><td>Code-Audit + Test</td><td>C0</td></tr><tr><td>P-D-04</td><td>Keine PII in Logs</td><td>Regex-Scan auf E-Mail/Telefon/Adresse</td><td>C0</td></tr><tr><td>P-D-05</td><td>Keine PII in Crashlytics-Custom-Keys</td><td>Code-Review</td><td>C1</td></tr><tr><td>P-D-06</td><td>Firestore-Rules verweigern Default-Read/Write</td><td>Rules-Unit-Test</td><td>C0</td></tr><tr><td>P-D-07</td><td>Datenlecks zwischen Tenants verhindert</td><td>Multi-Tenant-Test</td><td>C0</td></tr><tr><td>P-D-08</td><td>Backup-Tag in Manifest gezielt gesetzt (<code>allowBackup=false</code> oder mit Regel)</td><td>Manifest-Check</td><td>C0</td></tr></tbody></table>
+<h4 id="e-drittanbieter-sdks"><a href="#e-drittanbieter-sdks" style="color:inherit;text-decoration:none">E. Drittanbieter-SDKs</a></h4>
+<table><thead><tr><th>SDK</th><th>gesammelte Daten</th><th>Speicherort</th><th>Aufbewahrung</th><th>Löschkonzept</th></tr></thead><tbody><tr><td>Firebase Auth</td><td>E-Mail-Hash, Refresh-Token</td><td>Google-DC EU</td><td>bis Kontolöschung</td><td>Auth-Account-Delete</td></tr><tr><td>Firestore</td><td>Nutzdaten</td><td>Google-DC EU</td><td>bis Nutzerlöschung</td><td>per Cloud-Function <code>deleteUserData</code></td></tr><tr><td>FCM</td><td>Push-Token, Topic-Abos</td><td>Google</td><td>bis Token-Refresh</td><td>bei Logout invalidiert</td></tr><tr><td>Crashlytics</td><td>Stacktrace, Geräteinfo (anonym)</td><td>Google</td><td>90 Tage</td><td>Self-Delete via Console</td></tr><tr><td>Analytics</td><td>Event-Namen, Pseudo-ID</td><td>Google</td><td>14 Monate</td><td>Console-Reset / Opt-out</td></tr><tr><td>App Check</td><td>Integrity-Token</td><td>Google</td><td>Session</td><td>n/a</td></tr><tr><td>Remote Config</td><td>nichts (nur Read)</td><td>–</td><td>–</td><td>n/a</td></tr></tbody></table>
+<h3 id="124-datenflussdiagramm-textuell"><a href="#124-datenflussdiagramm-textuell" style="color:inherit;text-decoration:none">12.4 Datenflussdiagramm (textuell)</a></h3>
+<pre><code>[ Android-App ]
+   │  TLS 1.2+
+   ├── Auth   → Firebase Auth (EU, Refresh-Token rotiert)
+   ├── Daten  → Firestore (EU, RBAC durch Rules)
+   ├── Push   → FCM (Token rotiert bei Login)
+   ├── Crash  → Crashlytics (anonymisiert, kein PII-Custom-Key)
+   ├── Stats  → Analytics (nur nach Consent, IP-Anonymisierung)
+   └── Check  → App Check (anti-bot, Session-only)
+
+Lokal (Sandbox /data/data/&lt;pkg&gt;/):
+   ├── EncryptedSharedPreferences (Token, Settings)
+   ├── Room-DB (Offline-Cache, SQLCipher)
+   └── Logs (rotierend, max 7 Tage, ohne PII)</code></pre>
+<h3 id="125-berechtigungs-inventar-soll"><a href="#125-berechtigungs-inventar-soll" style="color:inherit;text-decoration:none">12.5 Berechtigungs-Inventar (Soll)</a></h3>
+<table><thead><tr><th>Manifest-Permission</th><th>App-Bedarf?</th><th>Begründung</th></tr></thead><tbody><tr><td><code>INTERNET</code></td><td>ja</td><td>Backend-Calls</td></tr><tr><td><code>ACCESS_NETWORK_STATE</code></td><td>optional</td><td>Online/Offline-Banner</td></tr><tr><td><code>POST_NOTIFICATIONS</code> (API 33+)</td><td>ja</td><td>Erinnerungen</td></tr><tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>nein</td><td>nicht nötig</td></tr><tr><td><code>READ_EXTERNAL_STORAGE</code></td><td>nein</td><td>SAF + Scoped Storage</td></tr><tr><td><code>WRITE_EXTERNAL_STORAGE</code></td><td>nein</td><td>dito</td></tr><tr><td><code>CAMERA</code></td><td>nur On-Demand</td><td>Avatar / Beleg-Foto</td></tr><tr><td><code>RECORD_AUDIO</code></td><td>nein</td><td>–</td></tr><tr><td><code>ACCESS_FINE_LOCATION</code></td><td>nein</td><td>–</td></tr><tr><td><code>SYSTEM_ALERT_WINDOW</code></td><td>nein</td><td>–</td></tr></tbody></table>
+<h3 id="126-dsgvo-checkliste"><a href="#126-dsgvo-checkliste" style="color:inherit;text-decoration:none">12.6 DSGVO-Checkliste</a></h3>
+<ul><li>[ ] Datenschutzerklärung verlinkt im Play-Listing und in der App.</li><li>[ ] Verzeichnis der Verarbeitungstätigkeiten (VVT) gepflegt.</li><li>[ ] Auftragsverarbeitungsverträge mit Google (DPA) abgeschlossen.</li><li>[ ] Drittlandtransfer (EU-US-DPF) dokumentiert.</li><li>[ ] TOMs (technisch-organisatorische Maßnahmen) beschrieben.</li><li>[ ] Lösch- und Auskunftsroutine getestet.</li><li>[ ] DPIA durchgeführt, falls Risikoschwellen erreicht.</li><li>[ ] Cookie-/Tracking-Hinweis falls relevant (WebView-Onboarding etc.).</li></ul>
+<h3 id="127-google-play-data-safety-vorlage"><a href="#127-google-play-data-safety-vorlage" style="color:inherit;text-decoration:none">12.7 Google Play Data-Safety-Vorlage</a></h3>
+<pre><code>Welche Daten werden erhoben? Welche geteilt? Verschlüsselung in Transit? Löschbar?
+
+Persönliche Daten
+  - Name (erhoben, nicht geteilt, verschlüsselt, löschbar)
+  - E-Mail (erhoben, nicht geteilt, verschlüsselt, löschbar)
+Nutzergenerierte Inhalte
+  - Aufgaben/Notizen (erhoben, nicht geteilt, verschlüsselt, löschbar)
+App-Aktivität
+  - App-Interaktionen (erhoben, nicht geteilt, verschlüsselt, löschbar)
+Diagnose
+  - Absturzlogs (erhoben, an Google, verschlüsselt, löschbar)
+  - Diagnosedaten (erhoben, an Google, verschlüsselt, löschbar)
+Geräte- oder andere Kennungen
+  - keine</code></pre>
+<hr />
+<h2 id="13-nachweisdokumentation-für-google-play"><a href="#13-nachweisdokumentation-für-google-play" style="color:inherit;text-decoration:none">13. Nachweisdokumentation für Google Play</a></h2>
+<h3 id="131-ordnerstruktur"><a href="#131-ordnerstruktur" style="color:inherit;text-decoration:none">13.1 Ordnerstruktur</a></h3>
+<pre><code>release/closed-test-&lt;YYYY-MM-DD&gt;/
+  README.md                       # Übersicht des Releases
+  testers.csv                     # Pseudonym, Beitritt, Engagement-Tage
+  feedback/
+    day-01.csv .. day-14.csv
+  bugs/
+    &lt;id&gt;.md
+  crashes/
+    crashlytics-export.csv
+    anr-export.csv
+  stats/
+    sessions-per-tester.csv
+    crash-free-users.csv
+  builds/
+    versionCode-1234-changelog.md
+  scans/
+    dependency-scan.json
+    lint.html
+    detekt.html
+    proguard-mapping.txt
+  privacy/
+    data-safety.json
+    permission-matrix.md
+    sdk-inventory.md
+  go-no-go.md                     # Aggregation siehe Anhang J/J2</code></pre>
+<h3 id="132-closed-testing-nachweise"><a href="#132-closed-testing-nachweise" style="color:inherit;text-decoration:none">13.2 Closed-Testing-Nachweise</a></h3>
+<ul><li>Tester-Pool: <code>testers.csv</code> mit ≥ 12 Einträgen, Beitritt vor Tag 1,</li></ul>
+<p>Engagement ≥ 10/14 Tage in <code>sessions-per-tester.csv</code>.</p>
+<ul><li>Feedback-Aggregation pro Tag (<code>feedback/day-XX.csv</code>) inkl. Sternebewertung.</li><li>Bug-Stand: <code>bugs/*.md</code> nach P0/P1/P2/P3, Anzahl offen am Ende = 0 für P0/P1.</li><li>Crash-Statistik: 7-Tage-Crash-Free-Users ≥ 99,5 %.</li></ul>
+<h3 id="133-qualitätsnachweise"><a href="#133-qualitätsnachweise" style="color:inherit;text-decoration:none">13.3 Qualitäts­nachweise</a></h3>
+<ul><li><code>scans/lint.html</code>, <code>scans/detekt.html</code> ohne Errors.</li><li><code>scans/kover.xml</code> mit Coverage-Schwellen erreicht.</li><li><code>builds/versionCode-XXXX-changelog.md</code> enthält Test-Matrix-Status,</li></ul>
+<p>unterstützte Android-Versionen, Geräteliste (Test Lab + Tester).</p>
+<ul><li><code>stats/</code>-Exporte aus Crashlytics + Vitals.</li></ul>
+<h3 id="134-datenschutz-nachweise"><a href="#134-datenschutz-nachweise" style="color:inherit;text-decoration:none">13.4 Datenschutz-Nachweise</a></h3>
+<ul><li><code>privacy/data-safety.json</code> (Hash im Repo getrackt) entspricht dem</li></ul>
+<p>Play-Console-Formular.</p>
+<ul><li><code>privacy/permission-matrix.md</code> listet jede Manifest-Permission samt</li></ul>
+<p>Use-Case.</p>
+<ul><li><code>privacy/sdk-inventory.md</code> listet jede SDK + Datenfluss + DPA-Status.</li></ul>
+<h3 id="135-sicherheitsnachweise"><a href="#135-sicherheitsnachweise" style="color:inherit;text-decoration:none">13.5 Sicherheits­nachweise</a></h3>
+<ul><li><code>scans/dependency-scan.json</code> mit 0 kritischen CVEs.</li><li>ProGuard/R8-Mapping (<code>scans/proguard-mapping.txt</code>) in Play hochgeladen.</li><li>Manifest-Audit: keine Debug-Flags, <code>usesCleartextTraffic=false</code>,</li></ul>
+<p><code>android:allowBackup</code> bewusst gesetzt.</p>
+<ul><li>Pre-Launch Report aus Play Console ohne kritische Findings.</li></ul>
+<h3 id="136-release-dokumentation"><a href="#136-release-dokumentation" style="color:inherit;text-decoration:none">13.6 Release-Dokumentation</a></h3>
+<ul><li><code>release-notes-&lt;versionCode&gt;.md</code> (kurz, Nutzerperspektive).</li><li><code>known-limitations-&lt;versionCode&gt;.md</code> (Defekte, die mit dieser</li></ul>
+<p>Version bewusst ausgeliefert werden).</p>
+<ul><li><code>rollback-plan-&lt;versionCode&gt;.md</code> (Schritte für Stop-Rollout und</li></ul>
+<p>Rückzug auf vorigen Track).</p>
+<h3 id="137-review-vorbereitung"><a href="#137-review-vorbereitung" style="color:inherit;text-decoration:none">13.7 Review-Vorbereitung</a></h3>
+<p>Vor Klick auf „Submit for review“:</p>
+<ul><li>Data-Safety-Form gespeichert + Hash gleich <code>data-safety.json</code>.</li><li>Inhaltsbewertung aktuell.</li><li>Zielgruppe + Inhaltskategorie eingestellt.</li><li>Screenshots aktuell (Material 3, Dark Mode, Tablet).</li><li>Datenschutzerklärung-URL erreichbar (CI prüft 200 OK).</li><li>Promo-Video optional, ohne externe Tracker.</li></ul>
+<hr />
+<h2 id="14-go-no-go-kriterien-erweiterung"><a href="#14-go-no-go-kriterien-erweiterung" style="color:inherit;text-decoration:none">14. Go-/No-Go-Kriterien (Erweiterung)</a></h2>
+<p>Dies ist Anhang <strong>J2</strong> und ergänzt Anhang J aus Teil I. Ein Build wird nur ausgeliefert, wenn <strong>alle</strong> Kriterien aus J <strong>und</strong> J2 erfüllt sind.</p>
+<h3 id="141-technisch-j2-t"><a href="#141-technisch-j2-t" style="color:inherit;text-decoration:none">14.1 Technisch (J2-T)</a></h3>
+<table><thead><tr><th>ID</th><th>Kriterium</th><th>Schwelle</th></tr></thead><tbody><tr><td>J2-T-01</td><td>keine offenen C0/C1-Bugs</td><td>0</td></tr><tr><td>J2-T-02</td><td>Crash-Free-Users (Closed 7 Tage)</td><td>≥ 99,5 %</td></tr><tr><td>J2-T-03</td><td>ANR-Rate</td><td>&lt; 0,47 %</td></tr><tr><td>J2-T-04</td><td>Kaltstart &lt; 2 s auf Pixel 5</td><td>ja</td></tr><tr><td>J2-T-05</td><td>Sync-Konflikt-Reproduktion grün</td><td>ja</td></tr><tr><td>J2-T-06</td><td>Push-Zustellrate (testweise)</td><td>≥ 95 %</td></tr></tbody></table>
+<h3 id="142-sicherheit-j2-s"><a href="#142-sicherheit-j2-s" style="color:inherit;text-decoration:none">14.2 Sicherheit (J2-S)</a></h3>
+<table><thead><tr><th>ID</th><th>Kriterium</th><th>Schwelle</th></tr></thead><tbody><tr><td>J2-S-01</td><td>0 kritische CVE (Dependency-Scan)</td><td>0</td></tr><tr><td>J2-S-02</td><td>0 Hardcoded Secrets (Regex-Scan)</td><td>0</td></tr><tr><td>J2-S-03</td><td>keine Debug-Features in Release-Build</td><td>bestätigt</td></tr><tr><td>J2-S-04</td><td>TLS only, network-security-config aktiv</td><td>ja</td></tr><tr><td>J2-S-05</td><td>App Check + Play Integrity scharf</td><td>ja</td></tr></tbody></table>
+<h3 id="143-datenschutz-j2-p"><a href="#143-datenschutz-j2-p" style="color:inherit;text-decoration:none">14.3 Datenschutz (J2-P)</a></h3>
+<table><thead><tr><th>ID</th><th>Kriterium</th><th>Schwelle</th></tr></thead><tbody><tr><td>J2-P-01</td><td>Datenschutzerklärung erreichbar</td><td>200 OK</td></tr><tr><td>J2-P-02</td><td>Data-Safety-Hash unverändert oder reviewt</td><td>ja</td></tr><tr><td>J2-P-03</td><td>nur dokumentierte Manifest-Permissions</td><td>ja</td></tr><tr><td>J2-P-04</td><td>Kontolöschung in der App vorhanden</td><td>ja</td></tr><tr><td>J2-P-05</td><td>Datenexport funktioniert</td><td>ja</td></tr><tr><td>J2-P-06</td><td>keine PII in Logs (Scan)</td><td>0 Treffer</td></tr></tbody></table>
+<h3 id="144-qualität-j2-q"><a href="#144-qualität-j2-q" style="color:inherit;text-decoration:none">14.4 Qualität (J2-Q)</a></h3>
+<table><thead><tr><th>ID</th><th>Kriterium</th><th>Schwelle</th></tr></thead><tbody><tr><td>J2-Q-01</td><td>Unit/Integration/UI-Tests grün</td><td>100 %</td></tr><tr><td>J2-Q-02</td><td>Coverage Domain/Data/UI</td><td>80/70/50 %</td></tr><tr><td>J2-Q-03</td><td>Multi-Device-Smoke (4 Referenzgeräte)</td><td>grün</td></tr><tr><td>J2-Q-04</td><td>Android 10–16 grün</td><td>grün</td></tr><tr><td>J2-Q-05</td><td>Regression-Suite (Maestro) grün</td><td>grün</td></tr></tbody></table>
+<h3 id="145-performance-j2-f"><a href="#145-performance-j2-f" style="color:inherit;text-decoration:none">14.5 Performance (J2-F)</a></h3>
+<table><thead><tr><th>ID</th><th>Kriterium</th><th>Schwelle</th></tr></thead><tbody><tr><td>J2-F-01</td><td>Kaltstart auf P50</td><td>&lt; 2 s</td></tr><tr><td>J2-F-02</td><td>Speicher-Peak im Hot-Path</td><td>&lt; 250 MB</td></tr><tr><td>J2-F-03</td><td>Frame-Drop-Rate (Compose-Bench)</td><td>&lt; 0,5 %</td></tr><tr><td>J2-F-04</td><td>Daten-Sync pro Tag (Median)</td><td>&lt; 5 MB</td></tr></tbody></table>
+<h3 id="146-play-store-j2-g"><a href="#146-play-store-j2-g" style="color:inherit;text-decoration:none">14.6 Play-Store (J2-G)</a></h3>
+<table><thead><tr><th>ID</th><th>Kriterium</th><th>Schwelle</th></tr></thead><tbody><tr><td>J2-G-01</td><td>Closed Test ≥ 14 Tage + ≥ 12 Tester</td><td>erfüllt</td></tr><tr><td>J2-G-02</td><td>keine Richtlinien­verstöße im Self-Assessment</td><td>0</td></tr><tr><td>J2-G-03</td><td>targetSdk = Play-aktueller Wert (≥ 35)</td><td>ja</td></tr><tr><td>J2-G-04</td><td>Store-Listing vollständig (DE + EN)</td><td>ja</td></tr><tr><td>J2-G-05</td><td>Pre-Launch Report ohne Blocker</td><td>grün</td></tr></tbody></table>
+<h3 id="147-eskalationsstufen"><a href="#147-eskalationsstufen" style="color:inherit;text-decoration:none">14.7 Eskalationsstufen</a></h3>
+<table><thead><tr><th>Stufe</th><th>Auslöser</th><th>Folge</th><th>Verantwortlich</th></tr></thead><tbody><tr><td>E0</td><td>C0-Bug nach Production-Upload</td><td>Stop Rollout (0 %), Hotfix in 24 h</td><td>Release-Lead</td></tr><tr><td>E1</td><td>C1-Bug im Closed Test</td><td>Build aus dem Track ziehen, Fix-Build</td><td>Engineering-Lead</td></tr><tr><td>E2</td><td>Datenschutz-Vorfall</td><td>DPO informieren, ggf. 72-h-Meldung</td><td>DPO + Legal</td></tr><tr><td>E3</td><td>Google-Ablehnung</td><td>Maßnahmen aus Anhang K, neue Submission</td><td>Release-Lead</td></tr></tbody></table>
+<hr />
+<h2 id="15-cicd-integration-erweiterung"><a href="#15-cicd-integration-erweiterung" style="color:inherit;text-decoration:none">15. CI/CD-Integration (Erweiterung)</a></h2>
+<p>Diese Jobs ergänzen die Pipeline aus Kapitel 9.</p>
+<table><thead><tr><th>Job</th><th>Trigger</th><th>Inhalt</th></tr></thead><tbody><tr><td><code>negative</code></td><td>jeder PR</td><td>parametrisierte Negativtests (<code>tests/concept/test_negative_*</code>)</td></tr><tr><td><code>privacy-scan</code></td><td>jeder PR</td><td>Regex-Scan auf Secrets/PII, HTTPS-only, Permissions-Drift, legal/-Docs</td></tr><tr><td><code>dependency-scan</code></td><td>nightly + pre-release</td><td>OWASP-Check, Trivy, gradle-versions-Plugin</td></tr><tr><td><code>manifest-audit</code></td><td>jeder PR + pre-release</td><td>Manifest-Diff vs. erlaubte Liste</td></tr><tr><td><code>data-safety-diff</code></td><td>jeder PR</td><td>Hash von <code>privacy/data-safety.json</code> vs. letzte Review</td></tr><tr><td><code>rules-tests</code></td><td>jeder PR</td><td>Firestore-Rules-Unit-Tests</td></tr><tr><td><code>playstore-checklist</code></td><td>pre-release + closed</td><td><code>tools/playstore_check.py</code> (existiert bereits im Repo)</td></tr></tbody></table>
+<p><strong>Build-Blocker</strong>: Wenn <code>negative</code>, <code>privacy-scan</code>, <code>manifest-audit</code>, <code>data-safety-diff</code>, <code>rules-tests</code> oder <code>playstore-checklist</code> rot sind, verweigert der Release-Gate-Job den Upload.</p>
+<hr />
+<h2 id="16-ergebnisformat-al"><a href="#16-ergebnisformat-al" style="color:inherit;text-decoration:none">16. Ergebnisformat A–L</a></h2>
+<table><thead><tr><th>Anhang</th><th>Lieferobjekt</th><th>Speicherort</th></tr></thead><tbody><tr><td>A</td><td>Negativtest-Konzept</td><td>Abschnitt 11 + <code>tests/concept/test_negative_*.py</code></td></tr><tr><td>B</td><td>Datenschutz-Teststrategie</td><td>Abschnitt 12 + <code>tests/concept/test_privacy_*.py</code></td></tr><tr><td>C</td><td>Google-Play-Nachweisdokumentation</td><td>Abschnitt 13 + <code>release/closed-test-*/</code></td></tr><tr><td>D</td><td>Go-/No-Go-Entscheidungssystem</td><td>Abschnitt 14 (J2) + <code>tests/concept/test_release_gate.py</code>, <code>test_release_gate_extended.py</code></td></tr><tr><td>E</td><td>Risikomatrix</td><td>Abschnitt 11.2</td></tr><tr><td>F</td><td>Build-Blockierungsregeln</td><td>Abschnitt 9.2 + 15 + <code>tools/test_protocol.py</code></td></tr><tr><td>G</td><td>Release-Freigabeprozess</td><td>Abschnitt 14.7 + <code>tools/test_protocol.py</code></td></tr><tr><td>H</td><td>Datenschutz-Checklisten</td><td>Abschnitt 12.6 + 12.5</td></tr><tr><td>I</td><td>Sicherheits-Checklisten</td><td>Abschnitt 14.2</td></tr><tr><td>J</td><td>CI/CD-Validierungen</td><td>Abschnitt 9 + 15</td></tr><tr><td>K</td><td>Vorlagen für Tester-Feedback / Fehlerberichte</td><td>Anhang G/H aus Teil I + <code>release/closed-test-*/feedback,bugs/</code></td></tr><tr><td>L</td><td>Finale Google-Play-Review-Checkliste</td><td>Abschnitt 13.7 + Anhang J/J2</td></tr></tbody></table>
+<hr />
+<p><em>Teil II Eigentümer: QA-Lead + DPO + Release-Lead. Letzte Review: 2026-05-20.</em></p>
+    </article>
+  </main>
+</body>
+</html>

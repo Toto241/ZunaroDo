@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zunarodo · QA- und Release-Center · Uebersicht</title>
+  <style>
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-muted: #f1f3f7;
+  --border: #e1e4ea;
+  --text: #131720;
+  --text-muted: #54607a;
+  --primary: #0b5fff;
+  --go: #1b873b;
+  --hold: #b54708;
+  --block: #b42318;
+  --unknown: #6b7280;
+  --go-bg: #e7f5ec;
+  --hold-bg: #fdf2e3;
+  --block-bg: #fdecea;
+  --unknown-bg: #eef0f4;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06),
+            0 1px 3px rgba(16, 24, 40, 0.08);
+  --radius: 12px;
+  --mono: 'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #161a23;
+    --surface-muted: #1d2230;
+    --border: #2a3041;
+    --text: #e9edf6;
+    --text-muted: #98a2b8;
+    --primary: #79a6ff;
+    --go: #34a853;
+    --hold: #f9a825;
+    --block: #f87171;
+    --unknown: #9ca3af;
+    --go-bg: #0e2818;
+    --hold-bg: #2a1c08;
+    --block-bg: #2a0f0f;
+    --unknown-bg: #1d2230;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px; line-height: 1.5; margin: 0; padding: 0;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 24px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+header .logo { font-weight: 700; font-size: 16px; }
+header .meta { color: var(--text-muted); font-size: 13px; font-family: var(--mono); }
+main {
+  max-width: 1440px; margin: 0 auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.row { display: flex; gap: 18px; flex-wrap: wrap; }
+.col { flex: 1 1 240px; min-width: 240px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.card .title {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.card .title h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.card .value   { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.card .sub     { font-size: 12px; color: var(--text-muted); }
+.card.span-2   { flex: 2 1 520px; }
+.card.span-3   { flex: 3 1 780px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+}
+.pill::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+}
+.pill.go      { color: var(--go);      background: var(--go-bg); }
+.pill.hold    { color: var(--hold);    background: var(--hold-bg); }
+.pill.block   { color: var(--block);   background: var(--block-bg); }
+.pill.unknown { color: var(--unknown); background: var(--unknown-bg); }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.bar { height: 6px; border-radius: 3px; background: var(--surface-muted); overflow: hidden; }
+.bar > div { height: 100%; background: var(--go); }
+.bar.hold > div { background: var(--hold); }
+.bar.block > div { background: var(--block); }
+
+table {
+  width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+th, td {
+  text-align: left; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); font-size: 13px;
+}
+th { background: var(--surface-muted); color: var(--text-muted);
+     font-weight: 600; text-transform: uppercase; font-size: 11px;
+     letter-spacing: 0.04em; }
+tr:last-child td { border-bottom: none; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.id  { font-family: var(--mono); font-size: 12px; color: var(--text-muted); word-break: break-all; }
+
+.searchbar {
+  display: flex; gap: 8px; align-items: center;
+}
+.searchbar input {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--text);
+  font-size: 13px;
+}
+
+.list { display: flex; flex-direction: column; gap: 0; }
+.list > .row-item {
+  display: grid; grid-template-columns: 100px 1fr 80px;
+  align-items: center; gap: 12px;
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 12px;
+}
+.list > .row-item:last-child { border-bottom: none; }
+.list .col-status { display: flex; }
+.list .col-name { color: var(--text); word-break: break-all; }
+.list .col-time { color: var(--text-muted); text-align: right;
+                  font-variant-numeric: tabular-nums; }
+
+details.failure {
+  background: var(--block-bg); border-left: 4px solid var(--block);
+  border-radius: 6px; padding: 10px 14px;
+}
+details.failure summary { cursor: pointer; font-weight: 600; color: var(--block); }
+details.failure pre {
+  margin: 8px 0 0 0; padding: 10px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+footer {
+  color: var(--text-muted); font-size: 12px; padding: 20px 24px;
+  text-align: center;
+}
+
+nav.toc {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 10px 24px; background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 500;
+  position: sticky; top: 0; z-index: 10;
+}
+nav.toc a {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  color: var(--text-muted); text-decoration: none;
+  border: 1px solid transparent;
+}
+nav.toc a:hover { color: var(--primary); background: var(--surface);
+                  border-color: var(--border); }
+
+.artifacts-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.artifact-link {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface);
+  color: var(--text); text-decoration: none;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+.artifact-link:hover { transform: translateY(-1px);
+                        border-color: var(--primary); }
+.artifact-link .icon { font-size: 18px; line-height: 1; }
+.artifact-link .name { font-weight: 600; font-size: 14px; }
+.artifact-link .desc { font-size: 12px; color: var(--text-muted); }
+.artifact-link.missing { opacity: 0.55; pointer-events: none; }
+.artifact-link.missing .desc::after {
+  content: " (nicht gefunden)"; color: var(--block);
+}
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">Zunarodo · QA- und Release-Center</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="pill go">GO</span>
+      <span class="sub" style="font-size:13px;color:var(--text-muted);">
+        981/984 Tests gruen
+      </span>
+    </div>
+    <div class="meta">Einstiegspunkt - waehle ein Modul rechts.</div>
+  </header>
+
+  <main>
+    <section class="row">
+      <div class="card span-3">
+        <div class="title">
+          <h3>Schnellzugriffe</h3>
+          <span class="sub">Klick oeffnet die Seite direkt im Browser</span>
+        </div>
+        <div class="artifacts-grid">
+          <a class='artifact-link' href='tests/concept/reports/dashboard.html'><span class='name' style='font-size:15px;'>📊  Dashboard oeffnen</span><span class='desc'>Live-Test-Resultate, Bereichsstatistiken, Test-Liste</span></a><a class='artifact-link' href='tests/concept/reports/TESTING.html'><span class='name' style='font-size:15px;'>📘  Test-Konzept (HTML)</span><span class='desc'>Test- und Compliance-Konzept (Teil I + II)</span></a><a class='artifact-link' href='tests/concept/reports/UI_CONCEPT.html'><span class='name' style='font-size:15px;'>🧭  UI-/Cockpit-Konzept (HTML)</span><span class='desc'>Admin-Panel-Architektur, Datenmodelle, Workflows</span></a><a class='artifact-link' href='tests/concept/reports/PLAYSTORE.html'><span class='name' style='font-size:15px;'>🚀  Play-Store-Anleitung (HTML)</span><span class='desc'>Schritt-fuer-Schritt Veroeffentlichung</span></a><a class='artifact-link' href='tests/concept/reports/protocol.html'><span class='name' style='font-size:15px;'>📑  Audit-Protokoll (HTML)</span><span class='desc'>Vollstaendiger Markdown-Auditbericht aller Tests</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kpi-grid">
+        <div class='card' style='min-width:0;'><div class='title'><h3>Mitglieder-Szenarien</h3><span class="pill go">GO</span></div><div class='value'>18/18</div><div class='sub'>Dauer 71.1s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Rollen / Berechtigungen</h3><span class="pill go">GO</span></div><div class='value'>69/69</div><div class='sub'>Dauer 1.0s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Pairwise-Matrix</h3><span class="pill go">GO</span></div><div class='value'>13/13</div><div class='sub'>Dauer 4.1s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Property-Tests</h3><span class="pill go">GO</span></div><div class='value'>29/29</div><div class='sub'>Dauer 10.3s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Negativtests</h3><span class="pill go">GO</span></div><div class='value'>48/48</div><div class='sub'>Dauer 10.4s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Datenschutztests</h3><span class="pill go">GO</span></div><div class='value'>250/250</div><div class='sub'>Dauer 2.6s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Security-Negativ</h3><span class="pill go">GO</span></div><div class='value'>22/22</div><div class='sub'>Dauer 0.0s</div></div><div class='card' style='min-width:0;'><div class='title'><h3>Release-Gate (J + J2)</h3><span class="pill go">GO</span></div><div class='value'>197/197</div><div class='sub'>Dauer 2.2s</div></div>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="card span-3">
+        <div class="title">
+          <h3>Was ist das hier?</h3>
+        </div>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:var(--text);">
+          Diese Seite ist der zentrale Einstiegspunkt. Der
+          <a href="tests/concept/reports/dashboard.html">Test-Dashboard</a> zeigt die
+          live-aggregierten Resultate der gesamten Test-Suite
+          (Mitglieder, Rollen, Pairwise, Property, Negative,
+          Datenschutz, Security, Release-Gate). Die drei Konzept-
+          Dokumente
+          <a href="tests/concept/reports/TESTING.html">TESTING</a>,
+          <a href="tests/concept/reports/UI_CONCEPT.html">UI_CONCEPT</a>
+          und
+          <a href="tests/concept/reports/PLAYSTORE.html">PLAYSTORE</a>
+          sind direkt im Browser lesbar gerendert.
+        </p>
+        <p style="margin:0;font-size:13px;color:var(--text-muted);">
+          Neugenerierung jederzeit:
+          <code>python -m tools.test_protocol --all</code> +
+          <code>python -m tools.dashboard</code>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Generiert von <code>tools/dashboard.py</code>.
+    Letzter Lauf: 2026-05-20T16:37:16.141218+00:00.
+  </footer>
+</body>
+</html>

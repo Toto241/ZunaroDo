@@ -143,6 +143,7 @@ def test_concept_directory_contains_full_suite():
         "test_negative_network.py", "test_negative_security.py",
         "test_privacy_scan.py", "test_privacy_data_rights.py",
         "test_dashboard_generator.py",
+        "test_md_to_html.py",
     }
     present = {p.name for p in concept.iterdir() if p.is_file()}
     missing = needed - present
@@ -191,6 +192,16 @@ def test_dashboard_generator_module_present():
     text = p.read_text(encoding="utf-8", errors="replace")
     # Pflicht-API
     for symbol in ("render_dashboard", "MARKER_LABEL",
-                   "DEFAULT_JSON", "DEFAULT_HTML"):
+                   "DEFAULT_JSON", "DEFAULT_HTML",
+                   "_render_companion_docs", "_index_landing_html"):
         assert symbol in text, (
             f"tools/dashboard.py exponiert {symbol} nicht (Konzept-API)")
+
+
+def test_md_to_html_module_present():
+    p = REPO / "tools" / "md_to_html.py"
+    assert p.is_file(), "tools/md_to_html.py fehlt"
+    text = p.read_text(encoding="utf-8", errors="replace")
+    for sym in ("markdown_to_html", "render_doc", "DOC_CSS"):
+        assert sym in text, (
+            f"tools/md_to_html.py exponiert {sym} nicht")

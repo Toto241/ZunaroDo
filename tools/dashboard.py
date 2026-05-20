@@ -244,6 +244,43 @@ footer {
   color: var(--text-muted); font-size: 12px; padding: 20px 24px;
   text-align: center;
 }
+
+nav.toc {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 10px 24px; background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 500;
+  position: sticky; top: 0; z-index: 10;
+}
+nav.toc a {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  color: var(--text-muted); text-decoration: none;
+  border: 1px solid transparent;
+}
+nav.toc a:hover { color: var(--primary); background: var(--surface);
+                  border-color: var(--border); }
+
+.artifacts-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.artifact-link {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface);
+  color: var(--text); text-decoration: none;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+.artifact-link:hover { transform: translateY(-1px);
+                        border-color: var(--primary); }
+.artifact-link .icon { font-size: 18px; line-height: 1; }
+.artifact-link .name { font-weight: 600; font-size: 14px; }
+.artifact-link .desc { font-size: 12px; color: var(--text-muted); }
+.artifact-link.missing { opacity: 0.55; pointer-events: none; }
+.artifact-link.missing .desc::after {
+  content: " (nicht gefunden)"; color: var(--block);
+}
 """
 
 
@@ -433,6 +470,124 @@ def _failures_card(records: list[dict]) -> str:
     """
 
 
+def _render_companion_docs(source_path: Path) -> dict[str, Path]:
+    """Konvertiert die Markdown-Dokus in HTML neben das Dashboard.
+
+    Liefert Mapping `md-Quellname -> erzeugte HTML-Datei`, sodass die
+    Artefakt-Karten direkt auf die gerenderte Variante verlinken
+    koennen. Im Browser zeigt das einen formatierten Lesetext statt
+    rohem Markdown.
+    """
+    from tools.md_to_html import render_doc
+
+    base = source_path.parent                       # tests/concept/reports
+    repo = base.parent.parent.parent
+    targets = {
+        "TESTING.md":     repo / "TESTING.md",
+        "UI_CONCEPT.md":  repo / "UI_CONCEPT.md",
+        "PLAYSTORE.md":   repo / "PLAYSTORE.md",
+        "protocol.md":    base / "protocol.md",
+    }
+    out_map: dict[str, Path] = {}
+    for name, md_path in targets.items():
+        if not md_path.is_file():
+            continue
+        html_out = base / md_path.with_suffix(".html").name
+        back = "dashboard.html"
+        try:
+            content = render_doc(
+                title=md_path.stem, markdown_text=md_path.read_text(
+                    encoding="utf-8", errors="replace"),
+                back_link=back,
+                back_label="← zurueck zum Dashboard")
+        except Exception:
+            continue
+        html_out.write_text(content, encoding="utf-8")
+        out_map[name] = html_out
+    return out_map
+
+
+def _artifact_card(source_path: Path,
+                    rendered_docs: dict[str, Path]) -> str:
+    """Liste der bekannten Begleit-Artefakte mit klickbaren Links.
+
+    Pfade sind relativ zum Speicherort der dashboard.html. Wenn eine
+    HTML-Renderung der Markdown-Quelle existiert (siehe
+    _render_companion_docs), wird ZUERST darauf verlinkt - sonst auf
+    die Roh-Quelle.
+    """
+    base = source_path.parent
+    repo = base.parent.parent.parent
+    items = [
+        ("Test-Konzept",
+         "TESTING.md", repo / "TESTING.md",
+         "📘",
+         "Test- und Compliance-Konzept (Teil I + II, ~3000 Zeilen)"),
+        ("UI-/Cockpit-Konzept",
+         "UI_CONCEPT.md", repo / "UI_CONCEPT.md",
+         "🧭",
+         "Admin-Panel-Architektur, Datenmodelle, Workflows"),
+        ("Play-Store-Anleitung",
+         "PLAYSTORE.md", repo / "PLAYSTORE.md",
+         "🚀",
+         "Schritt-fuer-Schritt Veroeffentlichung in der Play Console"),
+        ("Audit-Protokoll",
+         "protocol.md", base / "protocol.md",
+         "📑",
+         "Markdown-Auditbericht aller Tests des letzten Laufs"),
+        ("Maschinen-Protokoll",
+         None, base / "protocol.json",
+         "🧾",
+         "JSON-Quelle fuer dieses Dashboard und CI-Integrationen"),
+        ("JUnit-XML",
+         None, base / "junit.xml",
+         "🧪",
+         "Roher pytest-Bericht fuer CI-Tools (GitHub Actions etc.)"),
+        ("Pairwise-Matrix",
+         None, base / "pairwise-matrix.tsv",
+         "🧮",
+         "Kombinatorische Testmatrix (Anhang C, 196 Faelle)"),
+        ("Protokoll-Generator",
+         None, repo / "tools" / "test_protocol.py",
+         "⚙️",
+         "Skript, das aus JUnit-XML dieses Protokoll erzeugt"),
+        ("Dashboard-Generator",
+         None, repo / "tools" / "dashboard.py",
+         "🖥️",
+         "Dieses Dashboard - reproduzierbar generiert"),
+    ]
+
+    cells: list[str] = []
+    for label, md_name, raw_target, icon, desc in items:
+        # Bevorzugt die gerenderte HTML-Datei verlinken (lesbar im Browser)
+        rendered = rendered_docs.get(md_name) if md_name else None
+        target = rendered if rendered is not None else raw_target
+        try:
+            rel = os.path.relpath(target, start=base).replace(os.sep, "/")
+        except ValueError:
+            rel = str(target)
+        exists = target.is_file()
+        klass = "artifact-link" + ("" if exists else " missing")
+        cells.append(
+            f"<a class='{klass}' href='{_esc(rel)}'>"
+            f"<span class='icon'>{icon}</span>"
+            f"<span class='name'>{_esc(label)}</span>"
+            f"<span class='desc'>{_esc(desc)}</span>"
+            f"</a>"
+        )
+    return f"""
+    <div class="card span-3" id="artefakte">
+      <div class="title">
+        <h3>Artefakte &amp; Dokumente</h3>
+        <span class="sub">Klick oeffnet die Datei direkt im Browser</span>
+      </div>
+      <div class="artifacts-grid">
+        {''.join(cells)}
+      </div>
+    </div>
+    """
+
+
 def _test_list(records: list[dict]) -> str:
     rows: list[str] = []
     # nach Status sortiert: fail/error zuerst, dann skipped, dann passed
@@ -482,6 +637,14 @@ def render_dashboard(data: dict, source_path: Path) -> str:
     kpi_markers = [m for m in MARKER_LABEL if m in by_marker]
     kpi_html = "".join(_kpi_card(m, data) for m in kpi_markers)
 
+    decision = data.get("decision", "UNKNOWN")
+    state = _decision_status(decision)
+    totals = data.get("totals", {}) or {}
+
+    # Begleit-Dokumente als HTML neben das Dashboard schreiben, damit die
+    # Artefakt-Karten auf gerenderte Seiten verlinken statt auf rohes Markdown
+    rendered_docs = _render_companion_docs(source_path)
+
     return f"""<!doctype html>
 <html lang="de">
 <head>
@@ -493,28 +656,44 @@ def render_dashboard(data: dict, source_path: Path) -> str:
 <body>
   <header>
     <div class="logo">QA / Release / Compliance · Cockpit</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      {_pill(state, decision)}
+      <span class="sub" style="color:var(--text-muted);font-size:13px;">
+        {totals.get('passed', 0)}/{totals.get('count', 0)} grün
+      </span>
+    </div>
     <div class="meta">
       generiert: {_esc(generated)} ·
-      host: {_esc(platform.node())} ·
-      quelle: {_esc(source_path.name)}
+      host: {_esc(platform.node())}
     </div>
   </header>
+  <nav class="toc">
+    <a href="#uebersicht">Übersicht</a>
+    <a href="#artefakte">Artefakte</a>
+    <a href="#kpis">KPIs</a>
+    <a href="#bereiche">Bereiche</a>
+    <a href="#fehler">Fehler</a>
+    <a href="#tests">Test-Liste</a>
+  </nav>
   <main>
-    <section class="row">
+    <section id="uebersicht" class="row">
       {_release_card(data)}
     </section>
-    <section>
+    <section id="artefakte" class="row">
+      {_artifact_card(source_path, rendered_docs)}
+    </section>
+    <section id="kpis">
       <div class="kpi-grid">
         {kpi_html}
       </div>
     </section>
-    <section class="row">
+    <section id="bereiche" class="row">
       {_marker_table(data)}
     </section>
-    <section class="row">
+    <section id="fehler" class="row">
       {_failures_card(records)}
     </section>
-    <section class="row">
+    <section id="tests" class="row">
       {_test_list(records)}
     </section>
   </main>
@@ -528,6 +707,139 @@ def render_dashboard(data: dict, source_path: Path) -> str:
 </html>"""
 
 
+def _index_landing_html(data: dict, dashboard_rel: str) -> str:
+    """Eigenstaendige index.html im Projekt-Root - der eigentliche
+    Einstiegspunkt. Zeigt einen kurzen Status-Hub und linkt aufs
+    Dashboard sowie die wichtigsten Doku-HTMLs."""
+    decision = data.get("decision", "UNKNOWN")
+    state = _decision_status(decision)
+    totals = data.get("totals", {}) or {}
+    by_marker = data.get("by_marker", {}) or {}
+    base = REPO_ROOT
+    rendered_base = REPO_ROOT / "tests" / "concept" / "reports"
+
+    # Quick-Links (relativ zum Projekt-Root)
+    quick = [
+        ("📊  Dashboard oeffnen",
+         dashboard_rel,
+         "Live-Test-Resultate, Bereichsstatistiken, Test-Liste"),
+        ("📘  Test-Konzept (HTML)",
+         "tests/concept/reports/TESTING.html",
+         "Test- und Compliance-Konzept (Teil I + II)"),
+        ("🧭  UI-/Cockpit-Konzept (HTML)",
+         "tests/concept/reports/UI_CONCEPT.html",
+         "Admin-Panel-Architektur, Datenmodelle, Workflows"),
+        ("🚀  Play-Store-Anleitung (HTML)",
+         "tests/concept/reports/PLAYSTORE.html",
+         "Schritt-fuer-Schritt Veroeffentlichung"),
+        ("📑  Audit-Protokoll (HTML)",
+         "tests/concept/reports/protocol.html",
+         "Vollstaendiger Markdown-Auditbericht aller Tests"),
+    ]
+    qcells: list[str] = []
+    for name, href, desc in quick:
+        target = base / href
+        exists = target.is_file()
+        klass = "artifact-link" + ("" if exists else " missing")
+        qcells.append(
+            f"<a class='{klass}' href='{_esc(href)}'>"
+            f"<span class='name' style='font-size:15px;'>{_esc(name)}</span>"
+            f"<span class='desc'>{_esc(desc)}</span>"
+            f"</a>"
+        )
+
+    # KPI-Kuerzeln im Hub
+    kpi_quick: list[str] = []
+    for marker in ("members", "roles", "combinatorics", "property",
+                    "negative", "privacy", "security", "release_gate"):
+        b = by_marker.get(marker, {}) or {}
+        if not b.get("count"):
+            continue
+        s = _bucket_status(b)
+        kpi_quick.append(
+            f"<div class='card' style='min-width:0;'>"
+            f"<div class='title'>"
+            f"<h3>{_esc(MARKER_LABEL.get(marker, marker))}</h3>"
+            f"{_pill(s, s.upper())}</div>"
+            f"<div class='value'>{b.get('passed', 0)}/{b.get('count', 0)}</div>"
+            f"<div class='sub'>Dauer {b.get('duration_s', 0):.1f}s</div>"
+            f"</div>"
+        )
+
+    return f"""<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zunarodo · QA- und Release-Center · Uebersicht</title>
+  <style>{CSS}</style>
+</head>
+<body>
+  <header>
+    <div class="logo">Zunarodo · QA- und Release-Center</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      {_pill(state, decision)}
+      <span class="sub" style="font-size:13px;color:var(--text-muted);">
+        {totals.get('passed', 0)}/{totals.get('count', 0)} Tests gruen
+      </span>
+    </div>
+    <div class="meta">Einstiegspunkt - waehle ein Modul rechts.</div>
+  </header>
+
+  <main>
+    <section class="row">
+      <div class="card span-3">
+        <div class="title">
+          <h3>Schnellzugriffe</h3>
+          <span class="sub">Klick oeffnet die Seite direkt im Browser</span>
+        </div>
+        <div class="artifacts-grid">
+          {''.join(qcells)}
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kpi-grid">
+        {''.join(kpi_quick)}
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="card span-3">
+        <div class="title">
+          <h3>Was ist das hier?</h3>
+        </div>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:var(--text);">
+          Diese Seite ist der zentrale Einstiegspunkt. Der
+          <a href="{_esc(dashboard_rel)}">Test-Dashboard</a> zeigt die
+          live-aggregierten Resultate der gesamten Test-Suite
+          (Mitglieder, Rollen, Pairwise, Property, Negative,
+          Datenschutz, Security, Release-Gate). Die drei Konzept-
+          Dokumente
+          <a href="tests/concept/reports/TESTING.html">TESTING</a>,
+          <a href="tests/concept/reports/UI_CONCEPT.html">UI_CONCEPT</a>
+          und
+          <a href="tests/concept/reports/PLAYSTORE.html">PLAYSTORE</a>
+          sind direkt im Browser lesbar gerendert.
+        </p>
+        <p style="margin:0;font-size:13px;color:var(--text-muted);">
+          Neugenerierung jederzeit:
+          <code>python -m tools.test_protocol --all</code> +
+          <code>python -m tools.dashboard</code>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Generiert von <code>tools/dashboard.py</code>.
+    Letzter Lauf: {_esc(data.get('generated_at') or '—')}.
+  </footer>
+</body>
+</html>"""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="HTML-Dashboard aus protocol.json erzeugen.")
@@ -535,6 +847,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Pfad zur protocol.json (Default: tests/concept/reports/protocol.json)")
     parser.add_argument("--out", default=str(DEFAULT_HTML),
                         help="Zielpfad fuer die HTML-Ausgabe")
+    parser.add_argument("--no-index", action="store_true",
+                        help="Kein index.html im Projekt-Root erzeugen")
     args = parser.parse_args(argv)
     src = Path(args.json)
     if not src.is_file():
@@ -552,6 +866,19 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Status: {data.get('decision')} · "
           f"Tests: {data.get('totals', {}).get('count')} · "
           f"groesse: {os.path.getsize(out)} Bytes")
+
+    # Projekt-Root-index.html als echter Einstiegspunkt
+    if not args.no_index:
+        index_path = REPO_ROOT / "index.html"
+        try:
+            dashboard_rel = os.path.relpath(out, start=REPO_ROOT).replace(
+                os.sep, "/")
+        except ValueError:
+            dashboard_rel = "tests/concept/reports/dashboard.html"
+        index_path.write_text(
+            _index_landing_html(data, dashboard_rel),
+            encoding="utf-8")
+        print(f"Einstiegspunkt:        {index_path}")
     return 0
 
 

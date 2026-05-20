@@ -139,6 +139,7 @@ def _stats_by_marker(records: list[dict]) -> dict[str, dict]:
         "test_release_gate_extended": "release_gate",
         "test_protocol_generator":    "release_gate",
         "test_dashboard_generator":   "release_gate",
+        "test_md_to_html":            "release_gate",
         "test_negative_inputs":       "negative",
         "test_negative_network":      "negative",
         "test_negative_security":     "security",

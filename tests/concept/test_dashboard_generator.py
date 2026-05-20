@@ -65,8 +65,11 @@ def _synth_protocol() -> dict:
 
 @pytest.fixture
 def synth_html() -> str:
+    # Realistischer Quellpfad - die Artefakt-Karten berechnen relative
+    # Links auf TESTING.md/UI_CONCEPT.md aus diesem Speicherort.
+    from tools.dashboard import DEFAULT_JSON
     return render_dashboard(_synth_protocol(),
-                             source_path=Path("synth.json"))
+                             source_path=DEFAULT_JSON)
 
 
 def test_decision_status_mapping():
@@ -116,6 +119,53 @@ def test_html_has_kpi_for_each_marker(synth_html):
 
 def test_html_renders_decision_pill(synth_html):
     assert "pill go" in synth_html
+
+
+def test_html_has_navigation(synth_html):
+    """Die TOC oben verlinkt auf die Hauptbereiche - das macht
+    dashboard.html erst zu einer richtigen Uebersicht."""
+    assert "<nav class=\"toc\">" in synth_html
+    for anchor in ("uebersicht", "artefakte", "kpis", "bereiche",
+                    "fehler", "tests"):
+        assert f'href="#{anchor}"' in synth_html, (
+            f"TOC-Link auf #{anchor} fehlt")
+        assert f'id="{anchor}"' in synth_html, (
+            f"Sprungmarke id={anchor} fehlt")
+
+
+def test_html_links_to_companion_artifacts(synth_html):
+    """Artefakt-Karten muessen die *gerenderten HTML-Versionen* von
+    TESTING/UI_CONCEPT/PLAYSTORE/protocol verlinken (im Browser
+    lesbar), zusaetzlich die lokalen Report-Rohdateien."""
+    # Die HTML-Versionen sind das eigentliche Ziel - so wird das
+    # Markdown im Browser nicht als roher Text angezeigt.
+    for href in ("TESTING.html", "UI_CONCEPT.html", "PLAYSTORE.html",
+                  "protocol.html", "protocol.json", "junit.xml",
+                  "pairwise-matrix.tsv"):
+        assert href in synth_html, (
+            f"Artefakt-Link {href} fehlt im Dashboard")
+    assert "artifact-link" in synth_html
+    assert synth_html.count("artifact-link") >= 9
+
+
+def test_html_does_not_contain_nested_anchors(synth_html):
+    """Verschachtelte <a>-Tags sind invalides HTML und verursachen,
+    dass innere Links nicht klickbar sind."""
+    import re
+    # Eine Heuristik: jeder schließende </a> sollte einen passenden
+    # öffnenden <a haben, ohne dass davor ein weiteres <a kommt.
+    open_count = 0
+    in_a = False
+    pos = 0
+    for m in re.finditer(r"<a\b|</a>", synth_html):
+        tag = m.group(0)
+        if tag == "</a>":
+            in_a = False
+        else:
+            assert not in_a, (
+                f"Verschachteltes <a>-Tag bei Pos {m.start()} - "
+                f"Kontext: {synth_html[max(0,m.start()-80):m.start()+80]}")
+            in_a = True
 
 
 def test_html_renders_skipped_as_hold(synth_html):
