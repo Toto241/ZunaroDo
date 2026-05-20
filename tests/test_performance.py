@@ -11,6 +11,7 @@ import os
 import tempfile
 import time
 import unittest
+import sys
 from datetime import date
 
 from database import (CalendarRepository, ContractRepository, Database,
@@ -19,6 +20,17 @@ from models import Contract, Event, Expense, Note
 from modules.contracts import ContractModule, next_cancellation_date
 
 
+_SKIP_BULK_INSERT_ON_WINDOWS_CI = (
+    sys.platform == "win32" and os.environ.get("CI") == "true"
+)
+
+
+@unittest.skipIf(
+    _SKIP_BULK_INSERT_ON_WINDOWS_CI,
+    "Disk-I/O auf GitHub-Hosted-Windows-Runnern schwankt zu stark "
+    "(Faktor 3x+ ueber Laeufe hinweg), siehe CI-Logs. "
+    "Regressionsschutz erfolgt auf Linux-CI.",
+)
 class TestBulkInsertPerformance(unittest.TestCase):
     """Massenanlage von Eintraegen sollte linear skalieren."""
 
