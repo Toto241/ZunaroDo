@@ -1,0 +1,23 @@
+# gitleaks-Konfig: Allowlist fuer bewusste False-Positives.
+#
+# Krypto-Code enthaelt naturgemaess viele Strings mit "private_key",
+# "secret", "32-Byte" usw., die der generic-Pattern-Match als API-Keys
+# missinterpretiert. Dieselbe Logik fuer Lizenz-Token-Code.
+title = "Alltagshelfer gitleaks config"
+
+# Standard-Regeln von gitleaks weiterhin scharf nutzen
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Pfade ohne echte Secrets, aber mit verdaechtigen Strings"
+paths = [
+    '''services/pairing/''',          # Ed25519 / SPAKE2 - Docstrings mit "private_key"
+    '''services/license_token\.py''', # Ed25519 - Token-Doku
+    '''services/license_ui\.py''',    # Token-Paste-UI-Texte
+    '''tests/test_pairing.*\.py''',   # Test-Daten + Allowlist-Strings
+    '''tests/test_smoke\.py''',       # Test-Fixtures mit Beispiel-Keys
+    '''tools/gen_license\.py''',      # CLI-Argumente mit "--private-key"-Flag
+    '''docs/''',                       # Doku zitiert Pattern in Beispielen
+    '''PAYMENT\.md''',                 # Operations-Doku mit "PRIV_HEX"-Beispielen
+]

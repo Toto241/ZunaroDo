@@ -120,6 +120,8 @@ gegen diese Tabelle und schlägt bei Drift Alarm.
 | `requests` | latest | HTTP-Client | URLs an Zielserver | nur an konfigurierte Hosts | `httpx` |
 | `google-generativeai` | optional | Gemini-LLM | Prompt-Text, App-ID | Google LLC | offline LLM (llama.cpp) - bei Bedarf |
 | `cryptography` (transitiv) | latest | Krypto-Primitives | keine | lokal | n/a |
+| `keyring` | >=24 | OS-Keychain-Zugriff (sichere Geraete-Identitaet) | keine | nur OS-Keychain auf demselben Geraet | File-Fallback fuer Headless |
+| `spake2` | >=0.8 | SPAKE2-Handshake (Geraetekopplung) | keine | nur lokal zwischen den koppelnden Geraeten | n/a (Standard-PAKE) |
 | `Pillow` (falls genutzt) | latest | Bildverarbeitung | keine | lokal | n/a |
 | `APScheduler` | latest | Termin-/Reminder-Scheduler (Desktop) | keine | lokal | nativ `WorkManager` (Android) |
 | `customtkinter` | latest | Desktop-UI (Tk) | keine | lokal | nicht auf Android |
