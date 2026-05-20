@@ -4,7 +4,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_decision_status_mapping",
       "id": "tests.concept.test_dashboard_generator::test_decision_status_mapping",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -52,7 +52,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_is_self_contained",
       "id": "tests.concept.test_dashboard_generator::test_html_is_self_contained",
-      "time_s": 0.079,
+      "time_s": 0.107,
       "status": "passed",
       "message": ""
     },
@@ -60,7 +60,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_contains_all_records",
       "id": "tests.concept.test_dashboard_generator::test_html_contains_all_records",
-      "time_s": 0.077,
+      "time_s": 0.105,
       "status": "passed",
       "message": ""
     },
@@ -68,7 +68,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_has_kpi_for_each_marker",
       "id": "tests.concept.test_dashboard_generator::test_html_has_kpi_for_each_marker",
-      "time_s": 0.078,
+      "time_s": 0.104,
       "status": "passed",
       "message": ""
     },
@@ -76,7 +76,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_renders_decision_pill",
       "id": "tests.concept.test_dashboard_generator::test_html_renders_decision_pill",
-      "time_s": 0.079,
+      "time_s": 0.082,
       "status": "passed",
       "message": ""
     },
@@ -84,7 +84,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_has_navigation",
       "id": "tests.concept.test_dashboard_generator::test_html_has_navigation",
-      "time_s": 0.08,
+      "time_s": 0.084,
       "status": "passed",
       "message": ""
     },
@@ -92,7 +92,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_links_to_companion_artifacts",
       "id": "tests.concept.test_dashboard_generator::test_html_links_to_companion_artifacts",
-      "time_s": 0.077,
+      "time_s": 0.084,
       "status": "passed",
       "message": ""
     },
@@ -100,7 +100,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_does_not_contain_nested_anchors",
       "id": "tests.concept.test_dashboard_generator::test_html_does_not_contain_nested_anchors",
-      "time_s": 0.075,
+      "time_s": 0.086,
       "status": "passed",
       "message": ""
     },
@@ -108,7 +108,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_renders_skipped_as_hold",
       "id": "tests.concept.test_dashboard_generator::test_html_renders_skipped_as_hold",
-      "time_s": 0.075,
+      "time_s": 0.084,
       "status": "passed",
       "message": ""
     },
@@ -116,7 +116,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_html_escapes_html_in_test_id",
       "id": "tests.concept.test_dashboard_generator::test_html_escapes_html_in_test_id",
-      "time_s": 0.05,
+      "time_s": 0.049,
       "status": "passed",
       "message": ""
     },
@@ -124,7 +124,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_main_runs_against_real_protocol",
       "id": "tests.concept.test_dashboard_generator::test_main_runs_against_real_protocol",
-      "time_s": 0.111,
+      "time_s": 0.119,
       "status": "passed",
       "message": ""
     },
@@ -140,7 +140,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_default_paths_inside_reports_dir",
       "id": "tests.concept.test_dashboard_generator::test_default_paths_inside_reports_dir",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -148,7 +148,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_render_dashboard_is_deterministic",
       "id": "tests.concept.test_dashboard_generator::test_render_dashboard_is_deterministic",
-      "time_s": 0.098,
+      "time_s": 0.104,
       "status": "passed",
       "message": ""
     },
@@ -156,7 +156,7 @@
       "classname": "tests.concept.test_dashboard_generator",
       "name": "test_failure_section_shows_when_records_failed",
       "id": "tests.concept.test_dashboard_generator::test_failure_section_shows_when_records_failed",
-      "time_s": 0.046,
+      "time_s": 0.056,
       "status": "passed",
       "message": ""
     },
@@ -228,7 +228,7 @@
       "classname": "tests.concept.test_md_to_html",
       "name": "test_renders_fenced_code_block",
       "id": "tests.concept.test_md_to_html::test_renders_fenced_code_block",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -284,7 +284,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-01]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-01]",
-      "time_s": 0.41,
+      "time_s": 0.384,
       "status": "passed",
       "message": ""
     },
@@ -292,7 +292,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-02]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-02]",
-      "time_s": 0.745,
+      "time_s": 0.646,
       "status": "passed",
       "message": ""
     },
@@ -300,7 +300,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-03]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-03]",
-      "time_s": 1.817,
+      "time_s": 1.715,
       "status": "passed",
       "message": ""
     },
@@ -308,7 +308,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-04]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-04]",
-      "time_s": 3.375,
+      "time_s": 3.454,
       "status": "passed",
       "message": ""
     },
@@ -316,7 +316,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-05]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-05]",
-      "time_s": 4.801,
+      "time_s": 3.984,
       "status": "passed",
       "message": ""
     },
@@ -324,7 +324,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-06]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-06]",
-      "time_s": 6.8,
+      "time_s": 5.311,
       "status": "passed",
       "message": ""
     },
@@ -332,7 +332,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-07]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-07]",
-      "time_s": 4.858,
+      "time_s": 3.842,
       "status": "passed",
       "message": ""
     },
@@ -340,7 +340,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-08]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-08]",
-      "time_s": 0.501,
+      "time_s": 0.447,
       "status": "passed",
       "message": ""
     },
@@ -348,7 +348,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M_can_seed_profile[M-09]",
       "id": "tests.concept.test_members_scenarios::test_M_can_seed_profile[M-09]",
-      "time_s": 1.38,
+      "time_s": 1.093,
       "status": "passed",
       "message": ""
     },
@@ -356,7 +356,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M01_single_owner_no_rotation",
       "id": "tests.concept.test_members_scenarios::test_M01_single_owner_no_rotation",
-      "time_s": 0.383,
+      "time_s": 0.297,
       "status": "passed",
       "message": ""
     },
@@ -364,7 +364,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M02_minimal_team_two_members",
       "id": "tests.concept.test_members_scenarios::test_M02_minimal_team_two_members",
-      "time_s": 0.773,
+      "time_s": 0.641,
       "status": "passed",
       "message": ""
     },
@@ -372,7 +372,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M05_meets_play_minimum_12",
       "id": "tests.concept.test_members_scenarios::test_M05_meets_play_minimum_12",
-      "time_s": 4.787,
+      "time_s": 4.162,
       "status": "passed",
       "message": ""
     },
@@ -380,7 +380,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M06_scales_to_twenty_plus",
       "id": "tests.concept.test_members_scenarios::test_M06_scales_to_twenty_plus",
-      "time_s": 6.819,
+      "time_s": 6.21,
       "status": "passed",
       "message": ""
     },
@@ -388,7 +388,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M07_mixed_status_distribution",
       "id": "tests.concept.test_members_scenarios::test_M07_mixed_status_distribution",
-      "time_s": 4.684,
+      "time_s": 4.723,
       "status": "passed",
       "message": ""
     },
@@ -396,7 +396,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M08_invited_only_owner_active",
       "id": "tests.concept.test_members_scenarios::test_M08_invited_only_owner_active",
-      "time_s": 0.597,
+      "time_s": 0.577,
       "status": "passed",
       "message": ""
     },
@@ -404,7 +404,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_M09_reactivation_restores_member",
       "id": "tests.concept.test_members_scenarios::test_M09_reactivation_restores_member",
-      "time_s": 1.286,
+      "time_s": 1.271,
       "status": "passed",
       "message": ""
     },
@@ -412,7 +412,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_remove_and_readd_preserves_distinct_id",
       "id": "tests.concept.test_members_scenarios::test_remove_and_readd_preserves_distinct_id",
-      "time_s": 1.934,
+      "time_s": 1.889,
       "status": "passed",
       "message": ""
     },
@@ -420,7 +420,7 @@
       "classname": "tests.concept.test_members_scenarios",
       "name": "test_get_events_handles_all_sizes",
       "id": "tests.concept.test_members_scenarios::test_get_events_handles_all_sizes",
-      "time_s": 25.498,
+      "time_s": 25.173,
       "status": "passed",
       "message": ""
     },
@@ -428,7 +428,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA02_long_member_name_is_stored_or_rejected[1024]",
       "id": "tests.concept.test_negative_inputs::test_NA02_long_member_name_is_stored_or_rejected[1024]",
-      "time_s": 0.205,
+      "time_s": 0.2,
       "status": "passed",
       "message": ""
     },
@@ -436,7 +436,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA02_long_member_name_is_stored_or_rejected[10000]",
       "id": "tests.concept.test_negative_inputs::test_NA02_long_member_name_is_stored_or_rejected[10000]",
-      "time_s": 0.203,
+      "time_s": 0.204,
       "status": "passed",
       "message": ""
     },
@@ -444,7 +444,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA02_long_member_name_is_stored_or_rejected[65536]",
       "id": "tests.concept.test_negative_inputs::test_NA02_long_member_name_is_stored_or_rejected[65536]",
-      "time_s": 0.211,
+      "time_s": 0.204,
       "status": "passed",
       "message": ""
     },
@@ -452,7 +452,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA02_long_contract_name_does_not_break_listing",
       "id": "tests.concept.test_negative_inputs::test_NA02_long_contract_name_does_not_break_listing",
-      "time_s": 0.199,
+      "time_s": 0.151,
       "status": "passed",
       "message": ""
     },
@@ -460,7 +460,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['Anna \\U0001f600']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['Anna \\U0001f600']",
-      "time_s": 0.185,
+      "time_s": 0.156,
       "status": "passed",
       "message": ""
     },
@@ -468,7 +468,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['Anna\\\\x00Nachher']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['Anna\\\\x00Nachher']",
-      "time_s": 0.186,
+      "time_s": 0.171,
       "status": "passed",
       "message": ""
     },
@@ -476,7 +476,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['Anna\\\\nMehrzeilig']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['Anna\\\\nMehrzeilig']",
-      "time_s": 0.185,
+      "time_s": 0.19,
       "status": "passed",
       "message": ""
     },
@@ -484,7 +484,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['\\\\u202earabicRTL']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['\\\\u202earabicRTL']",
-      "time_s": 0.179,
+      "time_s": 0.193,
       "status": "passed",
       "message": ""
     },
@@ -492,7 +492,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['  trailing space   ']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['  trailing space   ']",
-      "time_s": 0.185,
+      "time_s": 0.194,
       "status": "passed",
       "message": ""
     },
@@ -500,7 +500,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['<script>alert(1)</scrip]",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['<script>alert(1)</scrip]",
-      "time_s": 0.205,
+      "time_s": 0.193,
       "status": "passed",
       "message": ""
     },
@@ -508,7 +508,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name[\"Anna' DROP\"]",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name[\"Anna' DROP\"]",
-      "time_s": 0.204,
+      "time_s": 0.206,
       "status": "passed",
       "message": ""
     },
@@ -516,7 +516,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['\\u0410\\u043d\\u043d\\u0430 \\u0418\\u0432\\u0430\\u043d\\u043e\\u0432\\u0430']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['\\u0410\\u043d\\u043d\\u0430 \\u0418\\u0432\\u0430\\u043d\\u043e\\u0432\\u0430']",
-      "time_s": 0.212,
+      "time_s": 0.206,
       "status": "passed",
       "message": ""
     },
@@ -524,7 +524,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name['\\u5c71\\u7530\\u592a\\u90ce']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name['\\u5c71\\u7530\\u592a\\u90ce']",
-      "time_s": 0.222,
+      "time_s": 0.216,
       "status": "passed",
       "message": ""
     },
@@ -532,7 +532,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_member_name[' ']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_member_name[' ']",
-      "time_s": 0.215,
+      "time_s": 0.162,
       "status": "passed",
       "message": ""
     },
@@ -540,7 +540,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['Anna \\U0001f600']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['Anna \\U0001f600']",
-      "time_s": 0.178,
+      "time_s": 0.156,
       "status": "passed",
       "message": ""
     },
@@ -548,7 +548,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['Anna\\\\x00Nachher']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['Anna\\\\x00Nachher']",
-      "time_s": 0.184,
+      "time_s": 0.168,
       "status": "passed",
       "message": ""
     },
@@ -556,7 +556,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['Anna\\\\nMehrzeilig']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['Anna\\\\nMehrzeilig']",
-      "time_s": 0.194,
+      "time_s": 0.176,
       "status": "passed",
       "message": ""
     },
@@ -564,7 +564,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['\\\\u202earabicRTL']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['\\\\u202earabicRTL']",
-      "time_s": 0.199,
+      "time_s": 0.183,
       "status": "passed",
       "message": ""
     },
@@ -572,7 +572,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['  trailing space   ']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['  trailing space   ']",
-      "time_s": 0.17,
+      "time_s": 0.198,
       "status": "passed",
       "message": ""
     },
@@ -580,7 +580,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['<script>alert(1)</scrip]",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['<script>alert(1)</scrip]",
-      "time_s": 0.204,
+      "time_s": 0.196,
       "status": "passed",
       "message": ""
     },
@@ -588,7 +588,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description[\"Anna' DROP\"]",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description[\"Anna' DROP\"]",
-      "time_s": 0.213,
+      "time_s": 0.228,
       "status": "passed",
       "message": ""
     },
@@ -596,7 +596,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description['\\u0410\\u043d\\u043d\\u0430 \\u0418\\u0432\\u0430\\u043d\\u043e\\u0432\\u0430']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description['\\u0410\\u043d\\u043d\\u0430 \\u0418\\u0432\\u0430\\u043d\\u043e\\u0432\\u0430']",
-      "time_s": 0.209,
+      "time_s": 0.222,
       "status": "passed",
       "message": ""
     },
@@ -612,7 +612,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA03_special_chars_in_expense_description[' ']",
       "id": "tests.concept.test_negative_inputs::test_NA03_special_chars_in_expense_description[' ']",
-      "time_s": 0.182,
+      "time_s": 0.171,
       "status": "passed",
       "message": ""
     },
@@ -620,7 +620,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_member_name_is_literal[Anna'; DROP TABLE fa]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_member_name_is_literal[Anna'; DROP TABLE fa]",
-      "time_s": 0.188,
+      "time_s": 0.179,
       "status": "passed",
       "message": ""
     },
@@ -628,7 +628,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_member_name_is_literal[1' OR '1'='1]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_member_name_is_literal[1' OR '1'='1]",
-      "time_s": 0.188,
+      "time_s": 0.162,
       "status": "passed",
       "message": ""
     },
@@ -636,7 +636,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_member_name_is_literal['); DELETE FROM cont]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_member_name_is_literal['); DELETE FROM cont]",
-      "time_s": 0.188,
+      "time_s": 0.173,
       "status": "passed",
       "message": ""
     },
@@ -644,7 +644,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_member_name_is_literal[Anna\"; UPDATE family]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_member_name_is_literal[Anna\"; UPDATE family]",
-      "time_s": 0.196,
+      "time_s": 0.194,
       "status": "passed",
       "message": ""
     },
@@ -652,7 +652,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_member_name_is_literal[Anna\\\\'; SELECT * FRO]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_member_name_is_literal[Anna\\\\'; SELECT * FRO]",
-      "time_s": 0.196,
+      "time_s": 0.191,
       "status": "passed",
       "message": ""
     },
@@ -660,7 +660,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_member_name_is_literal[%27%20OR%201=1%20--%]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_member_name_is_literal[%27%20OR%201=1%20--%]",
-      "time_s": 0.198,
+      "time_s": 0.207,
       "status": "passed",
       "message": ""
     },
@@ -668,7 +668,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_contract_fields[Anna'; DROP TABLE fa]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_contract_fields[Anna'; DROP TABLE fa]",
-      "time_s": 0.203,
+      "time_s": 0.201,
       "status": "passed",
       "message": ""
     },
@@ -676,7 +676,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_contract_fields[1' OR '1'='1]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_contract_fields[1' OR '1'='1]",
-      "time_s": 0.215,
+      "time_s": 0.21,
       "status": "passed",
       "message": ""
     },
@@ -684,7 +684,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_contract_fields['); DELETE FROM cont]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_contract_fields['); DELETE FROM cont]",
-      "time_s": 0.201,
+      "time_s": 0.189,
       "status": "passed",
       "message": ""
     },
@@ -692,7 +692,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_contract_fields[Anna\"; UPDATE family]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_contract_fields[Anna\"; UPDATE family]",
-      "time_s": 0.183,
+      "time_s": 0.182,
       "status": "passed",
       "message": ""
     },
@@ -700,7 +700,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_contract_fields[Anna\\\\'; SELECT * FRO]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_contract_fields[Anna\\\\'; SELECT * FRO]",
-      "time_s": 0.187,
+      "time_s": 0.18,
       "status": "passed",
       "message": ""
     },
@@ -708,7 +708,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA04_sql_injection_in_contract_fields[%27%20OR%201=1%20--%]",
       "id": "tests.concept.test_negative_inputs::test_NA04_sql_injection_in_contract_fields[%27%20OR%201=1%20--%]",
-      "time_s": 0.185,
+      "time_s": 0.187,
       "status": "passed",
       "message": ""
     },
@@ -716,7 +716,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA05_double_member_is_idempotent_or_distinct_ids",
       "id": "tests.concept.test_negative_inputs::test_NA05_double_member_is_idempotent_or_distinct_ids",
-      "time_s": 0.192,
+      "time_s": 0.177,
       "status": "passed",
       "message": ""
     },
@@ -724,7 +724,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA11_missing_required_param_returns_friendly_error",
       "id": "tests.concept.test_negative_inputs::test_NA11_missing_required_param_returns_friendly_error",
-      "time_s": 0.187,
+      "time_s": 0.192,
       "status": "passed",
       "message": ""
     },
@@ -732,7 +732,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA11_unknown_capability_returns_friendly_error",
       "id": "tests.concept.test_negative_inputs::test_NA11_unknown_capability_returns_friendly_error",
-      "time_s": 0.196,
+      "time_s": 0.199,
       "status": "passed",
       "message": ""
     },
@@ -740,7 +740,7 @@
       "classname": "tests.concept.test_negative_inputs",
       "name": "test_NA11_invalid_param_type_does_not_crash",
       "id": "tests.concept.test_negative_inputs::test_NA11_invalid_param_type_does_not_crash",
-      "time_s": 0.181,
+      "time_s": 0.196,
       "status": "passed",
       "message": ""
     },
@@ -748,7 +748,7 @@
       "classname": "tests.concept.test_negative_network",
       "name": "test_NB01_unreachable_server_does_not_corrupt_state",
       "id": "tests.concept.test_negative_network::test_NB01_unreachable_server_does_not_corrupt_state",
-      "time_s": 2.044,
+      "time_s": 2.039,
       "status": "passed",
       "message": ""
     },
@@ -756,7 +756,7 @@
       "classname": "tests.concept.test_negative_network",
       "name": "test_NB04_server_500_does_not_silently_succeed",
       "id": "tests.concept.test_negative_network::test_NB04_server_500_does_not_silently_succeed",
-      "time_s": 0.518,
+      "time_s": 0.529,
       "status": "passed",
       "message": ""
     },
@@ -764,7 +764,7 @@
       "classname": "tests.concept.test_negative_network",
       "name": "test_NB04_garbage_response_is_handled",
       "id": "tests.concept.test_negative_network::test_NB04_garbage_response_is_handled",
-      "time_s": 0.517,
+      "time_s": 0.521,
       "status": "passed",
       "message": ""
     },
@@ -772,7 +772,7 @@
       "classname": "tests.concept.test_negative_network",
       "name": "test_NB06_offline_then_sync_round_trips_events",
       "id": "tests.concept.test_negative_network::test_NB06_offline_then_sync_round_trips_events",
-      "time_s": 0.028,
+      "time_s": 0.023,
       "status": "passed",
       "message": ""
     },
@@ -780,7 +780,7 @@
       "classname": "tests.concept.test_negative_network",
       "name": "test_NB06_corrupt_log_lines_are_skipped",
       "id": "tests.concept.test_negative_network::test_NB06_corrupt_log_lines_are_skipped",
-      "time_s": 0.007,
+      "time_s": 0.01,
       "status": "passed",
       "message": ""
     },
@@ -788,7 +788,7 @@
       "classname": "tests.concept.test_negative_network",
       "name": "test_NB07_lww_orders_by_lamport_then_time",
       "id": "tests.concept.test_negative_network::test_NB07_lww_orders_by_lamport_then_time",
-      "time_s": 0.014,
+      "time_s": 0.015,
       "status": "passed",
       "message": ""
     },
@@ -820,7 +820,7 @@
       "classname": "tests.concept.test_negative_security",
       "name": "test_ND04_tampered_signature_is_rejected",
       "id": "tests.concept.test_negative_security::test_ND04_tampered_signature_is_rejected",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -828,7 +828,7 @@
       "classname": "tests.concept.test_negative_security",
       "name": "test_ND04_swapped_signing_key_is_rejected",
       "id": "tests.concept.test_negative_security::test_ND04_swapped_signing_key_is_rejected",
-      "time_s": 0.001,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -988,7 +988,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_matrix_is_deterministic",
       "id": "tests.concept.test_pairwise_matrix::test_matrix_is_deterministic",
-      "time_s": 1.639,
+      "time_s": 1.67,
       "status": "passed",
       "message": ""
     },
@@ -996,7 +996,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_matrix_respects_constraints",
       "id": "tests.concept.test_pairwise_matrix::test_matrix_respects_constraints",
-      "time_s": 0.807,
+      "time_s": 0.823,
       "status": "passed",
       "message": ""
     },
@@ -1004,7 +1004,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_matrix_has_acceptable_size",
       "id": "tests.concept.test_pairwise_matrix::test_matrix_has_acceptable_size",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -1020,7 +1020,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[0]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[0]",
-      "time_s": 0.221,
+      "time_s": 0.239,
       "status": "passed",
       "message": ""
     },
@@ -1028,7 +1028,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[25]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[25]",
-      "time_s": 0.226,
+      "time_s": 0.225,
       "status": "passed",
       "message": ""
     },
@@ -1036,7 +1036,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[50]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[50]",
-      "time_s": 0.233,
+      "time_s": 0.218,
       "status": "passed",
       "message": ""
     },
@@ -1044,7 +1044,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[75]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[75]",
-      "time_s": 0.249,
+      "time_s": 0.253,
       "status": "passed",
       "message": ""
     },
@@ -1052,7 +1052,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[100]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[100]",
-      "time_s": 0.196,
+      "time_s": 0.183,
       "status": "passed",
       "message": ""
     },
@@ -1060,7 +1060,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[125]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[125]",
-      "time_s": 0.175,
+      "time_s": 0.17,
       "status": "passed",
       "message": ""
     },
@@ -1068,7 +1068,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[150]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[150]",
-      "time_s": 0.29,
+      "time_s": 0.292,
       "status": "passed",
       "message": ""
     },
@@ -1076,7 +1076,7 @@
       "classname": "tests.concept.test_pairwise_matrix",
       "name": "test_sampled_cases_persist_in_real_repo[175]",
       "id": "tests.concept.test_pairwise_matrix::test_sampled_cases_persist_in_real_repo[175]",
-      "time_s": 0.33,
+      "time_s": 0.321,
       "status": "passed",
       "message": ""
     },
@@ -1204,7 +1204,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_diff_keys_reports_changed_strings",
       "id": "tests.concept.test_playstore_sync::test_diff_keys_reports_changed_strings",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -1212,7 +1212,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_diff_keys_reports_added_and_removed",
       "id": "tests.concept.test_playstore_sync::test_diff_keys_reports_added_and_removed",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -1220,7 +1220,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_merge_keeps_local_when_remote_empty",
       "id": "tests.concept.test_playstore_sync::test_merge_keeps_local_when_remote_empty",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -1228,7 +1228,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_merge_prefers_remote_when_not_empty",
       "id": "tests.concept.test_playstore_sync::test_merge_prefers_remote_when_not_empty",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -1260,7 +1260,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_export_markdown_shows_length_counters",
       "id": "tests.concept.test_playstore_sync::test_export_markdown_shows_length_counters",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -1268,7 +1268,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_cli_init_writes_yaml",
       "id": "tests.concept.test_playstore_sync::test_cli_init_writes_yaml",
-      "time_s": 0.026,
+      "time_s": 0.035,
       "status": "passed",
       "message": ""
     },
@@ -1276,7 +1276,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_cli_validate_on_sample",
       "id": "tests.concept.test_playstore_sync::test_cli_validate_on_sample",
-      "time_s": 0.018,
+      "time_s": 0.027,
       "status": "passed",
       "message": ""
     },
@@ -1284,7 +1284,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_cli_push_dry_run_and_pull_via_mock",
       "id": "tests.concept.test_playstore_sync::test_cli_push_dry_run_and_pull_via_mock",
-      "time_s": 0.063,
+      "time_s": 0.074,
       "status": "passed",
       "message": ""
     },
@@ -1292,7 +1292,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_cli_export_writes_snapshot",
       "id": "tests.concept.test_playstore_sync::test_cli_export_writes_snapshot",
-      "time_s": 0.022,
+      "time_s": 0.033,
       "status": "passed",
       "message": ""
     },
@@ -1300,7 +1300,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_cli_push_aborts_on_invalid",
       "id": "tests.concept.test_playstore_sync::test_cli_push_aborts_on_invalid",
-      "time_s": 0.004,
+      "time_s": 0.008,
       "status": "passed",
       "message": ""
     },
@@ -1308,7 +1308,7 @@
       "classname": "tests.concept.test_playstore_sync",
       "name": "test_cli_sample_prints_yaml",
       "id": "tests.concept.test_playstore_sync::test_cli_sample_prints_yaml",
-      "time_s": 0.006,
+      "time_s": 0.011,
       "status": "passed",
       "message": ""
     },
@@ -1324,7 +1324,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB02_purging_member_decouples_references",
       "id": "tests.concept.test_privacy_data_rights::test_PB02_purging_member_decouples_references",
-      "time_s": 0.32,
+      "time_s": 0.29,
       "status": "passed",
       "message": ""
     },
@@ -1332,7 +1332,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB03_export_all_produces_parseable_artifacts",
       "id": "tests.concept.test_privacy_data_rights::test_PB03_export_all_produces_parseable_artifacts",
-      "time_s": 0.238,
+      "time_s": 0.269,
       "status": "passed",
       "message": ""
     },
@@ -1340,7 +1340,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB03_each_exporter_produces_header[export_contracts-vertraege.csv-contracts]",
       "id": "tests.concept.test_privacy_data_rights::test_PB03_each_exporter_produces_header[export_contracts-vertraege.csv-contracts]",
-      "time_s": 0.171,
+      "time_s": 0.204,
       "status": "passed",
       "message": ""
     },
@@ -1348,7 +1348,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB03_each_exporter_produces_header[export_expenses-ausgaben.csv-expenses]",
       "id": "tests.concept.test_privacy_data_rights::test_PB03_each_exporter_produces_header[export_expenses-ausgaben.csv-expenses]",
-      "time_s": 0.219,
+      "time_s": 0.199,
       "status": "passed",
       "message": ""
     },
@@ -1356,7 +1356,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB03_each_exporter_produces_header[export_calendar-termine.csv-calendar]",
       "id": "tests.concept.test_privacy_data_rights::test_PB03_each_exporter_produces_header[export_calendar-termine.csv-calendar]",
-      "time_s": 0.22,
+      "time_s": 0.32,
       "status": "passed",
       "message": ""
     },
@@ -1364,7 +1364,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB03_each_exporter_produces_header[export_social-kontakte.csv-social]",
       "id": "tests.concept.test_privacy_data_rights::test_PB03_each_exporter_produces_header[export_social-kontakte.csv-social]",
-      "time_s": 0.223,
+      "time_s": 0.234,
       "status": "passed",
       "message": ""
     },
@@ -1372,7 +1372,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB03_each_exporter_produces_header[export_family-haushalt.csv-family]",
       "id": "tests.concept.test_privacy_data_rights::test_PB03_each_exporter_produces_header[export_family-haushalt.csv-family]",
-      "time_s": 0.333,
+      "time_s": 0.227,
       "status": "passed",
       "message": ""
     },
@@ -1380,7 +1380,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB04_soft_delete_hides_then_restore_brings_back",
       "id": "tests.concept.test_privacy_data_rights::test_PB04_soft_delete_hides_then_restore_brings_back",
-      "time_s": 0.25,
+      "time_s": 0.228,
       "status": "passed",
       "message": ""
     },
@@ -1388,7 +1388,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_PB06_dropping_db_file_removes_all_data",
       "id": "tests.concept.test_privacy_data_rights::test_PB06_dropping_db_file_removes_all_data",
-      "time_s": 0.454,
+      "time_s": 0.432,
       "status": "passed",
       "message": ""
     },
@@ -1396,7 +1396,7 @@
       "classname": "tests.concept.test_privacy_data_rights",
       "name": "test_audit_log_format_does_not_leak_pii",
       "id": "tests.concept.test_privacy_data_rights::test_audit_log_format_does_not_leak_pii",
-      "time_s": 0.207,
+      "time_s": 0.212,
       "status": "passed",
       "message": ""
     },
@@ -1780,7 +1780,7 @@
       "classname": "tests.concept.test_privacy_scan",
       "name": "test_PD01_no_cleartext_http_urls[services/pairing/identity.py]",
       "id": "tests.concept.test_privacy_scan::test_PD01_no_cleartext_http_urls[services/pairing/identity.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -2596,7 +2596,7 @@
       "classname": "tests.concept.test_privacy_scan",
       "name": "test_JS02_no_hardcoded_secrets[gui.py]",
       "id": "tests.concept.test_privacy_scan::test_JS02_no_hardcoded_secrets[gui.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -2852,7 +2852,7 @@
       "classname": "tests.concept.test_privacy_scan",
       "name": "test_PD04_no_pii_in_log_statements[services/license_ui.py]",
       "id": "tests.concept.test_privacy_scan::test_PD04_no_pii_in_log_statements[services/license_ui.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -3172,7 +3172,7 @@
       "classname": "tests.concept.test_privacy_scan",
       "name": "test_PD04_no_pii_in_log_statements[tools/playstore_check.py]",
       "id": "tests.concept.test_privacy_scan::test_PD04_no_pii_in_log_statements[tools/playstore_check.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -3340,7 +3340,7 @@
       "classname": "tests.concept.test_privacy_scan",
       "name": "test_PB01_account_deletion_capability_exists",
       "id": "tests.concept.test_privacy_scan::test_PB01_account_deletion_capability_exists",
-      "time_s": 0.181,
+      "time_s": 0.167,
       "status": "passed",
       "message": ""
     },
@@ -3348,7 +3348,7 @@
       "classname": "tests.concept.test_properties_concept",
       "name": "test_P1_rotation_advances_one_step",
       "id": "tests.concept.test_properties_concept::test_P1_rotation_advances_one_step",
-      "time_s": 4.414,
+      "time_s": 4.345,
       "status": "passed",
       "message": ""
     },
@@ -3356,7 +3356,7 @@
       "classname": "tests.concept.test_properties_concept",
       "name": "test_P2_overdue_task_rolls_forward_to_future",
       "id": "tests.concept.test_properties_concept::test_P2_overdue_task_rolls_forward_to_future",
-      "time_s": 4.442,
+      "time_s": 4.377,
       "status": "passed",
       "message": ""
     },
@@ -3572,7 +3572,7 @@
       "classname": "tests.concept.test_properties_concept",
       "name": "test_P6_pairwise_deterministic",
       "id": "tests.concept.test_properties_concept::test_P6_pairwise_deterministic",
-      "time_s": 1.624,
+      "time_s": 1.689,
       "status": "passed",
       "message": ""
     },
@@ -3588,7 +3588,7 @@
       "classname": "tests.concept.test_protocol_generator",
       "name": "test_protocol_classifies_and_decides",
       "id": "tests.concept.test_protocol_generator::test_protocol_classifies_and_decides",
-      "time_s": 0.007,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -3596,7 +3596,7 @@
       "classname": "tests.concept.test_protocol_generator",
       "name": "test_protocol_formats_markdown",
       "id": "tests.concept.test_protocol_generator::test_protocol_formats_markdown",
-      "time_s": 0.032,
+      "time_s": 0.035,
       "status": "passed",
       "message": ""
     },
@@ -3652,7 +3652,7 @@
       "classname": "tests.concept.test_release_gate",
       "name": "test_J6_concept_modules_import",
       "id": "tests.concept.test_release_gate::test_J6_concept_modules_import",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -3660,7 +3660,7 @@
       "classname": "tests.concept.test_release_gate",
       "name": "test_J7_pairwise_matrix_has_full_coverage",
       "id": "tests.concept.test_release_gate::test_J7_pairwise_matrix_has_full_coverage",
-      "time_s": 0.809,
+      "time_s": 0.836,
       "status": "passed",
       "message": ""
     },
@@ -3668,7 +3668,7 @@
       "classname": "tests.concept.test_release_gate",
       "name": "test_J8_permission_matrix_is_complete",
       "id": "tests.concept.test_release_gate::test_J8_permission_matrix_is_complete",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -3676,7 +3676,7 @@
       "classname": "tests.concept.test_release_gate",
       "name": "test_J9_member_profiles_present",
       "id": "tests.concept.test_release_gate::test_J9_member_profiles_present",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -3684,7 +3684,7 @@
       "classname": "tests.concept.test_release_gate",
       "name": "test_J10_full_module_registry_assembles",
       "id": "tests.concept.test_release_gate::test_J10_full_module_registry_assembles",
-      "time_s": 0.215,
+      "time_s": 0.246,
       "status": "passed",
       "message": ""
     },
@@ -3708,7 +3708,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JS03_no_debug_features_in_release_code[gui.py]",
       "id": "tests.concept.test_release_gate_extended::test_JS03_no_debug_features_in_release_code[gui.py]",
-      "time_s": 0.008,
+      "time_s": 0.009,
       "status": "passed",
       "message": ""
     },
@@ -3724,7 +3724,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JS03_no_debug_features_in_release_code[models.py]",
       "id": "tests.concept.test_release_gate_extended::test_JS03_no_debug_features_in_release_code[models.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -3740,7 +3740,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JS03_no_debug_features_in_release_code[core/interface.py]",
       "id": "tests.concept.test_release_gate_extended::test_JS03_no_debug_features_in_release_code[core/interface.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -3796,7 +3796,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JS03_no_debug_features_in_release_code[modules/inbox.py]",
       "id": "tests.concept.test_release_gate_extended::test_JS03_no_debug_features_in_release_code[modules/inbox.py]",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -3804,7 +3804,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JS03_no_debug_features_in_release_code[modules/notes.py]",
       "id": "tests.concept.test_release_gate_extended::test_JS03_no_debug_features_in_release_code[modules/notes.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -4092,7 +4092,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JS03_no_debug_features_in_release_code[services/sync_server.py]",
       "id": "tests.concept.test_release_gate_extended::test_JS03_no_debug_features_in_release_code[services/sync_server.py]",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -4268,7 +4268,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_JT04_no_blocker_todo[gui.py]",
       "id": "tests.concept.test_release_gate_extended::test_JT04_no_blocker_todo[gui.py]",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -4836,7 +4836,7 @@
       "classname": "tests.concept.test_release_gate_extended",
       "name": "test_concept_directory_contains_full_suite",
       "id": "tests.concept.test_release_gate_extended::test_concept_directory_contains_full_suite",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -5356,7 +5356,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_owner_can_do_everything",
       "id": "tests.concept.test_roles_permissions::test_owner_can_do_everything",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5364,7 +5364,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_guest_cannot_modify_data",
       "id": "tests.concept.test_roles_permissions::test_guest_cannot_modify_data",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5372,7 +5372,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_admin_can_invite_but_not_delete_group",
       "id": "tests.concept.test_roles_permissions::test_admin_can_invite_but_not_delete_group",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5380,7 +5380,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_member_can_self_assign_but_not_other",
       "id": "tests.concept.test_roles_permissions::test_member_can_self_assign_but_not_other",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5388,7 +5388,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_destructive_capabilities_have_marker",
       "id": "tests.concept.test_roles_permissions::test_destructive_capabilities_have_marker",
-      "time_s": 0.179,
+      "time_s": 0.172,
       "status": "passed",
       "message": ""
     },
@@ -5396,7 +5396,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_license_gate_blocks_ai_in_free",
       "id": "tests.concept.test_roles_permissions::test_license_gate_blocks_ai_in_free",
-      "time_s": 0.169,
+      "time_s": 0.168,
       "status": "passed",
       "message": ""
     },
@@ -5404,7 +5404,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_license_gate_passes_family_in_free",
       "id": "tests.concept.test_roles_permissions::test_license_gate_passes_family_in_free",
-      "time_s": 0.176,
+      "time_s": 0.173,
       "status": "passed",
       "message": ""
     },
@@ -5412,7 +5412,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_license_gate_blocks_finance_writes_in_free",
       "id": "tests.concept.test_roles_permissions::test_license_gate_blocks_finance_writes_in_free",
-      "time_s": 0.189,
+      "time_s": 0.175,
       "status": "passed",
       "message": ""
     },
@@ -5420,7 +5420,7 @@
       "classname": "tests.concept.test_roles_permissions",
       "name": "test_owner_concept_role_maps_to_pro_license",
       "id": "tests.concept.test_roles_permissions::test_owner_concept_role_maps_to_pro_license",
-      "time_s": 0.196,
+      "time_s": 0.188,
       "status": "passed",
       "message": ""
     },
@@ -5428,7 +5428,7 @@
       "classname": "tests.test_gui_smoke.TestGuiImports",
       "name": "test_geometry_helpers",
       "id": "tests.test_gui_smoke.TestGuiImports::test_geometry_helpers",
-      "time_s": 0.072,
+      "time_s": 0.078,
       "status": "passed",
       "message": ""
     },
@@ -5492,7 +5492,7 @@
       "classname": "tests.test_integration.TestSmtpVersand",
       "name": "test_send_smtp_handles_server_error",
       "id": "tests.test_integration.TestSmtpVersand::test_send_smtp_handles_server_error",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -5516,7 +5516,7 @@
       "classname": "tests.test_integration.TestImapAbruf",
       "name": "test_fetch_imap_loops_through_unseen",
       "id": "tests.test_integration.TestImapAbruf::test_fetch_imap_loops_through_unseen",
-      "time_s": 0.205,
+      "time_s": 0.237,
       "status": "passed",
       "message": ""
     },
@@ -5524,7 +5524,7 @@
       "classname": "tests.test_integration.TestOcrParsing",
       "name": "test_missing_engine_returns_hint",
       "id": "tests.test_integration.TestOcrParsing::test_missing_engine_returns_hint",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -5564,7 +5564,7 @@
       "classname": "tests.test_integration.TestHttpsSyncServer",
       "name": "test_tls_handshake_with_self_signed_cert",
       "id": "tests.test_integration.TestHttpsSyncServer::test_tls_handshake_with_self_signed_cert",
-      "time_s": 0.798,
+      "time_s": 0.771,
       "status": "passed",
       "message": ""
     },
@@ -5580,7 +5580,7 @@
       "classname": "tests.test_integration.TestGeminiRealApi",
       "name": "test_simple_ask_returns_text",
       "id": "tests.test_integration.TestGeminiRealApi::test_simple_ask_returns_text",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "skipped",
       "message": "GOOGLE_API_KEY nicht gesetzt - Gemini-Real-Test ausgelassen"
     },
@@ -5596,7 +5596,7 @@
       "classname": "tests.test_mobile_helpers.TestFormatCurrency",
       "name": "test_normal",
       "id": "tests.test_mobile_helpers.TestFormatCurrency::test_normal",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -5604,7 +5604,7 @@
       "classname": "tests.test_mobile_helpers.TestFormatCurrency",
       "name": "test_other_currency",
       "id": "tests.test_mobile_helpers.TestFormatCurrency::test_other_currency",
-      "time_s": 0.002,
+      "time_s": 0.004,
       "status": "passed",
       "message": ""
     },
@@ -5612,7 +5612,7 @@
       "classname": "tests.test_mobile_helpers.TestFormatCurrency",
       "name": "test_thousands_separator",
       "id": "tests.test_mobile_helpers.TestFormatCurrency::test_thousands_separator",
-      "time_s": 0.002,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5620,7 +5620,7 @@
       "classname": "tests.test_mobile_helpers.TestFormatCurrency",
       "name": "test_zero",
       "id": "tests.test_mobile_helpers.TestFormatCurrency::test_zero",
-      "time_s": 0.003,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5628,7 +5628,7 @@
       "classname": "tests.test_mobile_helpers.TestDaysUntil",
       "name": "test_future",
       "id": "tests.test_mobile_helpers.TestDaysUntil::test_future",
-      "time_s": 0.003,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -5636,7 +5636,7 @@
       "classname": "tests.test_mobile_helpers.TestDaysUntil",
       "name": "test_invalid",
       "id": "tests.test_mobile_helpers.TestDaysUntil::test_invalid",
-      "time_s": 0.002,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5660,7 +5660,7 @@
       "classname": "tests.test_mobile_helpers.TestRelativeWhen",
       "name": "test_future",
       "id": "tests.test_mobile_helpers.TestRelativeWhen::test_future",
-      "time_s": 0.026,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5724,7 +5724,7 @@
       "classname": "tests.test_mobile_helpers.TestUrgencyColor",
       "name": "test_overdue_is_error",
       "id": "tests.test_mobile_helpers.TestUrgencyColor::test_overdue_is_error",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5732,7 +5732,7 @@
       "classname": "tests.test_mobile_helpers.TestUrgencyColor",
       "name": "test_within_month_is_warning",
       "id": "tests.test_mobile_helpers.TestUrgencyColor::test_within_month_is_warning",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5756,7 +5756,7 @@
       "classname": "tests.test_mobile_helpers.TestTruncate",
       "name": "test_long_gets_ellipsis",
       "id": "tests.test_mobile_helpers.TestTruncate::test_long_gets_ellipsis",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5924,7 +5924,7 @@
       "classname": "tests.test_pairing.TestInMemorySecureStore",
       "name": "test_delete_missing_is_silent",
       "id": "tests.test_pairing.TestInMemorySecureStore::test_delete_missing_is_silent",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5948,7 +5948,7 @@
       "classname": "tests.test_pairing.TestInMemorySecureStore",
       "name": "test_overwrite_replaces_value",
       "id": "tests.test_pairing.TestInMemorySecureStore::test_overwrite_replaces_value",
-      "time_s": 0.0,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -5980,7 +5980,7 @@
       "classname": "tests.test_pairing.TestKeyringSecureStore",
       "name": "test_delete_removes_from_list",
       "id": "tests.test_pairing.TestKeyringSecureStore::test_delete_removes_from_list",
-      "time_s": 0.027,
+      "time_s": 0.029,
       "status": "passed",
       "message": ""
     },
@@ -5988,7 +5988,7 @@
       "classname": "tests.test_pairing.TestKeyringSecureStore",
       "name": "test_list_keys_returns_set_keys",
       "id": "tests.test_pairing.TestKeyringSecureStore::test_list_keys_returns_set_keys",
-      "time_s": 0.043,
+      "time_s": 0.047,
       "status": "passed",
       "message": ""
     },
@@ -6004,7 +6004,7 @@
       "classname": "tests.test_pairing.TestKeyringSecureStore",
       "name": "test_roundtrip",
       "id": "tests.test_pairing.TestKeyringSecureStore::test_roundtrip",
-      "time_s": 0.025,
+      "time_s": 0.021,
       "status": "passed",
       "message": ""
     },
@@ -6116,7 +6116,7 @@
       "classname": "tests.test_pairing_handshake.TestPairingHappyPath",
       "name": "test_both_sides_derive_same_psk",
       "id": "tests.test_pairing_handshake.TestPairingHappyPath::test_both_sides_derive_same_psk",
-      "time_s": 0.024,
+      "time_s": 0.022,
       "status": "passed",
       "message": ""
     },
@@ -6132,7 +6132,7 @@
       "classname": "tests.test_pairing_handshake.TestPairingHappyPath",
       "name": "test_psk_symmetric_under_role_swap",
       "id": "tests.test_pairing_handshake.TestPairingHappyPath::test_psk_symmetric_under_role_swap",
-      "time_s": 0.042,
+      "time_s": 0.043,
       "status": "passed",
       "message": ""
     },
@@ -6148,7 +6148,7 @@
       "classname": "tests.test_pairing_handshake.TestPairingFailures",
       "name": "test_initiator_cannot_make_proof_before_learning_responder_key",
       "id": "tests.test_pairing_handshake.TestPairingFailures::test_initiator_cannot_make_proof_before_learning_responder_key",
-      "time_s": 0.021,
+      "time_s": 0.022,
       "status": "passed",
       "message": ""
     },
@@ -6164,7 +6164,7 @@
       "classname": "tests.test_pairing_handshake.TestPairingFailures",
       "name": "test_responder_with_wrong_initiator_pubkey_in_invitation",
       "id": "tests.test_pairing_handshake.TestPairingFailures::test_responder_with_wrong_initiator_pubkey_in_invitation",
-      "time_s": 0.021,
+      "time_s": 0.022,
       "status": "passed",
       "message": ""
     },
@@ -6172,7 +6172,7 @@
       "classname": "tests.test_pairing_handshake.TestPairingFailures",
       "name": "test_wrong_ot_secret_breaks_handshake",
       "id": "tests.test_pairing_handshake.TestPairingFailures::test_wrong_ot_secret_breaks_handshake",
-      "time_s": 0.021,
+      "time_s": 0.022,
       "status": "passed",
       "message": ""
     },
@@ -6180,7 +6180,7 @@
       "classname": "tests.test_pairing_handshake.TestSecretsDoNotLeak",
       "name": "test_result_only_exposes_safe_fields",
       "id": "tests.test_pairing_handshake.TestSecretsDoNotLeak::test_result_only_exposes_safe_fields",
-      "time_s": 0.021,
+      "time_s": 0.024,
       "status": "passed",
       "message": ""
     },
@@ -6188,7 +6188,7 @@
       "classname": "tests.test_performance.TestBulkInsertPerformance",
       "name": "test_insert_500_contracts_under_15s",
       "id": "tests.test_performance.TestBulkInsertPerformance::test_insert_500_contracts_under_15s",
-      "time_s": 3.047,
+      "time_s": 2.985,
       "status": "passed",
       "message": ""
     },
@@ -6196,7 +6196,7 @@
       "classname": "tests.test_performance.TestBulkInsertPerformance",
       "name": "test_insert_500_expenses_under_15s",
       "id": "tests.test_performance.TestBulkInsertPerformance::test_insert_500_expenses_under_15s",
-      "time_s": 3.003,
+      "time_s": 3.038,
       "status": "passed",
       "message": ""
     },
@@ -6204,7 +6204,7 @@
       "classname": "tests.test_performance.TestBulkInsertPerformance",
       "name": "test_list_200_contracts_under_2s",
       "id": "tests.test_performance.TestBulkInsertPerformance::test_list_200_contracts_under_2s",
-      "time_s": 1.354,
+      "time_s": 1.288,
       "status": "passed",
       "message": ""
     },
@@ -6212,7 +6212,7 @@
       "classname": "tests.test_performance.TestDeadlineCalculationPerformance",
       "name": "test_deadline_calculation_scales",
       "id": "tests.test_performance.TestDeadlineCalculationPerformance::test_deadline_calculation_scales",
-      "time_s": 0.122,
+      "time_s": 0.123,
       "status": "passed",
       "message": ""
     },
@@ -6220,7 +6220,7 @@
       "classname": "tests.test_performance.TestNotesListingPerformance",
       "name": "test_list_attached_in_large_dataset",
       "id": "tests.test_performance.TestNotesListingPerformance::test_list_attached_in_large_dataset",
-      "time_s": 6.46,
+      "time_s": 6.323,
       "status": "passed",
       "message": ""
     },
@@ -6244,7 +6244,7 @@
       "classname": "tests.test_playstore_check.TestParseBuildozerSpec",
       "name": "test_ignores_comments_and_blanks",
       "id": "tests.test_playstore_check.TestParseBuildozerSpec::test_ignores_comments_and_blanks",
-      "time_s": 0.002,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -6332,7 +6332,7 @@
       "classname": "tests.test_playstore_check.TestCheckSecrets",
       "name": "test_clean_repo_passes",
       "id": "tests.test_playstore_check.TestCheckSecrets::test_clean_repo_passes",
-      "time_s": 0.006,
+      "time_s": 0.007,
       "status": "passed",
       "message": ""
     },
@@ -6340,7 +6340,7 @@
       "classname": "tests.test_playstore_check.TestCheckSecrets",
       "name": "test_detects_google_api_key",
       "id": "tests.test_playstore_check.TestCheckSecrets::test_detects_google_api_key",
-      "time_s": 0.005,
+      "time_s": 0.006,
       "status": "passed",
       "message": ""
     },
@@ -6364,7 +6364,7 @@
       "classname": "tests.test_playstore_check.TestCodeSmells",
       "name": "test_print_only_in_mobile_path",
       "id": "tests.test_playstore_check.TestCodeSmells::test_print_only_in_mobile_path",
-      "time_s": 0.004,
+      "time_s": 0.005,
       "status": "passed",
       "message": ""
     },
@@ -6396,7 +6396,7 @@
       "classname": "tests.test_playstore_check.TestRunChecksIntegration",
       "name": "test_runs_without_exception",
       "id": "tests.test_playstore_check.TestRunChecksIntegration::test_runs_without_exception",
-      "time_s": 0.125,
+      "time_s": 0.14,
       "status": "passed",
       "message": ""
     },
@@ -6404,7 +6404,7 @@
       "classname": "tests.test_playstore_check.TestRunChecksIntegration",
       "name": "test_subset_only",
       "id": "tests.test_playstore_check.TestRunChecksIntegration::test_subset_only",
-      "time_s": 0.005,
+      "time_s": 0.006,
       "status": "passed",
       "message": ""
     },
@@ -6420,7 +6420,7 @@
       "classname": "tests.test_smoke.TestRegistry",
       "name": "test_capabilities_registered",
       "id": "tests.test_smoke.TestRegistry::test_capabilities_registered",
-      "time_s": 0.17,
+      "time_s": 0.265,
       "status": "passed",
       "message": ""
     },
@@ -6428,7 +6428,7 @@
       "classname": "tests.test_smoke.TestRegistry",
       "name": "test_module_to_module_via_context",
       "id": "tests.test_smoke.TestRegistry::test_module_to_module_via_context",
-      "time_s": 0.16,
+      "time_s": 0.147,
       "status": "passed",
       "message": ""
     },
@@ -6436,7 +6436,7 @@
       "classname": "tests.test_smoke.TestRegistry",
       "name": "test_unknown_capability_returns_error",
       "id": "tests.test_smoke.TestRegistry::test_unknown_capability_returns_error",
-      "time_s": 0.188,
+      "time_s": 0.156,
       "status": "passed",
       "message": ""
     },
@@ -6444,7 +6444,7 @@
       "classname": "tests.test_smoke.TestHasCapabilityHonorsDisabled",
       "name": "test_has_capability_false_when_disabled",
       "id": "tests.test_smoke.TestHasCapabilityHonorsDisabled::test_has_capability_false_when_disabled",
-      "time_s": 0.174,
+      "time_s": 0.172,
       "status": "passed",
       "message": ""
     },
@@ -6452,7 +6452,7 @@
       "classname": "tests.test_smoke.TestHasCapabilityHonorsDisabled",
       "name": "test_has_capability_returns_after_enable",
       "id": "tests.test_smoke.TestHasCapabilityHonorsDisabled::test_has_capability_returns_after_enable",
-      "time_s": 0.194,
+      "time_s": 0.166,
       "status": "passed",
       "message": ""
     },
@@ -6460,7 +6460,7 @@
       "classname": "tests.test_smoke.TestCalendarNoMutation",
       "name": "test_recurring_event_not_mutated_in_db",
       "id": "tests.test_smoke.TestCalendarNoMutation::test_recurring_event_not_mutated_in_db",
-      "time_s": 0.2,
+      "time_s": 0.174,
       "status": "passed",
       "message": ""
     },
@@ -6468,7 +6468,7 @@
       "classname": "tests.test_smoke.TestDestructiveFlags",
       "name": "test_critical_capabilities_are_marked",
       "id": "tests.test_smoke.TestDestructiveFlags::test_critical_capabilities_are_marked",
-      "time_s": 0.196,
+      "time_s": 0.22,
       "status": "passed",
       "message": ""
     },
@@ -6476,7 +6476,7 @@
       "classname": "tests.test_smoke.TestModuleStatePersistence",
       "name": "test_disabled_module_id_persists",
       "id": "tests.test_smoke.TestModuleStatePersistence::test_disabled_module_id_persists",
-      "time_s": 0.221,
+      "time_s": 0.209,
       "status": "passed",
       "message": ""
     },
@@ -6484,7 +6484,7 @@
       "classname": "tests.test_smoke.TestDayStructurePersistence",
       "name": "test_entry_persists",
       "id": "tests.test_smoke.TestDayStructurePersistence::test_entry_persists",
-      "time_s": 0.217,
+      "time_s": 0.186,
       "status": "passed",
       "message": ""
     },
@@ -6492,7 +6492,7 @@
       "classname": "tests.test_smoke.TestAssistantLogRotation",
       "name": "test_log_does_not_grow_unbounded",
       "id": "tests.test_smoke.TestAssistantLogRotation::test_log_does_not_grow_unbounded",
-      "time_s": 0.383,
+      "time_s": 0.399,
       "status": "passed",
       "message": ""
     },
@@ -6500,7 +6500,7 @@
       "classname": "tests.test_smoke.TestSettings",
       "name": "test_db_value_overrides_default",
       "id": "tests.test_smoke.TestSettings::test_db_value_overrides_default",
-      "time_s": 0.18,
+      "time_s": 0.17,
       "status": "passed",
       "message": ""
     },
@@ -6508,7 +6508,7 @@
       "classname": "tests.test_smoke.TestSettings",
       "name": "test_defaults_when_empty",
       "id": "tests.test_smoke.TestSettings::test_defaults_when_empty",
-      "time_s": 0.161,
+      "time_s": 0.153,
       "status": "passed",
       "message": ""
     },
@@ -6516,7 +6516,7 @@
       "classname": "tests.test_smoke.TestSettings",
       "name": "test_env_overrides_db",
       "id": "tests.test_smoke.TestSettings::test_env_overrides_db",
-      "time_s": 0.192,
+      "time_s": 0.163,
       "status": "passed",
       "message": ""
     },
@@ -6524,7 +6524,7 @@
       "classname": "tests.test_smoke.TestSettings",
       "name": "test_secret_is_not_persisted",
       "id": "tests.test_smoke.TestSettings::test_secret_is_not_persisted",
-      "time_s": 0.181,
+      "time_s": 0.184,
       "status": "passed",
       "message": ""
     },
@@ -6532,7 +6532,7 @@
       "classname": "tests.test_smoke.TestSyncExpandedCapabilities",
       "name": "test_contract_replays_on_other_device",
       "id": "tests.test_smoke.TestSyncExpandedCapabilities::test_contract_replays_on_other_device",
-      "time_s": 0.413,
+      "time_s": 0.401,
       "status": "passed",
       "message": ""
     },
@@ -6540,7 +6540,7 @@
       "classname": "tests.test_smoke.TestSyncCompaction",
       "name": "test_compact_drops_oldest",
       "id": "tests.test_smoke.TestSyncCompaction::test_compact_drops_oldest",
-      "time_s": 0.03,
+      "time_s": 0.031,
       "status": "passed",
       "message": ""
     },
@@ -6548,7 +6548,7 @@
       "classname": "tests.test_smoke.TestHttpSyncRoundTrip",
       "name": "test_http_provider_append_and_fetch",
       "id": "tests.test_smoke.TestHttpSyncRoundTrip::test_http_provider_append_and_fetch",
-      "time_s": 0.532,
+      "time_s": 0.527,
       "status": "passed",
       "message": ""
     },
@@ -6556,7 +6556,7 @@
       "classname": "tests.test_smoke.TestGeminiAssistantStub",
       "name": "test_mode_reports_llm",
       "id": "tests.test_smoke.TestGeminiAssistantStub::test_mode_reports_llm",
-      "time_s": 0.237,
+      "time_s": 0.201,
       "status": "passed",
       "message": ""
     },
@@ -6564,7 +6564,7 @@
       "classname": "tests.test_smoke.TestGeminiAssistantStub",
       "name": "test_token_usage_accumulates",
       "id": "tests.test_smoke.TestGeminiAssistantStub::test_token_usage_accumulates",
-      "time_s": 0.217,
+      "time_s": 0.182,
       "status": "passed",
       "message": ""
     },
@@ -6580,7 +6580,7 @@
       "classname": "tests.test_smoke.TestEncryption",
       "name": "test_plain_mode_when_no_key",
       "id": "tests.test_smoke.TestEncryption::test_plain_mode_when_no_key",
-      "time_s": 0.167,
+      "time_s": 0.2,
       "status": "passed",
       "message": ""
     },
@@ -6588,7 +6588,7 @@
       "classname": "tests.test_smoke.TestThreadSafety",
       "name": "test_concurrent_dispatch",
       "id": "tests.test_smoke.TestThreadSafety::test_concurrent_dispatch",
-      "time_s": 0.714,
+      "time_s": 0.678,
       "status": "passed",
       "message": ""
     },
@@ -6596,7 +6596,7 @@
       "classname": "tests.test_smoke.TestConversationHistory",
       "name": "test_history_grows_across_calls",
       "id": "tests.test_smoke.TestConversationHistory::test_history_grows_across_calls",
-      "time_s": 0.242,
+      "time_s": 0.203,
       "status": "passed",
       "message": ""
     },
@@ -6612,7 +6612,7 @@
       "classname": "tests.test_smoke.TestSyncReentry",
       "name": "test_non_synced_outer_lets_nested_log",
       "id": "tests.test_smoke.TestSyncReentry::test_non_synced_outer_lets_nested_log",
-      "time_s": 0.22,
+      "time_s": 0.217,
       "status": "passed",
       "message": ""
     },
@@ -6620,7 +6620,7 @@
       "classname": "tests.test_smoke.TestSyncReentry",
       "name": "test_synced_outer_suppresses_synced_nested",
       "id": "tests.test_smoke.TestSyncReentry::test_synced_outer_suppresses_synced_nested",
-      "time_s": 0.22,
+      "time_s": 0.196,
       "status": "passed",
       "message": ""
     },
@@ -6628,7 +6628,7 @@
       "classname": "tests.test_smoke.TestRecurrenceValidation",
       "name": "test_invalid_date_rejected",
       "id": "tests.test_smoke.TestRecurrenceValidation::test_invalid_date_rejected",
-      "time_s": 0.199,
+      "time_s": 0.195,
       "status": "passed",
       "message": ""
     },
@@ -6636,7 +6636,7 @@
       "classname": "tests.test_smoke.TestRecurrenceValidation",
       "name": "test_negative_recurrence_rejected",
       "id": "tests.test_smoke.TestRecurrenceValidation::test_negative_recurrence_rejected",
-      "time_s": 0.211,
+      "time_s": 0.187,
       "status": "passed",
       "message": ""
     },
@@ -6644,7 +6644,7 @@
       "classname": "tests.test_smoke.TestRecurrenceValidation",
       "name": "test_none_recurrence_ok",
       "id": "tests.test_smoke.TestRecurrenceValidation::test_none_recurrence_ok",
-      "time_s": 0.191,
+      "time_s": 0.21,
       "status": "passed",
       "message": ""
     },
@@ -6652,7 +6652,7 @@
       "classname": "tests.test_smoke.TestRecurrenceValidation",
       "name": "test_positive_recurrence_ok",
       "id": "tests.test_smoke.TestRecurrenceValidation::test_positive_recurrence_ok",
-      "time_s": 0.163,
+      "time_s": 0.199,
       "status": "passed",
       "message": ""
     },
@@ -6660,7 +6660,7 @@
       "classname": "tests.test_smoke.TestRecurrenceValidation",
       "name": "test_zero_recurrence_rejected",
       "id": "tests.test_smoke.TestRecurrenceValidation::test_zero_recurrence_rejected",
-      "time_s": 0.182,
+      "time_s": 0.174,
       "status": "passed",
       "message": ""
     },
@@ -6668,7 +6668,7 @@
       "classname": "tests.test_smoke.TestSyncServerCompaction",
       "name": "test_server_drops_oldest_when_over_limit",
       "id": "tests.test_smoke.TestSyncServerCompaction::test_server_drops_oldest_when_over_limit",
-      "time_s": 0.709,
+      "time_s": 0.586,
       "status": "passed",
       "message": ""
     },
@@ -6676,7 +6676,7 @@
       "classname": "tests.test_smoke.TestUtcTimestamps",
       "name": "test_event_timestamp_has_utc_marker",
       "id": "tests.test_smoke.TestUtcTimestamps::test_event_timestamp_has_utc_marker",
-      "time_s": 0.236,
+      "time_s": 0.247,
       "status": "passed",
       "message": ""
     },
@@ -6700,7 +6700,7 @@
       "classname": "tests.test_smoke.TestSqlCipherValidation",
       "name": "test_nul_byte_rejected",
       "id": "tests.test_smoke.TestSqlCipherValidation::test_nul_byte_rejected",
-      "time_s": 0.002,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -6708,7 +6708,7 @@
       "classname": "tests.test_smoke.TestSqlCipherValidation",
       "name": "test_too_short_rejected",
       "id": "tests.test_smoke.TestSqlCipherValidation::test_too_short_rejected",
-      "time_s": 0.002,
+      "time_s": 0.001,
       "status": "passed",
       "message": ""
     },
@@ -6716,7 +6716,7 @@
       "classname": "tests.test_smoke.TestCompleteTaskCatchUp",
       "name": "test_overdue_task_advances_rotation_multiple_times",
       "id": "tests.test_smoke.TestCompleteTaskCatchUp::test_overdue_task_advances_rotation_multiple_times",
-      "time_s": 0.232,
+      "time_s": 0.204,
       "status": "passed",
       "message": ""
     },
@@ -6780,7 +6780,7 @@
       "classname": "tests.test_smoke.TestDeleteCapabilities",
       "name": "test_delete_caps_are_destructive",
       "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_caps_are_destructive",
-      "time_s": 0.199,
+      "time_s": 0.187,
       "status": "passed",
       "message": ""
     },
@@ -6788,7 +6788,7 @@
       "classname": "tests.test_smoke.TestDeleteCapabilities",
       "name": "test_delete_contract_round_trip",
       "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_contract_round_trip",
-      "time_s": 0.215,
+      "time_s": 0.186,
       "status": "passed",
       "message": ""
     },
@@ -6796,7 +6796,7 @@
       "classname": "tests.test_smoke.TestDeleteCapabilities",
       "name": "test_delete_member_keeps_orphan_contracts",
       "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_member_keeps_orphan_contracts",
-      "time_s": 0.209,
+      "time_s": 0.212,
       "status": "passed",
       "message": ""
     },
@@ -6804,7 +6804,7 @@
       "classname": "tests.test_smoke.TestDeleteCapabilities",
       "name": "test_delete_unknown_returns_error",
       "id": "tests.test_smoke.TestDeleteCapabilities::test_delete_unknown_returns_error",
-      "time_s": 0.221,
+      "time_s": 0.192,
       "status": "passed",
       "message": ""
     },
@@ -6820,7 +6820,7 @@
       "classname": "tests.test_smoke.TestInputValidation",
       "name": "test_family_task_rejects_zero_interval",
       "id": "tests.test_smoke.TestInputValidation::test_family_task_rejects_zero_interval",
-      "time_s": 0.176,
+      "time_s": 0.214,
       "status": "passed",
       "message": ""
     },
@@ -6828,7 +6828,7 @@
       "classname": "tests.test_smoke.TestInputValidation",
       "name": "test_finance_rejects_bad_date",
       "id": "tests.test_smoke.TestInputValidation::test_finance_rejects_bad_date",
-      "time_s": 0.179,
+      "time_s": 0.152,
       "status": "passed",
       "message": ""
     },
@@ -6836,7 +6836,7 @@
       "classname": "tests.test_smoke.TestInputValidation",
       "name": "test_finance_rejects_negative_amount",
       "id": "tests.test_smoke.TestInputValidation::test_finance_rejects_negative_amount",
-      "time_s": 0.181,
+      "time_s": 0.169,
       "status": "passed",
       "message": ""
     },
@@ -6844,7 +6844,7 @@
       "classname": "tests.test_smoke.TestInputValidation",
       "name": "test_social_rejects_empty_name",
       "id": "tests.test_smoke.TestInputValidation::test_social_rejects_empty_name",
-      "time_s": 0.189,
+      "time_s": 0.172,
       "status": "passed",
       "message": ""
     },
@@ -6852,7 +6852,7 @@
       "classname": "tests.test_smoke.TestInputValidation",
       "name": "test_social_rejects_non_positive_cadence",
       "id": "tests.test_smoke.TestInputValidation::test_social_rejects_non_positive_cadence",
-      "time_s": 0.196,
+      "time_s": 0.308,
       "status": "passed",
       "message": ""
     },
@@ -6860,7 +6860,7 @@
       "classname": "tests.test_smoke.TestLlmProposalValidation",
       "name": "test_missing_required_dropped",
       "id": "tests.test_smoke.TestLlmProposalValidation::test_missing_required_dropped",
-      "time_s": 0.197,
+      "time_s": 0.164,
       "status": "passed",
       "message": ""
     },
@@ -6868,7 +6868,7 @@
       "classname": "tests.test_smoke.TestLlmProposalValidation",
       "name": "test_unknown_target_capability_dropped",
       "id": "tests.test_smoke.TestLlmProposalValidation::test_unknown_target_capability_dropped",
-      "time_s": 0.195,
+      "time_s": 0.189,
       "status": "passed",
       "message": ""
     },
@@ -6876,7 +6876,7 @@
       "classname": "tests.test_smoke.TestDisabledModuleSurfaced",
       "name": "test_disabled_contracts_yields_warning_in_finance_events",
       "id": "tests.test_smoke.TestDisabledModuleSurfaced::test_disabled_contracts_yields_warning_in_finance_events",
-      "time_s": 0.202,
+      "time_s": 0.185,
       "status": "passed",
       "message": ""
     },
@@ -6884,7 +6884,7 @@
       "classname": "tests.test_smoke.TestDiagnose",
       "name": "test_collect_returns_expected_shape",
       "id": "tests.test_smoke.TestDiagnose::test_collect_returns_expected_shape",
-      "time_s": 1.065,
+      "time_s": 1.0,
       "status": "passed",
       "message": ""
     },
@@ -6892,7 +6892,7 @@
       "classname": "tests.test_smoke.TestBackupAndRestore",
       "name": "test_list_backups_sorted_newest_first",
       "id": "tests.test_smoke.TestBackupAndRestore::test_list_backups_sorted_newest_first",
-      "time_s": 0.34,
+      "time_s": 0.293,
       "status": "passed",
       "message": ""
     },
@@ -6900,7 +6900,7 @@
       "classname": "tests.test_smoke.TestBackupAndRestore",
       "name": "test_online_backup_creates_readable_copy",
       "id": "tests.test_smoke.TestBackupAndRestore::test_online_backup_creates_readable_copy",
-      "time_s": 0.228,
+      "time_s": 0.277,
       "status": "passed",
       "message": ""
     },
@@ -6908,7 +6908,7 @@
       "classname": "tests.test_smoke.TestBackupAndRestore",
       "name": "test_restore_overwrites_live_db",
       "id": "tests.test_smoke.TestBackupAndRestore::test_restore_overwrites_live_db",
-      "time_s": 0.171,
+      "time_s": 0.198,
       "status": "passed",
       "message": ""
     },
@@ -6916,7 +6916,7 @@
       "classname": "tests.test_smoke.TestCsvExport",
       "name": "test_export_all_writes_five_files",
       "id": "tests.test_smoke.TestCsvExport::test_export_all_writes_five_files",
-      "time_s": 0.179,
+      "time_s": 0.156,
       "status": "passed",
       "message": ""
     },
@@ -6924,7 +6924,7 @@
       "classname": "tests.test_smoke.TestCsvExport",
       "name": "test_export_contracts_writes_csv",
       "id": "tests.test_smoke.TestCsvExport::test_export_contracts_writes_csv",
-      "time_s": 0.182,
+      "time_s": 0.191,
       "status": "passed",
       "message": ""
     },
@@ -6932,7 +6932,7 @@
       "classname": "tests.test_smoke.TestSearch",
       "name": "test_no_hit",
       "id": "tests.test_smoke.TestSearch::test_no_hit",
-      "time_s": 0.179,
+      "time_s": 0.19,
       "status": "passed",
       "message": ""
     },
@@ -6940,7 +6940,7 @@
       "classname": "tests.test_smoke.TestSearch",
       "name": "test_search_finds_multiple_sources",
       "id": "tests.test_smoke.TestSearch::test_search_finds_multiple_sources",
-      "time_s": 0.19,
+      "time_s": 0.198,
       "status": "passed",
       "message": ""
     },
@@ -6948,7 +6948,7 @@
       "classname": "tests.test_smoke.TestSearch",
       "name": "test_short_query_rejected",
       "id": "tests.test_smoke.TestSearch::test_short_query_rejected",
-      "time_s": 0.215,
+      "time_s": 0.216,
       "status": "passed",
       "message": ""
     },
@@ -6956,7 +6956,7 @@
       "classname": "tests.test_smoke.TestProposalUpdate",
       "name": "test_update_blocked_after_accept",
       "id": "tests.test_smoke.TestProposalUpdate::test_update_blocked_after_accept",
-      "time_s": 0.221,
+      "time_s": 0.222,
       "status": "passed",
       "message": ""
     },
@@ -6964,7 +6964,7 @@
       "classname": "tests.test_smoke.TestProposalUpdate",
       "name": "test_update_payload_replaces_value",
       "id": "tests.test_smoke.TestProposalUpdate::test_update_payload_replaces_value",
-      "time_s": 0.235,
+      "time_s": 0.201,
       "status": "passed",
       "message": ""
     },
@@ -6972,7 +6972,7 @@
       "classname": "tests.test_smoke.TestProposalUpdate",
       "name": "test_update_then_accept_uses_new_payload",
       "id": "tests.test_smoke.TestProposalUpdate::test_update_then_accept_uses_new_payload",
-      "time_s": 0.234,
+      "time_s": 0.236,
       "status": "passed",
       "message": ""
     },
@@ -6980,7 +6980,7 @@
       "classname": "tests.test_smoke.TestRegistryGetCapability",
       "name": "test_returns_capability_object",
       "id": "tests.test_smoke.TestRegistryGetCapability::test_returns_capability_object",
-      "time_s": 0.186,
+      "time_s": 0.189,
       "status": "passed",
       "message": ""
     },
@@ -6988,7 +6988,7 @@
       "classname": "tests.test_smoke.TestRegistryGetCapability",
       "name": "test_returns_none_for_disabled_module",
       "id": "tests.test_smoke.TestRegistryGetCapability::test_returns_none_for_disabled_module",
-      "time_s": 0.196,
+      "time_s": 0.167,
       "status": "passed",
       "message": ""
     },
@@ -6996,7 +6996,7 @@
       "classname": "tests.test_smoke.TestRegistryGetCapability",
       "name": "test_returns_none_for_unknown",
       "id": "tests.test_smoke.TestRegistryGetCapability::test_returns_none_for_unknown",
-      "time_s": 0.185,
+      "time_s": 0.153,
       "status": "passed",
       "message": ""
     },
@@ -7052,7 +7052,7 @@
       "classname": "tests.test_smoke.TestBackupSqlCipherPath",
       "name": "test_sqlcipher_path_rejects_short_key",
       "id": "tests.test_smoke.TestBackupSqlCipherPath::test_sqlcipher_path_rejects_short_key",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -7060,7 +7060,7 @@
       "classname": "tests.test_smoke.TestBackupSqlCipherPath",
       "name": "test_sqlcipher_path_requires_key",
       "id": "tests.test_smoke.TestBackupSqlCipherPath::test_sqlcipher_path_requires_key",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -7068,7 +7068,7 @@
       "classname": "tests.test_smoke.TestSyncServerTls",
       "name": "test_serve_with_bad_cert_path_raises",
       "id": "tests.test_smoke.TestSyncServerTls::test_serve_with_bad_cert_path_raises",
-      "time_s": 0.007,
+      "time_s": 0.003,
       "status": "passed",
       "message": ""
     },
@@ -7076,7 +7076,7 @@
       "classname": "tests.test_smoke.TestCsvImportRoundTrip",
       "name": "test_export_then_import_reproduces_data",
       "id": "tests.test_smoke.TestCsvImportRoundTrip::test_export_then_import_reproduces_data",
-      "time_s": 0.522,
+      "time_s": 0.397,
       "status": "passed",
       "message": ""
     },
@@ -7084,7 +7084,7 @@
       "classname": "tests.test_smoke.TestCsvImportRoundTrip",
       "name": "test_invalid_dates_dont_crash",
       "id": "tests.test_smoke.TestCsvImportRoundTrip::test_invalid_dates_dont_crash",
-      "time_s": 0.254,
+      "time_s": 0.222,
       "status": "passed",
       "message": ""
     },
@@ -7092,7 +7092,7 @@
       "classname": "tests.test_smoke.TestCsvImportRoundTrip",
       "name": "test_missing_csv_files_are_skipped",
       "id": "tests.test_smoke.TestCsvImportRoundTrip::test_missing_csv_files_are_skipped",
-      "time_s": 0.239,
+      "time_s": 0.234,
       "status": "passed",
       "message": ""
     },
@@ -7100,7 +7100,7 @@
       "classname": "tests.test_smoke.TestStatistics",
       "name": "test_contracts_overview_top_3",
       "id": "tests.test_smoke.TestStatistics::test_contracts_overview_top_3",
-      "time_s": 0.247,
+      "time_s": 0.241,
       "status": "passed",
       "message": ""
     },
@@ -7108,7 +7108,7 @@
       "classname": "tests.test_smoke.TestStatistics",
       "name": "test_expenses_per_category_aggregates",
       "id": "tests.test_smoke.TestStatistics::test_expenses_per_category_aggregates",
-      "time_s": 0.239,
+      "time_s": 0.255,
       "status": "passed",
       "message": ""
     },
@@ -7116,7 +7116,7 @@
       "classname": "tests.test_smoke.TestStatistics",
       "name": "test_expenses_per_month_returns_buckets",
       "id": "tests.test_smoke.TestStatistics::test_expenses_per_month_returns_buckets",
-      "time_s": 0.22,
+      "time_s": 0.219,
       "status": "passed",
       "message": ""
     },
@@ -7124,7 +7124,7 @@
       "classname": "tests.test_smoke.TestStatistics",
       "name": "test_rejects_zero_months",
       "id": "tests.test_smoke.TestStatistics::test_rejects_zero_months",
-      "time_s": 0.211,
+      "time_s": 0.196,
       "status": "passed",
       "message": ""
     },
@@ -7132,7 +7132,7 @@
       "classname": "tests.test_smoke.TestStatistics",
       "name": "test_yearly_summary",
       "id": "tests.test_smoke.TestStatistics::test_yearly_summary",
-      "time_s": 0.23,
+      "time_s": 0.192,
       "status": "passed",
       "message": ""
     },
@@ -7140,7 +7140,7 @@
       "classname": "tests.test_smoke.TestUtcTimestampsInDb",
       "name": "test_assistant_log_uses_utc",
       "id": "tests.test_smoke.TestUtcTimestampsInDb::test_assistant_log_uses_utc",
-      "time_s": 0.172,
+      "time_s": 0.175,
       "status": "passed",
       "message": ""
     },
@@ -7204,7 +7204,7 @@
       "classname": "tests.test_smoke.TestProfile",
       "name": "test_two_profiles_use_separate_files",
       "id": "tests.test_smoke.TestProfile::test_two_profiles_use_separate_files",
-      "time_s": 0.406,
+      "time_s": 0.473,
       "status": "passed",
       "message": ""
     },
@@ -7212,7 +7212,7 @@
       "classname": "tests.test_smoke.TestAutoBackup",
       "name": "test_prune_old_backups_keeps_newest",
       "id": "tests.test_smoke.TestAutoBackup::test_prune_old_backups_keeps_newest",
-      "time_s": 0.278,
+      "time_s": 0.267,
       "status": "passed",
       "message": ""
     },
@@ -7220,7 +7220,7 @@
       "classname": "tests.test_smoke.TestAutoBackup",
       "name": "test_run_once_creates_backup_and_prunes",
       "id": "tests.test_smoke.TestAutoBackup::test_run_once_creates_backup_and_prunes",
-      "time_s": 0.308,
+      "time_s": 0.318,
       "status": "passed",
       "message": ""
     },
@@ -7228,7 +7228,7 @@
       "classname": "tests.test_smoke.TestIcalExport",
       "name": "test_export_creates_valid_ical",
       "id": "tests.test_smoke.TestIcalExport::test_export_creates_valid_ical",
-      "time_s": 0.19,
+      "time_s": 0.182,
       "status": "passed",
       "message": ""
     },
@@ -7236,7 +7236,7 @@
       "classname": "tests.test_smoke.TestVCardExport",
       "name": "test_export_creates_valid_vcard",
       "id": "tests.test_smoke.TestVCardExport::test_export_creates_valid_vcard",
-      "time_s": 0.165,
+      "time_s": 0.172,
       "status": "passed",
       "message": ""
     },
@@ -7244,7 +7244,7 @@
       "classname": "tests.test_smoke.TestYearlyPdfReport",
       "name": "test_pdf_report_produced",
       "id": "tests.test_smoke.TestYearlyPdfReport::test_pdf_report_produced",
-      "time_s": 0.215,
+      "time_s": 0.211,
       "status": "passed",
       "message": ""
     },
@@ -7252,7 +7252,7 @@
       "classname": "tests.test_smoke.TestNotesModule",
       "name": "test_add_list_update_attach_delete",
       "id": "tests.test_smoke.TestNotesModule::test_add_list_update_attach_delete",
-      "time_s": 0.214,
+      "time_s": 0.206,
       "status": "passed",
       "message": ""
     },
@@ -7260,7 +7260,7 @@
       "classname": "tests.test_smoke.TestNotesModule",
       "name": "test_empty_title_rejected",
       "id": "tests.test_smoke.TestNotesModule::test_empty_title_rejected",
-      "time_s": 0.179,
+      "time_s": 0.171,
       "status": "passed",
       "message": ""
     },
@@ -7268,7 +7268,7 @@
       "classname": "tests.test_smoke.TestNotesModule",
       "name": "test_invalid_entity_type_rejected",
       "id": "tests.test_smoke.TestNotesModule::test_invalid_entity_type_rejected",
-      "time_s": 0.203,
+      "time_s": 0.176,
       "status": "passed",
       "message": ""
     },
@@ -7276,7 +7276,7 @@
       "classname": "tests.test_smoke.TestNotesModule",
       "name": "test_search_finds_notes",
       "id": "tests.test_smoke.TestNotesModule::test_search_finds_notes",
-      "time_s": 0.21,
+      "time_s": 0.198,
       "status": "passed",
       "message": ""
     },
@@ -7284,7 +7284,7 @@
       "classname": "tests.test_smoke.TestIcalImportRoundTrip",
       "name": "test_import_missing_file_returns_error",
       "id": "tests.test_smoke.TestIcalImportRoundTrip::test_import_missing_file_returns_error",
-      "time_s": 0.202,
+      "time_s": 0.221,
       "status": "passed",
       "message": ""
     },
@@ -7292,7 +7292,7 @@
       "classname": "tests.test_smoke.TestIcalImportRoundTrip",
       "name": "test_roundtrip",
       "id": "tests.test_smoke.TestIcalImportRoundTrip::test_roundtrip",
-      "time_s": 0.398,
+      "time_s": 0.41,
       "status": "passed",
       "message": ""
     },
@@ -7300,7 +7300,7 @@
       "classname": "tests.test_smoke.TestVCardImportRoundTrip",
       "name": "test_roundtrip_preserves_rhythmus",
       "id": "tests.test_smoke.TestVCardImportRoundTrip::test_roundtrip_preserves_rhythmus",
-      "time_s": 0.377,
+      "time_s": 0.343,
       "status": "passed",
       "message": ""
     },
@@ -7316,7 +7316,7 @@
       "classname": "tests.test_smoke.TestLamportCrdt",
       "name": "test_events_get_lamport_counter",
       "id": "tests.test_smoke.TestLamportCrdt::test_events_get_lamport_counter",
-      "time_s": 0.202,
+      "time_s": 0.191,
       "status": "passed",
       "message": ""
     },
@@ -7332,7 +7332,7 @@
       "classname": "tests.test_smoke.TestBulkOperations",
       "name": "test_bulk_complete_overdue_tasks",
       "id": "tests.test_smoke.TestBulkOperations::test_bulk_complete_overdue_tasks",
-      "time_s": 0.23,
+      "time_s": 0.229,
       "status": "passed",
       "message": ""
     },
@@ -7340,7 +7340,7 @@
       "classname": "tests.test_smoke.TestBulkOperations",
       "name": "test_bulk_delete_archived",
       "id": "tests.test_smoke.TestBulkOperations::test_bulk_delete_archived",
-      "time_s": 0.22,
+      "time_s": 0.211,
       "status": "passed",
       "message": ""
     },
@@ -7348,7 +7348,7 @@
       "classname": "tests.test_smoke.TestBulkOperations",
       "name": "test_bulk_reject_open_proposals",
       "id": "tests.test_smoke.TestBulkOperations::test_bulk_reject_open_proposals",
-      "time_s": 0.248,
+      "time_s": 0.233,
       "status": "passed",
       "message": ""
     },
@@ -7356,7 +7356,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_assistant_ask_lock_serializes",
       "id": "tests.test_smoke.TestReviewFixes::test_assistant_ask_lock_serializes",
-      "time_s": 0.202,
+      "time_s": 0.205,
       "status": "passed",
       "message": ""
     },
@@ -7364,7 +7364,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_bulk_complete_overdue_dispatches_individual_tasks",
       "id": "tests.test_smoke.TestReviewFixes::test_bulk_complete_overdue_dispatches_individual_tasks",
-      "time_s": 0.236,
+      "time_s": 0.231,
       "status": "passed",
       "message": ""
     },
@@ -7372,7 +7372,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_bulk_delete_archived_uses_repository_method",
       "id": "tests.test_smoke.TestReviewFixes::test_bulk_delete_archived_uses_repository_method",
-      "time_s": 0.218,
+      "time_s": 0.241,
       "status": "passed",
       "message": ""
     },
@@ -7388,7 +7388,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_geometry_validation",
       "id": "tests.test_smoke.TestReviewFixes::test_geometry_validation",
-      "time_s": 0.161,
+      "time_s": 0.174,
       "status": "passed",
       "message": ""
     },
@@ -7396,7 +7396,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_http_provider_has_read_all",
       "id": "tests.test_smoke.TestReviewFixes::test_http_provider_has_read_all",
-      "time_s": 4.28,
+      "time_s": 4.233,
       "status": "passed",
       "message": ""
     },
@@ -7404,7 +7404,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_ical_export_folds_at_byte_boundary",
       "id": "tests.test_smoke.TestReviewFixes::test_ical_export_folds_at_byte_boundary",
-      "time_s": 0.222,
+      "time_s": 0.228,
       "status": "passed",
       "message": ""
     },
@@ -7412,7 +7412,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_ical_import_rejects_nonexistent",
       "id": "tests.test_smoke.TestReviewFixes::test_ical_import_rejects_nonexistent",
-      "time_s": 0.205,
+      "time_s": 0.19,
       "status": "passed",
       "message": ""
     },
@@ -7420,7 +7420,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_ical_import_rejects_path_outside_or_bad_extension",
       "id": "tests.test_smoke.TestReviewFixes::test_ical_import_rejects_path_outside_or_bad_extension",
-      "time_s": 0.198,
+      "time_s": 0.189,
       "status": "passed",
       "message": ""
     },
@@ -7428,7 +7428,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_ical_import_validates_recurrence",
       "id": "tests.test_smoke.TestReviewFixes::test_ical_import_validates_recurrence",
-      "time_s": 0.204,
+      "time_s": 0.191,
       "status": "passed",
       "message": ""
     },
@@ -7436,7 +7436,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_initial_lamport_ignores_other_devices",
       "id": "tests.test_smoke.TestReviewFixes::test_initial_lamport_ignores_other_devices",
-      "time_s": 0.21,
+      "time_s": 0.199,
       "status": "passed",
       "message": ""
     },
@@ -7444,7 +7444,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_internal_capabilities_hidden_from_llm",
       "id": "tests.test_smoke.TestReviewFixes::test_internal_capabilities_hidden_from_llm",
-      "time_s": 0.185,
+      "time_s": 0.209,
       "status": "passed",
       "message": ""
     },
@@ -7452,7 +7452,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_notes_entity_id_zero_preserved",
       "id": "tests.test_smoke.TestReviewFixes::test_notes_entity_id_zero_preserved",
-      "time_s": 0.177,
+      "time_s": 0.193,
       "status": "passed",
       "message": ""
     },
@@ -7460,7 +7460,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_rrule_uses_yearly_for_365",
       "id": "tests.test_smoke.TestReviewFixes::test_rrule_uses_yearly_for_365",
-      "time_s": 0.186,
+      "time_s": 0.174,
       "status": "passed",
       "message": ""
     },
@@ -7468,7 +7468,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_sync_event_args_deep_copy",
       "id": "tests.test_smoke.TestReviewFixes::test_sync_event_args_deep_copy",
-      "time_s": 0.199,
+      "time_s": 0.188,
       "status": "passed",
       "message": ""
     },
@@ -7476,7 +7476,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_unescape_preserves_real_null_bytes",
       "id": "tests.test_smoke.TestReviewFixes::test_unescape_preserves_real_null_bytes",
-      "time_s": 0.193,
+      "time_s": 0.185,
       "status": "passed",
       "message": ""
     },
@@ -7484,7 +7484,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_vcard_import_clamps_cadence",
       "id": "tests.test_smoke.TestReviewFixes::test_vcard_import_clamps_cadence",
-      "time_s": 0.191,
+      "time_s": 0.18,
       "status": "passed",
       "message": ""
     },
@@ -7492,7 +7492,7 @@
       "classname": "tests.test_smoke.TestReviewFixes",
       "name": "test_vcard_import_rejects_too_large",
       "id": "tests.test_smoke.TestReviewFixes::test_vcard_import_rejects_too_large",
-      "time_s": 0.225,
+      "time_s": 0.192,
       "status": "passed",
       "message": ""
     },
@@ -7500,7 +7500,7 @@
       "classname": "tests.test_smoke.TestProposalsFlow",
       "name": "test_price_change_round_trip",
       "id": "tests.test_smoke.TestProposalsFlow::test_price_change_round_trip",
-      "time_s": 0.223,
+      "time_s": 0.216,
       "status": "passed",
       "message": ""
     },
@@ -7508,7 +7508,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_action_apply_token_rejects_empty",
       "id": "tests.test_smoke.TestLicensing::test_action_apply_token_rejects_empty",
-      "time_s": 0.176,
+      "time_s": 0.211,
       "status": "passed",
       "message": ""
     },
@@ -7516,7 +7516,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_action_apply_token_rejects_garbage",
       "id": "tests.test_smoke.TestLicensing::test_action_apply_token_rejects_garbage",
-      "time_s": 0.207,
+      "time_s": 0.176,
       "status": "passed",
       "message": ""
     },
@@ -7524,7 +7524,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_action_apply_token_round_trip",
       "id": "tests.test_smoke.TestLicensing::test_action_apply_token_round_trip",
-      "time_s": 0.231,
+      "time_s": 0.253,
       "status": "passed",
       "message": ""
     },
@@ -7532,7 +7532,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_action_start_trial_success_then_blocked",
       "id": "tests.test_smoke.TestLicensing::test_action_start_trial_success_then_blocked",
-      "time_s": 0.198,
+      "time_s": 0.192,
       "status": "passed",
       "message": ""
     },
@@ -7540,7 +7540,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_activate_pro_sets_year_for_annual",
       "id": "tests.test_smoke.TestLicensing::test_activate_pro_sets_year_for_annual",
-      "time_s": 0.218,
+      "time_s": 0.183,
       "status": "passed",
       "message": ""
     },
@@ -7548,7 +7548,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_activation_rejects_free_tier",
       "id": "tests.test_smoke.TestLicensing::test_activation_rejects_free_tier",
-      "time_s": 0.199,
+      "time_s": 0.179,
       "status": "passed",
       "message": ""
     },
@@ -7556,7 +7556,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_activation_requires_withdrawal_waiver",
       "id": "tests.test_smoke.TestLicensing::test_activation_requires_withdrawal_waiver",
-      "time_s": 0.209,
+      "time_s": 0.223,
       "status": "passed",
       "message": ""
     },
@@ -7580,7 +7580,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_affiliate_block_in_letter_text_is_static",
       "id": "tests.test_smoke.TestLicensing::test_affiliate_block_in_letter_text_is_static",
-      "time_s": 0.202,
+      "time_s": 0.194,
       "status": "passed",
       "message": ""
     },
@@ -7620,7 +7620,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_apply_token_persists_token_string",
       "id": "tests.test_smoke.TestLicensing::test_apply_token_persists_token_string",
-      "time_s": 0.248,
+      "time_s": 0.227,
       "status": "passed",
       "message": ""
     },
@@ -7644,7 +7644,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_cancellation_includes_affiliate_suggestions",
       "id": "tests.test_smoke.TestLicensing::test_cancellation_includes_affiliate_suggestions",
-      "time_s": 0.23,
+      "time_s": 0.204,
       "status": "passed",
       "message": ""
     },
@@ -7732,7 +7732,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_grandfathered_keeps_read_but_blocks_write",
       "id": "tests.test_smoke.TestLicensing::test_grandfathered_keeps_read_but_blocks_write",
-      "time_s": 0.218,
+      "time_s": 0.231,
       "status": "passed",
       "message": ""
     },
@@ -7740,7 +7740,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_grandfathering_migration_runs_once",
       "id": "tests.test_smoke.TestLicensing::test_grandfathering_migration_runs_once",
-      "time_s": 0.213,
+      "time_s": 0.225,
       "status": "passed",
       "message": ""
     },
@@ -7748,7 +7748,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_grandfathering_skipped_for_empty_db",
       "id": "tests.test_smoke.TestLicensing::test_grandfathering_skipped_for_empty_db",
-      "time_s": 0.192,
+      "time_s": 0.161,
       "status": "passed",
       "message": ""
     },
@@ -7772,7 +7772,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_issuer_skips_cancellations",
       "id": "tests.test_smoke.TestLicensing::test_issuer_skips_cancellations",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -7780,7 +7780,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_lemon_signature_and_parse",
       "id": "tests.test_smoke.TestLicensing::test_lemon_signature_and_parse",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -7796,7 +7796,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_license_round_trip",
       "id": "tests.test_smoke.TestLicensing::test_license_round_trip",
-      "time_s": 0.292,
+      "time_s": 0.166,
       "status": "passed",
       "message": ""
     },
@@ -7804,7 +7804,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_load_license_defaults_to_free",
       "id": "tests.test_smoke.TestLicensing::test_load_license_defaults_to_free",
-      "time_s": 0.18,
+      "time_s": 0.174,
       "status": "passed",
       "message": ""
     },
@@ -7812,7 +7812,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_load_license_drops_tampered_token",
       "id": "tests.test_smoke.TestLicensing::test_load_license_drops_tampered_token",
-      "time_s": 0.202,
+      "time_s": 0.184,
       "status": "passed",
       "message": ""
     },
@@ -7820,7 +7820,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_load_license_handles_corrupt_values",
       "id": "tests.test_smoke.TestLicensing::test_load_license_handles_corrupt_values",
-      "time_s": 0.207,
+      "time_s": 0.2,
       "status": "passed",
       "message": ""
     },
@@ -7828,7 +7828,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_load_license_keeps_expired_token_for_grace",
       "id": "tests.test_smoke.TestLicensing::test_load_license_keeps_expired_token_for_grace",
-      "time_s": 0.194,
+      "time_s": 0.193,
       "status": "passed",
       "message": ""
     },
@@ -7884,7 +7884,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_pricing_onboarded_flag_persists",
       "id": "tests.test_smoke.TestLicensing::test_pricing_onboarded_flag_persists",
-      "time_s": 0.2,
+      "time_s": 0.196,
       "status": "passed",
       "message": ""
     },
@@ -7892,7 +7892,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_pro_downgrades_after_grace_period",
       "id": "tests.test_smoke.TestLicensing::test_pro_downgrades_after_grace_period",
-      "time_s": 0.209,
+      "time_s": 0.247,
       "status": "passed",
       "message": ""
     },
@@ -7980,7 +7980,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_scheduler_picks_up_extra_event_sources",
       "id": "tests.test_smoke.TestLicensing::test_scheduler_picks_up_extra_event_sources",
-      "time_s": 0.001,
+      "time_s": 0.002,
       "status": "passed",
       "message": ""
     },
@@ -8100,7 +8100,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_trial_is_not_reusable",
       "id": "tests.test_smoke.TestLicensing::test_trial_is_not_reusable",
-      "time_s": 0.163,
+      "time_s": 0.225,
       "status": "passed",
       "message": ""
     },
@@ -8108,7 +8108,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_trial_starts_and_expires",
       "id": "tests.test_smoke.TestLicensing::test_trial_starts_and_expires",
-      "time_s": 0.158,
+      "time_s": 0.193,
       "status": "passed",
       "message": ""
     },
@@ -8116,7 +8116,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_webhook_server_end_to_end",
       "id": "tests.test_smoke.TestLicensing::test_webhook_server_end_to_end",
-      "time_s": 0.513,
+      "time_s": 0.521,
       "status": "passed",
       "message": ""
     },
@@ -8124,7 +8124,7 @@
       "classname": "tests.test_smoke.TestLicensing",
       "name": "test_webhook_server_rejects_bad_signature",
       "id": "tests.test_smoke.TestLicensing::test_webhook_server_rejects_bad_signature",
-      "time_s": 0.517,
+      "time_s": 0.52,
       "status": "passed",
       "message": ""
     }
@@ -8134,7 +8134,7 @@
     "failed": 0,
     "error": 0,
     "skipped": 3,
-    "duration_s": 154.2540000000029,
+    "duration_s": 147.43200000000311,
     "count": 1016
   },
   "by_file": {
@@ -8143,7 +8143,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.934,
+      "duration_s": 1.0750000000000002,
       "count": 20
     },
     "test_md_to_html": {
@@ -8151,7 +8151,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.014000000000000005,
+      "duration_s": 0.015000000000000006,
       "count": 15
     },
     "test_members_scenarios": {
@@ -8159,7 +8159,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 71.448,
+      "duration_s": 65.819,
       "count": 18
     },
     "test_negative_inputs": {
@@ -8167,7 +8167,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 7.826999999999999,
+      "duration_s": 7.577000000000001,
       "count": 40
     },
     "test_negative_network": {
@@ -8175,7 +8175,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 3.13,
+      "duration_s": 3.139,
       "count": 8
     },
     "test_negative_security": {
@@ -8183,7 +8183,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.029000000000000012,
+      "duration_s": 0.032000000000000015,
       "count": 22
     },
     "test_pairwise_matrix": {
@@ -8191,7 +8191,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 4.373,
+      "duration_s": 4.401999999999999,
       "count": 13
     },
     "test_playstore_sync": {
@@ -8199,7 +8199,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.169,
+      "duration_s": 0.22300000000000003,
       "count": 29
     },
     "test_privacy_data_rights": {
@@ -8207,7 +8207,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 2.6350000000000002,
+      "duration_s": 2.615,
       "count": 10
     },
     "test_privacy_scan": {
@@ -8215,7 +8215,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.43200000000000016,
+      "duration_s": 0.42200000000000015,
       "count": 243
     },
     "test_properties_concept": {
@@ -8223,7 +8223,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 10.505999999999986,
+      "duration_s": 10.436999999999985,
       "count": 29
     },
     "test_protocol_generator": {
@@ -8231,7 +8231,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.045000000000000005,
+      "duration_s": 0.044000000000000004,
       "count": 4
     },
     "test_release_gate": {
@@ -8239,7 +8239,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 1.0290000000000001,
+      "duration_s": 1.0899999999999999,
       "count": 10
     },
     "test_release_gate_extended": {
@@ -8247,7 +8247,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.17000000000000012,
+      "duration_s": 0.17800000000000013,
       "count": 148
     },
     "test_roles_permissions": {
@@ -8255,7 +8255,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.9690000000000001,
+      "duration_s": 0.94,
       "count": 69
     },
     "TestGuiImports": {
@@ -8263,7 +8263,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.086,
+      "duration_s": 0.092,
       "count": 5
     },
     "TestMainImports": {
@@ -8279,7 +8279,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.015,
+      "duration_s": 0.016,
       "count": 4
     },
     "TestImapAbruf": {
@@ -8287,7 +8287,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.205,
+      "duration_s": 0.237,
       "count": 1
     },
     "TestOcrParsing": {
@@ -8295,7 +8295,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.004,
+      "duration_s": 0.005,
       "count": 2
     },
     "TestPrinten": {
@@ -8311,7 +8311,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.798,
+      "duration_s": 0.771,
       "count": 1
     },
     "TestSqlCipherRealRoundTrip": {
@@ -8327,7 +8327,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 1,
-      "duration_s": 0.002,
+      "duration_s": 0.003,
       "count": 1
     },
     "TestFormatCurrency": {
@@ -8343,7 +8343,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.007,
+      "duration_s": 0.005,
       "count": 4
     },
     "TestRelativeWhen": {
@@ -8351,7 +8351,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.031000000000000003,
+      "duration_s": 0.006,
       "count": 6
     },
     "TestUrgencyColor": {
@@ -8359,7 +8359,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.003,
+      "duration_s": 0.005,
       "count": 5
     },
     "TestTruncate": {
@@ -8367,7 +8367,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.002,
+      "duration_s": 0.003,
       "count": 3
     },
     "TestGroupByModule": {
@@ -8407,7 +8407,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.006,
+      "duration_s": 0.008,
       "count": 8
     },
     "TestKeyringSecureStore": {
@@ -8415,7 +8415,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.097,
+      "duration_s": 0.099,
       "count": 4
     },
     "TestDefaultSecureStore": {
@@ -8447,7 +8447,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.088,
+      "duration_s": 0.087,
       "count": 3
     },
     "TestPairingFailures": {
@@ -8455,7 +8455,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.085,
+      "duration_s": 0.088,
       "count": 5
     },
     "TestSecretsDoNotLeak": {
@@ -8463,7 +8463,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.021,
+      "duration_s": 0.024,
       "count": 1
     },
     "TestBulkInsertPerformance": {
@@ -8471,7 +8471,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 7.404000000000001,
+      "duration_s": 7.311,
       "count": 3
     },
     "TestDeadlineCalculationPerformance": {
@@ -8479,7 +8479,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.122,
+      "duration_s": 0.123,
       "count": 1
     },
     "TestNotesListingPerformance": {
@@ -8487,7 +8487,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 6.46,
+      "duration_s": 6.323,
       "count": 1
     },
     "TestParseBuildozerSpec": {
@@ -8495,7 +8495,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.005,
+      "duration_s": 0.006,
       "count": 3
     },
     "TestCheckSdkLevels": {
@@ -8527,7 +8527,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.011,
+      "duration_s": 0.013000000000000001,
       "count": 2
     },
     "TestCheckDemoData": {
@@ -8543,7 +8543,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.01,
+      "duration_s": 0.011,
       "count": 2
     },
     "TestReportFormats": {
@@ -8559,7 +8559,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.13,
+      "duration_s": 0.14600000000000002,
       "count": 2
     },
     "TestPropertyBasedSkipped": {
@@ -8575,7 +8575,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.518,
+      "duration_s": 0.5680000000000001,
       "count": 3
     },
     "TestHasCapabilityHonorsDisabled": {
@@ -8583,7 +8583,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.368,
+      "duration_s": 0.33799999999999997,
       "count": 2
     },
     "TestCalendarNoMutation": {
@@ -8591,7 +8591,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.2,
+      "duration_s": 0.174,
       "count": 1
     },
     "TestDestructiveFlags": {
@@ -8599,7 +8599,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.196,
+      "duration_s": 0.22,
       "count": 1
     },
     "TestModuleStatePersistence": {
@@ -8607,7 +8607,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.221,
+      "duration_s": 0.209,
       "count": 1
     },
     "TestDayStructurePersistence": {
@@ -8615,7 +8615,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.217,
+      "duration_s": 0.186,
       "count": 1
     },
     "TestAssistantLogRotation": {
@@ -8623,7 +8623,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.383,
+      "duration_s": 0.399,
       "count": 1
     },
     "TestSettings": {
@@ -8631,7 +8631,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.714,
+      "duration_s": 0.6699999999999999,
       "count": 4
     },
     "TestSyncExpandedCapabilities": {
@@ -8639,7 +8639,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.413,
+      "duration_s": 0.401,
       "count": 1
     },
     "TestSyncCompaction": {
@@ -8647,7 +8647,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.03,
+      "duration_s": 0.031,
       "count": 1
     },
     "TestHttpSyncRoundTrip": {
@@ -8655,7 +8655,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.532,
+      "duration_s": 0.527,
       "count": 1
     },
     "TestGeminiAssistantStub": {
@@ -8663,7 +8663,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.45399999999999996,
+      "duration_s": 0.383,
       "count": 2
     },
     "TestEncryption": {
@@ -8671,7 +8671,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.169,
+      "duration_s": 0.202,
       "count": 2
     },
     "TestThreadSafety": {
@@ -8679,7 +8679,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.714,
+      "duration_s": 0.678,
       "count": 1
     },
     "TestConversationHistory": {
@@ -8687,7 +8687,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.242,
+      "duration_s": 0.203,
       "count": 1
     },
     "TestSmtpWiring": {
@@ -8703,7 +8703,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.44,
+      "duration_s": 0.41300000000000003,
       "count": 2
     },
     "TestRecurrenceValidation": {
@@ -8711,7 +8711,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.946,
+      "duration_s": 0.9649999999999999,
       "count": 5
     },
     "TestSyncServerCompaction": {
@@ -8719,7 +8719,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.709,
+      "duration_s": 0.586,
       "count": 1
     },
     "TestUtcTimestamps": {
@@ -8727,7 +8727,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.236,
+      "duration_s": 0.247,
       "count": 1
     },
     "TestInboxExtractText": {
@@ -8743,7 +8743,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.004,
+      "duration_s": 0.002,
       "count": 2
     },
     "TestCompleteTaskCatchUp": {
@@ -8751,7 +8751,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.232,
+      "duration_s": 0.204,
       "count": 1
     },
     "TestPrintFileNoShell": {
@@ -8775,7 +8775,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.844,
+      "duration_s": 0.7769999999999999,
       "count": 4
     },
     "TestInputValidation": {
@@ -8783,7 +8783,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 1.1300000000000001,
+      "duration_s": 1.224,
       "count": 6
     },
     "TestLlmProposalValidation": {
@@ -8791,7 +8791,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.392,
+      "duration_s": 0.353,
       "count": 2
     },
     "TestDisabledModuleSurfaced": {
@@ -8799,7 +8799,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.202,
+      "duration_s": 0.185,
       "count": 1
     },
     "TestDiagnose": {
@@ -8807,7 +8807,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 1.065,
+      "duration_s": 1.0,
       "count": 1
     },
     "TestBackupAndRestore": {
@@ -8815,7 +8815,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.7390000000000001,
+      "duration_s": 0.768,
       "count": 3
     },
     "TestCsvExport": {
@@ -8823,7 +8823,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.361,
+      "duration_s": 0.347,
       "count": 2
     },
     "TestSearch": {
@@ -8831,7 +8831,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.584,
+      "duration_s": 0.604,
       "count": 3
     },
     "TestProposalUpdate": {
@@ -8839,7 +8839,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.69,
+      "duration_s": 0.659,
       "count": 3
     },
     "TestRegistryGetCapability": {
@@ -8847,7 +8847,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.567,
+      "duration_s": 0.509,
       "count": 3
     },
     "TestI18n": {
@@ -8863,7 +8863,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.002,
+      "duration_s": 0.004,
       "count": 2
     },
     "TestSyncServerTls": {
@@ -8871,7 +8871,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.007,
+      "duration_s": 0.003,
       "count": 1
     },
     "TestCsvImportRoundTrip": {
@@ -8879,7 +8879,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 1.0150000000000001,
+      "duration_s": 0.853,
       "count": 3
     },
     "TestStatistics": {
@@ -8887,7 +8887,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 1.147,
+      "duration_s": 1.103,
       "count": 5
     },
     "TestUtcTimestampsInDb": {
@@ -8895,7 +8895,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.37,
+      "duration_s": 0.373,
       "count": 2
     },
     "TestProfile": {
@@ -8903,7 +8903,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.41200000000000003,
+      "duration_s": 0.479,
       "count": 7
     },
     "TestAutoBackup": {
@@ -8911,7 +8911,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.5860000000000001,
+      "duration_s": 0.585,
       "count": 2
     },
     "TestIcalExport": {
@@ -8919,7 +8919,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.19,
+      "duration_s": 0.182,
       "count": 1
     },
     "TestVCardExport": {
@@ -8927,7 +8927,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.165,
+      "duration_s": 0.172,
       "count": 1
     },
     "TestYearlyPdfReport": {
@@ -8935,7 +8935,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.215,
+      "duration_s": 0.211,
       "count": 1
     },
     "TestNotesModule": {
@@ -8943,7 +8943,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.806,
+      "duration_s": 0.7509999999999999,
       "count": 4
     },
     "TestIcalImportRoundTrip": {
@@ -8951,7 +8951,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.6000000000000001,
+      "duration_s": 0.631,
       "count": 2
     },
     "TestVCardImportRoundTrip": {
@@ -8959,7 +8959,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.377,
+      "duration_s": 0.343,
       "count": 1
     },
     "TestLamportCrdt": {
@@ -8967,7 +8967,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.20600000000000002,
+      "duration_s": 0.195,
       "count": 3
     },
     "TestBulkOperations": {
@@ -8975,7 +8975,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.698,
+      "duration_s": 0.673,
       "count": 3
     },
     "TestReviewFixes": {
@@ -8983,7 +8983,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 7.695999999999999,
+      "duration_s": 7.605999999999998,
       "count": 18
     },
     "TestProposalsFlow": {
@@ -8991,7 +8991,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 0.223,
+      "duration_s": 0.216,
       "count": 1
     },
     "TestLicensing": {
@@ -8999,7 +8999,7 @@
       "failed": 0,
       "error": 0,
       "skipped": 0,
-      "duration_s": 5.638000000000006,
+      "duration_s": 5.543000000000005,
       "count": 78
     }
   },
@@ -9010,7 +9010,7 @@
       "error": 0,
       "skipped": 0,
       "count": 18,
-      "duration_s": 71.448
+      "duration_s": 65.819
     },
     "roles": {
       "passed": 69,
@@ -9018,7 +9018,7 @@
       "error": 0,
       "skipped": 0,
       "count": 69,
-      "duration_s": 0.9690000000000001
+      "duration_s": 0.94
     },
     "combinatorics": {
       "passed": 13,
@@ -9026,7 +9026,7 @@
       "error": 0,
       "skipped": 0,
       "count": 13,
-      "duration_s": 4.373
+      "duration_s": 4.401999999999999
     },
     "property": {
       "passed": 29,
@@ -9034,7 +9034,7 @@
       "error": 0,
       "skipped": 0,
       "count": 29,
-      "duration_s": 10.505999999999986
+      "duration_s": 10.436999999999985
     },
     "release_gate": {
       "passed": 197,
@@ -9042,7 +9042,7 @@
       "error": 0,
       "skipped": 0,
       "count": 197,
-      "duration_s": 2.191999999999983
+      "duration_s": 2.4019999999999797
     },
     "playstore": {
       "passed": 29,
@@ -9050,7 +9050,7 @@
       "error": 0,
       "skipped": 0,
       "count": 29,
-      "duration_s": 0.169
+      "duration_s": 0.22300000000000003
     },
     "negative": {
       "passed": 48,
@@ -9058,7 +9058,7 @@
       "error": 0,
       "skipped": 0,
       "count": 48,
-      "duration_s": 10.956999999999997
+      "duration_s": 10.716000000000001
     },
     "security": {
       "passed": 22,
@@ -9066,7 +9066,7 @@
       "error": 0,
       "skipped": 0,
       "count": 22,
-      "duration_s": 0.029000000000000012
+      "duration_s": 0.032000000000000015
     },
     "privacy": {
       "passed": 253,
@@ -9074,11 +9074,11 @@
       "error": 0,
       "skipped": 0,
       "count": 253,
-      "duration_s": 3.0669999999999735
+      "duration_s": 3.036999999999973
     }
   },
   "decision": "GO",
   "reasons": [],
-  "elapsed_s": 156.35900000005495,
-  "generated_at": "2026-05-20T16:53:11.459579+00:00"
+  "elapsed_s": 150.0470000000205,
+  "generated_at": "2026-05-20T17:15:22.093525+00:00"
 }
