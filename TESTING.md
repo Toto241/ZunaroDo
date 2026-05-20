@@ -1119,3 +1119,481 @@ release/
 
 *Eigentümer dieses Dokuments: QA-Lead. Letzte Review: 2026-05-20.
 Nächste Pflicht-Review: vor jedem Production-Release.*
+
+---
+
+# Teil II — Negativ-, Datenschutz- und Compliance-Konzept
+
+Erweitert Teil I (Stack-Konzept) um harte Negativ-, Datenschutz-,
+Sicherheits- und Play-Compliance-Anforderungen. Ziel: **vor** dem
+Upload in die Play Console werden technische, datenschutzrechtliche
+und richtlinienseitige Verstöße automatisiert erkannt und blockiert.
+
+## Inhalt Teil II
+
+11. [Negativtests](#11-negativtests)
+12. [Datenschutztests](#12-datenschutztests)
+13. [Nachweisdokumentation für Google Play](#13-nachweisdokumentation-fur-google-play)
+14. [Go-/No-Go-Kriterien (Erweiterung)](#14-go--no-go-kriterien-erweiterung)
+15. [CI/CD-Integration (Erweiterung)](#15-cicd-integration-erweiterung)
+16. [Ergebnisformat A–L](#16-ergebnisformat-al)
+
+---
+
+## 11. Negativtests
+
+Negativtests sind verpflichtend. Eine grüne Negativtest-Suite ist
+Voraussetzung für jeden Closed-Test- oder Production-Build.
+
+### 11.1 Kritikalitätsstufen
+
+| Stufe | Bedeutung | Beispiel | Build-Wirkung |
+| --- | --- | --- | --- |
+| **C0 Blocker** | App startet nicht, Daten gehen verloren, Sicherheitslücke | SQL-Injection im Login | sofortiger Stop, kein Upload |
+| **C1 Critical** | Kernfunktion bricht ohne Recovery | Sync löscht lokale Änderungen | Stop, Hotfix Pflicht |
+| **C2 Major** | Funktion bricht, Workaround existiert | Falsche Fehlermeldung bei 401 | Fix vor Release |
+| **C3 Minor** | UX-Aussetzer, kein Datenverlust | Toast-Text vertauscht | Backlog, optional vor Release |
+| **C4 Cosmetic** | Optik | Padding falsch | Backlog |
+
+### 11.2 Risikomatrix (Eintritts­wahrscheinlichkeit × Schaden)
+
+| Wahrscheinlichkeit \ Schaden | gering | mittel | hoch | kritisch |
+| --- | --- | --- | --- | --- |
+| selten | C4 | C3 | C2 | C1 |
+| möglich | C3 | C2 | C1 | C0 |
+| häufig | C2 | C1 | C0 | C0 |
+| sicher | C1 | C0 | C0 | C0 |
+
+C0 + C1 sind automatisch **No-Go**. C2 ist No-Go ohne dokumentierte
+Mitigation. C3/C4 sind dokumentationspflichtig.
+
+### 11.3 Negativtest-Matrix
+
+#### A. Benutzerbezogene Negativtests
+
+| ID | Eingabe / Situation | Erwartetes Verhalten | Krit. |
+| --- | --- | --- | --- |
+| N-A-01 | Registrierung mit ungültiger E-Mail | UI-Fehler, kein Auth-Call | C1 |
+| N-A-02 | Eingabe > 10 000 Zeichen | gestutzt oder Fehler, kein Crash | C1 |
+| N-A-03 | Sonderzeichen (Emoji, Steuerzeichen, NUL) | gespeichert oder verworfen, kein Crash | C1 |
+| N-A-04 | SQL-Injection in Namensfeld | gespeichert literal, keine SQL-Ausführung | C0 |
+| N-A-05 | Doppelter Account (gleiche E-Mail) | Auth-Server blockt, UI-Fehler | C1 |
+| N-A-06 | Gesperrter Nutzer logged sich ein | UI-Fehler „Konto gesperrt“ | C1 |
+| N-A-07 | Gelöschter Nutzer öffnet Deep-Link | Hinweis + Onboarding für Re-Invite | C1 |
+| N-A-08 | Abgelaufene Session | automatischer Logout, sanfter Re-Auth | C1 |
+| N-A-09 | Paralleler Login (2 Geräte) | beide aktiv, Konflikte über LWW | C1 |
+| N-A-10 | Manipulierte Rolle (Client setzt OWNER) | Server lehnt ab, UI-Fehler | C0 |
+| N-A-11 | Unvollständiges Profil | Onboarding blockt Funktion bis Pflichtfeld | C2 |
+
+#### B. Netzwerk- und Synchronisationsfehler
+
+| ID | Situation | Erwartetes Verhalten | Krit. |
+| --- | --- | --- | --- |
+| N-B-01 | kein Internet | Banner, Offline-Modus | C1 |
+| N-B-02 | instabile Verbindung | Retry mit Backoff | C2 |
+| N-B-03 | sehr langsame Verbindung (2 G) | Spinner, Timeout > 30 s | C2 |
+| N-B-04 | Server Timeout 504 | Klare Fehlermeldung | C2 |
+| N-B-05 | Verbindungsabbruch mitten in PUT | Retry oder lokale Queue | C1 |
+| N-B-06 | Offline-Edit → Online-Sync | Konflikt-Resolution wendet LWW | C1 |
+| N-B-07 | Paralleles Edit auf 2 Geräten | Konflikt-Banner, Audit-Eintrag | C1 |
+
+#### C. Gerätebezogene Fehler
+
+| ID | Situation | Erwartetes Verhalten | Krit. |
+| --- | --- | --- | --- |
+| N-C-01 | Speicher voll | Speichern liefert UI-Fehler, kein Crash | C1 |
+| N-C-02 | Akku-Sparmodus | Sync läuft im erlaubten Fenster | C2 |
+| N-C-03 | App im Hintergrund OOM-killed | Process-Death-Restore, ViewModel-State | C1 |
+| N-C-04 | Crash mitten im Schreiben | DB konsistent (Transaktion) | C0 |
+| N-C-05 | Geräte-Neustart | App startet sauber | C1 |
+| N-C-06 | Android 10–16 | UI funktioniert, keine ANR | C1 |
+| N-C-07 | Bildschirmgrößen compact–expanded | Layout responsive | C2 |
+| N-C-08 | Rotation während Aktion | State erhalten | C2 |
+| N-C-09 | Dark Mode | Kontraste WCAG AA | C2 |
+| N-C-10 | Sprache RTL / lange Strings | UI bricht nicht | C2 |
+
+#### D. Sicherheits- und Manipulationstests
+
+| ID | Situation | Erwartetes Verhalten | Krit. |
+| --- | --- | --- | --- |
+| N-D-01 | Root-Gerät | Hinweis, App Check verweigert sensible Aktionen | C1 |
+| N-D-02 | Emulator | App Check verweigert oder loggt | C1 |
+| N-D-03 | Debugger angehängt | Sensitive Aktionen sperren | C1 |
+| N-D-04 | Modifizierte APK / fehlende Signatur | Integritätsprüfung schlägt fehl | C0 |
+| N-D-05 | Frida/Hooking | App Check / Play Integrity verweigert | C1 |
+| N-D-06 | unsicherer Deep-Link (Daten in URL) | Validierung, kein blindes Vertrauen | C0 |
+| N-D-07 | exported Activity ohne Schutz | nicht vorhanden / explizit dokumentiert | C0 |
+| N-D-08 | implicit Intent mit Daten | nur expliziter Intent für sensible Daten | C1 |
+| N-D-09 | Klartext-Traffic (`http://`) | network-security-config blockt | C0 |
+| N-D-10 | WebView ohne `setJavaScriptEnabled=false` | nur explizit erlaubt + URL-Whitelist | C1 |
+
+#### E. API- und Backend-Negativtests
+
+| ID | Situation | Erwartetes Verhalten | Krit. |
+| --- | --- | --- | --- |
+| N-E-01 | ungültiger Token | 401 → Re-Auth-Flow | C1 |
+| N-E-02 | abgelaufener Token | Refresh, sonst Logout | C1 |
+| N-E-03 | fehlende Authentifizierung | Rules verweigern | C0 |
+| N-E-04 | manipulierter Request-Body | Server-side-Validierung | C0 |
+| N-E-05 | fehlende Datenfelder | Default oder Fehler, kein Crash | C1 |
+| N-E-06 | unerwartete Server-Antwort (HTML statt JSON) | sauber abgefangen | C1 |
+| N-E-07 | DB-Fehler / Constraint-Violation | Retry oder UI-Fehler | C1 |
+| N-E-08 | Rate-Limit 429 | Backoff, kein Loop | C1 |
+| N-E-09 | fehlerhafte Push (FCM-Payload korrupt) | Crash-frei, optional Log | C1 |
+
+### 11.4 Automatisierung in CI
+
+Alle N-IDs sind im Repo unter `tests/concept/test_negative_*.py` als
+parametrisierte Tests umgesetzt. Pro PR muss die Negativ-Suite grün
+sein. Nightly läuft zusätzlich Fuzzing (Property-Tests + zufalls­basiert)
+über Eingabefelder.
+
+---
+
+## 12. Datenschutztests
+
+### 12.1 Grundprinzipien
+
+- **DSGVO-Konformität**: Art. 6 Rechtsgrundlage je Verarbeitung,
+  Art. 13/14 Informationspflichten, Art. 15–22 Betroffenenrechte.
+- **Datensparsamkeit**: nur was nachweislich nötig ist.
+- **Privacy by Design**: lokal-first, Verschlüsselung, kein Tracking
+  ohne aktive Einwilligung.
+- **Transparenz**: Datenschutzerklärung + In-App-Hinweise.
+
+### 12.2 Datenerhebungs-Inventar
+
+| Datenkategorie | Zweck | Rechtsgrundlage | Empfänger | Aufbewahrung |
+| --- | --- | --- | --- | --- |
+| E-Mail (Konto) | Login, Pwd-Reset | Vertrag (Art. 6 I b) | App-Backend | bis Kontolöschung |
+| Profilname | Anzeige in Gruppen | Vertrag | App-Backend, Gruppe | bis Kontolöschung |
+| Aufgaben, Notizen, Termine | Kernfunktion | Vertrag | App-Backend, Gruppe | bis Löschung durch Nutzer |
+| Crashlytics-Reports | Stabilität | Berechtigtes Interesse (Art. 6 I f) | Google | 90 Tage |
+| Analytics (anonymisiert) | Produktverbesserung | Einwilligung (Art. 6 I a) | Google | 14 Monate |
+| Push-Token (FCM) | Benachrichtigung | Vertrag | Google FCM | bis Logout / Token-Refresh |
+| App-Logs (lokal) | Debug, Support | Berechtigtes Interesse | nur lokal | rotierend 7 Tage |
+| App-Check-Token | Anti-Bot | Berechtigtes Interesse | Google | Session |
+
+### 12.3 Datenschutz-Testmatrix
+
+#### A. Datenerhebung
+
+| ID | Prüfung | Methode | Krit. |
+| --- | --- | --- | --- |
+| P-A-01 | Liste der erhobenen Datentypen identisch zu Data-Safety-Form | manueller Abgleich + CI-Hash | C0 |
+| P-A-02 | Keine Tracking-IDs ohne Opt-in | statische Code-Analyse + Init-Reihenfolge-Test | C0 |
+| P-A-03 | Analytics nur nach `consent=granted` | Espresso/Compose-Test | C1 |
+| P-A-04 | Drittanbieter-SDKs in `docs/sdk-inventory.md` aufgeführt | CI-Diff | C1 |
+
+#### B. Nutzerrechte
+
+| ID | Prüfung | Methode | Krit. |
+| --- | --- | --- | --- |
+| P-B-01 | „Konto löschen“ in Settings sichtbar (Play-Pflicht) | Compose-UI-Test | C0 |
+| P-B-02 | Kontolöschung entfernt serverseitige + lokale Daten | Integrationstest | C0 |
+| P-B-03 | Datenexport liefert valides JSON/CSV | E2E-Test | C1 |
+| P-B-04 | Widerruf einer Einwilligung wirkt unmittelbar | Integrationstest | C1 |
+| P-B-05 | Profildaten editierbar | UI-Test | C2 |
+| P-B-06 | Lokale Daten lassen sich löschen | Integrationstest | C1 |
+
+#### C. Berechtigungen
+
+| ID | Prüfung | Methode | Krit. |
+| --- | --- | --- | --- |
+| P-C-01 | AndroidManifest enthält nur dokumentierte Permissions | CI-Linter | C0 |
+| P-C-02 | Laufzeit-Permission-Rationale vor System-Dialog | UI-Test | C1 |
+| P-C-03 | Hintergrund-Permissions begründet im Play-Listing | Doc-Review | C1 |
+| P-C-04 | Kamera/Mikrofon/Standort nur On-Demand | UI-Test + Code-Review | C0 |
+
+#### D. Datensicherheit
+
+| ID | Prüfung | Methode | Krit. |
+| --- | --- | --- | --- |
+| P-D-01 | HTTPS-only (`usesCleartextTraffic=false`) | Manifest-Check | C0 |
+| P-D-02 | network-security-config aktiv | Manifest-Check | C0 |
+| P-D-03 | Token in EncryptedSharedPreferences / Keystore | Code-Audit + Test | C0 |
+| P-D-04 | Keine PII in Logs | Regex-Scan auf E-Mail/Telefon/Adresse | C0 |
+| P-D-05 | Keine PII in Crashlytics-Custom-Keys | Code-Review | C1 |
+| P-D-06 | Firestore-Rules verweigern Default-Read/Write | Rules-Unit-Test | C0 |
+| P-D-07 | Datenlecks zwischen Tenants verhindert | Multi-Tenant-Test | C0 |
+| P-D-08 | Backup-Tag in Manifest gezielt gesetzt (`allowBackup=false` oder mit Regel) | Manifest-Check | C0 |
+
+#### E. Drittanbieter-SDKs
+
+| SDK | gesammelte Daten | Speicherort | Aufbewahrung | Löschkonzept |
+| --- | --- | --- | --- | --- |
+| Firebase Auth | E-Mail-Hash, Refresh-Token | Google-DC EU | bis Kontolöschung | Auth-Account-Delete |
+| Firestore | Nutzdaten | Google-DC EU | bis Nutzerlöschung | per Cloud-Function `deleteUserData` |
+| FCM | Push-Token, Topic-Abos | Google | bis Token-Refresh | bei Logout invalidiert |
+| Crashlytics | Stacktrace, Geräteinfo (anonym) | Google | 90 Tage | Self-Delete via Console |
+| Analytics | Event-Namen, Pseudo-ID | Google | 14 Monate | Console-Reset / Opt-out |
+| App Check | Integrity-Token | Google | Session | n/a |
+| Remote Config | nichts (nur Read) | – | – | n/a |
+
+### 12.4 Datenflussdiagramm (textuell)
+
+```
+[ Android-App ]
+   │  TLS 1.2+
+   ├── Auth   → Firebase Auth (EU, Refresh-Token rotiert)
+   ├── Daten  → Firestore (EU, RBAC durch Rules)
+   ├── Push   → FCM (Token rotiert bei Login)
+   ├── Crash  → Crashlytics (anonymisiert, kein PII-Custom-Key)
+   ├── Stats  → Analytics (nur nach Consent, IP-Anonymisierung)
+   └── Check  → App Check (anti-bot, Session-only)
+
+Lokal (Sandbox /data/data/<pkg>/):
+   ├── EncryptedSharedPreferences (Token, Settings)
+   ├── Room-DB (Offline-Cache, SQLCipher)
+   └── Logs (rotierend, max 7 Tage, ohne PII)
+```
+
+### 12.5 Berechtigungs-Inventar (Soll)
+
+| Manifest-Permission | App-Bedarf? | Begründung |
+| --- | --- | --- |
+| `INTERNET` | ja | Backend-Calls |
+| `ACCESS_NETWORK_STATE` | optional | Online/Offline-Banner |
+| `POST_NOTIFICATIONS` (API 33+) | ja | Erinnerungen |
+| `RECEIVE_BOOT_COMPLETED` | nein | nicht nötig |
+| `READ_EXTERNAL_STORAGE` | nein | SAF + Scoped Storage |
+| `WRITE_EXTERNAL_STORAGE` | nein | dito |
+| `CAMERA` | nur On-Demand | Avatar / Beleg-Foto |
+| `RECORD_AUDIO` | nein | – |
+| `ACCESS_FINE_LOCATION` | nein | – |
+| `SYSTEM_ALERT_WINDOW` | nein | – |
+
+### 12.6 DSGVO-Checkliste
+
+- [ ] Datenschutzerklärung verlinkt im Play-Listing und in der App.
+- [ ] Verzeichnis der Verarbeitungstätigkeiten (VVT) gepflegt.
+- [ ] Auftragsverarbeitungsverträge mit Google (DPA) abgeschlossen.
+- [ ] Drittlandtransfer (EU-US-DPF) dokumentiert.
+- [ ] TOMs (technisch-organisatorische Maßnahmen) beschrieben.
+- [ ] Lösch- und Auskunftsroutine getestet.
+- [ ] DPIA durchgeführt, falls Risikoschwellen erreicht.
+- [ ] Cookie-/Tracking-Hinweis falls relevant (WebView-Onboarding etc.).
+
+### 12.7 Google Play Data-Safety-Vorlage
+
+```
+Welche Daten werden erhoben? Welche geteilt? Verschlüsselung in Transit? Löschbar?
+
+Persönliche Daten
+  - Name (erhoben, nicht geteilt, verschlüsselt, löschbar)
+  - E-Mail (erhoben, nicht geteilt, verschlüsselt, löschbar)
+Nutzergenerierte Inhalte
+  - Aufgaben/Notizen (erhoben, nicht geteilt, verschlüsselt, löschbar)
+App-Aktivität
+  - App-Interaktionen (erhoben, nicht geteilt, verschlüsselt, löschbar)
+Diagnose
+  - Absturzlogs (erhoben, an Google, verschlüsselt, löschbar)
+  - Diagnosedaten (erhoben, an Google, verschlüsselt, löschbar)
+Geräte- oder andere Kennungen
+  - keine
+```
+
+---
+
+## 13. Nachweisdokumentation für Google Play
+
+### 13.1 Ordnerstruktur
+
+```
+release/closed-test-<YYYY-MM-DD>/
+  README.md                       # Übersicht des Releases
+  testers.csv                     # Pseudonym, Beitritt, Engagement-Tage
+  feedback/
+    day-01.csv .. day-14.csv
+  bugs/
+    <id>.md
+  crashes/
+    crashlytics-export.csv
+    anr-export.csv
+  stats/
+    sessions-per-tester.csv
+    crash-free-users.csv
+  builds/
+    versionCode-1234-changelog.md
+  scans/
+    dependency-scan.json
+    lint.html
+    detekt.html
+    proguard-mapping.txt
+  privacy/
+    data-safety.json
+    permission-matrix.md
+    sdk-inventory.md
+  go-no-go.md                     # Aggregation siehe Anhang J/J2
+```
+
+### 13.2 Closed-Testing-Nachweise
+
+- Tester-Pool: `testers.csv` mit ≥ 12 Einträgen, Beitritt vor Tag 1,
+  Engagement ≥ 10/14 Tage in `sessions-per-tester.csv`.
+- Feedback-Aggregation pro Tag (`feedback/day-XX.csv`) inkl. Sternebewertung.
+- Bug-Stand: `bugs/*.md` nach P0/P1/P2/P3, Anzahl offen am Ende = 0 für P0/P1.
+- Crash-Statistik: 7-Tage-Crash-Free-Users ≥ 99,5 %.
+
+### 13.3 Qualitäts­nachweise
+
+- `scans/lint.html`, `scans/detekt.html` ohne Errors.
+- `scans/kover.xml` mit Coverage-Schwellen erreicht.
+- `builds/versionCode-XXXX-changelog.md` enthält Test-Matrix-Status,
+  unterstützte Android-Versionen, Geräteliste (Test Lab + Tester).
+- `stats/`-Exporte aus Crashlytics + Vitals.
+
+### 13.4 Datenschutz-Nachweise
+
+- `privacy/data-safety.json` (Hash im Repo getrackt) entspricht dem
+  Play-Console-Formular.
+- `privacy/permission-matrix.md` listet jede Manifest-Permission samt
+  Use-Case.
+- `privacy/sdk-inventory.md` listet jede SDK + Datenfluss + DPA-Status.
+
+### 13.5 Sicherheits­nachweise
+
+- `scans/dependency-scan.json` mit 0 kritischen CVEs.
+- ProGuard/R8-Mapping (`scans/proguard-mapping.txt`) in Play hochgeladen.
+- Manifest-Audit: keine Debug-Flags, `usesCleartextTraffic=false`,
+  `android:allowBackup` bewusst gesetzt.
+- Pre-Launch Report aus Play Console ohne kritische Findings.
+
+### 13.6 Release-Dokumentation
+
+- `release-notes-<versionCode>.md` (kurz, Nutzerperspektive).
+- `known-limitations-<versionCode>.md` (Defekte, die mit dieser
+  Version bewusst ausgeliefert werden).
+- `rollback-plan-<versionCode>.md` (Schritte für Stop-Rollout und
+  Rückzug auf vorigen Track).
+
+### 13.7 Review-Vorbereitung
+
+Vor Klick auf „Submit for review“:
+
+- Data-Safety-Form gespeichert + Hash gleich `data-safety.json`.
+- Inhaltsbewertung aktuell.
+- Zielgruppe + Inhaltskategorie eingestellt.
+- Screenshots aktuell (Material 3, Dark Mode, Tablet).
+- Datenschutzerklärung-URL erreichbar (CI prüft 200 OK).
+- Promo-Video optional, ohne externe Tracker.
+
+---
+
+## 14. Go-/No-Go-Kriterien (Erweiterung)
+
+Dies ist Anhang **J2** und ergänzt Anhang J aus Teil I. Ein Build wird
+nur ausgeliefert, wenn **alle** Kriterien aus J **und** J2 erfüllt sind.
+
+### 14.1 Technisch (J2-T)
+
+| ID | Kriterium | Schwelle |
+| --- | --- | --- |
+| J2-T-01 | keine offenen C0/C1-Bugs | 0 |
+| J2-T-02 | Crash-Free-Users (Closed 7 Tage) | ≥ 99,5 % |
+| J2-T-03 | ANR-Rate | < 0,47 % |
+| J2-T-04 | Kaltstart < 2 s auf Pixel 5 | ja |
+| J2-T-05 | Sync-Konflikt-Reproduktion grün | ja |
+| J2-T-06 | Push-Zustellrate (testweise) | ≥ 95 % |
+
+### 14.2 Sicherheit (J2-S)
+
+| ID | Kriterium | Schwelle |
+| --- | --- | --- |
+| J2-S-01 | 0 kritische CVE (Dependency-Scan) | 0 |
+| J2-S-02 | 0 Hardcoded Secrets (Regex-Scan) | 0 |
+| J2-S-03 | keine Debug-Features in Release-Build | bestätigt |
+| J2-S-04 | TLS only, network-security-config aktiv | ja |
+| J2-S-05 | App Check + Play Integrity scharf | ja |
+
+### 14.3 Datenschutz (J2-P)
+
+| ID | Kriterium | Schwelle |
+| --- | --- | --- |
+| J2-P-01 | Datenschutzerklärung erreichbar | 200 OK |
+| J2-P-02 | Data-Safety-Hash unverändert oder reviewt | ja |
+| J2-P-03 | nur dokumentierte Manifest-Permissions | ja |
+| J2-P-04 | Kontolöschung in der App vorhanden | ja |
+| J2-P-05 | Datenexport funktioniert | ja |
+| J2-P-06 | keine PII in Logs (Scan) | 0 Treffer |
+
+### 14.4 Qualität (J2-Q)
+
+| ID | Kriterium | Schwelle |
+| --- | --- | --- |
+| J2-Q-01 | Unit/Integration/UI-Tests grün | 100 % |
+| J2-Q-02 | Coverage Domain/Data/UI | 80/70/50 % |
+| J2-Q-03 | Multi-Device-Smoke (4 Referenzgeräte) | grün |
+| J2-Q-04 | Android 10–16 grün | grün |
+| J2-Q-05 | Regression-Suite (Maestro) grün | grün |
+
+### 14.5 Performance (J2-F)
+
+| ID | Kriterium | Schwelle |
+| --- | --- | --- |
+| J2-F-01 | Kaltstart auf P50 | < 2 s |
+| J2-F-02 | Speicher-Peak im Hot-Path | < 250 MB |
+| J2-F-03 | Frame-Drop-Rate (Compose-Bench) | < 0,5 % |
+| J2-F-04 | Daten-Sync pro Tag (Median) | < 5 MB |
+
+### 14.6 Play-Store (J2-G)
+
+| ID | Kriterium | Schwelle |
+| --- | --- | --- |
+| J2-G-01 | Closed Test ≥ 14 Tage + ≥ 12 Tester | erfüllt |
+| J2-G-02 | keine Richtlinien­verstöße im Self-Assessment | 0 |
+| J2-G-03 | targetSdk = Play-aktueller Wert (≥ 35) | ja |
+| J2-G-04 | Store-Listing vollständig (DE + EN) | ja |
+| J2-G-05 | Pre-Launch Report ohne Blocker | grün |
+
+### 14.7 Eskalationsstufen
+
+| Stufe | Auslöser | Folge | Verantwortlich |
+| --- | --- | --- | --- |
+| E0 | C0-Bug nach Production-Upload | Stop Rollout (0 %), Hotfix in 24 h | Release-Lead |
+| E1 | C1-Bug im Closed Test | Build aus dem Track ziehen, Fix-Build | Engineering-Lead |
+| E2 | Datenschutz-Vorfall | DPO informieren, ggf. 72-h-Meldung | DPO + Legal |
+| E3 | Google-Ablehnung | Maßnahmen aus Anhang K, neue Submission | Release-Lead |
+
+---
+
+## 15. CI/CD-Integration (Erweiterung)
+
+Diese Jobs ergänzen die Pipeline aus Kapitel 9.
+
+| Job | Trigger | Inhalt |
+| --- | --- | --- |
+| `negative` | jeder PR | parametrisierte Negativtests (`tests/concept/test_negative_*`) |
+| `privacy-scan` | jeder PR | Regex-Scan auf Secrets/PII, HTTPS-only, Permissions-Drift, legal/-Docs |
+| `dependency-scan` | nightly + pre-release | OWASP-Check, Trivy, gradle-versions-Plugin |
+| `manifest-audit` | jeder PR + pre-release | Manifest-Diff vs. erlaubte Liste |
+| `data-safety-diff` | jeder PR | Hash von `privacy/data-safety.json` vs. letzte Review |
+| `rules-tests` | jeder PR | Firestore-Rules-Unit-Tests |
+| `playstore-checklist` | pre-release + closed | `tools/playstore_check.py` (existiert bereits im Repo) |
+
+**Build-Blocker**: Wenn `negative`, `privacy-scan`, `manifest-audit`,
+`data-safety-diff`, `rules-tests` oder `playstore-checklist` rot sind,
+verweigert der Release-Gate-Job den Upload.
+
+---
+
+## 16. Ergebnisformat A–L
+
+| Anhang | Lieferobjekt | Speicherort |
+| --- | --- | --- |
+| A | Negativtest-Konzept | Abschnitt 11 + `tests/concept/test_negative_*.py` |
+| B | Datenschutz-Teststrategie | Abschnitt 12 + `tests/concept/test_privacy_*.py` |
+| C | Google-Play-Nachweisdokumentation | Abschnitt 13 + `release/closed-test-*/` |
+| D | Go-/No-Go-Entscheidungssystem | Abschnitt 14 (J2) + `tests/concept/test_release_gate.py`, `test_release_gate_extended.py` |
+| E | Risikomatrix | Abschnitt 11.2 |
+| F | Build-Blockierungsregeln | Abschnitt 9.2 + 15 + `tools/test_protocol.py` |
+| G | Release-Freigabeprozess | Abschnitt 14.7 + `tools/test_protocol.py` |
+| H | Datenschutz-Checklisten | Abschnitt 12.6 + 12.5 |
+| I | Sicherheits-Checklisten | Abschnitt 14.2 |
+| J | CI/CD-Validierungen | Abschnitt 9 + 15 |
+| K | Vorlagen für Tester-Feedback / Fehlerberichte | Anhang G/H aus Teil I + `release/closed-test-*/feedback,bugs/` |
+| L | Finale Google-Play-Review-Checkliste | Abschnitt 13.7 + Anhang J/J2 |
+
+---
+
+*Teil II Eigentümer: QA-Lead + DPO + Release-Lead. Letzte Review: 2026-05-20.*

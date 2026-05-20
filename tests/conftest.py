@@ -21,4 +21,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "release_gate: Release-Gate (Kapitel 4.5 / Anhang J)")
     config.addinivalue_line(
+        "markers", "negative: Negativtests (Teil II Abschnitt 11)")
+    config.addinivalue_line(
+        "markers", "privacy: Datenschutz-/Compliance-Tests (Teil II 12-13)")
+    config.addinivalue_line(
+        "markers", "security: Security-Negativtests (Teil II 11.3 D)")
+    config.addinivalue_line(
         "markers", "slow: Tests > 1s")

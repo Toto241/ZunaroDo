@@ -44,7 +44,10 @@ MARKER_SECTIONS = [
     ("roles",         "Anhang D - Rollen- und Berechtigungsmatrix"),
     ("combinatorics", "Kapitel 3 / Anhang C - Pairwise-Matrix"),
     ("property",      "Kapitel 8 - Property-/Fuzz-Tests"),
-    ("release_gate",  "Kapitel 4.5 / Anhang J - Release-Gate"),
+    ("negative",      "Teil II Abschnitt 11 - Negativtests"),
+    ("privacy",       "Teil II Abschnitt 12 - Datenschutztests"),
+    ("security",      "Teil II Abschnitt 11.3 D - Security-Negativtests"),
+    ("release_gate",  "Anhang J + J2 - Release-Gate"),
 ]
 
 
@@ -128,11 +131,18 @@ def _classify(records: list[dict]) -> dict:
 def _stats_by_marker(records: list[dict]) -> dict[str, dict]:
     """Approximiert die Marker anhand des Dateinamens."""
     mapping = {
-        "test_members_scenarios": "members",
-        "test_roles_permissions": "roles",
-        "test_pairwise_matrix":   "combinatorics",
-        "test_properties_concept": "property",
-        "test_release_gate":      "release_gate",
+        "test_members_scenarios":     "members",
+        "test_roles_permissions":     "roles",
+        "test_pairwise_matrix":       "combinatorics",
+        "test_properties_concept":    "property",
+        "test_release_gate":          "release_gate",
+        "test_release_gate_extended": "release_gate",
+        "test_protocol_generator":    "release_gate",
+        "test_negative_inputs":       "negative",
+        "test_negative_network":      "negative",
+        "test_negative_security":     "security",
+        "test_privacy_scan":          "privacy",
+        "test_privacy_data_rights":   "privacy",
     }
     out: dict[str, dict] = {m: {"passed": 0, "failed": 0, "error": 0,
                                  "skipped": 0, "count": 0,
