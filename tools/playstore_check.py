@@ -126,6 +126,8 @@ CODE_SMELLS: list[tuple[str, str, str]] = [
 DOCUMENTED_SDKS = {
     "kivy", "kivymd", "certifi", "requests", "google-generativeai",
     "cryptography", "Pillow", "pyjnius", "sqlcipher3",
+    # Sichere Geraetekopplung (services/pairing/):
+    "keyring", "spake2",
     # Desktop / cross-cutting Libraries (laufen nicht auf Android,
     # sind aber im requirements-Inventar):
     "customtkinter", "fpdf2", "APScheduler", "plyer",

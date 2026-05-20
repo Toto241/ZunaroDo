@@ -35,6 +35,9 @@ dependencies = [
     "customtkinter>=5.2.0,<6.0",
     "fpdf2>=2.7.0,<3.0",
     "APScheduler>=3.10.0,<4.0",
+    "cryptography>=42.0.0,<50.0",
+    "keyring>=24.0.0,<26.0",
+    "spake2>=0.8,<1.0",
 ]
 
 [project.optional-dependencies]
