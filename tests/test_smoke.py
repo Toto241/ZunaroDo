@@ -2582,6 +2582,136 @@ class TestLicensing(unittest.TestCase):
         finally:
             os.unlink(tmp.name)
 
+    # ---- license_ui (GUI-agnostische Helfer) ------------------------
+    def test_tier_status_for_free(self) -> None:
+        from services.license_ui import make_tier_status
+        st = make_tier_status(License())
+        self.assertEqual(st.tier, Tier.FREE)
+        self.assertTrue(st.can_start_trial)
+        self.assertIn("Free", st.headline)
+
+    def test_tier_status_for_trial_shows_days_left(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_ui import make_tier_status
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.TRIAL,
+                       trial_started_at=now - timedelta(days=10))
+        st = make_tier_status(lic, now=now)
+        self.assertEqual(st.tier, Tier.TRIAL)
+        self.assertEqual(st.expires_in_days, 4)  # 14 - 10
+        self.assertFalse(st.can_start_trial)
+
+    def test_tier_status_in_grace_period(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_ui import make_tier_status
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_MONTHLY, persons=2,
+                       expires_at=now - timedelta(days=3))
+        st = make_tier_status(lic, now=now)
+        self.assertTrue(st.in_grace_period)
+        self.assertIn("Karenz", st.headline)
+
+    def test_sidebar_indicator_strings(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_ui import sidebar_indicator
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        self.assertEqual(sidebar_indicator(License()), "Tier: Free")
+        trial = License(tier=Tier.TRIAL,
+                         trial_started_at=now - timedelta(days=2))
+        self.assertIn("Trial (12d)", sidebar_indicator(trial, now=now))
+        pro = License(tier=Tier.PRO_ANNUAL, persons=2,
+                       expires_at=now + timedelta(days=180))
+        self.assertIn("Pro (jaehrlich)", sidebar_indicator(pro, now=now))
+
+    def test_build_pricing_rows_marks_recommended(self) -> None:
+        from services.license_ui import build_pricing_rows
+        rows = build_pricing_rows(4, recommended=Tier.PRO_ANNUAL)
+        recommended = [r for r in rows if r.is_recommended]
+        self.assertEqual(len(recommended), 1)
+        self.assertEqual(recommended[0].tier, Tier.PRO_ANNUAL)
+        # Free + 3 Pro-Tiers (Family ist bei 4 noch unter Cap)
+        self.assertEqual(len(rows), 4)
+
+    def test_build_pricing_rows_skips_family_above_cap(self) -> None:
+        from services.license_ui import build_pricing_rows
+        from services.licensing import FAMILY_PERSONS_CAP, Tier
+        rows = build_pricing_rows(FAMILY_PERSONS_CAP + 1)
+        tiers = [r.tier for r in rows]
+        self.assertNotIn(Tier.PRO_FAMILY, tiers)
+
+    def test_action_start_trial_success_then_blocked(self) -> None:
+        from services.license_ui import action_start_trial
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            first = action_start_trial(repo)
+            self.assertTrue(first.success)
+            self.assertEqual(first.license.tier, Tier.TRIAL)
+            second = action_start_trial(repo)
+            self.assertFalse(second.success)
+            self.assertIn("bereits genutzt", second.message)
+        finally:
+            db.close()
+            os.unlink(tmp.name)
+
+    def test_action_apply_token_round_trip(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              generate_keypair, sign_token)
+        from services.license_ui import action_apply_token
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=4,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=365),
+                            customer_id="alice@example.com")
+        token_str = sign_token(tok, priv)
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            result = action_apply_token(repo, token_str, public_key_hex=pub,
+                                          now=now)
+            self.assertTrue(result.success, result.message)
+            self.assertEqual(result.license.tier, Tier.PRO_ANNUAL)
+            self.assertEqual(result.license.persons, 4)
+        finally:
+            db.close()
+            os.unlink(tmp.name)
+
+    def test_action_apply_token_rejects_garbage(self) -> None:
+        from services.license_ui import action_apply_token
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            result = action_apply_token(repo, "not-a-real-token")
+            self.assertFalse(result.success)
+            self.assertIn("Token", result.message)
+        finally:
+            db.close()
+            os.unlink(tmp.name)
+
+    def test_action_apply_token_rejects_empty(self) -> None:
+        from services.license_ui import action_apply_token
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            result = action_apply_token(repo, "   ")
+            self.assertFalse(result.success)
+            self.assertIn("Kein Token", result.message)
+        finally:
+            db.close()
+            os.unlink(tmp.name)
+
     def test_format_quote_de_mentions_savings(self) -> None:
         text = format_quote_de(calculate_price(4, Tier.PRO_ANNUAL))
         self.assertIn("EUR/Jahr", text)
