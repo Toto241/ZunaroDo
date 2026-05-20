@@ -47,6 +47,7 @@ MARKER_SECTIONS = [
     ("negative",      "Teil II Abschnitt 11 - Negativtests"),
     ("privacy",       "Teil II Abschnitt 12 - Datenschutztests"),
     ("security",      "Teil II Abschnitt 11.3 D - Security-Negativtests"),
+    ("playstore",     "Play-Store-Sync (tools/playstore_sync.py)"),
     ("release_gate",  "Anhang J + J2 - Release-Gate"),
 ]
 
@@ -140,6 +141,7 @@ def _stats_by_marker(records: list[dict]) -> dict[str, dict]:
         "test_protocol_generator":    "release_gate",
         "test_dashboard_generator":   "release_gate",
         "test_md_to_html":            "release_gate",
+        "test_playstore_sync":        "playstore",
         "test_negative_inputs":       "negative",
         "test_negative_network":      "negative",
         "test_negative_security":     "security",

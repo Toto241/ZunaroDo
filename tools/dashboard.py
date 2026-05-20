@@ -50,6 +50,7 @@ MARKER_LABEL = {
     "negative":      "Negativtests",
     "privacy":       "Datenschutztests",
     "security":      "Security-Negativ",
+    "playstore":     "Play-Store-Sync",
     "release_gate":  "Release-Gate (J + J2)",
 }
 

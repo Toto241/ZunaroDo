@@ -1,0 +1,190 @@
+{
+  "de.alltagshelfer.alltagshelfer": {
+    "identity": {
+      "package_name": "de.alltagshelfer.alltagshelfer",
+      "app_name": "Alltagshelfer",
+      "default_language": "de-DE",
+      "version_name": "0.9.0",
+      "version_code": 1
+    },
+    "contact": {
+      "support_email": "support@example.org",
+      "support_url": "https://example.org/alltagshelfer",
+      "marketing_url": "https://example.org/alltagshelfer/marketing",
+      "privacy_policy_url": "https://example.org/alltagshelfer/privacy"
+    },
+    "localizations": {
+      "de-DE": {
+        "title": "Alltagshelfer",
+        "short_description": "Vertraege, Termine, Finanzen, Familie - alles lokal und ohne Cloud-Zwang.",
+        "full_description": "Alltagshelfer ist ein datenschutzfreundlicher Assistent\nfuer Vertraege, Termine, Finanzen und Haushaltsplanung.\nAlle Daten bleiben lokal auf dem Geraet - kein Tracking,\nkeine Werbung.",
+        "video_url": ""
+      },
+      "en-US": {
+        "title": "Alltagshelfer",
+        "short_description": "Privacy-friendly household helper.",
+        "full_description": "Manage contracts, expenses, appointments and household\ntasks - on-device, encrypted, no tracking, no ads.",
+        "video_url": ""
+      }
+    },
+    "images": {
+      "icon": "assets/store/icon-512.png",
+      "feature_graphic": "assets/store/feature.png",
+      "phone_screenshots": [
+        "assets/store/phone-1.png",
+        "assets/store/phone-2.png",
+        "assets/store/phone-3.png"
+      ],
+      "tablet_screenshots": [],
+      "promo_video": ""
+    },
+    "store_listing": {
+      "category": "PRODUCTIVITY",
+      "tags": [
+        "household",
+        "privacy",
+        "german"
+      ],
+      "content_rating": "USK 0",
+      "target_age_group": "all",
+      "ads_present": false,
+      "in_app_purchases": false
+    },
+    "data_safety": {
+      "data_collected": true,
+      "data_shared": false,
+      "encrypted_in_transit": true,
+      "users_can_request_deletion": true,
+      "types": {
+        "email": {
+          "collected": true,
+          "shared": false,
+          "purpose": "APP_FUNCTIONALITY",
+          "optional": false
+        },
+        "name": {
+          "collected": true,
+          "shared": false,
+          "purpose": "APP_FUNCTIONALITY",
+          "optional": false
+        },
+        "user_content": {
+          "collected": true,
+          "shared": false,
+          "purpose": "APP_FUNCTIONALITY",
+          "optional": false
+        },
+        "app_interactions": {
+          "collected": true,
+          "shared": false,
+          "purpose": "ANALYTICS",
+          "optional": true
+        },
+        "crash_logs": {
+          "collected": true,
+          "shared": true,
+          "purpose": "APP_FUNCTIONALITY",
+          "shared_with": [
+            "google_firebase"
+          ],
+          "optional": false
+        }
+      },
+      "sdk_inventory": [
+        {
+          "name": "Firebase Auth",
+          "data": [
+            "email_hash"
+          ],
+          "purpose": "APP_FUNCTIONALITY"
+        },
+        {
+          "name": "Firebase Firestore",
+          "data": [
+            "user_content"
+          ],
+          "purpose": "APP_FUNCTIONALITY"
+        },
+        {
+          "name": "Firebase Crashlytics",
+          "data": [
+            "crash_logs"
+          ],
+          "purpose": "APP_FUNCTIONALITY"
+        },
+        {
+          "name": "Firebase Analytics",
+          "data": [
+            "app_interactions"
+          ],
+          "purpose": "ANALYTICS"
+        }
+      ],
+      "privacy_policy_file": "legal/DATENSCHUTZ.md"
+    },
+    "permissions": {
+      "declared": [
+        "android.permission.INTERNET"
+      ],
+      "blocked": [
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.READ_PHONE_STATE",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "tracks": {
+      "internal": {
+        "tester_groups": [
+          "internal-team@example.org"
+        ],
+        "releases": [
+          {
+            "version_code": 1,
+            "version_name": "0.9.0",
+            "status": "completed",
+            "user_fraction": 1.0,
+            "release_notes": {
+              "de-DE": "Initialer Internal-Test-Build."
+            }
+          }
+        ]
+      },
+      "closed": {
+        "tester_groups": [
+          "zunarodo-closed-testers@googlegroups.com"
+        ],
+        "min_testers": 12,
+        "min_days": 14,
+        "releases": []
+      },
+      "production": {
+        "release_notes_default_locale": "de-DE",
+        "releases": []
+      }
+    },
+    "testers": {
+      "google_groups": [
+        "zunarodo-closed-testers@googlegroups.com"
+      ],
+      "individual_emails": []
+    },
+    "monitoring": {
+      "crash_free_users_threshold": 99.5,
+      "anr_rate_threshold": 0.47,
+      "min_engagement_days_per_tester": 10
+    },
+    "policy": {
+      "content_guidelines_accepted": true,
+      "us_export_compliance": false,
+      "ads_complies_with_families_policy": false,
+      "target_audience_includes_children": false
+    },
+    "metadata": {
+      "schema_version": 1,
+      "generated_by": "tools/playstore_sync.py",
+      "generated_at": "2026-05-20T16:47:12+00:00"
+    }
+  }
+}

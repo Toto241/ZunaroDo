@@ -27,4 +27,6 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "security: Security-Negativtests (Teil II 11.3 D)")
     config.addinivalue_line(
+        "markers", "playstore: Play-Store-Sync-Tests")
+    config.addinivalue_line(
         "markers", "slow: Tests > 1s")

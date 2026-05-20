@@ -9,6 +9,7 @@ REM      start.bat                  ->  Menue
 REM      start.bat open             ->  bestehende index.html oeffnen
 REM      start.bat refresh          ->  Dashboard neu rendern (schnell)
 REM      start.bat full             ->  gesamte Test-Suite + Dashboard
+REM      start.bat playstore        ->  Play-Store-Sync-Untermenue
 REM ============================================================
 
 setlocal EnableExtensions
@@ -39,9 +40,10 @@ if errorlevel 1 (
 
 REM ---------- Kommandozeilen-Argument auswerten ----------
 set "mode=%~1"
-if /I "%mode%"=="open"    goto OPEN
-if /I "%mode%"=="refresh" goto REFRESH
-if /I "%mode%"=="full"    goto FULL
+if /I "%mode%"=="open"      goto OPEN
+if /I "%mode%"=="refresh"   goto REFRESH
+if /I "%mode%"=="full"      goto FULL
+if /I "%mode%"=="playstore" goto PLAYSTORE_MENU
 
 REM Kein Argument -> interaktiver Modus (Doppelklick)
 set "interactive=1"
@@ -49,17 +51,19 @@ set "interactive=1"
 REM ---------- Interaktives Menue ----------
 echo Was moechtest du tun?
 echo.
-echo   [1] Schnell  -  nur Dashboard / index.html neu rendern  ^(^< 5 s^)
-echo   [2] Voll     -  komplette Test-Suite + Dashboard         ^(~ 3 min^)
-echo   [3] Direkt   -  bestehendes Cockpit oeffnen, nichts neu  ^(0 s^)
+echo   [1] Schnell    -  nur Dashboard / index.html neu rendern   ^(^< 5 s^)
+echo   [2] Voll       -  komplette Test-Suite + Dashboard          ^(~ 3 min^)
+echo   [3] Direkt     -  bestehendes Cockpit oeffnen, nichts neu   ^(0 s^)
+echo   [4] Play-Store -  YAML init/validate/push/pull/diff/export  ^(Untermenue^)
 echo   [Q] Beenden
 echo.
 set "choice="
-set /p choice=Auswahl [1/2/3/Q, Enter = 1]:
+set /p choice=Auswahl [1/2/3/4/Q, Enter = 1]:
 if not defined choice set "choice=1"
 if /I "%choice%"=="1" goto REFRESH
 if /I "%choice%"=="2" goto FULL
 if /I "%choice%"=="3" goto OPEN
+if /I "%choice%"=="4" goto PLAYSTORE_MENU
 if /I "%choice%"=="q" goto END
 goto REFRESH
 
@@ -116,6 +120,53 @@ if not "%gate_rc%"=="0" (
     echo.
 )
 goto OPEN
+
+REM ============================================================
+REM  Mode: PLAYSTORE_MENU  -  Untermenue fuer playstore_sync.py
+REM ============================================================
+:PLAYSTORE_MENU
+echo.
+echo --- Play-Store-Sync-Untermenue ---
+echo.
+echo Konfiguration: playstore.yml im Projekt-Root
+echo Doku:          PLAYSTORE.md ^(Teil 1-8^)
+echo.
+echo   [1] init      -  Beispiel-YAML aus dem Repo erzeugen ^(--force^)
+echo   [2] validate  -  YAML gegen Soll-Schema pruefen
+echo   [3] push-dry  -  Aenderungen anzeigen, ohne zu schreiben
+echo   [4] push      -  YAML in die Play Console schreiben
+echo   [5] pull      -  Stand aus Play Console in die YAML uebernehmen
+echo   [6] diff      -  Unterschiede YAML ^<^=^=^=^=^=^> Play Console
+echo   [7] export    -  Markdown-Snapshot in release/ schreiben
+echo   [Q] Zurueck zum Hauptmenue
+echo.
+set "psaction="
+set /p psaction=Auswahl [1-7/Q]:
+if /I "%psaction%"=="1" (
+    python -m tools.playstore_sync init --force
+) else if /I "%psaction%"=="2" (
+    python -m tools.playstore_sync validate
+) else if /I "%psaction%"=="3" (
+    python -m tools.playstore_sync push --dry-run
+) else if /I "%psaction%"=="4" (
+    python -m tools.playstore_sync push
+) else if /I "%psaction%"=="5" (
+    python -m tools.playstore_sync pull --merge
+) else if /I "%psaction%"=="6" (
+    python -m tools.playstore_sync diff
+) else if /I "%psaction%"=="7" (
+    python -m tools.playstore_sync export
+) else if /I "%psaction%"=="q" (
+    goto END
+)
+echo.
+echo --- Aktion abgeschlossen ---
+echo.
+if defined interactive (
+    echo Druecke eine Taste, um das Fenster zu schliessen.
+    pause >nul
+)
+goto END
 
 REM ============================================================
 REM  Mode: OPEN  -  index.html im Standardbrowser oeffnen
