@@ -161,6 +161,10 @@ class ModuleRegistry:
         # aufgerufen mit (capability_name, args, result). Wird in main.py
         # gesetzt - bei den Tests bleibt er None.
         self._audit_hook = None
+        # Optionaler Pre-Dispatch-Hook: bekommt (name, args, capability=cap)
+        # und kann ein Error-Dict zurueckgeben, das den Aufruf vor der
+        # Ausfuehrung abweist (Lizenz-Gate). Liefert None -> Aufruf laeuft.
+        self._pre_dispatch_hook = None
 
     # ---- Registrierung ------------------------------------------------
     def register(self, module: ModuleInterface) -> None:
@@ -213,6 +217,15 @@ class ModuleRegistry:
             return {"error": f"Modul '{cap.module_id}' ist deaktiviert",
                     "module_disabled": True}
         kwargs = dict(args or {})
+        # Pre-Dispatch-Hook (Lizenz-Gate o.ae.) - darf abweisen
+        if self._pre_dispatch_hook is not None:
+            try:
+                blocked = self._pre_dispatch_hook(capability_name, kwargs,
+                                                    capability=cap)
+            except Exception as exc:                       # noqa: BLE001
+                return {"error": f"Pre-Dispatch-Hook hat versagt: {exc}"}
+            if isinstance(blocked, dict):
+                return blocked
         # fehlende Pflichtparameter freundlich abfangen
         missing = [p for p in cap.required_params() if p not in kwargs]
         if missing:
@@ -238,6 +251,11 @@ class ModuleRegistry:
         """Hook(capability_name, args_dict, result_dict) -> None.
         Wird automatisch nach destruktiven Calls aufgerufen."""
         self._audit_hook = hook
+
+    def set_pre_dispatch_hook(self, hook) -> None:
+        """Hook(capability_name, args_dict, *, capability) -> Optional[dict].
+        Liefert ein Error-Dict, um den Aufruf abzuweisen (Lizenz-Gate)."""
+        self._pre_dispatch_hook = hook
 
     def has_capability(self, capability_name: str) -> bool:
         """True nur, wenn die Capability existiert UND ihr Modul aktiv ist."""

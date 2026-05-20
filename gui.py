@@ -21,7 +21,7 @@ import re
 import threading
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 import customtkinter as ctk
 
@@ -146,10 +146,24 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
     config = load_config(settings)
 
     output = OutputService("ausgaben", smtp=make_smtp_config(config))
-    llm = GeminiClient(model=config.gemini_model,
-                       api_key=config.gemini_api_key or None)
-    active_llm = llm if llm.is_available else None
+    # Lizenz vor Gemini-Init pruefen - Free/abgelaufen = kein LLM-Start
+    from services.licensing import load_license
+    from services.license_gate import install_gate
+    license_at_boot = load_license(settings)
+    if license_at_boot.allows_ai():
+        llm = GeminiClient(model=config.gemini_model,
+                           api_key=config.gemini_api_key or None)
+        active_llm = llm if llm.is_available else None
+    else:
+        active_llm = None
     registry = build_registry(db, output, llm=active_llm)
+    install_gate(registry, lambda: load_license(settings))
+    # Grandfathering: einmalig markieren, wenn beim ersten Pricing-
+    # Launch bereits Daten vorliegen. Laeuft NACH install_gate, damit
+    # die Lese-Calls (_has_any_data) durch den Gate gehen - die
+    # ALWAYS_OPEN-Liste haelt sie offen.
+    from services.licensing import apply_grandfathering_if_needed
+    apply_grandfathering_if_needed(settings, lambda: _has_any_data(registry))
 
     module_states = ModuleStateRepository(db)
     apply_persisted_module_states(registry, module_states)
@@ -267,7 +281,30 @@ class AlltagshelferGUI(ctk.CTk):
                        padx=(0, 10), pady=10)
         # Tab-Labels durch i18n - Reihenfolge bleibt fest (Werte sind die
         # Builder-Funktionen, Schluessel die uebersetzten Labels).
+        # Aktuelle Lizenz wird hier einmal geladen - fuer Schloss-Marker
+        # auf gesperrten Tabs (Pro-only).
+        from services.licensing import load_license as _load_license
+        self._current_license = _load_license(self.settings_repo)
         t = self.i18n.t
+        # Tab-Label -> (Builder, gated_module_id). gated_module_id ist None
+        # fuer immer offene Tabs, sonst die Modul-ID, gegen die License
+        # geprueft wird.
+        self.tab_gating: dict[str, Optional[str]] = {
+            t("tab.dashboard"): None,
+            t("tab.contracts"): "contracts",
+            t("tab.family"): "family",
+            t("tab.finance"): "finance",
+            t("tab.calendar"): "calendar",
+            t("tab.social"): "social",
+            t("tab.inbox"): "inbox",
+            t("tab.statistics"): None,
+            t("tab.data"): None,
+            t("tab.assistant"): "assistant_ai",
+            t("tab.search"): None,
+            t("tab.history"): None,
+            t("tab.modules"): None,
+            t("tab.settings"): None,
+        }
         self.tab_builders: dict[str, Callable] = {
             t("tab.dashboard"): self._build_dashboard,
             t("tab.contracts"): self._build_contracts,
@@ -289,7 +326,8 @@ class AlltagshelferGUI(ctk.CTk):
         # Unbekannte oder fehlende Tabs landen am Ende in Standard-Reihenfolge.
         ordered = self._resolve_tab_order(self.tab_builders, t)
         for name, builder in ordered:
-            builder(self.tabs.add(name))
+            display = self._tab_display_label(name)
+            builder(self.tabs.add(display))
 
         # Assistant bei destruktiven Aufrufen den Nutzer fragen lassen
         self.assistant.set_confirm_callback(self._confirm_destructive)
@@ -303,6 +341,20 @@ class AlltagshelferGUI(ctk.CTk):
         # Onboarding-Dialog erst nach mainloop-Start zeigen, damit alle
         # Widgets sichtbar sind.
         self.after(200, self._maybe_run_onboarding)
+
+    def _tab_display_label(self, plain_label: str) -> str:
+        """Schloss-Marker vor Tab-Labels von Modulen, die die Lizenz sperrt."""
+        gated_id = self.tab_gating.get(plain_label)
+        if gated_id is None:
+            return plain_label
+        lic = self._current_license
+        if gated_id == "assistant_ai":
+            if lic.allows_ai():
+                return plain_label
+            return f"[Pro] {plain_label}"
+        if lic.allows_module(gated_id):
+            return plain_label
+        return f"[Pro] {plain_label}"
 
     def _resolve_tab_order(self, builders: dict, t) -> list[tuple[str, Callable]]:
         """Wendet eine vom Nutzer hinterlegte Tab-Reihenfolge an.
