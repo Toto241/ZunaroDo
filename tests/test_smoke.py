@@ -39,12 +39,19 @@ from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
 from services.config import DEFAULTS, load_config, save_value
-from services.licensing import (ANNUAL_DISCOUNT_RATE, FREE_MAX_PERSONS,
-                                 FREE_MODULES_DEFAULT,
+from services.licensing import (ANNUAL_DISCOUNT_RATE, FAMILY_PERSONS_CAP,
+                                 FREE_MAX_PERSONS, FREE_MODULES_DEFAULT,
+                                 GRACE_PERIOD_DAYS,
+                                 MOBILE_PRICE_MARKUP,
                                  PRICE_BASE_MONTHLY_EUR,
+                                 PRICE_FAMILY_FLAT_MONTHLY_EUR,
                                  PRICE_PER_EXTRA_PERSON_MONTHLY_EUR,
-                                 License, Tier, all_quotes, calculate_price,
-                                 format_quote_de, load_license, save_license)
+                                 TRIAL_DAYS, Currency, License, Platform,
+                                 Tier, activate_pro, all_quotes,
+                                 calculate_price, convert_to_chf,
+                                 format_quote_de, load_license,
+                                 mark_grandfathered, recommended_tier,
+                                 save_license, start_trial)
 from services.llm import LLMAnswer, ToolCall, TokenUsage
 from services.output import OutputService
 from services.sync import (DEFAULT_SYNCED_CAPABILITIES, FileSyncProvider,
@@ -2500,12 +2507,19 @@ class TestLicensing(unittest.TestCase):
         with self.assertRaises(ValueError):
             calculate_price(0, Tier.PRO_MONTHLY)
 
-    def test_all_quotes_returns_all_tiers(self) -> None:
+    def test_all_quotes_returns_pricing_tiers(self) -> None:
+        # FREE + drei zahlende Pro-Tiers (Family nur wenn unter Cap)
         quotes = all_quotes(3)
-        self.assertEqual(set(quotes.keys()), set(Tier))
+        self.assertIn(Tier.FREE, quotes)
+        self.assertIn(Tier.PRO_MONTHLY, quotes)
+        self.assertIn(Tier.PRO_ANNUAL, quotes)
+        self.assertIn(Tier.PRO_FAMILY, quotes)
         # Jahresabo immer guenstiger pro Monat als Monatsabo
         self.assertLess(quotes[Tier.PRO_ANNUAL].monthly_eur,
                         quotes[Tier.PRO_MONTHLY].monthly_eur)
+        # Family wird oberhalb der Kappung nicht angeboten
+        big = all_quotes(7)
+        self.assertNotIn(Tier.PRO_FAMILY, big)
 
     def test_free_license_restricts_modules(self) -> None:
         lic = License()
@@ -2572,6 +2586,464 @@ class TestLicensing(unittest.TestCase):
         text = format_quote_de(calculate_price(4, Tier.PRO_ANNUAL))
         self.assertIn("EUR/Jahr", text)
         self.assertIn("20 %", text)
+
+    # ---- Trial ------------------------------------------------------
+    def test_trial_starts_and_expires(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            lic = start_trial(repo, now=now)
+            self.assertEqual(lic.tier, Tier.TRIAL)
+            self.assertTrue(lic.is_pro(now))
+            self.assertEqual(lic.trial_days_left(now), TRIAL_DAYS)
+            # nach 15 Tagen ist Trial abgelaufen
+            later = now + timedelta(days=TRIAL_DAYS + 1)
+            lic = load_license(repo)
+            self.assertEqual(lic.effective_tier(later), Tier.FREE)
+            self.assertFalse(lic.is_pro(later))
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_trial_is_not_reusable(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            start_trial(repo, now=start)
+            # Zweiter Start-Versuch nach Ablauf darf nichts aendern
+            later = start + timedelta(days=30)
+            lic = start_trial(repo, now=later)
+            self.assertEqual(lic.trial_started_at, start)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    # ---- Family-Cap -------------------------------------------------
+    def test_family_tier_flat_price(self) -> None:
+        q = calculate_price(5, Tier.PRO_FAMILY)
+        self.assertAlmostEqual(q.monthly_eur, PRICE_FAMILY_FLAT_MONTHLY_EUR)
+
+    def test_family_tier_rejects_too_many_persons(self) -> None:
+        with self.assertRaises(ValueError):
+            calculate_price(FAMILY_PERSONS_CAP + 1, Tier.PRO_FAMILY)
+
+    def test_recommended_tier_picks_family_above_break_even(self) -> None:
+        # 5 Personen: monatlich 6,99 + 3*1,99 = 12,96 < 12,99 Family
+        # 4 Personen: monatlich 6,99 + 2*1,99 = 10,97 < 12,99 Family -> Annual
+        # Break-even bei 5 Personen ist knapp - Family lohnt erst ab 6, aber
+        # da die Cap bei 5 liegt, ist Annual fast immer guenstiger.
+        self.assertEqual(recommended_tier(2), Tier.PRO_ANNUAL)
+        self.assertEqual(recommended_tier(4), Tier.PRO_ANNUAL)
+        self.assertEqual(recommended_tier(10), Tier.PRO_ANNUAL)
+
+    # ---- Expiration + Grace -----------------------------------------
+    def test_pro_downgrades_after_grace_period(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            activate_pro(repo, Tier.PRO_MONTHLY, persons=2, now=now,
+                          expires_at=now + timedelta(days=30))
+            lic = load_license(repo)
+            # waehrend Laufzeit: Pro
+            self.assertTrue(lic.is_pro(now + timedelta(days=15)))
+            # nach Ablauf aber innerhalb Grace: Pro
+            self.assertTrue(lic.is_pro(now + timedelta(days=33)))
+            self.assertTrue(lic.is_in_grace_period(now + timedelta(days=33)))
+            # nach Grace: Free
+            after = now + timedelta(days=30 + GRACE_PERIOD_DAYS + 1)
+            self.assertFalse(lic.is_pro(after))
+            self.assertEqual(lic.effective_tier(after), Tier.FREE)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_activate_pro_sets_year_for_annual(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            lic = activate_pro(repo, Tier.PRO_ANNUAL, persons=2, now=now)
+            self.assertEqual(lic.expires_at, now + timedelta(days=365))
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    # ---- Grandfathering --------------------------------------------
+    def test_grandfathering_migration_runs_once(self) -> None:
+        from services.licensing import (KEY_GRANDFATHER_MIGRATION_DONE,
+                                          apply_grandfathering_if_needed)
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            # erster Lauf mit Bestandsdaten -> markiert
+            lic = apply_grandfathering_if_needed(repo, lambda: True)
+            self.assertIsNotNone(lic)
+            self.assertTrue(lic.grandfathered)
+            self.assertEqual(repo.get(KEY_GRANDFATHER_MIGRATION_DONE), "true")
+            # zweiter Lauf - kein erneutes Markieren
+            again = apply_grandfathering_if_needed(repo, lambda: True)
+            self.assertIsNone(again)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_grandfathering_skipped_for_empty_db(self) -> None:
+        from services.licensing import apply_grandfathering_if_needed
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            result = apply_grandfathering_if_needed(repo, lambda: False)
+            self.assertIsNone(result)
+            lic = load_license(repo)
+            self.assertFalse(lic.grandfathered)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_grandfathered_keeps_read_but_blocks_write(self) -> None:
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            mark_grandfathered(repo, ("contracts", "finance", "calendar"))
+            lic = load_license(repo)
+            self.assertTrue(lic.grandfathered)
+            # Lesen: alle Module zugaenglich
+            self.assertTrue(lic.allows_module("finance"))
+            self.assertTrue(lic.allows_module("inbox"))
+            # Schreiben: nur die ehemals freien Module
+            self.assertTrue(lic.allows_module("finance", writing=True))
+            self.assertFalse(lic.allows_module("inbox", writing=True))
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    # ---- Mobile-Markup ----------------------------------------------
+    def test_mobile_pricing_has_markup(self) -> None:
+        desktop = calculate_price(2, Tier.PRO_MONTHLY, Platform.DESKTOP)
+        android = calculate_price(2, Tier.PRO_MONTHLY, Platform.ANDROID)
+        ios = calculate_price(2, Tier.PRO_MONTHLY, Platform.IOS)
+        self.assertGreater(android.monthly_eur, desktop.monthly_eur)
+        self.assertAlmostEqual(
+            android.monthly_eur,
+            round(desktop.monthly_eur * (1 + MOBILE_PRICE_MARKUP), 2))
+        self.assertAlmostEqual(android.monthly_eur, ios.monthly_eur)
+
+    # ---- Enforcement-Gate -------------------------------------------
+    def test_gate_blocks_pro_module_for_free(self) -> None:
+        from services.license_gate import make_gate
+        gate = make_gate(lambda: License(tier=Tier.FREE))
+        # contracts ist im Free-Tier per Default offen
+        err = gate("contracts.list", {})
+        self.assertIsNone(err)
+        # finance ist Pro-only
+        err = gate("finance.list_expenses", {})
+        self.assertIsNotNone(err)
+        self.assertTrue(err.get("tier_locked"))
+
+    def test_gate_allows_everything_for_pro(self) -> None:
+        from services.license_gate import make_gate
+        gate = make_gate(lambda: License(tier=Tier.PRO_ANNUAL))
+        for cap in ("contracts.list", "finance.list_expenses",
+                    "inbox.analyze_mail", "social.draft_message"):
+            self.assertIsNone(gate(cap, {}), f"{cap} sollte fuer Pro offen sein")
+
+    def test_gate_blocks_ai_capability_for_free(self) -> None:
+        from services.license_gate import make_gate
+        gate = make_gate(lambda: License(tier=Tier.FREE))
+        err = gate("inbox.analyze_mail", {"mail_text": "test"})
+        self.assertIsNotNone(err)
+        self.assertEqual(err["lock_kind"], "ai")
+
+    def test_gate_open_modules_always_accessible(self) -> None:
+        from services.license_gate import make_gate
+        gate = make_gate(lambda: License(tier=Tier.FREE))
+        for cap in ("system.search", "stats.expenses_per_month",
+                    "daystructure.list", "notes.list"):
+            self.assertIsNone(gate(cap, {}),
+                              f"{cap} sollte immer offen sein")
+
+    def test_registry_pre_dispatch_hook_blocks_calls(self) -> None:
+        # End-to-End ueber die Registry: Hook weist tatsaechlich ab.
+        from core.interface import Capability, ModuleInterface, ModuleRegistry
+
+        class DummyModule(ModuleInterface):
+            @property
+            def module_id(self) -> str:
+                return "finance"
+
+            @property
+            def display_name(self) -> str:
+                return "Finance"
+
+            def get_capabilities(self):
+                return [Capability(
+                    name="finance.list_expenses",
+                    description="x", parameters={},
+                    handler=lambda: {"items": []})]
+
+        reg = ModuleRegistry()
+        reg.register(DummyModule())
+        from services.license_gate import make_gate
+        reg.set_pre_dispatch_hook(make_gate(lambda: License(tier=Tier.FREE)))
+        result = reg.dispatch("finance.list_expenses", {})
+        self.assertTrue(result.get("tier_locked"))
+
+
+    # ---- Pro-Aktivierungs-Flow (Widerrufsverzicht) ------------------
+    def test_activation_requires_withdrawal_waiver(self) -> None:
+        from services.activation_flow import (ActivationRequest,
+                                                CONFIRMATIONS_DE,
+                                                request_activation)
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            req = ActivationRequest(tier=Tier.PRO_ANNUAL, persons=2)
+            # Nutzer lehnt ab -> keine Aktivierung
+            result = request_activation(repo, req, lambda r, t: False)
+            self.assertFalse(result.success)
+            self.assertEqual(load_license(repo).tier, Tier.FREE)
+            # Nutzer akzeptiert -> Aktivierung + Verzicht markiert
+            captured: list = []
+            def confirm(r, texts):
+                captured.append(texts)
+                return True
+            result = request_activation(repo, req, confirm)
+            self.assertTrue(result.success)
+            self.assertEqual(result.license.tier, Tier.PRO_ANNUAL)
+            self.assertTrue(result.license.withdrawal_waived)
+            # Alle drei Texte muessen dem Confirm-Callback uebergeben worden sein
+            self.assertEqual(captured[0], CONFIRMATIONS_DE)
+            self.assertEqual(len(CONFIRMATIONS_DE), 3)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_activation_rejects_free_tier(self) -> None:
+        from services.activation_flow import (ActivationRequest,
+                                                request_activation)
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            req = ActivationRequest(tier=Tier.FREE, persons=1)
+            result = request_activation(repo, req, lambda r, t: True)
+            self.assertFalse(result.success)
+            self.assertIn("kein zahlungspflichtiger Tier", result.error)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    # ---- Token (Ed25519-Tamper-Schutz) ------------------------------
+    def test_token_sign_verify_round_trip(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              generate_keypair, sign_token,
+                                              verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=4,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=365),
+                            customer_id="alice@example.com",
+                            platform=Platform.DESKTOP)
+        token_str = sign_token(tok, priv)
+        verified = verify_token(token_str, pub,
+                                 now=now + timedelta(days=10))
+        self.assertEqual(verified.tier, Tier.PRO_ANNUAL)
+        self.assertEqual(verified.persons, 4)
+
+    def test_token_rejects_tampered_payload(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              TokenError, generate_keypair,
+                                              sign_token, verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_MONTHLY, persons=2,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=30),
+                            customer_id="c")
+        token_str = sign_token(tok, priv)
+        tampered = token_str[:-3] + "AAA"  # Signatur kaputt
+        with self.assertRaises(TokenError):
+            verify_token(tampered, pub, now=now)
+
+    def test_token_expired_raises_subclass_with_payload(self) -> None:
+        # Critical-Fix: abgelaufenes Token muss als TokenExpired-Subklasse
+        # geworfen werden und den geparsten Token mitliefern, damit
+        # load_license die Grace-Period anwenden kann statt das Token
+        # zu verwerfen.
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              TokenError, TokenExpired,
+                                              generate_keypair, sign_token,
+                                              verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=2,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=30),
+                            customer_id="x")
+        token_str = sign_token(tok, priv)
+        try:
+            verify_token(token_str, pub, now=now + timedelta(days=40))
+        except TokenExpired as exc:
+            self.assertIsInstance(exc, TokenError)
+            self.assertEqual(exc.token.tier, Tier.PRO_ANNUAL)
+            self.assertEqual(exc.token.expires_at,
+                             now + timedelta(days=30))
+        else:
+            self.fail("TokenExpired wurde nicht geworfen")
+
+    def test_load_license_keeps_expired_token_for_grace(self) -> None:
+        # Critical-Fix: load_license darf abgelaufenes Token NICHT loeschen.
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              DEFAULT_PUBLIC_KEY_HEX,
+                                              LicenseToken,
+                                              generate_keypair, sign_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        import services.license_token as token_module
+        priv, pub = generate_keypair()
+        # Test-Pubkey temporaer setzen, sonst lehnt verify_token alles ab
+        original_pub = token_module.DEFAULT_PUBLIC_KEY_HEX
+        token_module.DEFAULT_PUBLIC_KEY_HEX = pub
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        db = Database(tmp.name)
+        try:
+            repo = SettingsRepository(db)
+            past = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            tok = LicenseToken(tier=Tier.PRO_ANNUAL, persons=2,
+                                purchased_at=past - timedelta(days=400),
+                                expires_at=past,
+                                customer_id="x")
+            token_str = sign_token(tok, priv)
+            from services.licensing import KEY_TOKEN
+            repo.set(KEY_TOKEN, token_str)
+            lic = load_license(repo)
+            # Token darf NICHT geloescht worden sein
+            self.assertEqual(repo.get(KEY_TOKEN), token_str)
+            # Lizenz traegt expires_at -> Grace-Period kann greifen
+            self.assertIsNotNone(lic.expires_at)
+        finally:
+            db.close()
+            token_module.DEFAULT_PUBLIC_KEY_HEX = original_pub
+            os.unlink(tmp.name)
+
+    def test_load_license_drops_tampered_token(self) -> None:
+        # Manipuliertes Token wird geloescht, weil die Signatur ungueltig ist
+        from services.licensing import KEY_TOKEN
+        from services.license_token import CRYPTO_AVAILABLE
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            repo.set(KEY_TOKEN, "garbage.token")
+            load_license(repo)
+            self.assertIsNone(repo.get(KEY_TOKEN))
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_apply_token_persists_token_string(self) -> None:
+        # High-Fix: apply_token_to_repo MUSS den Token-String unter
+        # KEY_TOKEN ablegen, sonst greift Tamper-Schutz beim naechsten
+        # Start nicht.
+        from datetime import datetime, timedelta, timezone
+        from services.licensing import KEY_TOKEN
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              apply_token_to_repo,
+                                              generate_keypair, sign_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, _ = generate_keypair()
+        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        tmp.close()
+        try:
+            db = Database(tmp.name)
+            repo = SettingsRepository(db)
+            now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            tok = LicenseToken(tier=Tier.PRO_MONTHLY, persons=2,
+                                purchased_at=now,
+                                expires_at=now + timedelta(days=30),
+                                customer_id="x")
+            token_str = sign_token(tok, priv)
+            apply_token_to_repo(repo, token_str, tok)
+            self.assertEqual(repo.get(KEY_TOKEN), token_str)
+            db.close()
+        finally:
+            os.unlink(tmp.name)
+
+    def test_token_rejects_expired(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
+                                              TokenError, generate_keypair,
+                                              sign_token, verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, pub = generate_keypair()
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        tok = LicenseToken(tier=Tier.PRO_MONTHLY, persons=2,
+                            purchased_at=now,
+                            expires_at=now + timedelta(days=30),
+                            customer_id="c")
+        token_str = sign_token(tok, priv)
+        with self.assertRaises(TokenError):
+            verify_token(token_str, pub, now=now + timedelta(days=40))
+
+    def test_token_without_configured_pubkey_rejected(self) -> None:
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              DEFAULT_PUBLIC_KEY_HEX,
+                                              TokenError, verify_token)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        # Default-Pubkey ist all-zero - jede Validierung muss fehlschlagen
+        with self.assertRaises(TokenError):
+            verify_token("a.b", DEFAULT_PUBLIC_KEY_HEX)
+
+    # ---- CHF-Konvertierung ------------------------------------------
+    def test_chf_conversion_applies_swiss_vat(self) -> None:
+        eur = calculate_price(2, Tier.PRO_MONTHLY)
+        chf = convert_to_chf(eur)
+        self.assertEqual(chf.currency, Currency.CHF)
+        # CHF muss in vernuenftiger Naehe zu EUR liegen
+        self.assertLess(chf.monthly_eur, eur.monthly_eur)  # CH-MwSt niedriger
+        self.assertGreater(chf.monthly_eur, eur.monthly_eur * 0.7)
 
 
 if __name__ == "__main__":

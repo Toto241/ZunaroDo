@@ -151,10 +151,19 @@ def main() -> None:
     config: AppConfig = load_config(settings)
     output = OutputService("ausgaben", smtp=make_smtp_config(config))
 
-    # Gemini-Client mit aufgeloester Konfiguration
-    llm = GeminiClient(model=config.gemini_model,
-                       api_key=config.gemini_api_key or None)
-    active_llm = llm if llm.is_available else None
+    # Gemini-Client mit aufgeloester Konfiguration. Lizenz wird VOR
+    # dem Init geprueft - im Free-Tier wird der LLM gar nicht erst
+    # gestartet, dann laeuft die App offline-only.
+    from services.licensing import load_license
+    license_at_boot = load_license(settings)
+    if license_at_boot.allows_ai():
+        llm = GeminiClient(model=config.gemini_model,
+                           api_key=config.gemini_api_key or None)
+        active_llm = llm if llm.is_available else None
+    else:
+        log.info("Lizenz-Tier %s erlaubt keine KI - Offline-Modus",
+                 license_at_boot.tier.value)
+        active_llm = None
 
     registry = build_registry(db, output, llm=active_llm)
     apply_persisted_module_states(registry, ModuleStateRepository(db))
@@ -179,6 +188,26 @@ def main() -> None:
                             actor=profile or "local")
 
     registry.set_audit_hook(_audit)
+
+    # Lizenz-Gate: Pre-Dispatch-Hook wertet die aktive Lizenz aus.
+    # Lambda statt fester Lizenz, damit ein Tier-Wechsel zur Laufzeit
+    # (Pro-Aktivierung im Settings-Tab) sofort wirkt.
+    from services.license_gate import install_gate
+    from services.licensing import (apply_grandfathering_if_needed,
+                                       load_license)
+    install_gate(registry, lambda: load_license(settings))
+
+    def _has_any_data() -> bool:
+        try:
+            if registry.dispatch("contracts.list", {}).get("count", 0):
+                return True
+            if registry.dispatch("family.members", {}).get("count", 0):
+                return True
+        except Exception as exc:                          # noqa: BLE001
+            log.warning("Grandfathering-Check konnte nicht auf Daten "
+                        "zugreifen: %s", exc)
+        return False
+    apply_grandfathering_if_needed(settings, _has_any_data)
 
     assistant = Assistant(
         registry, llm=active_llm,

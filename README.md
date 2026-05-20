@@ -209,24 +209,69 @@ Im GUI-Daten-Tab steht zusätzlich ein „Backup jetzt erstellen"-Button.
 ## Preismodell und Lizenz
 
 [services/licensing.py](services/licensing.py) definiert das Preismodell. Es
-gibt drei Tiers — keinen werbefinanzierten Tier, weil Display-Ads frontal mit
-der Privacy-Positionierung kollidieren würden und im DACH-Markt für Apps mit
-Finanz-/Vertrags-/Familiendaten unüblich sind.
+gibt fünf Tiers — keinen werbefinanzierten Tier, weil Display-Ads frontal mit
+der Privacy-Positionierung kollidieren würden.
 
 | Tier | Preis (brutto, inkl. USt.) | Umfang |
 | --- | --- | --- |
 | **Free** | 0 € | 1 Person, 2 Module (Verträge + Familie), kein KI, kein Sync |
-| **Pro monatlich** | **6,99 €/Monat** (bis 2 Personen) + **1,99 €/Monat** je weiterer Person | Alle acht Module, Gemini-KI, Mehrgeräte-Sync, SQLCipher, OCR |
-| **Pro jährlich** | wie monatlich, **20 % Rabatt** auf den effektiven Monatspreis | Identisch zu Pro monatlich |
+| **Trial** | 0 €, 14 Tage einmalig | Voller Pro-Umfang, danach Auto-Downgrade |
+| **Pro monatlich** | **6,99 €/Monat** (bis 2 Personen) + **1,99 €/Monat** je weiterer Person | Alle Module, Gemini-KI, Mehrgeräte-Sync, SQLCipher, OCR |
+| **Pro jährlich** | wie monatlich, **20 % Rabatt** | Identisch zu Pro monatlich |
+| **Pro Familie** | **12,99 €/Monat** (Flat) | Bis 5 Personen, sonst wie Pro |
+
+iOS/Android-Preise erhalten **25 % Markup** (App-Store-Cut). CHF via
+`convert_to_chf` mit 8,1 % CH-MwSt.
 
 Beispielrechnung für eine vierköpfige Familie:
 
 - Pro monatlich: 6,99 € + 2 × 1,99 € = **10,97 €/Monat** → 131,64 €/Jahr
 - Pro jährlich: 8,78 €/Monat → **105,31 €/Jahr** (Ersparnis ~26,33 €)
+- Pro Familie: 12,99 €/Monat — nicht günstiger als Annual, daher empfiehlt
+  `recommended_tier(4)` Annual
 
-Statt Werbung gibt es bewusst kontextuelle, statische Affiliate-Empfehlungen
-(Verbraucherzentrale, Stiftung Warentest) im Vertragsmodul — keine Tracking-Ads,
-kein Cookie-Banner-Theater, DSGVO-sauber.
+### Durchsetzung
+
+- **Pre-Dispatch-Hook** in `ModuleRegistry.dispatch` weist gesperrte
+  Capabilities mit `{"tier_locked": True}` ab
+  ([services/license_gate.py](services/license_gate.py)).
+- **GUI**: Tabs gesperrter Module bekommen `[Pro]`-Prefix.
+- **Gemini-Init**: wird im FREE-Tier gar nicht erst gestartet.
+- **Free-immer-offen**: Suche, Statistiken, Notes, Tagesstruktur.
+- **Grace-Period**: 7 Tage nach Abo-Ablauf bleibt Pro aktiv, dann
+  automatischer Downgrade auf Free.
+- **Trial**: einmalig 14 Tage voller Pro-Zugriff, nicht durch
+  Neuinstallation erneuerbar.
+- **Grandfathering**: Bestandsdaten beim Pricing-Launch behalten Lese-
+  Zugriff auf alle Module unbefristet.
+
+### Tamper-Schutz (Ed25519)
+
+Lizenzen können per signiertem Token ausgestellt werden
+([services/license_token.py](services/license_token.py)). Ohne Token
+akzeptiert die App keinen Pro-Status — wer nur `license.tier=pro_annual`
+in der DB einträgt, bleibt Free.
+
+```bash
+# Anbieter: einmalig Keypair erzeugen (Private-Key SICHER aufbewahren!)
+python tools/gen_license.py keygen
+
+# Token signieren und dem Kunden zusenden
+python tools/gen_license.py sign --private-key <hex> \
+  --tier pro_annual --persons 4 --customer-id kunde@example.com --days 365
+```
+
+### Aktivierung & Widerrufsverzicht
+
+[services/activation_flow.py](services/activation_flow.py) holt vor jeder
+Aktivierung die drei Bestätigungen ein, die nach BGB §356 Abs. 5 für das
+vorzeitige Erlöschen des 14-Tage-Widerrufsrechts nötig sind.
+
+### Legal-Templates
+
+[legal/](legal/) enthält Vorlagen für Impressum, Datenschutz, AGB und
+Widerrufsbelehrung mit `[PLATZHALTER]`. **Vor Veröffentlichung anwaltlich
+prüfen lassen.**
 
 ```python
 from services.licensing import Tier, calculate_price, format_quote_de
@@ -234,11 +279,9 @@ print(format_quote_de(calculate_price(persons=4, tier=Tier.PRO_ANNUAL)))
 # 105.31 EUR/Jahr (entspricht 8.78 EUR/Monat, 20 % Rabatt, Ersparnis 26.33 EUR)
 ```
 
-Persistiert wird die aktive Lizenz über `load_license` / `save_license` in
-denselben App-Settings wie die übrige Konfiguration. Die Durchsetzung
-(Sperren von Tabs, Verstecken des KI-Buttons) bleibt Sache der GUI/CLI —
-das Modul liefert nur die Wahrheit darüber, was erlaubt ist (analog zum
-Modul-Enable/Disable in der `ModuleRegistry`).
+Statt Werbung gibt es bewusst kontextuelle, statische Affiliate-Empfehlungen
+(Verbraucherzentrale, Stiftung Warentest) im Vertragsmodul — keine Tracking-Ads,
+kein Cookie-Banner-Theater, DSGVO-sauber.
 
 ## Onboarding
 

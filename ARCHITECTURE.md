@@ -133,6 +133,45 @@ nur per Env-Var oder Keyring entgegengenommen.
 - `tests/test_gui_smoke.py` - Import-/Signatur-Smoke ohne Tk-Display.
 - Coverage-Konfiguration in `.coveragerc`.
 
+## Lizenz-/Pricing-Schicht
+
+Das Lizenz-System ist als orthogonale Schicht ueber die Registry
+implementiert - kein Modul kennt es direkt, Aufrufer auch nicht.
+
+```text
+GUI / CLI / Mobile
+       |
+       v
+  ModuleRegistry.dispatch
+       |
+       +--> Pre-Dispatch-Hook  ---> services/license_gate.py
+       |        |                        |
+       |        |                        v
+       |        |                  services/licensing.py:load_license
+       |        |                        |
+       |        |                        v
+       |        |                  services/license_token.py (Ed25519)
+       |        |
+       |        +-- erlaubt? --> Handler ausfuehren
+       |        +-- gesperrt? --> {"tier_locked": True}
+       v
+  Capability.handler
+```
+
+- **[services/licensing.py](services/licensing.py)** - Tier-Enum, Preisrechnung,
+  License-Dataclass, Settings-Persistenz, Trial-/Grace-Period-Logik.
+- **[services/license_gate.py](services/license_gate.py)** - Pre-Dispatch-Hook,
+  Mapping Modul -> Tier-Anforderung.
+- **[services/license_token.py](services/license_token.py)** - Ed25519-
+  Signatur/Verifikation fuer Tamper-Schutz.
+- **[services/activation_flow.py](services/activation_flow.py)** - holt
+  Widerrufsverzicht (BGB §356 Abs. 5) vor Pro-Aktivierung.
+- **[tools/gen_license.py](tools/gen_license.py)** - CLI fuer den Anbieter,
+  um Lizenz-Tokens zu signieren.
+
+Die Lizenz wird per Lambda an den Gate uebergeben, nicht als Wert -
+so wirkt ein Tier-Wechsel zur Laufzeit sofort, ohne Restart.
+
 ## Mobile-Frontend (Android)
 
 `mobile/` ist eine **zweite Praesentationsschicht** neben der Desktop-GUI:

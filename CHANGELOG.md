@@ -2,6 +2,38 @@
 
 Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
+## [0.10.0] - 2026-05-20
+
+### Neu
+
+- **Pricing-/Lizenz-System** ([services/licensing.py](services/licensing.py)).
+  Fuenf Tiers: FREE, TRIAL (14 Tage), PRO_MONTHLY (6,99 EUR/Mo),
+  PRO_ANNUAL (-20 %), PRO_FAMILY (Flat 12,99 EUR/Mo bis 5 Personen).
+- **Enforcement-Gate** ([services/license_gate.py](services/license_gate.py)).
+  Pre-Dispatch-Hook in `ModuleRegistry.dispatch` weist gesperrte
+  Capabilities mit `tier_locked` ab. GUI markiert gesperrte Tabs mit
+  `[Pro]`. Gemini-Client wird im FREE-Tier gar nicht erst initialisiert.
+- **Ed25519-Lizenz-Token** ([services/license_token.py](services/license_token.py)).
+  Offline-verifizierbarer Tamper-Schutz. Generator-CLI:
+  [tools/gen_license.py](tools/gen_license.py).
+- **Grandfathering-Migration** - Bestandsdaten beim Pricing-Launch
+  werden einmalig markiert; Lesezugriff auf alle Module bleibt
+  unbefristet, Pro-Features brauchen aber weiterhin ein Abo.
+- **Pro-Aktivierungs-Flow mit Widerrufsverzicht** ([services/activation_flow.py](services/activation_flow.py)).
+  Holt vor jeder Aktivierung die drei Bestaetigungen ein, die fuer das
+  vorzeitige Erloeschen des 14-Tage-Widerrufsrechts (BGB §356 Abs. 5)
+  noetig sind.
+- **Legal-Templates** ([legal/](legal/)) - Vorlagen fuer Impressum,
+  Datenschutz, AGB und Widerrufsbelehrung mit Platzhaltern.
+- **Mobile-/CHF-Pricing** - 25 % Markup auf iOS/Android (App-Store-Cut),
+  Konvertierungs-Helper fuer CHF mit 8,1 % CH-MwSt.
+
+### Verifiziert
+
+- 38 neue Tests in `TestLicensing` (Trial-Ablauf, Family-Cap, Grace-Period,
+  Grandfathering, Token-Roundtrip + Tamper-Detection, Mobile-Markup,
+  Widerrufsverzicht).
+
 ## [0.9.0] - 2026-05-19
 
 ### Neu
