@@ -253,6 +253,70 @@ nav.toc {
   font-size: 13px; font-weight: 500;
   position: sticky; top: 0; z-index: 10;
 }
+
+/* ---- Build-Center ---- */
+.build-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+.build-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface);
+}
+.build-card.ready  { border-color: var(--go); }
+.build-card.notyet { border-color: var(--hold); }
+.build-card .head {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.build-card .head .icon { font-size: 24px; }
+.build-card .head h4 {
+  margin: 0; font-size: 16px; font-weight: 600;
+  flex: 1; padding: 0 8px;
+}
+.build-card .tool { font-size: 12px; color: var(--text-muted); }
+.build-card .cmdbox {
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface-muted); overflow: hidden;
+}
+.build-card .cmdbox code {
+  flex: 1; padding: 8px 10px; background: transparent;
+  border: none; font-family: var(--mono); font-size: 12px;
+  color: var(--text); overflow-x: auto; white-space: nowrap;
+}
+.build-card .cmdbox button {
+  border: none; border-left: 1px solid var(--border);
+  background: var(--surface); color: var(--primary); font-weight: 600;
+  padding: 0 14px; cursor: pointer; font-size: 12px;
+}
+.build-card .cmdbox button:hover { background: var(--bg); }
+.build-card .actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.build-card .actions a, .build-card .actions button {
+  display: inline-block; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--primary);
+  text-decoration: none; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+}
+.build-card .actions a.primary, .build-card .actions button.primary {
+  background: var(--primary); color: #ffffff; border-color: var(--primary);
+}
+.build-card .actions a:hover { background: var(--surface-muted); }
+.build-card details { font-size: 12px; }
+.build-card details summary { cursor: pointer; color: var(--text-muted); }
+.build-card details ul { padding-left: 18px; margin: 6px 0; }
+.build-card .artifact {
+  font-size: 12px; padding: 8px 10px; border-radius: 6px;
+  background: var(--surface-muted); border: 1px dashed var(--border);
+}
+.build-card .artifact.none { color: var(--text-muted); }
+.build-card .artifact .meta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); color: var(--text-muted);
+}
 nav.toc a {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 10px; border-radius: 6px;
@@ -281,6 +345,27 @@ nav.toc a:hover { color: var(--primary); background: var(--surface);
 .artifact-link.missing { opacity: 0.55; pointer-events: none; }
 .artifact-link.missing .desc::after {
   content: " (nicht gefunden)"; color: var(--block);
+}
+"""
+
+
+JS_COPY = """
+function copyText(btn, text) {
+  const ok = (msg) => {
+    const orig = btn.textContent;
+    btn.textContent = msg;
+    setTimeout(() => { btn.textContent = orig; }, 1200);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => ok('Kopiert'),
+                                              () => ok('Fehlgeschlagen'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok('Kopiert'); }
+    catch (e) { ok('Fehlgeschlagen'); }
+    document.body.removeChild(ta);
+  }
 }
 """
 
@@ -589,6 +674,106 @@ def _artifact_card(source_path: Path,
     """
 
 
+def _build_center(source_path: Path) -> str:
+    """Liste der Build-Plattformen Android/iOS/PC.
+
+    Liest tools/build_status.py und rendert pro Plattform eine Karte
+    mit Status, Befehl, kopierbarem Code und (falls vorhanden) Link
+    zum Build-Skript.
+    """
+    try:
+        from tools.build_status import gather, to_dict
+        items = to_dict(gather())
+    except Exception as exc:                              # noqa: BLE001
+        return (f"<div class='card span-3'>"
+                f"<h3>Build-Center nicht verfuegbar</h3>"
+                f"<p class='sub'>{_esc(exc)}</p></div>")
+
+    base = source_path.parent
+    repo = base.parent.parent.parent
+    cards: list[str] = []
+    for it in items:
+        ready = "ready" if it["available"] else "notyet"
+        state = "go" if it["available"] else "hold"
+        status_label = "bereit" if it["available"] else "nicht verfuegbar"
+        # Skript-Link (relative auf reports/-Verzeichnis bezogen)
+        script_html = ""
+        if it.get("script_path"):
+            try:
+                full = repo / it["script_path"]
+                rel = os.path.relpath(full, start=base).replace(os.sep, "/")
+                primary = "primary" if it["available"] else ""
+                script_html = (
+                    f"<a class='{primary}' href='{_esc(rel)}'>"
+                    f"Build-Skript oeffnen</a>")
+            except ValueError:
+                pass
+        # Artefakt-Block
+        art = it.get("artifact")
+        if art:
+            size_kb = (art.get("size_bytes") or 0) / 1024
+            unit = "KB"
+            if size_kb > 1024:
+                size_kb /= 1024
+                unit = "MB"
+            art_html = (
+                "<div class='artifact'>"
+                f"<div><strong>Letztes Artefakt:</strong> "
+                f"<code>{_esc(art['path'])}</code></div>"
+                f"<div class='meta'>"
+                f"<span>{size_kb:.1f} {unit}</span>"
+                f"<span>{_esc(art.get('mtime_iso', ''))}</span>"
+                + (f"<span>v{_esc(art.get('version_guess', ''))}</span>"
+                    if art.get('version_guess') else "")
+                + "</div></div>"
+            )
+        else:
+            art_html = ("<div class='artifact none'>"
+                         "noch kein Build-Artefakt vorhanden</div>")
+        # Vorbedingungen als <details>
+        prereqs_html = "".join(f"<li>{_esc(p)}</li>"
+                                for p in it.get("prereqs") or [])
+        # Befehl + Copy-Button
+        cmd = it.get("command") or ""
+        # JS-String-Escape
+        js_cmd = (cmd.replace("\\", "\\\\").replace("'", "\\'")
+                       .replace("\n", "\\n"))
+        cards.append(f"""
+        <div class='build-card {ready}'>
+          <div class='head'>
+            <span class='icon'>{_esc(it.get('icon') or '⚙')}</span>
+            <h4>{_esc(it['label'])}</h4>
+            {_pill(state, status_label)}
+          </div>
+          <div class='tool'>Werkzeug: {_esc(it['tool'])}</div>
+          <div class='cmdbox'>
+            <code>{_esc(cmd)}</code>
+            <button onclick="copyText(this, '{js_cmd}')">Copy</button>
+          </div>
+          {art_html}
+          <div class='actions'>
+            {script_html}
+          </div>
+          <details>
+            <summary>Voraussetzungen + Hinweise</summary>
+            <ul>{prereqs_html}</ul>
+            <div class='sub'>{_esc(it.get('notes', ''))}</div>
+          </details>
+        </div>
+        """)
+    return f"""
+    <div class='card span-3' id='build'>
+      <div class='title'>
+        <h3>Build-Center  -  Android / iOS / PC</h3>
+        <span class='sub'>App fuer jede Zielplattform erzeugen</span>
+      </div>
+      <div class='build-grid'>
+        {''.join(cards)}
+      </div>
+    </div>
+    """
+
+
 def _test_list(records: list[dict]) -> str:
     rows: list[str] = []
     # nach Status sortiert: fail/error zuerst, dann skipped, dann passed
@@ -671,6 +856,7 @@ def render_dashboard(data: dict, source_path: Path) -> str:
   <nav class="toc">
     <a href="#uebersicht">Übersicht</a>
     <a href="#artefakte">Artefakte</a>
+    <a href="#build">Build</a>
     <a href="#kpis">KPIs</a>
     <a href="#bereiche">Bereiche</a>
     <a href="#fehler">Fehler</a>
@@ -682,6 +868,9 @@ def render_dashboard(data: dict, source_path: Path) -> str:
     </section>
     <section id="artefakte" class="row">
       {_artifact_card(source_path, rendered_docs)}
+    </section>
+    <section id="build" class="row">
+      {_build_center(source_path)}
     </section>
     <section id="kpis">
       <div class="kpi-grid">
@@ -703,9 +892,91 @@ def render_dashboard(data: dict, source_path: Path) -> str:
     Datenquelle: <code>{_esc(source_path)}</code>.
     Layout-/Architektur-Konzept: <code>UI_CONCEPT.md</code>.
   </footer>
-  <script>{JS_SEARCH}</script>
+  <script>{JS_COPY}{JS_SEARCH}</script>
 </body>
 </html>"""
+
+
+def _index_build_center() -> str:
+    """Build-Center fuer die index.html.
+
+    Wie `_build_center`, aber Pfade sind relativ zum Projekt-Root,
+    nicht zu tests/concept/reports/.
+    """
+    try:
+        from tools.build_status import gather, to_dict
+        items = to_dict(gather())
+    except Exception as exc:                            # noqa: BLE001
+        return (f"<div class='card span-3'><h3>Build-Center"
+                f" nicht verfuegbar</h3>"
+                f"<p class='sub'>{_esc(exc)}</p></div>")
+
+    cards: list[str] = []
+    for it in items:
+        ready = "ready" if it["available"] else "notyet"
+        state = "go" if it["available"] else "hold"
+        status_label = "bereit" if it["available"] else "nicht verfuegbar"
+        script_html = ""
+        if it.get("script_path"):
+            primary = "primary" if it["available"] else ""
+            script_html = (
+                f"<a class='{primary}' href='{_esc(it['script_path'])}'>"
+                f"Build-Skript oeffnen</a>")
+        art = it.get("artifact")
+        if art:
+            size_kb = (art.get("size_bytes") or 0) / 1024
+            unit = "KB"
+            if size_kb > 1024:
+                size_kb /= 1024
+                unit = "MB"
+            art_html = (
+                "<div class='artifact'>"
+                f"<div><strong>Letztes Artefakt:</strong> "
+                f"<code>{_esc(art['path'])}</code></div>"
+                f"<div class='meta'>"
+                f"<span>{size_kb:.1f} {unit}</span>"
+                f"<span>{_esc(art.get('mtime_iso', ''))}</span>"
+                + (f"<span>v{_esc(art.get('version_guess', ''))}</span>"
+                    if art.get('version_guess') else "")
+                + "</div></div>")
+        else:
+            art_html = ("<div class='artifact none'>"
+                         "noch kein Build-Artefakt vorhanden</div>")
+        prereqs_html = "".join(f"<li>{_esc(p)}</li>"
+                                for p in it.get("prereqs") or [])
+        cmd = it.get("command") or ""
+        js_cmd = (cmd.replace("\\", "\\\\").replace("'", "\\'")
+                       .replace("\n", "\\n"))
+        cards.append(f"""
+        <div class='build-card {ready}'>
+          <div class='head'>
+            <span class='icon'>{_esc(it.get('icon') or '⚙')}</span>
+            <h4>{_esc(it['label'])}</h4>
+            {_pill(state, status_label)}
+          </div>
+          <div class='tool'>Werkzeug: {_esc(it['tool'])}</div>
+          <div class='cmdbox'>
+            <code>{_esc(cmd)}</code>
+            <button onclick="copyText(this, '{js_cmd}')">Copy</button>
+          </div>
+          {art_html}
+          <div class='actions'>{script_html}</div>
+          <details>
+            <summary>Voraussetzungen + Hinweise</summary>
+            <ul>{prereqs_html}</ul>
+            <div class='sub'>{_esc(it.get('notes', ''))}</div>
+          </details>
+        </div>
+        """)
+    return f"""
+    <div class='card span-3' id='build'>
+      <div class='title'>
+        <h3>Build-Center  -  Android / iOS / PC</h3>
+        <span class='sub'>App fuer jede Zielplattform erzeugen</span>
+      </div>
+      <div class='build-grid'>{''.join(cards)}</div>
+    </div>
+    """
 
 
 def _index_landing_html(data: dict, dashboard_rel: str) -> str:
@@ -807,6 +1078,10 @@ def _index_landing_html(data: dict, dashboard_rel: str) -> str:
     </section>
 
     <section class="row">
+      {_index_build_center()}
+    </section>
+
+    <section class="row">
       <div class="card span-3">
         <div class="title">
           <h3>Was ist das hier?</h3>
@@ -837,6 +1112,7 @@ def _index_landing_html(data: dict, dashboard_rel: str) -> str:
     Generiert von <code>tools/dashboard.py</code>.
     Letzter Lauf: {_esc(data.get('generated_at') or '—')}.
   </footer>
+  <script>{JS_COPY}</script>
 </body>
 </html>"""
 

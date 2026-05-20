@@ -44,6 +44,7 @@ if /I "%mode%"=="open"      goto OPEN
 if /I "%mode%"=="refresh"   goto REFRESH
 if /I "%mode%"=="full"      goto FULL
 if /I "%mode%"=="playstore" goto PLAYSTORE_MENU
+if /I "%mode%"=="build"     goto BUILD_MENU
 
 REM Kein Argument -> interaktiver Modus (Doppelklick)
 set "interactive=1"
@@ -55,15 +56,17 @@ echo   [1] Schnell    -  nur Dashboard / index.html neu rendern   ^(^< 5 s^)
 echo   [2] Voll       -  komplette Test-Suite + Dashboard          ^(~ 3 min^)
 echo   [3] Direkt     -  bestehendes Cockpit oeffnen, nichts neu   ^(0 s^)
 echo   [4] Play-Store -  YAML init/validate/push/pull/diff/export  ^(Untermenue^)
+echo   [5] Build      -  App fuer Android / iOS / PC bauen         ^(Untermenue^)
 echo   [Q] Beenden
 echo.
 set "choice="
-set /p choice=Auswahl [1/2/3/4/Q, Enter = 1]:
+set /p choice=Auswahl [1/2/3/4/5/Q, Enter = 1]:
 if not defined choice set "choice=1"
 if /I "%choice%"=="1" goto REFRESH
 if /I "%choice%"=="2" goto FULL
 if /I "%choice%"=="3" goto OPEN
 if /I "%choice%"=="4" goto PLAYSTORE_MENU
+if /I "%choice%"=="5" goto BUILD_MENU
 if /I "%choice%"=="q" goto END
 goto REFRESH
 
@@ -157,6 +160,61 @@ if /I "%psaction%"=="1" (
 ) else if /I "%psaction%"=="7" (
     python -m tools.playstore_sync export
 ) else if /I "%psaction%"=="q" (
+    goto END
+)
+echo.
+echo --- Aktion abgeschlossen ---
+echo.
+if defined interactive (
+    echo Druecke eine Taste, um das Fenster zu schliessen.
+    pause >nul
+)
+goto END
+
+REM ============================================================
+REM  Mode: BUILD_MENU  -  Untermenue fuer Android / iOS / PC
+REM ============================================================
+:BUILD_MENU
+echo.
+echo --- Build-Untermenue ---
+echo.
+echo Build-Status anzeigen oder Build starten:
+echo.
+echo   [1] Status    -  Build-Voraussetzungen + letzte Artefakte
+echo   [2] PC        -  Desktop-Build via PyInstaller starten
+echo   [3] Android   -  Android-Build via Buildozer ^(braucht WSL2^)
+echo   [4] iOS       -  iOS-Build-Anleitung ^(nur Lesen, braucht macOS^)
+echo   [5] Dashboard -  Cockpit oeffnen, Build-Center inkl. Copy-Befehlen
+echo   [Q] Zurueck
+echo.
+set "bchoice="
+set /p bchoice=Auswahl [1-5/Q]:
+if /I "%bchoice%"=="1" (
+    python -m tools.build_status --no-emoji
+) else if /I "%bchoice%"=="2" (
+    if exist "scripts\build-desktop.bat" (
+        call "scripts\build-desktop.bat"
+    ) else (
+        echo [FEHLER] scripts\build-desktop.bat fehlt.
+    )
+) else if /I "%bchoice%"=="3" (
+    if exist "scripts\build-android.bat" (
+        call "scripts\build-android.bat"
+    ) else (
+        echo [FEHLER] scripts\build-android.bat fehlt.
+    )
+) else if /I "%bchoice%"=="4" (
+    echo.
+    echo iOS-Builds erfordern macOS + Xcode. Auf Windows nicht moeglich.
+    echo.
+    echo Doku: scripts\build-ios.sh
+    if exist "scripts\build-ios.sh" (
+        echo Skript-Inhalt:
+        type "scripts\build-ios.sh"
+    )
+) else if /I "%bchoice%"=="5" (
+    goto OPEN
+) else if /I "%bchoice%"=="q" (
     goto END
 )
 echo.

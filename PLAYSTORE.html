@@ -169,6 +169,70 @@ nav.toc {
   font-size: 13px; font-weight: 500;
   position: sticky; top: 0; z-index: 10;
 }
+
+/* ---- Build-Center ---- */
+.build-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+.build-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface);
+}
+.build-card.ready  { border-color: var(--go); }
+.build-card.notyet { border-color: var(--hold); }
+.build-card .head {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.build-card .head .icon { font-size: 24px; }
+.build-card .head h4 {
+  margin: 0; font-size: 16px; font-weight: 600;
+  flex: 1; padding: 0 8px;
+}
+.build-card .tool { font-size: 12px; color: var(--text-muted); }
+.build-card .cmdbox {
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface-muted); overflow: hidden;
+}
+.build-card .cmdbox code {
+  flex: 1; padding: 8px 10px; background: transparent;
+  border: none; font-family: var(--mono); font-size: 12px;
+  color: var(--text); overflow-x: auto; white-space: nowrap;
+}
+.build-card .cmdbox button {
+  border: none; border-left: 1px solid var(--border);
+  background: var(--surface); color: var(--primary); font-weight: 600;
+  padding: 0 14px; cursor: pointer; font-size: 12px;
+}
+.build-card .cmdbox button:hover { background: var(--bg); }
+.build-card .actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.build-card .actions a, .build-card .actions button {
+  display: inline-block; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--primary);
+  text-decoration: none; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+}
+.build-card .actions a.primary, .build-card .actions button.primary {
+  background: var(--primary); color: #ffffff; border-color: var(--primary);
+}
+.build-card .actions a:hover { background: var(--surface-muted); }
+.build-card details { font-size: 12px; }
+.build-card details summary { cursor: pointer; color: var(--text-muted); }
+.build-card details ul { padding-left: 18px; margin: 6px 0; }
+.build-card .artifact {
+  font-size: 12px; padding: 8px 10px; border-radius: 6px;
+  background: var(--surface-muted); border: 1px dashed var(--border);
+}
+.build-card .artifact.none { color: var(--text-muted); }
+.build-card .artifact .meta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); color: var(--text-muted);
+}
 nav.toc a {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 10px; border-radius: 6px;

@@ -142,6 +142,7 @@ def _stats_by_marker(records: list[dict]) -> dict[str, dict]:
         "test_dashboard_generator":   "release_gate",
         "test_md_to_html":            "release_gate",
         "test_playstore_sync":        "playstore",
+        "test_build_status":          "release_gate",
         "test_negative_inputs":       "negative",
         "test_negative_network":      "negative",
         "test_negative_security":     "security",
