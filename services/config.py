@@ -66,6 +66,10 @@ DEFAULTS: dict[str, str] = {
     "checkout.url_monthly": "",
     "checkout.url_annual": "",
     "checkout.url_family": "",
+    # URL fuer die Abo-Verwaltung beim Bezahldienstleister (Paddle/Lemon
+    # Customer-Portal). Wird in 'Mein Abo' als 'Abo verwalten / kuendigen'
+    # verlinkt.
+    "checkout.manage_url": "",
 }
 
 ENV_MAP: dict[str, str] = {
@@ -122,6 +126,7 @@ class AppConfig:
     checkout_url_monthly: str = ""
     checkout_url_annual: str = ""
     checkout_url_family: str = ""
+    checkout_manage_url: str = ""
 
 
 def _coerce(key: str, raw: str, config: AppConfig) -> None:
