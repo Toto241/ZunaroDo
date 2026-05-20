@@ -375,11 +375,19 @@ def _on_mobile_runtime(rel: Path) -> bool:
     return False
 
 
+#: Verzeichnisse, in denen Anti-Pattern bewusst als negativ-Beispiel
+#: oder Test-Fixture vorkommen koennen - hier wuerden Smells false-
+#: positives ausloesen.
+SMELL_EXEMPT_PREFIXES = ("tests", "tools", "docs")
+
+
 def check_smells(report: Report, files: Sequence[Path]) -> None:
     name = "code_smells"
     hits = 0
     for p in files:
         rel = p.relative_to(REPO_ROOT)
+        if rel.parts and rel.parts[0] in SMELL_EXEMPT_PREFIXES:
+            continue
         on_mobile = _on_mobile_runtime(rel)
         try:
             text = p.read_text(encoding="utf-8", errors="ignore")
