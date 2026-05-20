@@ -142,6 +142,7 @@ def test_concept_directory_contains_full_suite():
         "test_protocol_generator.py", "test_negative_inputs.py",
         "test_negative_network.py", "test_negative_security.py",
         "test_privacy_scan.py", "test_privacy_data_rights.py",
+        "test_dashboard_generator.py",
     }
     present = {p.name for p in concept.iterdir() if p.is_file()}
     missing = needed - present
@@ -158,3 +159,38 @@ def test_testing_doc_contains_part_II():
                    "Go-/No-Go-Kriterien (Erweiterung)",
                    "Nachweisdokumentation"):
         assert marker in text, f"TESTING.md fehlt Abschnitt '{marker}'"
+
+
+def test_ui_concept_doc_present_and_complete():
+    """UI_CONCEPT.md ist die Lieferung an das QA-Cockpit. Alle Anhaenge
+    A-O muessen darin als Headline vorkommen."""
+    doc = REPO / "UI_CONCEPT.md"
+    assert doc.is_file(), "UI_CONCEPT.md fehlt"
+    text = doc.read_text(encoding="utf-8", errors="replace")
+    for tag in ("A. Vollständiges UI-/UX-Konzept",
+                "B. Architekturdiagramme",
+                "C. Navigationsstruktur",
+                "D. Komponentenübersicht",
+                "E. Datenmodelle",
+                "F. Dashboard-Layouts",
+                "G. Compose-Komponentenstruktur",
+                "H. Backend-/API-Anforderungen",
+                "I. Firebase-Struktur",
+                "J. Test- und Release-Workflows",
+                "K. Go-/No-Go-Logik",
+                "L. Google-Play-Upload-Prozess",
+                "M. Reporting-System",
+                "N. Sicherheits- und Datenschutzmodule",
+                "O. Implementierungsstrategie"):
+        assert tag in text, f"UI_CONCEPT.md fehlt Abschnitt '{tag}'"
+
+
+def test_dashboard_generator_module_present():
+    p = REPO / "tools" / "dashboard.py"
+    assert p.is_file(), "tools/dashboard.py fehlt"
+    text = p.read_text(encoding="utf-8", errors="replace")
+    # Pflicht-API
+    for symbol in ("render_dashboard", "MARKER_LABEL",
+                   "DEFAULT_JSON", "DEFAULT_HTML"):
+        assert symbol in text, (
+            f"tools/dashboard.py exponiert {symbol} nicht (Konzept-API)")
