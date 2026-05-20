@@ -3490,6 +3490,86 @@ class TestLicensing(unittest.TestCase):
             db.close()
             os.unlink(tmp.name)
 
+    # ---- #5 Renewal-Notifications -----------------------------------
+    def test_renewal_event_for_trial_near_end(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_events import compute_renewal_events
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.TRIAL,
+                       trial_started_at=now - timedelta(days=11))
+        # 3 Tage Trial uebrig - innerhalb von 14d warn_within_days
+        events = compute_renewal_events(lic, warn_within_days=14, now=now)
+        self.assertEqual(len(events), 1)
+        self.assertIn("Trial", events[0].title)
+        self.assertEqual(events[0].days_remaining, 3)
+
+    def test_renewal_event_for_pro_near_expiry(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_events import compute_renewal_events
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_ANNUAL, persons=2,
+                       expires_at=now + timedelta(days=10))
+        events = compute_renewal_events(lic, warn_within_days=14, now=now)
+        self.assertEqual(len(events), 1)
+        self.assertIn("Abo", events[0].title)
+        self.assertEqual(events[0].days_remaining, 10)
+
+    def test_renewal_event_outside_warning_window(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_events import compute_renewal_events
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_ANNUAL, persons=2,
+                       expires_at=now + timedelta(days=100))
+        # 100d > 14d Warnfenster -> noch nichts
+        self.assertEqual(compute_renewal_events(lic, 14, now=now), [])
+
+    def test_renewal_event_in_grace_period(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_events import compute_renewal_events
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_MONTHLY, persons=2,
+                       expires_at=now - timedelta(days=2))
+        events = compute_renewal_events(lic, 14, now=now)
+        # Karenzzeit-Event + (expires_at liegt 2d zurueck, also < 0,
+        # daher KEIN renewal-Event mehr)
+        titles = [e.title for e in events]
+        self.assertTrue(any("Karenz" in t for t in titles))
+
+    def test_renewal_no_event_for_free(self) -> None:
+        from services.license_events import compute_renewal_events
+        self.assertEqual(compute_renewal_events(License(), 14), [])
+
+    def test_scheduler_picks_up_extra_event_sources(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from core.interface import ModuleRegistry
+        from services.license_events import license_event_source
+        from services.notifier import Notifier
+        from services.scheduler import ProactiveScheduler
+
+        class _CountingNotifier(Notifier):
+            def __init__(self):
+                super().__init__()
+                self.calls: list[tuple[str, str]] = []
+
+            def notify(self, title, message=""):       # noqa: A003
+                self.calls.append((title, message))
+
+        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_ANNUAL, persons=2,
+                       expires_at=now + timedelta(days=5))
+        notifier = _CountingNotifier()
+        sched = ProactiveScheduler(
+            ModuleRegistry(),  # leer - keine Modul-Events
+            notifier=notifier, warn_within_days=14,
+            extra_event_sources=[license_event_source(lambda: lic)])
+        triggered = sched.check_now()
+        self.assertEqual(len(triggered), 1)
+        self.assertTrue(any("Abo" in c[0] for c in notifier.calls))
+        # Idempotenz: zweiter Aufruf darf nicht noch mal melden
+        notifier.calls.clear()
+        sched.check_now()
+        self.assertEqual(notifier.calls, [])
+
     def test_token_sign_verify_round_trip(self) -> None:
         from datetime import datetime, timedelta, timezone
         from services.license_token import (CRYPTO_AVAILABLE, LicenseToken,
