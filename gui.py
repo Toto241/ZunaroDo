@@ -2349,7 +2349,7 @@ class AlltagshelferGUI(ctk.CTk):
                           font=ctk.CTkFont(family="Courier", size=10),
                           ).pack(anchor="w", pady=(0, 2))
 
-        # Trial-Button
+        # Trial-Button + Checkout-Buttons (falls Checkout-URLs konfiguriert)
         actions_frame = ctk.CTkFrame(section, fg_color="transparent")
         actions_frame.pack(fill="x", pady=(12, 4))
         trial_btn = ctk.CTkButton(
@@ -2359,6 +2359,17 @@ class AlltagshelferGUI(ctk.CTk):
             command=self._on_start_trial,
             state="normal" if st.can_start_trial else "disabled")
         trial_btn.pack(side="left", padx=(0, 8))
+        for label, url in (
+            ("Pro monatlich kaufen", self.config.checkout_url_monthly),
+            ("Pro jaehrlich kaufen", self.config.checkout_url_annual),
+            ("Pro Familie kaufen", self.config.checkout_url_family),
+        ):
+            if not url:
+                continue
+            ctk.CTkButton(
+                actions_frame, text=label,
+                command=lambda u=url: self._open_checkout(u),
+            ).pack(side="left", padx=(0, 8))
 
         # Token-Paste
         token_frame = ctk.CTkFrame(section, fg_color="transparent")
@@ -2385,6 +2396,19 @@ class AlltagshelferGUI(ctk.CTk):
         self._license_action_status.configure(text=result.message)
         if result.success:
             self._refresh_license_state()
+
+    def _open_checkout(self, url: str) -> None:
+        """Oeffnet die Checkout-URL des Bezahldienstleisters im Browser."""
+        import webbrowser
+        try:
+            webbrowser.open(url, new=2)
+            self._license_action_status.configure(
+                text=("Checkout im Browser geoeffnet. "
+                      "Nach erfolgreicher Zahlung erhaeltst du den Token "
+                      "per Mail - dann hier unten einfuegen."))
+        except Exception as exc:                        # noqa: BLE001
+            self._license_action_status.configure(
+                text=f"Konnte Browser nicht oeffnen: {exc}")
 
     def _on_apply_token(self) -> None:
         from services.license_ui import action_apply_token

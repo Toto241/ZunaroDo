@@ -2712,6 +2712,312 @@ class TestLicensing(unittest.TestCase):
             db.close()
             os.unlink(tmp.name)
 
+    # ---- Payment: Paddle-Adapter ------------------------------------
+    def test_paddle_signature_round_trip(self) -> None:
+        import hmac as _hmac
+        import time
+        from hashlib import sha256
+        from services.payment_adapter_paddle import verify_signature
+        secret = "whsec_test"
+        body = b'{"event_type":"subscription.created"}'
+        ts = int(time.time())
+        sig = _hmac.new(secret.encode(), f"{ts}:".encode() + body,
+                         sha256).hexdigest()
+        # gueltig
+        verify_signature(body, f"ts={ts};h1={sig}", secret)
+        # ts manipuliert
+        from services.payment import SignatureError
+        with self.assertRaises(SignatureError):
+            verify_signature(body, f"ts={ts + 1};h1={sig}", secret)
+        # Toleranzfenster verletzt
+        old_ts = ts - 600
+        old_sig = _hmac.new(secret.encode(),
+                             f"{old_ts}:".encode() + body,
+                             sha256).hexdigest()
+        with self.assertRaises(SignatureError):
+            verify_signature(body, f"ts={old_ts};h1={old_sig}", secret)
+
+    def test_paddle_parse_event(self) -> None:
+        import hmac as _hmac
+        import time
+        from hashlib import sha256
+        from services.payment import WebhookContext
+        from services.payment_adapter_paddle import parse_event
+        payload = {
+            "event_type": "subscription.created",
+            "event_id": "evt_001",
+            "data": {
+                "id": "sub_001",
+                "customer": {"id": "ctm_001",
+                              "email": "alice@example.com"},
+                "items": [{"price": {"id": "pri_pro_annual"}}],
+                "next_billed_at": "2027-05-20T00:00:00Z",
+            },
+        }
+        body = json.dumps(payload).encode()
+        secret = "s"
+        ts = int(time.time())
+        sig = _hmac.new(secret.encode(), f"{ts}:".encode() + body,
+                         sha256).hexdigest()
+        ctx = WebhookContext(
+            raw_body=body,
+            headers={"Paddle-Signature": f"ts={ts};h1={sig}"},
+            signing_secret=secret,
+            price_mapping={"pri_pro_annual": (Tier.PRO_ANNUAL, 4)},
+        )
+        ev = parse_event(ctx)
+        self.assertIsNotNone(ev)
+        self.assertEqual(ev.tier, Tier.PRO_ANNUAL)
+        self.assertEqual(ev.persons, 4)
+        self.assertEqual(ev.customer_email, "alice@example.com")
+        self.assertEqual(ev.transaction_id, "sub_001")
+
+    def test_paddle_unknown_price_rejected(self) -> None:
+        import hmac as _hmac
+        import time
+        from hashlib import sha256
+        from services.payment import UnknownPriceError, WebhookContext
+        from services.payment_adapter_paddle import parse_event
+        payload = {
+            "event_type": "subscription.created",
+            "data": {
+                "id": "sub_x",
+                "customer": {"id": "c", "email": "e@example.com"},
+                "items": [{"price": {"id": "pri_unknown"}}],
+            },
+        }
+        body = json.dumps(payload).encode()
+        ts = int(time.time())
+        sig = _hmac.new(b"s", f"{ts}:".encode() + body, sha256).hexdigest()
+        ctx = WebhookContext(
+            raw_body=body,
+            headers={"Paddle-Signature": f"ts={ts};h1={sig}"},
+            signing_secret="s",
+            price_mapping={"pri_other": (Tier.PRO_MONTHLY, 2)},
+        )
+        with self.assertRaises(UnknownPriceError):
+            parse_event(ctx)
+
+    # ---- Payment: Lemon-Squeezy-Adapter ----------------------------
+    def test_lemon_signature_and_parse(self) -> None:
+        import hmac as _hmac
+        from hashlib import sha256
+        from services.payment import WebhookContext
+        from services.payment_adapter_lemon import parse_event
+        payload = {
+            "meta": {"event_name": "subscription_created"},
+            "data": {
+                "id": "12345",
+                "attributes": {
+                    "user_email": "bob@example.com",
+                    "customer_id": 99,
+                    "variant_id": 7,
+                    "renews_at": "2027-05-20T00:00:00Z",
+                },
+            },
+        }
+        body = json.dumps(payload).encode()
+        secret = "ls_test"
+        sig = _hmac.new(secret.encode(), body, sha256).hexdigest()
+        ctx = WebhookContext(
+            raw_body=body,
+            headers={"X-Signature": sig},
+            signing_secret=secret,
+            price_mapping={"7": (Tier.PRO_FAMILY, 5)},
+        )
+        ev = parse_event(ctx)
+        self.assertEqual(ev.tier, Tier.PRO_FAMILY)
+        self.assertEqual(ev.persons, 5)
+        self.assertEqual(ev.customer_email, "bob@example.com")
+        # Falsche Signatur
+        from services.payment import SignatureError
+        ctx_bad = WebhookContext(
+            raw_body=body,
+            headers={"X-Signature": "deadbeef"},
+            signing_secret=secret,
+            price_mapping={"7": (Tier.PRO_FAMILY, 5)},
+        )
+        with self.assertRaises(SignatureError):
+            parse_event(ctx_bad)
+
+    def test_lemon_uninteresting_event_returns_none(self) -> None:
+        import hmac as _hmac
+        from hashlib import sha256
+        from services.payment import WebhookContext
+        from services.payment_adapter_lemon import parse_event
+        payload = {"meta": {"event_name": "license_key_created"},
+                    "data": {}}
+        body = json.dumps(payload).encode()
+        sig = _hmac.new(b"x", body, sha256).hexdigest()
+        ctx = WebhookContext(raw_body=body,
+                              headers={"X-Signature": sig},
+                              signing_secret="x", price_mapping={})
+        self.assertIsNone(parse_event(ctx))
+
+    # ---- Payment: HTTP-Webhook-Server -------------------------------
+    def test_webhook_server_end_to_end(self) -> None:
+        import hmac as _hmac
+        import threading
+        import urllib.request
+        from datetime import datetime, timedelta, timezone
+        from hashlib import sha256
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              generate_keypair)
+        from services.payment import PriceMapping
+        from services.payment_adapter_paddle import parse_event as paddle_parse
+        from services.payment_issuer import IssuerConfig
+        from services.payment_server import (WebhookServerConfig, serve)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, _ = generate_keypair()
+        sent: list[dict] = []
+        log_path = Path(tempfile.mkdtemp(prefix="ah_ws_")) / "audit.jsonl"
+        issuer = IssuerConfig(
+            private_key_hex=priv,
+            audit_log_path=log_path,
+            send_mail=lambda to, s, b: sent.append({"to": to}) or {"ok": True},
+        )
+        secret = "whsec"
+        mapping: PriceMapping = {"pri_X": (Tier.PRO_MONTHLY, 2)}
+        paddle_cfg = WebhookServerConfig(secret=secret,
+                                            price_mapping=mapping,
+                                            parser=paddle_parse)
+        server = serve("127.0.0.1", 0, paddle=paddle_cfg, lemon=None,
+                        issuer=issuer)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            payload = {
+                "event_type": "subscription.created",
+                "data": {
+                    "id": "sub_999",
+                    "customer": {"id": "c", "email": "z@example.com"},
+                    "items": [{"price": {"id": "pri_X"}}],
+                    "next_billed_at": (
+                        (datetime.now(timezone.utc) + timedelta(days=30))
+                        .isoformat()
+                    ),
+                },
+            }
+            body = json.dumps(payload).encode()
+            import time as _time
+            ts = int(_time.time())
+            sig = _hmac.new(secret.encode(),
+                             f"{ts}:".encode() + body,
+                             sha256).hexdigest()
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{port}/webhook/paddle",
+                data=body, method="POST",
+                headers={"Paddle-Signature": f"ts={ts};h1={sig}",
+                          "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                self.assertEqual(resp.status, 201)
+            self.assertEqual(len(sent), 1)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_webhook_server_rejects_bad_signature(self) -> None:
+        import threading
+        import urllib.error
+        import urllib.request
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              generate_keypair)
+        from services.payment_adapter_paddle import parse_event as paddle_parse
+        from services.payment_issuer import IssuerConfig
+        from services.payment_server import (WebhookServerConfig, serve)
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, _ = generate_keypair()
+        log_path = Path(tempfile.mkdtemp(prefix="ah_ws_x_")) / "audit.jsonl"
+        issuer = IssuerConfig(private_key_hex=priv,
+                               audit_log_path=log_path,
+                               send_mail=None)
+        paddle_cfg = WebhookServerConfig(secret="s", price_mapping={},
+                                            parser=paddle_parse)
+        server = serve("127.0.0.1", 0, paddle=paddle_cfg, lemon=None,
+                        issuer=issuer)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            req = urllib.request.Request(
+                f"http://127.0.0.1:{port}/webhook/paddle",
+                data=b'{"event_type":"x"}', method="POST",
+                headers={"Paddle-Signature": "ts=0;h1=bad"})
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(req, timeout=5)
+            self.assertEqual(ctx.exception.code, 401)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    # ---- Payment: Issuer (Token-Ausstellung + Mail + Idempotenz) ---
+    def test_issuer_signs_token_and_sends_mail(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              generate_keypair)
+        from services.payment import EventKind, PaymentEvent
+        from services.payment_issuer import IssuerConfig, handle_event
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, _pub = generate_keypair()
+        sent: list[dict] = []
+        def fake_send(to, subj, body):
+            sent.append({"to": to, "subj": subj, "body": body})
+            return {"status": "gesendet", "to": to}
+        log_dir = tempfile.mkdtemp(prefix="ah_pay_")
+        log_path = Path(log_dir) / "audit.jsonl"
+        cfg = IssuerConfig(private_key_hex=priv,
+                            audit_log_path=log_path,
+                            send_mail=fake_send)
+        event = PaymentEvent(
+            kind=EventKind.SUBSCRIPTION_CREATED,
+            provider="paddle",
+            customer_email="alice@example.com",
+            customer_id="ctm_1",
+            tier=Tier.PRO_ANNUAL,
+            persons=2,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=365),
+            transaction_id="tx_001",
+        )
+        result = handle_event(event, cfg)
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.token_str)
+        self.assertEqual(len(sent), 1)
+        self.assertIn(result.token_str, sent[0]["body"])
+        # Idempotenz: zweiter Versand wird geskippt
+        second = handle_event(event, cfg)
+        self.assertTrue(second.success)
+        self.assertIn("bereits", second.message)
+        self.assertEqual(len(sent), 1)
+
+    def test_issuer_skips_cancellations(self) -> None:
+        from datetime import datetime, timedelta, timezone
+        from services.license_token import (CRYPTO_AVAILABLE,
+                                              generate_keypair)
+        from services.payment import EventKind, PaymentEvent
+        from services.payment_issuer import IssuerConfig, handle_event
+        if not CRYPTO_AVAILABLE:
+            self.skipTest("cryptography nicht verfuegbar")
+        priv, _ = generate_keypair()
+        sent: list = []
+        log_path = Path(tempfile.mkdtemp(prefix="ah_pay_c_")) / "audit.jsonl"
+        cfg = IssuerConfig(private_key_hex=priv, audit_log_path=log_path,
+                            send_mail=lambda *a, **kw: sent.append(a))
+        event = PaymentEvent(
+            kind=EventKind.SUBSCRIPTION_CANCELED,
+            provider="paddle", customer_email="x@example.com",
+            customer_id="c", tier=Tier.PRO_ANNUAL, persons=2,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=30),
+            transaction_id="tx_c",
+        )
+        result = handle_event(event, cfg)
+        self.assertTrue(result.success)
+        self.assertIsNone(result.token_str)
+        self.assertEqual(sent, [])
+
     def test_format_quote_de_mentions_savings(self) -> None:
         text = format_quote_de(calculate_price(4, Tier.PRO_ANNUAL))
         self.assertIn("EUR/Jahr", text)
