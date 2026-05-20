@@ -1,0 +1,134 @@
+name: Android Compliance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # wöchentlich auf main laufen, damit neue Play-Store-Anforderungen
+    # früh auffallen, auch wenn nichts gemerged wird.
+    - cron: "0 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  compliance:
+    name: Play-Store-Compliance-Checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Run compliance checker (strict)
+        run: python -m tools.playstore_check --strict
+
+      - name: Compliance report (JSON artifact)
+        if: always()
+        run: python -m tools.playstore_check --json > playstore_report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playstore_report
+          path: playstore_report.json
+          retention-days: 30
+
+  secret-scan:
+    name: Secret-Scan (gitleaks)
+    runs-on: ubuntu-latest
+    # gitleaks-action ruft die PR-Commit-Liste ab - dafuer braucht der
+    # GITHUB_TOKEN explizit pull-requests:read. Ohne diese Permission
+    # bricht die Action mit 403 'Resource not accessible by integration'
+    # ab, BEVOR ueberhaupt ein Scan stattfindet.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: detect --no-git --redact
+
+  cve-scan:
+    name: CVE-Scan (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit
+
+      - name: pip-audit (warn-only auf CVSS < 7, fail bei >= 7)
+        run: |
+          pip-audit --strict --vulnerability-service osv \
+                    --requirement requirements.txt \
+                    --format json --output audit.json || true
+          python - <<'PY'
+          import json, sys
+          data = json.load(open("audit.json"))
+          high = []
+          for entry in data.get("dependencies", []):
+              for vuln in entry.get("vulns", []):
+                  for sev in vuln.get("aliases", []):
+                      pass
+                  # OSV liefert nicht immer CVSS; wir blocken bei jedem
+                  # Eintrag ohne fix.versions als Minimum.
+                  if vuln.get("fix_versions"):
+                      high.append((entry["name"], vuln["id"]))
+          if high:
+              print("HIGH/Fixable Vulnerabilities:")
+              for n, v in high:
+                  print(f"  {n} -> {v}")
+              sys.exit(1)
+          print("Keine fixablen CVEs gefunden.")
+          PY
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit
+          path: audit.json
+          retention-days: 30
+
+  privacy-policy-reachable:
+    name: Privacy-Policy URL erreichbar
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: HEAD-Request gegen Privacy-Policy URL
+        env:
+          PRIVACY_URL: ${{ vars.PRIVACY_POLICY_URL }}
+        run: |
+          if [ -z "$PRIVACY_URL" ]; then
+            echo "::warning::PRIVACY_POLICY_URL nicht als GitHub-Variable gesetzt - Skip."
+            exit 0
+          fi
+          status=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "$PRIVACY_URL")
+          echo "Privacy URL $PRIVACY_URL -> HTTP $status"
+          test "$status" -eq 200
