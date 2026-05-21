@@ -1,51 +1,40 @@
-"""
-Leichtes i18n-Scaffolding fuer den Alltagshelfer.
-
-Bewusst minimal: ein in JSON gepflegter Key-Value-Speicher pro Sprache.
-'de' ist die Default-Sprache und enthaelt den Grossteil der Strings;
-'en' liefert eine pragmatische Englisch-Fassung fuer die wichtigsten
-Labels. Unbekannte Schluessel fallen auf den Key zurueck (damit ein
-fehlender Eintrag im Code sichtbar bleibt, aber nichts crasht).
-
-Verwendung:
-    i18n = I18n("de")
-    label = i18n.t("tab.dashboard")
-
-Spracheinstellung wird ueber 'i18n.language' aus den App-Settings
-gesteuert. Default: "de".
-"""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Optional
 
-
-# Verzeichnis liegt neben dem services/-Paket
+# EU-wide i18n support with English as fallback language.
 _LOCALES_DIR = Path(__file__).resolve().parent.parent / "locales"
 
 
 class I18n:
-    """Sehr schlanker Uebersetzungs-Lookup."""
+    """Minimal translation lookup with EU language support."""
 
-    DEFAULT_LANGUAGE = "de"
-    SUPPORTED_LANGUAGES = ("de", "en")
+    DEFAULT_LANGUAGE = "en"
 
-    def __init__(self, language: str = "de"):
-        self.language = language if language in self.SUPPORTED_LANGUAGES \
+    SUPPORTED_LANGUAGES = (
+        "bg", "hr", "cs", "da", "nl", "en", "et", "fi",
+        "fr", "de", "el", "hu", "ga", "it", "lv", "lt",
+        "mt", "pl", "pt", "ro", "sk", "sl", "es", "sv",
+    )
+
+    def __init__(self, language: str = DEFAULT_LANGUAGE):
+        self.language = (
+            language if language in self.SUPPORTED_LANGUAGES
             else self.DEFAULT_LANGUAGE
+        )
         self._strings = self._load(self.language)
-        # Fallback: Defaultsprache fuer Schluessel, die in der gewaehlten
-        # Sprache fehlen.
-        self._fallback = (self._load(self.DEFAULT_LANGUAGE)
-                           if self.language != self.DEFAULT_LANGUAGE
-                           else {})
+        self._fallback = (
+            self._load(self.DEFAULT_LANGUAGE)
+            if self.language != self.DEFAULT_LANGUAGE
+            else {}
+        )
 
     def t(self, key: str, default: Optional[str] = None) -> str:
-        """Liefert die Uebersetzung. Reihenfolge: lang -> default -> key."""
-        if key in self._strings:
+        if key in self._strings and self._strings[key]:
             return self._strings[key]
-        if key in self._fallback:
+        if key in self._fallback and self._fallback[key]:
             return self._fallback[key]
         return default if default is not None else key
 
