@@ -222,14 +222,24 @@ class FamilyModule(ModuleInterface):
                                  "description": "Faelligkeit ISO (YYYY-MM-DD)"},
                     "description": {"type": "string",
                                     "description": "Zusatzinfo zum Auftrag"},
+                    "priority": {"type": "string",
+                                 "description": "Prioritaet: hoch | mittel | "
+                                                "normal (Standard: normal)"},
+                    "category": {"type": "string",
+                                 "description": "Kategorie zum Filtern"},
                 },
                 handler=self._cap_add_order,
             ),
             Capability(
                 name="family.orders",
                 description="Listet die einmaligen Auftraege mit Zustaendigkeit "
-                            "und Status auf.",
-                parameters={},
+                            "und Status auf, sortiert nach Prioritaet. Optional "
+                            "nach Kategorie filterbar.",
+                parameters={
+                    "category": {"type": "string",
+                                 "description": "Nur Auftraege dieser "
+                                                "Kategorie"},
+                },
                 handler=self._cap_orders,
             ),
             Capability(
@@ -436,9 +446,16 @@ class FamilyModule(ModuleInterface):
         return {"status": "abgehakt", "count": len(completed),
                 "tasks": completed}
 
+    _PRIORITIES = ("hoch", "mittel", "normal")
+
     def _cap_add_order(self, title: str, assignee: str = "",
                        due_date: str | None = None,
-                       description: str = "") -> dict:
+                       description: str = "",
+                       priority: str = "normal",
+                       category: str = "") -> dict:
+        priority = (priority or "normal").strip().lower()
+        if priority not in self._PRIORITIES:
+            return {"error": "Prioritaet muss hoch, mittel oder normal sein"}
         assignee_id = None
         assignee_name = ""
         if assignee:
@@ -452,13 +469,15 @@ class FamilyModule(ModuleInterface):
             assignee_id=assignee_id,
             due_date=date.fromisoformat(due_date) if due_date else None,
             description=description,
+            priority=priority,
+            category=(category or "").strip(),
         )
         saved = self.repo.add_order(order)
         saved.assignee_name = assignee_name
         return {"status": "Auftrag angelegt", "order": saved.to_dict()}
 
-    def _cap_orders(self) -> dict:
-        orders = self.repo.list_orders()
+    def _cap_orders(self, category: str | None = None) -> dict:
+        orders = self.repo.list_orders(category=category or None)
         return {"count": len(orders),
                 "orders": [o.to_dict() for o in orders]}
 

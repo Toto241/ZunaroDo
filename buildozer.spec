@@ -30,8 +30,11 @@ fullscreen = 0
 # Vorgabe: jede Permission ist in docs/android/04_PRIVACY_PERMISSIONS.md
 # begruendet und durch tools/playstore_check.py whitelisted.
 # INTERNET nur, weil Gemini/Sync online gehen koennen.
+# POST_NOTIFICATIONS (Android 13+/API 33): Laufzeitberechtigung fuer die
+# Erinnerungs-Benachrichtigungen des Schedulers. Wird sie verweigert,
+# bleibt die App nutzbar - Erinnerungen erscheinen dann nur in-App.
 # Kein FOREGROUND-/Calendar-/Contacts-/Location-Provider, weil Daten lokal bleiben.
-android.permissions = INTERNET
+android.permissions = INTERNET, POST_NOTIFICATIONS
 
 # API-Level und Architektur.
 # - android.api: Target-SDK. Play Store verlangt aktuell mind. 35 fuer neue

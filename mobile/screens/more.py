@@ -13,12 +13,16 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import MDList, OneLineIconListItem, IconLeftWidget
 from kivymd.uix.screen import MDScreen
+from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
-from mobile.helpers import language_menu_items
+from mobile.helpers import (build_order_payload, build_search_args,
+                            language_menu_items, search_args_valid, truncate)
 from services import config as app_config
 from services.data_deletion import delete_all_user_data, sandbox_data_dirs
 
@@ -201,6 +205,242 @@ class _DataDeletionPage(MDScreen):
             parent.remove_widget(self)
 
 
+class _FilteredListPage(MDScreen):
+    """Wie _SimpleListPage, aber mit einem Filterfeld, das als Argument an
+    die Capability durchgereicht wird (z.B. Beziehung bei Kontakten)."""
+
+    def __init__(self, title: str, capability: str, result_key: str,
+                 label_fn, filter_key: str, filter_hint: str,
+                 registry, **kwargs):
+        super().__init__(**kwargs)
+        self.title_text = title
+        self.capability = capability
+        self.result_key = result_key
+        self.label_fn = label_fn
+        self.filter_key = filter_key
+        self.filter_hint = filter_hint
+        self.registry = registry
+        self._build()
+        self._refresh()
+
+    def _build(self) -> None:
+        root = BoxLayout(orientation="vertical")
+        root.add_widget(MDTopAppBar(
+            title=self.title_text,
+            left_action_items=[["arrow-left", lambda *_: self._go_back()]],
+            right_action_items=[["refresh", lambda *_: self._refresh()]],
+        ))
+        fbox = MDBoxLayout(orientation="horizontal", adaptive_height=True,
+                           padding=dp(8), spacing=dp(8), size_hint=(1, None))
+        self.filter_field = MDTextField(hint_text=self.filter_hint)
+        self.filter_field.bind(on_text_validate=lambda *_: self._refresh())
+        fbox.add_widget(self.filter_field)
+        fbox.add_widget(MDFlatButton(text="Filtern",
+                                     on_release=lambda *_: self._refresh()))
+        root.add_widget(fbox)
+        scroll = ScrollView()
+        self.list = MDList()
+        scroll.add_widget(self.list)
+        root.add_widget(scroll)
+        self.add_widget(root)
+
+    def _refresh(self) -> None:
+        args: dict = {}
+        val = (self.filter_field.text or "").strip()
+        if val:
+            args[self.filter_key] = val
+        try:
+            result = self.registry.dispatch(self.capability, args)
+        except Exception as exc:
+            result = {self.result_key: [], "_err": str(exc)}
+        self.list.clear_widgets()
+        items = result.get(self.result_key, [])
+        if not items:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="information-outline"),
+                text="Keine Eintraege."))
+            return
+        for item in items:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="chevron-right"),
+                text=self.label_fn(item)))
+
+    def _go_back(self) -> None:
+        parent = self.parent
+        if parent is not None and hasattr(parent, "remove_widget"):
+            parent.remove_widget(self)
+
+
+class _SearchPage(MDScreen):
+    """Volltextsuche (system.search) mit optionalen Filtern."""
+
+    def __init__(self, registry, **kwargs):
+        super().__init__(**kwargs)
+        self.registry = registry
+        self._build()
+
+    def _build(self) -> None:
+        root = BoxLayout(orientation="vertical")
+        root.add_widget(MDTopAppBar(
+            title="Suche",
+            left_action_items=[["arrow-left", lambda *_: self._go_back()]],
+        ))
+        form = MDBoxLayout(orientation="vertical", adaptive_height=True,
+                           padding=dp(8), spacing=dp(4), size_hint=(1, None))
+        self.q = MDTextField(hint_text="Suchbegriff")
+        self.f_category = MDTextField(hint_text="Kategorie (optional)")
+        self.f_status = MDTextField(hint_text="Status (optional)")
+        self.f_from = MDTextField(hint_text="von JJJJ-MM-TT (optional)")
+        self.f_to = MDTextField(hint_text="bis JJJJ-MM-TT (optional)")
+        for w in (self.q, self.f_category, self.f_status,
+                  self.f_from, self.f_to):
+            form.add_widget(w)
+        form.add_widget(MDRaisedButton(
+            text="Suchen", on_release=lambda *_: self._run()))
+        root.add_widget(form)
+        scroll = ScrollView()
+        self.list = MDList()
+        scroll.add_widget(self.list)
+        root.add_widget(scroll)
+        self.add_widget(root)
+
+    def _run(self) -> None:
+        args = build_search_args(self.q.text, category=self.f_category.text,
+                                 status=self.f_status.text,
+                                 date_from=self.f_from.text,
+                                 date_to=self.f_to.text)
+        self.list.clear_widgets()
+        if not search_args_valid(args):
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="information-outline"),
+                text="Mind. 2 Zeichen oder einen Filter angeben."))
+            return
+        try:
+            result = self.registry.dispatch("system.search", args)
+        except Exception as exc:
+            result = {"error": str(exc)}
+        if "error" in result:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="alert"), text=str(result["error"])))
+            return
+        hits = result.get("hits", [])
+        if not hits:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="magnify"), text="Keine Treffer."))
+            return
+        for hit in hits:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="chevron-right"),
+                text=f"[{hit.get('source','?')}] "
+                     f"{truncate(hit.get('title',''), 40)}"))
+
+    def _go_back(self) -> None:
+        parent = self.parent
+        if parent is not None and hasattr(parent, "remove_widget"):
+            parent.remove_widget(self)
+
+
+class _OrdersPage(MDScreen):
+    """Einmalige Auftraege: Liste + Anlegen mit Prioritaet/Kategorie."""
+
+    def __init__(self, registry, **kwargs):
+        super().__init__(**kwargs)
+        self.registry = registry
+        self._dialog = None
+        self._build()
+        self._refresh()
+
+    def _build(self) -> None:
+        root = BoxLayout(orientation="vertical")
+        root.add_widget(MDTopAppBar(
+            title="Auftraege",
+            left_action_items=[["arrow-left", lambda *_: self._go_back()]],
+            right_action_items=[["plus", lambda *_: self._open_add()],
+                                ["refresh", lambda *_: self._refresh()]],
+        ))
+        scroll = ScrollView()
+        self.list = MDList()
+        scroll.add_widget(self.list)
+        root.add_widget(scroll)
+        self.add_widget(root)
+
+    def _refresh(self) -> None:
+        try:
+            result = self.registry.dispatch("family.orders", {})
+        except Exception:
+            result = {"orders": []}
+        self.list.clear_widgets()
+        orders = result.get("orders", [])
+        if not orders:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="information-outline"),
+                text="Keine Auftraege. Tipp auf +."))
+            return
+        for o in orders:
+            done = o.get("status") == "erledigt"
+            mark = {"hoch": "[!] ", "mittel": "[~] "}.get(
+                o.get("priority", "normal"), "")
+            kat = f" #{o['category']}" if o.get("category") else ""
+            check = "✓ " if done else ""
+            item = OneLineIconListItem(
+                IconLeftWidget(icon="checkbox-marked-circle-outline" if done
+                               else "checkbox-blank-circle-outline"),
+                text=f"{check}{mark}{o.get('title','')}{kat}")
+            oid = o.get("id")
+            if not done and oid is not None:
+                item.bind(on_release=self._make_complete(oid))
+            self.list.add_widget(item)
+
+    def _make_complete(self, oid: int):
+        def handler(_w):
+            self.registry.dispatch("family.complete_order", {"order_id": oid})
+            self._refresh()
+        return handler
+
+    def _open_add(self) -> None:
+        body = MDBoxLayout(orientation="vertical", spacing=dp(8),
+                           adaptive_height=True, padding=dp(8))
+        self._in_title = MDTextField(hint_text="Titel")
+        self._in_assignee = MDTextField(hint_text="Zustaendig (optional)")
+        self._in_due = MDTextField(hint_text="Faellig JJJJ-MM-TT (optional)")
+        self._in_priority = MDTextField(
+            hint_text="Prioritaet hoch/mittel/normal", text="normal")
+        self._in_category = MDTextField(hint_text="Kategorie (optional)")
+        for w in (self._in_title, self._in_assignee, self._in_due,
+                  self._in_priority, self._in_category):
+            body.add_widget(w)
+        self._dialog = MDDialog(
+            title="Neuer Auftrag", type="custom", content_cls=body,
+            buttons=[
+                MDFlatButton(text="Abbrechen",
+                             on_release=lambda *_: self._dismiss()),
+                MDFlatButton(text="Speichern",
+                             on_release=lambda *_: self._submit()),
+            ])
+        self._dialog.open()
+
+    def _submit(self) -> None:
+        payload = build_order_payload(
+            self._in_title.text, assignee=self._in_assignee.text,
+            due_date=self._in_due.text, priority=self._in_priority.text,
+            category=self._in_category.text)
+        if payload is None:
+            return                       # ohne Titel kein Auftrag
+        self.registry.dispatch("family.add_order", payload)
+        self._dismiss()
+        self._refresh()
+
+    def _dismiss(self) -> None:
+        if self._dialog is not None:
+            self._dialog.dismiss()
+            self._dialog = None
+
+    def _go_back(self) -> None:
+        parent = self.parent
+        if parent is not None and hasattr(parent, "remove_widget"):
+            parent.remove_widget(self)
+
+
 class MoreScreen(MDScreen):
 
     def __init__(self, registry, **kwargs):
@@ -217,23 +457,17 @@ class MoreScreen(MDScreen):
         root.add_widget(scroll)
         self.add_widget(root)
 
-        # Eintraege definieren
+        # Generische Listen-Eintraege (ohne Filter)
         self._entries = [
             ("account-multiple", "Familie / Haushalt",
              "family.members", "members",
              lambda m: f"{m.get('name','?')} ({m.get('role','-')})"),
-            ("account-heart", "Kontakte",
-             "social.list_contacts", "contacts",
-             lambda c: c.get("name", "?")),
             ("note", "Notizen",
              "notes.list", "notes",
              lambda n: n.get("title", "?")),
             ("clipboard-list", "Vorschlaege (Inbox)",
-             "inbox.list", "proposals",
+             "inbox.proposals", "proposals",
              lambda p: p.get("summary", "?")),
-            ("magnify", "Suche (Sammeluebersicht)",
-             "search.dashboard_summary", "items",
-             lambda i: i.get("title", str(i))),
         ]
         for icon, label, _cap, _key, _fn in self._entries:
             item = OneLineIconListItem(
@@ -242,6 +476,24 @@ class MoreScreen(MDScreen):
             )
             item.bind(on_release=self._make_handler(label))
             self.list.add_widget(item)
+
+        # Dedizierte Seiten mit eigener Bedienung
+        search_item = OneLineIconListItem(
+            IconLeftWidget(icon="magnify"), text="Suche (mit Filtern)")
+        search_item.bind(on_release=lambda *_: self._open_search())
+        self.list.add_widget(search_item)
+
+        orders_item = OneLineIconListItem(
+            IconLeftWidget(icon="clipboard-check"),
+            text="Auftraege (Prioritaet/Kategorie)")
+        orders_item.bind(on_release=lambda *_: self._open_orders())
+        self.list.add_widget(orders_item)
+
+        contacts_item = OneLineIconListItem(
+            IconLeftWidget(icon="account-heart"),
+            text="Kontakte (nach Beziehung)")
+        contacts_item.bind(on_release=lambda *_: self._open_contacts())
+        self.list.add_widget(contacts_item)
 
         # Sprachumschalter
         app = MDApp.get_running_app()
@@ -275,6 +527,21 @@ class MoreScreen(MDScreen):
 
     def _open_data_deletion_page(self) -> None:
         self.add_widget(_DataDeletionPage())
+
+    def _open_search(self) -> None:
+        self.add_widget(_SearchPage(registry=self.registry))
+
+    def _open_orders(self) -> None:
+        self.add_widget(_OrdersPage(registry=self.registry))
+
+    def _open_contacts(self) -> None:
+        self.add_widget(_FilteredListPage(
+            title="Kontakte", capability="social.contacts",
+            result_key="contacts",
+            label_fn=lambda c: f"{c.get('name','?')} "
+                               f"({c.get('relation','-')})",
+            filter_key="relation", filter_hint="Beziehung filtern (optional)",
+            registry=self.registry))
 
     def _make_handler(self, label_text: str):
         def handler(_widget):

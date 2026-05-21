@@ -9,10 +9,13 @@ from __future__ import annotations
 import unittest
 from datetime import date, timedelta
 
-from mobile.helpers import (AUTO_LANGUAGE_LABEL, dashboard_summary,
-                              days_until, format_currency, group_by_module,
-                              language_menu_items, relative_when, truncate,
-                              urgency_color)
+from mobile.helpers import (AUTO_LANGUAGE_LABEL, build_order_payload,
+                              build_search_args, dashboard_summary,
+                              days_until, distinct_values, format_currency,
+                              group_by_module, language_menu_items,
+                              normalize_priority, relative_when,
+                              search_args_valid, truncate, urgency_color,
+                              week_agenda)
 
 
 class TestFormatCurrency(unittest.TestCase):
@@ -144,7 +147,7 @@ class TestDashboardSummary(unittest.TestCase):
                     {"contract_name": "Strom",
                      "due_date": "2099-01-01",
                      "days_remaining": 30}]}
-            if name == "calendar.list_upcoming":
+            if name == "calendar.upcoming":
                 return {"events": [
                     {"title": "Zahnarzt",
                      "due_date": "2099-01-02"}]}
@@ -172,7 +175,7 @@ class TestDashboardSummary(unittest.TestCase):
                                           "due_date": "2099-01-01",
                                           "days_remaining": i}
                                          for i in range(20)]}
-            if name == "calendar.list_upcoming":
+            if name == "calendar.upcoming":
                 return {"events": [{"title": f"E{i}",
                                        "due_date": "2099-01-01"}
                                        for i in range(20)]}
@@ -183,6 +186,107 @@ class TestDashboardSummary(unittest.TestCase):
         # Phone-Limits: 3 Fristen, 5 Termine
         self.assertEqual(len(out["upcoming_deadlines"]), 3)
         self.assertEqual(len(out["upcoming_events"]), 5)
+
+
+class TestBuildSearchArgs(unittest.TestCase):
+
+    def test_query_only(self) -> None:
+        args = build_search_args("Strom")
+        self.assertEqual(args["query"], "Strom")
+        self.assertEqual(args["limit"], 100)
+        self.assertNotIn("category", args)
+
+    def test_filters_included_when_set(self) -> None:
+        args = build_search_args("  ", category="strom", status="offen",
+                                 date_from="2026-01-01", date_to="")
+        self.assertNotIn("query", args)            # leeres Stichwort entfaellt
+        self.assertEqual(args["category"], "strom")
+        self.assertEqual(args["status"], "offen")
+        self.assertEqual(args["date_from"], "2026-01-01")
+        self.assertNotIn("date_to", args)
+
+    def test_validity_query_min_length(self) -> None:
+        self.assertFalse(search_args_valid(build_search_args("a")))
+        self.assertTrue(search_args_valid(build_search_args("ab")))
+
+    def test_validity_filter_only(self) -> None:
+        # Kein/zu kurzes Stichwort, aber ein Filter -> gueltig.
+        self.assertTrue(search_args_valid(build_search_args("", category="x")))
+        self.assertFalse(search_args_valid(build_search_args("")))
+
+
+class TestNormalizePriority(unittest.TestCase):
+
+    def test_valid_values(self) -> None:
+        for v in ("hoch", "MITTEL", " normal "):
+            self.assertIn(normalize_priority(v),
+                          ("hoch", "mittel", "normal"))
+
+    def test_invalid_falls_back_to_normal(self) -> None:
+        self.assertEqual(normalize_priority("egal"), "normal")
+        self.assertEqual(normalize_priority(None), "normal")
+
+
+class TestBuildOrderPayload(unittest.TestCase):
+
+    def test_requires_title(self) -> None:
+        self.assertIsNone(build_order_payload("  "))
+
+    def test_full_payload(self) -> None:
+        p = build_order_payload("Rasen", assignee="Max", due_date="2026-06-01",
+                                description="hinterm Haus", priority="hoch",
+                                category="garten")
+        self.assertEqual(p, {"title": "Rasen", "priority": "hoch",
+                             "assignee": "Max", "description": "hinterm Haus",
+                             "category": "garten", "due_date": "2026-06-01"})
+
+    def test_optional_fields_omitted_and_priority_defaulted(self) -> None:
+        p = build_order_payload("Nur Titel", priority="quatsch")
+        self.assertEqual(p, {"title": "Nur Titel", "priority": "normal"})
+
+
+class TestDistinctValues(unittest.TestCase):
+
+    def test_sorted_unique_nonempty(self) -> None:
+        items = [{"relation": "Familie"}, {"relation": "Freund"},
+                 {"relation": "Familie"}, {"relation": ""}, {}]
+        self.assertEqual(distinct_values(items, "relation"),
+                         ["Familie", "Freund"])
+
+
+class TestWeekAgenda(unittest.TestCase):
+    """week_agenda holt system.agenda phone-tauglich und ist robust."""
+
+    def test_passes_through_days_and_overdue(self) -> None:
+        def mock_dispatch(name: str, args: dict) -> dict:
+            if name == "system.agenda":
+                self.assertEqual(args["horizon_days"], 7)
+                return {"days": [{"date": "2026-05-21", "weekday": "Donnerstag",
+                                  "count": 1, "events": [{"title": "X"}]}],
+                        "overdue": [{"title": "alt"}],
+                        "overdue_count": 1, "total": 2}
+            return {}
+        out = week_agenda(mock_dispatch)
+        self.assertEqual(len(out["days"]), 1)
+        self.assertEqual(out["overdue_count"], 1)
+        self.assertEqual(out["total"], 2)
+
+    def test_robust_against_errors(self) -> None:
+        def broken(_name: str, _args: dict) -> dict:
+            raise RuntimeError("boom")
+        out = week_agenda(broken)
+        self.assertEqual(out["days"], [])
+        self.assertEqual(out["overdue"], [])
+        self.assertEqual(out["total"], 0)
+
+    def test_custom_horizon_forwarded(self) -> None:
+        seen = {}
+
+        def mock_dispatch(name: str, args: dict) -> dict:
+            seen["h"] = args.get("horizon_days")
+            return {}
+        week_agenda(mock_dispatch, horizon_days=30)
+        self.assertEqual(seen["h"], 30)
 
 
 class TestLanguageMenuItems(unittest.TestCase):

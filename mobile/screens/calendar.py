@@ -68,7 +68,7 @@ class CalendarScreen(MDScreen):
 
     def _refresh(self) -> None:
         result = self.registry.dispatch(
-            "calendar.list_upcoming", {"days": 30})
+            "calendar.upcoming", {"horizon_days": 30})
         events = result.get("events", [])
         self.container.clear_widgets()
         if not events:

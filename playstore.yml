@@ -108,6 +108,7 @@ data_safety:
 permissions:
   declared:
   - android.permission.INTERNET
+  - android.permission.POST_NOTIFICATIONS
   blocked:
   - android.permission.MANAGE_EXTERNAL_STORAGE
   - android.permission.READ_PHONE_STATE

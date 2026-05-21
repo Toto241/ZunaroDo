@@ -91,11 +91,98 @@ def dashboard_summary(registry_dispatch) -> dict[str, Any]:
     except Exception:
         out["upcoming_deadlines"] = []
     try:
-        events = registry_dispatch("calendar.list_upcoming", {"days": 14})
+        events = registry_dispatch("calendar.upcoming", {"horizon_days": 14})
         out["upcoming_events"] = events.get("events", [])[:5]
     except Exception:
         out["upcoming_events"] = []
     return out
+
+
+ORDER_PRIORITIES = ("hoch", "mittel", "normal")
+
+
+def normalize_priority(value: str | None) -> str:
+    """Macht aus Freitext eine gueltige Prioritaet (Default 'normal')."""
+    v = (value or "").strip().lower()
+    return v if v in ORDER_PRIORITIES else "normal"
+
+
+def build_search_args(query: str | None, *, category: str | None = None,
+                      status: str | None = None, date_from: str | None = None,
+                      date_to: str | None = None, limit: int = 100
+                      ) -> dict[str, Any]:
+    """Baut die Argumente fuer `system.search`. Leere Felder entfallen."""
+    args: dict[str, Any] = {"limit": limit}
+    q = (query or "").strip()
+    if q:
+        args["query"] = q
+    for key, val in (("category", category), ("status", status),
+                     ("date_from", date_from), ("date_to", date_to)):
+        cleaned = (val or "").strip()
+        if cleaned:
+            args[key] = cleaned
+    return args
+
+
+def search_args_valid(args: dict[str, Any]) -> bool:
+    """True, wenn ein Stichwort (>=2 Zeichen) ODER mindestens ein Filter
+    gesetzt ist - spiegelt die Backend-Regel fuer die Filter-only-Suche."""
+    query = args.get("query", "")
+    has_filter = any(k in args for k in
+                     ("category", "status", "date_from", "date_to"))
+    return len(query) >= 2 or has_filter
+
+
+def build_order_payload(title: str | None, *, assignee: str = "",
+                        due_date: str = "", description: str = "",
+                        priority: str = "normal", category: str = ""
+                        ) -> dict[str, Any] | None:
+    """Baut die Argumente fuer `family.add_order`. None, wenn kein Titel."""
+    clean_title = (title or "").strip()
+    if not clean_title:
+        return None
+    payload: dict[str, Any] = {"title": clean_title,
+                               "priority": normalize_priority(priority)}
+    for key, val in (("assignee", assignee), ("description", description),
+                     ("category", category)):
+        cleaned = (val or "").strip()
+        if cleaned:
+            payload[key] = cleaned
+    due = (due_date or "").strip()
+    if due:
+        payload["due_date"] = due
+    return payload
+
+
+def distinct_values(items: Iterable[dict], key: str) -> list[str]:
+    """Sortierte, eindeutige nicht-leere Werte eines Feldes - fuer Filter."""
+    found: set[str] = set()
+    for item in items:
+        val = (item.get(key) or "").strip()
+        if val:
+            found.add(val)
+    return sorted(found)
+
+
+def week_agenda(registry_dispatch, horizon_days: int = 7) -> dict[str, Any]:
+    """Holt die Tages-/Wochenuebersicht (`system.agenda`) phone-tauglich.
+
+    Liefert immer ein robustes Dict mit `days` (Liste von Tagen, jeweils
+    mit `date`/`weekday`/`events`), `overdue` und `total` - auch wenn der
+    Aufruf fehlschlaegt (dann leer). `registry_dispatch` kann ein Mock sein.
+    """
+    try:
+        result = registry_dispatch("system.agenda",
+                                   {"horizon_days": horizon_days}) or {}
+    except Exception:
+        result = {}
+    return {
+        "days": result.get("days", []),
+        "overdue": result.get("overdue", []),
+        "overdue_count": result.get("overdue_count", len(
+            result.get("overdue", []))),
+        "total": result.get("total", 0),
+    }
 
 
 def truncate(text: str, max_len: int = 40) -> str:

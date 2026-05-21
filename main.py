@@ -27,6 +27,7 @@ from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
 from modules.notes import NotesModule
+from modules.overview import OverviewModule
 from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
@@ -116,6 +117,7 @@ def build_registry(db: Database, output: OutputService,
         family_repo, social_repo, proposal_repo, notes=notes_repo))
     registry.register(StatisticsModule(expense_repo, contracts_repo))
     registry.register(TaskTemplatesModule(TaskTemplateRepository(db)))
+    registry.register(OverviewModule())
     return registry
 
 
@@ -355,6 +357,7 @@ def main() -> None:
         extra_event_sources=[
             license_event_source(lambda: load_license(settings)),
         ],
+        state_path=state_path / ProactiveScheduler.STATE_FILE_NAME,
     )
     triggered = scheduler.check_now()
     print(f"  Notifikationen ausgeloest: {len(triggered)}")

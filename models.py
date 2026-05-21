@@ -186,6 +186,8 @@ class HouseholdOrder:
     due_date: Optional[date] = None
     description: str = ""
     status: str = "offen"
+    priority: str = "normal"            # hoch | mittel | normal
+    category: str = ""
     id: Optional[int] = None
     assignee_name: str = ""
 
@@ -197,6 +199,8 @@ class HouseholdOrder:
             "due_date": self.due_date.isoformat() if self.due_date else None,
             "description": self.description,
             "status": self.status,
+            "priority": self.priority,
+            "category": self.category,
         }
 
 

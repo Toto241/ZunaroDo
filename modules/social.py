@@ -97,8 +97,14 @@ class SocialModule(ModuleInterface):
             Capability(
                 name="social.contacts",
                 description="Listet alle Kontakte mit Resttagen bis zum "
-                            "naechsten Melden auf.",
-                parameters={},
+                            "naechsten Melden auf. Optional nach Beziehung "
+                            "(Kategorie) filterbar.",
+                parameters={
+                    "relation": {"type": "string",
+                                 "description": "Nur Kontakte mit dieser "
+                                                "Beziehung (z.B. Familie, "
+                                                "Freund)"},
+                },
                 handler=self._cap_list,
             ),
             Capability(
@@ -203,8 +209,12 @@ class SocialModule(ModuleInterface):
         saved = self.repo.add(c)
         return {"status": "angelegt", "contact": saved.to_dict()}
 
-    def _cap_list(self) -> dict:
+    def _cap_list(self, relation: str | None = None) -> dict:
         contacts = self.repo.list_all()
+        if relation:
+            wanted = relation.strip().lower()
+            contacts = [c for c in contacts
+                        if (c.relation or "").lower() == wanted]
         result = []
         for c in contacts:
             entry = c.to_dict()

@@ -62,6 +62,13 @@ FILE_REQUIREMENTS = {
     # --- tests/ (Funktions- und Integrationsebene) ---
     "test_smoke":             ["R1", "R2", "R4", "R5", "R6", "R7", "R8"],
     "test_search_filters":    ["R4"],
+    "test_priority_category": ["R3"],
+    "test_overview":          ["R1"],
+    "test_notifications_permission": ["R2", "R9"],
+    "test_compliance_gates":  ["R7", "R9"],
+    "test_import_robustness": ["R6"],
+    "test_sync_conflict":     ["R5"],
+    "test_mobile_screen_capabilities": ["R1", "R3", "R4"],
     "test_scheduler_reminders": ["R2"],
     "test_integration":       ["R5", "R6", "R7", "R8"],
     "test_performance":       ["R4", "R8"],

@@ -143,6 +143,14 @@ class ModuleContext:
         """Prueft, ob die Capability angeboten wird (lose Kopplung)."""
         return self._registry.has_capability(capability_name)
 
+    def collect_events(self, horizon_days: int = 90) -> list["Event"]:
+        """Liefert die modueluebergreifenden Dashboard-Ereignisse.
+
+        Erlaubt einem Modul (z.B. der Tages-/Wochenuebersicht), die Fristen
+        aller aktiven Module zu buendeln, ohne sie direkt zu kennen.
+        """
+        return self._registry.collect_events(horizon_days)
+
 
 # =====================================================================
 #  ModuleRegistry - das zentrale Verzeichnis aller Module

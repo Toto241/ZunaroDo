@@ -14,8 +14,11 @@ die eigentliche Erinnerungs-Mechanik der Module.
 """
 from __future__ import annotations
 
+import shutil
+import tempfile
 import unittest
 from datetime import date, timedelta
+from pathlib import Path
 
 from core.interface import ModuleRegistry
 from models import Event
@@ -111,6 +114,75 @@ class TestReminderTriggering(unittest.TestCase):
         events.append(_make_event("Zweite", 6))
         triggered = sched.check_now()
         self.assertEqual(triggered, ["Zweite"])
+
+
+class TestReminderPersistence(unittest.TestCase):
+    """Gesehene Marker ueberleben einen Neustart und sind robust gegen
+    System-/Zeitzonen-Spruenge (R2)."""
+
+    def setUp(self) -> None:
+        self.dir = Path(tempfile.mkdtemp(prefix="ah_sched_"))
+        self.state_path = self.dir / ProactiveScheduler.STATE_FILE_NAME
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def _scheduler(self, events: list[Event]) -> tuple[
+            ProactiveScheduler, _RecordingNotifier]:
+        notifier = _RecordingNotifier()
+        sched = ProactiveScheduler(
+            ModuleRegistry(), notifier=notifier, warn_within_days=14,
+            extra_event_sources=[_event_source(events)],
+            state_path=self.state_path)
+        return sched, notifier
+
+    def test_seen_markers_survive_restart(self) -> None:
+        events = [_make_event("TUEV faellig", 5)]
+        sched1, notifier1 = self._scheduler(events)
+        self.assertEqual(sched1.check_now(), ["TUEV faellig"])
+        self.assertTrue(self.state_path.exists())
+        # "Neustart": frische Instanz mit demselben State-Pfad.
+        sched2, notifier2 = self._scheduler(events)
+        self.assertEqual(sched2.check_now(), [])
+        self.assertEqual(notifier2.calls, [])
+
+    def test_clock_change_does_not_resend(self) -> None:
+        # Erst melden, dann simulieren wir einen Zeitsprung, indem sich
+        # die verbleibenden Tage aendern (z. B. DST/Datumswechsel). Da der
+        # Marker datumsfrei ist, darf dieselbe Erinnerung nicht erneut
+        # feuern - auch nicht nach einem Neustart.
+        sched1, _ = self._scheduler([_make_event("Garantie", 4)])
+        sched1.check_now()
+        sched2, notifier2 = self._scheduler([_make_event("Garantie", 3)])
+        self.assertEqual(sched2.check_now(), [])
+        self.assertEqual(notifier2.calls, [])
+
+    def test_new_event_after_restart_still_fires(self) -> None:
+        sched1, _ = self._scheduler([_make_event("Alt", 2)])
+        sched1.check_now()
+        sched2, notifier2 = self._scheduler([
+            _make_event("Alt", 2), _make_event("Neu", 6)])
+        self.assertEqual(sched2.check_now(), ["Neu"])
+
+    def test_corrupt_state_file_is_ignored(self) -> None:
+        self.state_path.write_text("nicht-json{", encoding="utf-8")
+        sched, notifier = self._scheduler([_make_event("Steuer", 1)])
+        # Defekte Datei -> leere Menge -> Meldung feuert dennoch.
+        self.assertEqual(sched.check_now(), ["Steuer"])
+
+    def test_without_state_path_refires_after_restart(self) -> None:
+        # Ohne Persistenzpfad bleibt das alte In-Memory-Verhalten: ein
+        # "Neustart" verliert die Marker und meldet erneut.
+        events = [_make_event("Fluechtig", 3)]
+        n1 = _RecordingNotifier()
+        ProactiveScheduler(ModuleRegistry(), notifier=n1, warn_within_days=14,
+                           extra_event_sources=[_event_source(events)]
+                           ).check_now()
+        n2 = _RecordingNotifier()
+        triggered = ProactiveScheduler(
+            ModuleRegistry(), notifier=n2, warn_within_days=14,
+            extra_event_sources=[_event_source(events)]).check_now()
+        self.assertEqual(triggered, ["Fluechtig"])
 
 
 if __name__ == "__main__":

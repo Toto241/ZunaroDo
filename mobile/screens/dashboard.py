@@ -20,7 +20,7 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import (dashboard_summary, format_currency,
-                             relative_when, urgency_color)
+                             relative_when, urgency_color, week_agenda)
 
 
 _URGENCY_HEX = {
@@ -35,6 +35,7 @@ class DashboardScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self._mode = "upcoming"            # "upcoming" | "week"
         self._build()
 
     def on_pre_enter(self, *_args):
@@ -44,7 +45,10 @@ class DashboardScreen(MDScreen):
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
             title="Alltagshelfer",
-            right_action_items=[["refresh", lambda *_: self._refresh()]],
+            right_action_items=[
+                ["calendar-week", lambda *_: self._toggle_mode()],
+                ["refresh", lambda *_: self._refresh()],
+            ],
         ))
 
         # Hero-Card mit Kennzahlen
@@ -97,6 +101,10 @@ class DashboardScreen(MDScreen):
 
         self.add_widget(root)
 
+    def _toggle_mode(self) -> None:
+        self._mode = "week" if self._mode == "upcoming" else "upcoming"
+        self._refresh()
+
     def _refresh(self) -> None:
         data = dashboard_summary(self.registry.dispatch)
         n = data["contracts_count"]
@@ -106,6 +114,10 @@ class DashboardScreen(MDScreen):
                               f"{format_currency(total)}")
 
         self.list.clear_widgets()
+
+        if self._mode == "week":
+            self._render_week()
+            return
 
         # Kuendigungsfristen zuerst
         for d in data.get("upcoming_deadlines", []):
@@ -141,4 +153,36 @@ class DashboardScreen(MDScreen):
             self.list.add_widget(OneLineAvatarIconListItem(
                 IconLeftWidget(icon="check-circle"),
                 text="Keine offenen Punkte. Schoenes Leben!",
+            ))
+
+    def _render_week(self) -> None:
+        """Tages-/Wochenuebersicht (system.agenda), nach Tag gruppiert."""
+        agenda = week_agenda(self.registry.dispatch, horizon_days=7)
+        if agenda["overdue_count"]:
+            self.list.add_widget(OneLineAvatarIconListItem(
+                IconLeftWidget(icon="alert-circle",
+                                 theme_icon_color="Custom",
+                                 icon_color=_URGENCY_HEX["error"]),
+                text=f"Ueberfaellig ({agenda['overdue_count']})",
+            ))
+            for ev in agenda["overdue"]:
+                self.list.add_widget(OneLineAvatarIconListItem(
+                    IconLeftWidget(icon="chevron-right"),
+                    text=ev.get("title", ""),
+                ))
+        for day in agenda["days"]:
+            self.list.add_widget(OneLineAvatarIconListItem(
+                IconLeftWidget(icon="calendar"),
+                text=f"{day.get('weekday','')}, {day.get('date','')}"
+                     f"  ({day.get('count', 0)})",
+            ))
+            for ev in day.get("events", []):
+                self.list.add_widget(OneLineAvatarIconListItem(
+                    IconLeftWidget(icon="chevron-right"),
+                    text=ev.get("title", ""),
+                ))
+        if not self.list.children:
+            self.list.add_widget(OneLineAvatarIconListItem(
+                IconLeftWidget(icon="check-circle"),
+                text="Diese Woche nichts faellig.",
             ))

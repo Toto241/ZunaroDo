@@ -4,8 +4,83 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ## [Unreleased]
 
+### Tests
+
+- **Import-Robustheit & Sync-Determinismus (R6/R5)** - neue Regressionstests:
+  CSV-Import überspringt fehlerhafte Zeilen für alle Entitäten und fällt bei
+  kaputten Werten auf Defaults zurück; iCal-Wiederholungen sind rund um die
+  DST-Umstellung datumsstabil ([tests/test_import_robustness.py](tests/test_import_robustness.py)).
+  Sync-Konflikte am selben Datensatz lösen sich deterministisch über den
+  device_id-Tie-Break auf ([tests/test_sync_conflict.py](tests/test_sync_conflict.py)).
+
 ### Neu
 
+- **UI-Sichtbarkeit der neuen Funktionen (Desktop + Mobile)** - die zuvor
+  nur über Capability/Assistent nutzbaren Features sind jetzt in der
+  Oberfläche bedienbar: Such-Filter (Kategorie/Status/Zeitraum) im Such-Tab,
+  Prioritäts- und Kategorie-Eingabe im Auftrags-Formular (samt Anzeige in der
+  Liste), Kategorie-Filter in der Verträge-Liste, Beziehungs-Filter in der
+  Kontakte-Liste sowie eine Tages-/Wochen-Agenda (`system.agenda`) als
+  umschaltbare Dashboard-Ansicht ([gui.py](gui.py)).
+- **Mobile-UI nachgezogen** - der Phone-Client erhält einen Such-Screen mit
+  Filtern, einen Auftrags-Screen (Anlegen mit Priorität/Kategorie +
+  Abhaken), einen Kontakte-Filter nach Beziehung, einen Kategorie-Filter in
+  der Verträge-Liste und einen Wochen-Umschalter im Dashboard
+  ([mobile/screens/more.py](mobile/screens/more.py),
+  [mobile/screens/contracts.py](mobile/screens/contracts.py),
+  [mobile/screens/dashboard.py](mobile/screens/dashboard.py)). Die Logik
+  liegt in testbaren Helfern ([mobile/helpers.py](mobile/helpers.py)).
+
+### Behoben
+
+- **Mobile rief nicht existierende Capabilities auf** - `social.list_contacts`,
+  `search.dashboard_summary`, `calendar.list_upcoming` und `inbox.list`
+  existierten nie; die betroffenen Phone-Listen blieben dadurch stumm leer.
+  Korrigiert auf `social.contacts`, `system.search`, `calendar.upcoming` und
+  `inbox.proposals`. Ein neuer Guard-Test prüft fortan ohne Kivy, dass alle
+  von Mobile-Screens genutzten Capabilities in der Registry existieren
+  ([tests/test_mobile_screen_capabilities.py](tests/test_mobile_screen_capabilities.py)).
+- **Play-Store-Compliance: Löschung, Data-Safety, Closed-Test** -
+  Datenschutzerklärung dokumentiert jetzt den In-App-Voll-Löschpfad
+  („Mehr → Alle Daten löschen"); die App ist lokal-first ohne
+  Entwickler-Server/Konto. Data-Safety-Tests stellen sicher, dass die
+  optionalen Online-Features (Gemini/IMAP) als optional + App-Funktionalität
+  modelliert sind und nicht als Tracking/Sharing zählen. Neues Release-Gate
+  `evaluate_closed_test_gate` ([tools/playstore_check.py](tools/playstore_check.py))
+  verlangt vor „GO" sowohl ≥12 Tester/≥14 Tage als auch ein Closed-Test-
+  Nachweisdokument; ein noch fehlender Nachweis ist im Pre-Merge-Check nur
+  informativ (kein WARN/FAIL, damit `--strict` waehrend der Entwicklung
+  nicht rot wird) - die GO-Entscheidung verlangt ihn dennoch.
+  Tests: [tests/test_compliance_gates.py](tests/test_compliance_gates.py),
+  [tests/test_data_safety.py](tests/test_data_safety.py).
+- **POST_NOTIFICATIONS-Berechtigung (Play-Store, Android 13+)** -
+  `buildozer.spec` und `playstore.yml` deklarieren jetzt
+  `POST_NOTIFICATIONS` für die Erinnerungs-Benachrichtigungen. Wird die
+  Berechtigung verweigert, bleibt die App nutzbar (der Notifier degradiert
+  auf In-App/Print statt zu crashen). Keine sensible/verbotene Permission
+  im Manifest. Tests:
+  [tests/test_notifications_permission.py](tests/test_notifications_permission.py).
+- **Tages-/Wochenübersicht (R1)** - neue Capability `system.agenda`
+  ([modules/overview.py](modules/overview.py)) bündelt die Fristen aller
+  aktiven Module und gruppiert sie nach Kalendertag (Standard: kommende 7
+  Tage = Wochenübersicht); überfällige Einträge kommen separat zurück. Der
+  `ModuleContext` exponiert dafür `collect_events`. Tests:
+  [tests/test_overview.py](tests/test_overview.py).
+- **Persistente Erinnerungs-Marker (R2)** - der `ProactiveScheduler`
+  ([services/scheduler.py](services/scheduler.py)) speichert die bereits
+  gemeldeten Erinnerungen atomar in `reminder_seen.json` im State-Ordner
+  und lädt sie beim Start. Dadurch keine Doppelmeldung nach einem Neustart.
+  Die Marker sind bewusst datumsfrei (`module_id` + Titel), sodass ein
+  System-/Zeitzonensprung (DST) keine erneute Meldung auslöst; eine defekte
+  State-Datei wird ignoriert. Tests:
+  [tests/test_scheduler_reminders.py](tests/test_scheduler_reminders.py).
+- **Prioritäten & Kategorie-Filter (R3)** - einmalige Aufträge haben jetzt
+  eine Priorität (`hoch`/`mittel`/`normal`) und eine optionale Kategorie
+  ([models.py](models.py), Schema-Migration v2→v3). `family.orders` sortiert
+  nach Priorität und filtert optional nach Kategorie; `family.add_order`
+  nimmt `priority`/`category` entgegen. Kategorie-/Beziehungs-Filter auch für
+  `contracts.list` und `social.contacts`. Tests:
+  [tests/test_priority_category.py](tests/test_priority_category.py).
 - **Such-Filter (R4)** - `system.search` akzeptiert nun optionale Filter
   `date_from`/`date_to` (Zeitraum), `status` und `category`
   ([modules/search.py](modules/search.py)). Ein gesetzter Filter schliesst
