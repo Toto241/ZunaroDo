@@ -115,6 +115,8 @@ class AppConfig:
 
     db_key: str = ""
     notify_warn_within_days: int = 14
+    #: Sprachwahl. Neben einem konkreten Code (z.B. "fr") ist der
+    #: Sonderwert "auto" erlaubt: dann wird die Geraetesprache erkannt.
     i18n_language: str = "de"
 
     backup_auto_enabled: bool = False
@@ -127,6 +129,20 @@ class AppConfig:
     checkout_url_annual: str = ""
     checkout_url_family: str = ""
     checkout_manage_url: str = ""
+
+    def effective_language(self) -> str:
+        """
+        Loest 'i18n_language' auf einen tatsaechlich unterstuetzten Code
+        auf - inklusive des Sonderwerts "auto" (Geraetesprache). Nutzbar
+        ueberall dort, wo keine I18n-Instanz gebraucht wird (Mobile-Boot,
+        Store-Listing-Generatoren ...).
+        """
+        from services.i18n import I18n, resolve_language
+        return resolve_language(
+            self.i18n_language,
+            supported=I18n.SUPPORTED_LANGUAGES,
+            default=I18n.DEFAULT_LANGUAGE,
+        )
 
 
 def _coerce(key: str, raw: str, config: AppConfig) -> None:

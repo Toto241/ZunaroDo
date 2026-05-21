@@ -2,6 +2,26 @@
 
 Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
+## [Unreleased]
+
+### Neu
+
+- **Mehrsprachigkeit (i18n-Fundament)** - alle 24 EU-Amtssprachen sind
+  als Locale-Datei angelegt ([locales/](locales/)). Vollstaendig
+  uebersetzt: DE, EN, FR, ES, IT, NL, PL, PT; die uebrigen 16 Sprachen
+  decken die Kern-UI (Navigation + Buttons) ab und fallen sonst auf
+  Deutsch zurueck. Siehe [locales/README.md](locales/README.md).
+- **Automatische Geraetesprache** - `detect_device_language()` in
+  [services/i18n.py](services/i18n.py) erkennt die OS-Sprache (Android
+  via pyjnius, Desktop via `locale`/Env). Der Settings-Wert
+  `i18n.language = "auto"` aktiviert die automatische Wahl.
+- **Sprachumschalter (Mobile)** - im "Mehr"-Screen
+  ([mobile/screens/more.py](mobile/screens/more.py)); die Bottom-
+  Navigation ist lokalisiert.
+- **i18n-Wartungstool** - [tools/i18n_sync.py](tools/i18n_sync.py)
+  prueft Key-Paritaet + Pflicht-Keys (`--check`, in der CI verankert)
+  und zeigt die Abdeckung je Sprache (`--coverage`).
+
 ## [0.10.0] - 2026-05-20
 
 ### Neu

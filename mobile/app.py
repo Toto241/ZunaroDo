@@ -30,7 +30,9 @@ except ImportError:                              # pragma: no cover
     ScreenManager = object                       # type: ignore[misc,assignment]
     HAS_KIVYMD = False
 
-from database import Database
+from database import Database, SettingsRepository
+from services.config import load_config
+from services.i18n import I18n
 from services.output import OutputService
 
 try:
@@ -71,18 +73,22 @@ if HAS_KIVYMD:
     class _RootShell(MDScreen):
         """Tragender Container mit Bottom-Navigation."""
 
-        def __init__(self, registry, **kwargs):
+        def __init__(self, registry, i18n: I18n, **kwargs):
             super().__init__(**kwargs)
             self.registry = registry
+            self.i18n = i18n
             nav = MDBottomNavigation()
 
-            # 5 Bereiche - bewusst kompakt fuer Phones
+            # 5 Bereiche - bewusst kompakt fuer Phones. Labels kommen aus
+            # dem i18n-Lookup; fehlt eine Uebersetzung, faellt I18n auf
+            # Deutsch zurueck.
+            t = i18n.t
             for icon, title, key, ScreenCls in [
-                ("view-dashboard", "Start", "dashboard", DashboardScreen),
-                ("file-document", "Vertraege", "contracts", ContractsScreen),
-                ("cash-multiple", "Finanzen", "finance", FinanceScreen),
-                ("calendar", "Termine", "calendar", CalendarScreen),
-                ("dots-horizontal", "Mehr", "more", MoreScreen),
+                ("view-dashboard", t("tab.dashboard"), "dashboard", DashboardScreen),
+                ("file-document", t("tab.contracts"), "contracts", ContractsScreen),
+                ("cash-multiple", t("tab.finance"), "finance", FinanceScreen),
+                ("calendar", t("tab.calendar"), "calendar", CalendarScreen),
+                ("dots-horizontal", t("tab.more"), "more", MoreScreen),
             ]:
                 item = MDBottomNavigationItem(
                     name=key, text=title, icon=icon)
@@ -104,6 +110,13 @@ if HAS_KIVYMD:
 
             db_path = _default_db_path()
             self._db = Database(str(db_path))
+            # Settings-Repo oeffentlich halten - der Sprachumschalter im
+            # "Mehr"-Screen persistiert hierueber.
+            self.settings = SettingsRepository(self._db)
+            config = load_config(self.settings)
+            # Sprache aufloesen (inkl. Sonderwert "auto" = Geraetesprache).
+            self.i18n = I18n(config.effective_language())
+
             self._output = OutputService(
                 str(Path(self.user_data_dir) / "ausgaben")
                 if hasattr(self, "user_data_dir")
@@ -112,7 +125,7 @@ if HAS_KIVYMD:
                 raise RuntimeError(
                     "build_registry konnte nicht importiert werden")
             self._registry = build_registry(self._db, self._output)
-            return _RootShell(self._registry)
+            return _RootShell(self._registry, self.i18n)
 
         def on_stop(self):
             try:

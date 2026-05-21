@@ -9,8 +9,9 @@ from __future__ import annotations
 import unittest
 from datetime import date, timedelta
 
-from mobile.helpers import (dashboard_summary, days_until, format_currency,
-                              group_by_module, relative_when, truncate,
+from mobile.helpers import (AUTO_LANGUAGE_LABEL, dashboard_summary,
+                              days_until, format_currency, group_by_module,
+                              language_menu_items, relative_when, truncate,
                               urgency_color)
 
 
@@ -182,6 +183,47 @@ class TestDashboardSummary(unittest.TestCase):
         # Phone-Limits: 3 Fristen, 5 Termine
         self.assertEqual(len(out["upcoming_deadlines"]), 3)
         self.assertEqual(len(out["upcoming_events"]), 5)
+
+
+class TestLanguageMenuItems(unittest.TestCase):
+
+    def test_first_entry_is_auto(self) -> None:
+        items = language_menu_items("de")
+        self.assertEqual(items[0]["code"], "auto")
+        self.assertEqual(items[0]["label"], AUTO_LANGUAGE_LABEL)
+
+    def test_exactly_one_selected(self) -> None:
+        for current in ("de", "auto", "fr", None, "es-ES", "xx"):
+            with self.subTest(current=current):
+                items = language_menu_items(current)
+                selected = [i for i in items if i["selected"]]
+                self.assertEqual(len(selected), 1)
+
+    def test_default_selects_german(self) -> None:
+        items = language_menu_items(None)
+        sel = next(i for i in items if i["selected"])
+        self.assertEqual(sel["code"], "de")
+
+    def test_auto_selected(self) -> None:
+        items = language_menu_items("auto")
+        self.assertTrue(items[0]["selected"])
+
+    def test_region_code_normalized(self) -> None:
+        items = language_menu_items("fr-FR")
+        sel = next(i for i in items if i["selected"])
+        self.assertEqual(sel["code"], "fr")
+
+    def test_unknown_setting_falls_back_to_german(self) -> None:
+        items = language_menu_items("xx")
+        sel = next(i for i in items if i["selected"])
+        self.assertEqual(sel["code"], "de")
+
+    def test_contains_all_available_languages(self) -> None:
+        from services.i18n import I18n
+        codes = {i["code"] for i in language_menu_items("de")}
+        for code, _name in I18n.available_languages():
+            self.assertIn(code, codes)
+        self.assertIn("auto", codes)
 
 
 if __name__ == "__main__":                       # pragma: no cover

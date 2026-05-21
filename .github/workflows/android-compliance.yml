@@ -29,6 +29,9 @@ jobs:
       - name: Run compliance checker (strict)
         run: python -m tools.playstore_check --strict
 
+      - name: i18n-Locale-Parität (Keys + CORE_KEYS)
+        run: python -m tools.i18n_sync --check
+
       - name: Compliance report (JSON artifact)
         if: always()
         run: python -m tools.playstore_check --json > playstore_report.json

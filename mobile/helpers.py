@@ -11,6 +11,8 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Iterable
 
+from services.i18n import AUTO, I18n, resolve_language
+
 
 def format_currency(amount: float | int, currency: str = "EUR") -> str:
     """`12.5 EUR` -> `12,50 €` (Deutsch)."""
@@ -103,6 +105,45 @@ def truncate(text: str, max_len: int = 40) -> str:
     if len(text) <= max_len:
         return text
     return text[: max_len - 1].rstrip() + "…"
+
+
+#: Label fuer die automatische Geraetesprache (zweisprachig, da es vor
+#: der Sprachwahl angezeigt wird).
+AUTO_LANGUAGE_LABEL = "Automatisch / Auto"
+
+
+def language_menu_items(current: str | None) -> list[dict[str, Any]]:
+    """
+    Baut die Eintraege fuer den Sprachumschalter.
+
+    `current` ist der gespeicherte Setting-Wert ('auto', 'de', 'fr' ...);
+    None/"" wird wie die Default-Sprache behandelt.
+
+    Liefert eine Liste von Dicts ``{"code", "label", "selected"}``. Der
+    erste Eintrag ist immer 'auto' (Geraetesprache), danach folgen alle
+    Sprachen, fuer die ein Locale-File existiert, in Registry-Reihenfolge.
+    Genau ein Eintrag ist `selected=True`.
+    """
+    raw = (current or I18n.DEFAULT_LANGUAGE).strip().lower()
+    # 'auto' bleibt 'auto'; jeder andere Wert wird auf eine tatsaechlich
+    # unterstuetzte Sprache aufgeloest (unbekannt -> Default), damit immer
+    # genau ein Eintrag ausgewaehlt ist.
+    selected_code = AUTO if raw == AUTO else resolve_language(
+        raw, supported=I18n.SUPPORTED_LANGUAGES,
+        default=I18n.DEFAULT_LANGUAGE)
+
+    items: list[dict[str, Any]] = [{
+        "code": AUTO,
+        "label": AUTO_LANGUAGE_LABEL,
+        "selected": selected_code == AUTO,
+    }]
+    for code, name in I18n.available_languages():
+        items.append({
+            "code": code,
+            "label": name,
+            "selected": selected_code == code,
+        })
+    return items
 
 
 def group_by_module(items: Iterable[dict]) -> dict[str, list[dict]]:
