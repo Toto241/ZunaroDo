@@ -6,6 +6,16 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **UI-Sichtbarkeit der neuen Funktionen (Desktop + Mobile)** - die zuvor
+  nur über Capability/Assistent nutzbaren Features sind jetzt in der
+  Oberfläche bedienbar: Such-Filter (Kategorie/Status/Zeitraum) im Such-Tab,
+  Prioritäts- und Kategorie-Eingabe im Auftrags-Formular (samt Anzeige in der
+  Liste), Kategorie-Filter in der Verträge-Liste, Beziehungs-Filter in der
+  Kontakte-Liste sowie eine Tages-/Wochen-Agenda (`system.agenda`) als
+  umschaltbare Dashboard-Ansicht ([gui.py](gui.py)). Auf dem Phone gibt es
+  einen Wochen-Umschalter im Dashboard, gestützt auf den testbaren Helfer
+  `week_agenda` ([mobile/helpers.py](mobile/helpers.py),
+  [mobile/screens/dashboard.py](mobile/screens/dashboard.py)).
 - **Play-Store-Compliance: Löschung, Data-Safety, Closed-Test** -
   Datenschutzerklärung dokumentiert jetzt den In-App-Voll-Löschpfad
   („Mehr → Alle Daten löschen"); die App ist lokal-first ohne

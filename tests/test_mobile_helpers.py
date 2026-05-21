@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from mobile.helpers import (AUTO_LANGUAGE_LABEL, dashboard_summary,
                               days_until, format_currency, group_by_module,
                               language_menu_items, relative_when, truncate,
-                              urgency_color)
+                              urgency_color, week_agenda)
 
 
 class TestFormatCurrency(unittest.TestCase):
@@ -183,6 +183,41 @@ class TestDashboardSummary(unittest.TestCase):
         # Phone-Limits: 3 Fristen, 5 Termine
         self.assertEqual(len(out["upcoming_deadlines"]), 3)
         self.assertEqual(len(out["upcoming_events"]), 5)
+
+
+class TestWeekAgenda(unittest.TestCase):
+    """week_agenda holt system.agenda phone-tauglich und ist robust."""
+
+    def test_passes_through_days_and_overdue(self) -> None:
+        def mock_dispatch(name: str, args: dict) -> dict:
+            if name == "system.agenda":
+                self.assertEqual(args["horizon_days"], 7)
+                return {"days": [{"date": "2026-05-21", "weekday": "Donnerstag",
+                                  "count": 1, "events": [{"title": "X"}]}],
+                        "overdue": [{"title": "alt"}],
+                        "overdue_count": 1, "total": 2}
+            return {}
+        out = week_agenda(mock_dispatch)
+        self.assertEqual(len(out["days"]), 1)
+        self.assertEqual(out["overdue_count"], 1)
+        self.assertEqual(out["total"], 2)
+
+    def test_robust_against_errors(self) -> None:
+        def broken(_name: str, _args: dict) -> dict:
+            raise RuntimeError("boom")
+        out = week_agenda(broken)
+        self.assertEqual(out["days"], [])
+        self.assertEqual(out["overdue"], [])
+        self.assertEqual(out["total"], 0)
+
+    def test_custom_horizon_forwarded(self) -> None:
+        seen = {}
+
+        def mock_dispatch(name: str, args: dict) -> dict:
+            seen["h"] = args.get("horizon_days")
+            return {}
+        week_agenda(mock_dispatch, horizon_days=30)
+        self.assertEqual(seen["h"], 30)
 
 
 class TestLanguageMenuItems(unittest.TestCase):

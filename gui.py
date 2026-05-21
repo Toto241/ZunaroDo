@@ -224,6 +224,17 @@ def _labeled_entry(parent, label: str, placeholder: str = "",
     return entry
 
 
+def _labeled_option_menu(parent, label: str, values: list[str],
+                         default: str = "") -> ctk.CTkOptionMenu:
+    row = ctk.CTkFrame(parent, fg_color="transparent")
+    row.pack(fill="x", pady=2)
+    ctk.CTkLabel(row, text=label, width=130, anchor="w").pack(side="left")
+    menu = ctk.CTkOptionMenu(row, values=values)
+    menu.set(default or (values[0] if values else ""))
+    menu.pack(side="left", fill="x", expand=True)
+    return menu
+
+
 def _clear(frame) -> None:
     for w in frame.winfo_children():
         w.destroy()
@@ -690,6 +701,12 @@ class AlltagshelferGUI(ctk.CTk):
             command=lambda _v: self._refresh_dashboard())
         self.horizon.set(t("dashboard.horizon.90"))
         self.horizon.pack(side="right")
+        # Ansicht-Umschalter: chronologische Liste vs. Tages-Agenda (Woche).
+        self.dash_view = ctk.CTkSegmentedButton(
+            header, values=["Liste", "Woche"],
+            command=lambda _v: self._refresh_dashboard())
+        self.dash_view.set("Liste")
+        self.dash_view.pack(side="right", padx=(0, 8))
 
         self.dash_list = ctk.CTkScrollableFrame(parent, fg_color="transparent")
         self.dash_list.grid(row=1, column=0, sticky="nsew")
@@ -699,6 +716,9 @@ class AlltagshelferGUI(ctk.CTk):
             return
         _clear(self.dash_list)
         t = self.i18n.t
+        if hasattr(self, "dash_view") and self.dash_view.get() == "Woche":
+            self._render_agenda()
+            return
         horizon = {
             t("dashboard.horizon.30"): 30,
             t("dashboard.horizon.90"): 90,
@@ -711,6 +731,41 @@ class AlltagshelferGUI(ctk.CTk):
             return
         for event in events:
             self._event_card(event)
+
+    def _render_agenda(self) -> None:
+        """Tages-/Wochenuebersicht (system.agenda): nach Kalendertag
+        gruppiert, Ueberfaellige zuerst."""
+        if not hasattr(self, "dash_list"):
+            return
+        result = self.registry.dispatch("system.agenda", {"horizon_days": 7})
+        if result.get("overdue_count"):
+            ctk.CTkLabel(
+                self.dash_list,
+                text=f"Ueberfaellig ({result['overdue_count']})",
+                font=ctk.CTkFont(size=13, weight="bold"),
+                text_color=URGENCY_COLOR["hoch"]).pack(anchor="w", pady=(4, 2))
+            for ev in result.get("overdue", []):
+                self._agenda_card(ev)
+        for day in result.get("days", []):
+            ctk.CTkLabel(self.dash_list,
+                         text=f"{day['weekday']}, {day['date']}",
+                         font=ctk.CTkFont(size=13, weight="bold")
+                         ).pack(anchor="w", pady=(8, 2))
+            if not day["count"]:
+                ctk.CTkLabel(self.dash_list, text="  -", text_color="gray"
+                             ).pack(anchor="w", padx=12)
+            for ev in day["events"]:
+                self._agenda_card(ev)
+
+    def _agenda_card(self, ev: dict) -> None:
+        row = ctk.CTkFrame(self.dash_list, fg_color="transparent")
+        row.pack(fill="x", padx=12, pady=1)
+        ctk.CTkLabel(row, text=f"- {ev.get('title', '')}", anchor="w"
+                     ).pack(side="left", fill="x", expand=True)
+        detail = ev.get("module_name") or ev.get("detail") or ""
+        if detail:
+            ctk.CTkLabel(row, text=detail, text_color="gray",
+                         font=ctk.CTkFont(size=10)).pack(side="right")
 
     def _event_card(self, event) -> None:
         color = URGENCY_COLOR[event.urgency]
@@ -750,9 +805,19 @@ class AlltagshelferGUI(ctk.CTk):
         parent.grid_rowconfigure(2, weight=1)
         t = self.i18n.t
 
-        ctk.CTkLabel(parent, text=t("tab.contracts"),
+        header = ctk.CTkFrame(parent, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
+        header.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(header, text=t("tab.contracts"),
                      font=ctk.CTkFont(size=18, weight="bold")
-                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+                     ).grid(row=0, column=0, sticky="w")
+        self.contract_filter = ctk.CTkOptionMenu(
+            header, width=170,
+            values=["Alle", "mobilfunk", "streaming", "strom",
+                    "versicherung", "sonstiges"],
+            command=lambda _v: self._refresh_contracts())
+        self.contract_filter.set("Alle")
+        self.contract_filter.grid(row=0, column=1, sticky="e")
 
         form = ctk.CTkFrame(parent)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
@@ -814,8 +879,13 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "contract_list"):
             return
         _clear(self.contract_list)
+        args: dict = {}
+        if hasattr(self, "contract_filter"):
+            chosen = self.contract_filter.get()
+            if chosen and chosen != "Alle":
+                args["category"] = chosen
         contracts = self.registry.dispatch("contracts.list",
-                                             {}).get("contracts", [])
+                                             args).get("contracts", [])
         if not contracts:
             ctk.CTkLabel(self.contract_list,
                          text="Noch keine Vertraege.",
@@ -992,7 +1062,10 @@ class AlltagshelferGUI(ctk.CTk):
             "assignee": _labeled_entry(form, t("form.who"), t("form.name")),
             "due_date": _labeled_entry(form, t("form.due_date")),
             "description": _labeled_entry(form, t("form.note")),
+            "category": _labeled_entry(form, "Kategorie", "optional"),
         }
+        self.order_priority = _labeled_option_menu(
+            form, "Prioritaet", ["normal", "mittel", "hoch"], "normal")
         ctk.CTkButton(form, text=t("action.add_order"),
                       command=self._on_order_add).pack(pady=6)
         self.order_list = ctk.CTkScrollableFrame(parent,
@@ -1004,12 +1077,16 @@ class AlltagshelferGUI(ctk.CTk):
         if not v["title"]:
             return
         payload = {"title": v["title"], "assignee": v["assignee"],
-                    "description": v["description"]}
+                    "description": v["description"],
+                    "priority": self.order_priority.get()}
         if v["due_date"]:
             payload["due_date"] = v["due_date"]
+        if v.get("category"):
+            payload["category"] = v["category"]
         self.registry.dispatch("family.add_order", payload)
         for e in self.order_inputs.values():
             e.delete(0, "end")
+        self.order_priority.set("normal")
         self._refresh_all()
 
     def _refresh_orders(self) -> None:
@@ -1022,9 +1099,13 @@ class AlltagshelferGUI(ctk.CTk):
             row.pack(fill="x", padx=12, pady=3)
             status_mark = "[ok]" if o["status"] == "erledigt" else "[offen]"
             faellig = f", bis {o['due_date']}" if o.get("due_date") else ""
+            prio = o.get("priority", "normal")
+            prio_mark = {"hoch": "[!] ", "mittel": "[~] "}.get(prio, "")
+            kat = f" #{o['category']}" if o.get("category") else ""
             ctk.CTkLabel(row,
-                         text=(f"{status_mark} {o['title']} -> "
-                                f"{o.get('assignee') or 'niemand'}{faellig}"),
+                         text=(f"{prio_mark}{status_mark} {o['title']} -> "
+                                f"{o.get('assignee') or 'niemand'}"
+                                f"{faellig}{kat}"),
                          anchor="w").pack(side="left", fill="x", expand=True)
             if o["status"] != "erledigt":
                 ctk.CTkButton(row, text="Erledigt", width=80,
@@ -1248,9 +1329,17 @@ class AlltagshelferGUI(ctk.CTk):
         parent.grid_rowconfigure(2, weight=1)
         t = self.i18n.t
 
-        ctk.CTkLabel(parent, text=t("social.title"),
+        header = ctk.CTkFrame(parent, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
+        header.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(header, text=t("social.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
-                     ).grid(row=0, column=0, sticky="w", pady=(6, 4))
+                     ).grid(row=0, column=0, sticky="w")
+        self.social_filter = ctk.CTkOptionMenu(
+            header, width=170, values=["Alle"],
+            command=lambda _v: self._refresh_social())
+        self.social_filter.set("Alle")
+        self.social_filter.grid(row=0, column=1, sticky="e")
 
         form = ctk.CTkFrame(parent)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
@@ -1287,8 +1376,19 @@ class AlltagshelferGUI(ctk.CTk):
             return
         _clear(self.social_list)
         t = self.i18n.t
-        contacts = self.registry.dispatch("social.contacts",
-                                            {}).get("contacts", [])
+        # Dropdown mit den vorhandenen Beziehungen befuellen.
+        all_contacts = self.registry.dispatch(
+            "social.contacts", {}).get("contacts", [])
+        args: dict = {}
+        if hasattr(self, "social_filter"):
+            rels = sorted({c.get("relation") for c in all_contacts
+                           if c.get("relation")})
+            self.social_filter.configure(values=["Alle"] + rels)
+            chosen = self.social_filter.get()
+            if chosen and chosen != "Alle":
+                args["relation"] = chosen
+        contacts = (self.registry.dispatch("social.contacts", args)
+                    .get("contacts", []) if args else all_contacts)
         if not contacts:
             ctk.CTkLabel(self.social_list,
                          text=t("social.no_contacts"),
@@ -2258,7 +2358,7 @@ class AlltagshelferGUI(ctk.CTk):
     # ================================================================
     def _build_search(self, parent) -> None:
         parent.grid_columnconfigure(0, weight=1)
-        parent.grid_rowconfigure(2, weight=1)
+        parent.grid_rowconfigure(3, weight=1)
 
         ctk.CTkLabel(parent, text=self.i18n.t("search.title"),
                      font=ctk.CTkFont(size=18, weight="bold")
@@ -2274,20 +2374,55 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkButton(bar, text=self.i18n.t("search.button"), width=110,
                       command=self._run_search).grid(row=0, column=1)
 
+        # Optionale Filter (Kategorie / Status / Zeitraum). Leer = ignoriert;
+        # ein gesetzter Filter erlaubt auch eine Suche ohne Stichwort.
+        filt = ctk.CTkFrame(parent, fg_color="transparent")
+        filt.grid(row=2, column=0, sticky="ew", pady=(0, 8))
+        ctk.CTkLabel(filt, text="Filter:", text_color="gray"
+                     ).pack(side="left", padx=(0, 6))
+        self.search_category = ctk.CTkEntry(filt, placeholder_text="Kategorie",
+                                            width=130)
+        self.search_category.pack(side="left", padx=4)
+        self.search_status = ctk.CTkEntry(filt, placeholder_text="Status",
+                                          width=110)
+        self.search_status.pack(side="left", padx=4)
+        self.search_date_from = ctk.CTkEntry(filt,
+                                             placeholder_text="von JJJJ-MM-TT",
+                                             width=130)
+        self.search_date_from.pack(side="left", padx=4)
+        self.search_date_to = ctk.CTkEntry(filt,
+                                           placeholder_text="bis JJJJ-MM-TT",
+                                           width=130)
+        self.search_date_to.pack(side="left", padx=4)
+        for _e in (self.search_category, self.search_status,
+                   self.search_date_from, self.search_date_to):
+            _e.bind("<Return>", lambda _ev: self._run_search())
+
         self.search_results = ctk.CTkScrollableFrame(
             parent, fg_color="transparent")
-        self.search_results.grid(row=2, column=0, sticky="nsew")
+        self.search_results.grid(row=3, column=0, sticky="nsew")
 
     def _run_search(self) -> None:
         query = self.search_entry.get().strip()
         _clear(self.search_results)
-        if len(query) < 2:
+        args: dict = {"limit": 100}
+        if query:
+            args["query"] = query
+        for key, widget in (("category", self.search_category),
+                            ("status", self.search_status),
+                            ("date_from", self.search_date_from),
+                            ("date_to", self.search_date_to)):
+            val = widget.get().strip()
+            if val:
+                args[key] = val
+        has_filter = any(k in args for k in
+                         ("category", "status", "date_from", "date_to"))
+        if len(query) < 2 and not has_filter:
             ctk.CTkLabel(self.search_results,
                          text=self.i18n.t("search.too_short"),
                          text_color="gray").pack(pady=20)
             return
-        result = self.registry.dispatch(
-            "system.search", {"query": query, "limit": 100})
+        result = self.registry.dispatch("system.search", args)
         if "error" in result:
             ctk.CTkLabel(self.search_results,
                          text=result["error"], text_color="gray"

@@ -98,6 +98,27 @@ def dashboard_summary(registry_dispatch) -> dict[str, Any]:
     return out
 
 
+def week_agenda(registry_dispatch, horizon_days: int = 7) -> dict[str, Any]:
+    """Holt die Tages-/Wochenuebersicht (`system.agenda`) phone-tauglich.
+
+    Liefert immer ein robustes Dict mit `days` (Liste von Tagen, jeweils
+    mit `date`/`weekday`/`events`), `overdue` und `total` - auch wenn der
+    Aufruf fehlschlaegt (dann leer). `registry_dispatch` kann ein Mock sein.
+    """
+    try:
+        result = registry_dispatch("system.agenda",
+                                   {"horizon_days": horizon_days}) or {}
+    except Exception:
+        result = {}
+    return {
+        "days": result.get("days", []),
+        "overdue": result.get("overdue", []),
+        "overdue_count": result.get("overdue_count", len(
+            result.get("overdue", []))),
+        "total": result.get("total", 0),
+    }
+
+
 def truncate(text: str, max_len: int = 40) -> str:
     """Phone-Listen brauchen kurze Strings."""
     if not text:
