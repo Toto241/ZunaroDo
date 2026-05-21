@@ -41,6 +41,17 @@ class ContractsScreen(MDScreen):
             right_action_items=[["refresh", lambda *_: self._refresh()]],
         ))
 
+        # Kategorie-Filter (leer = alle).
+        fbox = MDBoxLayout(orientation="horizontal", adaptive_height=True,
+                            padding=dp(8), spacing=dp(8), size_hint=(1, None))
+        self.category_filter = MDTextField(
+            hint_text="Kategorie filtern (optional)")
+        self.category_filter.bind(on_text_validate=lambda *_: self._refresh())
+        fbox.add_widget(self.category_filter)
+        fbox.add_widget(MDFlatButton(text="Filtern",
+                                     on_release=lambda *_: self._refresh()))
+        root.add_widget(fbox)
+
         self.scroll = ScrollView()
         self.container = MDBoxLayout(
             orientation="vertical",
@@ -62,7 +73,12 @@ class ContractsScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        result = self.registry.dispatch("contracts.list", {})
+        args: dict = {}
+        if hasattr(self, "category_filter"):
+            chosen = (self.category_filter.text or "").strip()
+            if chosen:
+                args["category"] = chosen
+        result = self.registry.dispatch("contracts.list", args)
         self.container.clear_widgets()
         contracts = result.get("contracts", [])
         total = result.get("total_monthly_cost", 0.0)

@@ -21,10 +21,25 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
   Prioritäts- und Kategorie-Eingabe im Auftrags-Formular (samt Anzeige in der
   Liste), Kategorie-Filter in der Verträge-Liste, Beziehungs-Filter in der
   Kontakte-Liste sowie eine Tages-/Wochen-Agenda (`system.agenda`) als
-  umschaltbare Dashboard-Ansicht ([gui.py](gui.py)). Auf dem Phone gibt es
-  einen Wochen-Umschalter im Dashboard, gestützt auf den testbaren Helfer
-  `week_agenda` ([mobile/helpers.py](mobile/helpers.py),
-  [mobile/screens/dashboard.py](mobile/screens/dashboard.py)).
+  umschaltbare Dashboard-Ansicht ([gui.py](gui.py)).
+- **Mobile-UI nachgezogen** - der Phone-Client erhält einen Such-Screen mit
+  Filtern, einen Auftrags-Screen (Anlegen mit Priorität/Kategorie +
+  Abhaken), einen Kontakte-Filter nach Beziehung, einen Kategorie-Filter in
+  der Verträge-Liste und einen Wochen-Umschalter im Dashboard
+  ([mobile/screens/more.py](mobile/screens/more.py),
+  [mobile/screens/contracts.py](mobile/screens/contracts.py),
+  [mobile/screens/dashboard.py](mobile/screens/dashboard.py)). Die Logik
+  liegt in testbaren Helfern ([mobile/helpers.py](mobile/helpers.py)).
+
+### Behoben
+
+- **Mobile rief nicht existierende Capabilities auf** - `social.list_contacts`,
+  `search.dashboard_summary`, `calendar.list_upcoming` und `inbox.list`
+  existierten nie; die betroffenen Phone-Listen blieben dadurch stumm leer.
+  Korrigiert auf `social.contacts`, `system.search`, `calendar.upcoming` und
+  `inbox.proposals`. Ein neuer Guard-Test prüft fortan ohne Kivy, dass alle
+  von Mobile-Screens genutzten Capabilities in der Registry existieren
+  ([tests/test_mobile_screen_capabilities.py](tests/test_mobile_screen_capabilities.py)).
 - **Play-Store-Compliance: Löschung, Data-Safety, Closed-Test** -
   Datenschutzerklärung dokumentiert jetzt den In-App-Voll-Löschpfad
   („Mehr → Alle Daten löschen"); die App ist lokal-first ohne
