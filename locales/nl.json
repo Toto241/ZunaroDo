@@ -103,6 +103,13 @@
   "data.import_run": "Import starten",
   "data.import_warning": "Geïmporteerde items krijgen nieuwe ID's - geen 1:1-roundtrip.",
   "data.last_backup": "Laatste back-up",
+  "data.delete_section": "Gegevens verwijderen",
+  "data.delete_button": "Alle gegevens verwijderen",
+  "data.delete_warning": "Verwijdert onherroepelijk alle contracten, afspraken, contacten, notities en instellingen van dit apparaat.",
+  "data.delete_confirm_title": "Echt alles verwijderen?",
+  "data.delete_confirm_body": "Deze actie kan niet ongedaan worden gemaakt. Al je gegevens worden permanent van dit apparaat verwijderd.",
+  "data.delete_confirm_action": "Definitief verwijderen",
+  "data.delete_done": "Alle gegevens verwijderd. Start de app opnieuw.",
 
   "calendar.title": "Afspraken en agenda",
   "calendar.empty": "Nog geen afspraken.",

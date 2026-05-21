@@ -103,6 +103,13 @@
   "data.import_run": "Rozpocznij import",
   "data.import_warning": "Zaimportowane wpisy otrzymują nowe identyfikatory - to nie jest pełny round-trip 1:1.",
   "data.last_backup": "Ostatnia kopia zapasowa",
+  "data.delete_section": "Usuń dane",
+  "data.delete_button": "Usuń wszystkie dane",
+  "data.delete_warning": "Trwale usuwa wszystkie umowy, terminy, kontakty, notatki i ustawienia z tego urządzenia.",
+  "data.delete_confirm_title": "Na pewno usunąć wszystko?",
+  "data.delete_confirm_body": "Tej operacji nie można cofnąć. Wszystkie Twoje dane zostaną trwale usunięte z tego urządzenia.",
+  "data.delete_confirm_action": "Usuń trwale",
+  "data.delete_done": "Wszystkie dane usunięte. Uruchom ponownie aplikację.",
 
   "calendar.title": "Terminy i kalendarz",
   "calendar.empty": "Brak terminów.",

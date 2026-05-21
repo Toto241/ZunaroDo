@@ -21,6 +21,35 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 - **i18n-Wartungstool** - [tools/i18n_sync.py](tools/i18n_sync.py)
   prueft Key-Paritaet + Pflicht-Keys (`--check`, in der CI verankert)
   und zeigt die Abdeckung je Sprache (`--coverage`).
+- **Voll-Loeschung der Nutzerdaten** (DSGVO Art. 17 / Play Store
+  Data-Deletion) via [services/data_deletion.py](services/data_deletion.py)
+  und `Database.wipe_all_data()`. Leert alle DB-Tabellen (mit VACUUM) und
+  die Sandbox-Verzeichnisse. Mobile-UI: "Mehr" → "Alle Daten loeschen"
+  mit ausdruecklicher Bestaetigung
+  ([mobile/screens/more.py](mobile/screens/more.py)).
+- **Data-Safety-Automatisierung** - [tools/data_safety.py](tools/data_safety.py)
+  leitet die Play-"Data Safety"-Angaben aus den App-Fakten ab
+  (`--generate`/`--markdown`) und prueft `playstore.yml` dagegen
+  (`--check`, in der CI). Deckte eine Falschangabe auf (Firebase/Analytics
+  im Mock, obwohl die App tracking-frei ist) - `playstore.yml` und der
+  Sync-Mock sind nun wahrheitsgemaess (kein Sharing, kein SDK-Inventar).
+- **Release-Checker erweitert** ([tools/playstore_check.py](tools/playstore_check.py))
+  um `data_deletion`- und `i18n`-Checks.
+- **Privacy-Policy-Hosting** - [tools/privacy_policy.py](tools/privacy_policy.py)
+  rendert `legal/DATENSCHUTZ.md` zu einer self-contained, Pages-tauglichen
+  HTML-Seite (`--build` → [site/](site/)) und prueft die
+  Veroeffentlichungsreife (`--check`: offene Platzhalter, Platzhalter-URL;
+  in der CI). GitHub-Pages-Deploy via
+  [.github/workflows/pages.yml](.github/workflows/pages.yml) (manuell).
+- **Store-Listing-Lokalisierungen** - [tools/store_listing.py](tools/store_listing.py)
+  pflegt die `localizations` in `playstore.yml` (jetzt DE/EN/FR/ES/IT/NL/PL/PT)
+  und setzt die Play-Laengenlimits durch (`--check`, in der CI;
+  `--generate` mergt kuratierte Sprachen).
+- **Mehrsprachige Rechtstexte (Mechanik)** - [services/legal.py](services/legal.py)
+  loest Impressum/Datenschutz/AGB/Widerruf je Sprache auf und faellt auf
+  Deutsch zurueck (`legal/<lang>/<DOK>.md`). Bewusst KEINE maschinelle
+  Uebersetzung verbindlicher Rechtstexte; Coverage via
+  `python -m tools.legal_status`.
 
 ## [0.10.0] - 2026-05-20
 

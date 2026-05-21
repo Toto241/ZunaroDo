@@ -208,6 +208,71 @@ class TestCodeSmells(unittest.TestCase):
                                 for f in rep.by_level(pc.Level.FAIL)))
 
 
+class TestCheckDataDeletion(unittest.TestCase):
+
+    def test_passes_when_mechanism_present(self) -> None:
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            (tmp / "services").mkdir()
+            (tmp / "services" / "data_deletion.py").write_text(
+                "x = 1\n", encoding="utf-8")
+            (tmp / "database.py").write_text(
+                "class Database:\n    def wipe_all_data(self): ...\n",
+                encoding="utf-8")
+            rep = pc.Report()
+            orig = pc.REPO_ROOT
+            pc.REPO_ROOT = tmp
+            try:
+                pc.check_data_deletion(rep)
+            finally:
+                pc.REPO_ROOT = orig
+            self.assertTrue(rep.by_level(pc.Level.PASS))
+            self.assertEqual(rep.by_level(pc.Level.FAIL), [])
+
+    def test_fails_when_service_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            (tmp / "database.py").write_text(
+                "def wipe_all_data(): ...\n", encoding="utf-8")
+            rep = pc.Report()
+            orig = pc.REPO_ROOT
+            pc.REPO_ROOT = tmp
+            try:
+                pc.check_data_deletion(rep)
+            finally:
+                pc.REPO_ROOT = orig
+            self.assertTrue(any("data_deletion.py" in f.message
+                                for f in rep.by_level(pc.Level.FAIL)))
+
+    def test_fails_when_wipe_method_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as t:
+            tmp = Path(t)
+            (tmp / "services").mkdir()
+            (tmp / "services" / "data_deletion.py").write_text(
+                "x = 1\n", encoding="utf-8")
+            (tmp / "database.py").write_text(
+                "class Database: ...\n", encoding="utf-8")
+            rep = pc.Report()
+            orig = pc.REPO_ROOT
+            pc.REPO_ROOT = tmp
+            try:
+                pc.check_data_deletion(rep)
+            finally:
+                pc.REPO_ROOT = orig
+            self.assertTrue(any("wipe_all_data" in f.message
+                                for f in rep.by_level(pc.Level.FAIL)))
+
+
+class TestCheckI18n(unittest.TestCase):
+    """Laeuft gegen das echte Repo - die Locales sind paritaetisch."""
+
+    def test_real_repo_parity_passes(self) -> None:
+        rep = pc.Report()
+        pc.check_i18n(rep)
+        self.assertEqual(rep.by_level(pc.Level.FAIL), [])
+        self.assertTrue(rep.by_level(pc.Level.PASS))
+
+
 class TestReportFormats(unittest.TestCase):
 
     def test_summary_counts(self) -> None:

@@ -103,6 +103,13 @@
   "data.import_run": "Iniciar importación",
   "data.import_warning": "Las entradas importadas reciben nuevos identificadores - no es un ida y vuelta 1:1.",
   "data.last_backup": "Última copia de seguridad",
+  "data.delete_section": "Eliminar datos",
+  "data.delete_button": "Eliminar todos los datos",
+  "data.delete_warning": "Elimina permanentemente todos los contratos, citas, contactos, notas y ajustes de este dispositivo.",
+  "data.delete_confirm_title": "¿Eliminar todo de verdad?",
+  "data.delete_confirm_body": "Esta acción no se puede deshacer. Todos tus datos se eliminarán permanentemente de este dispositivo.",
+  "data.delete_confirm_action": "Eliminar permanentemente",
+  "data.delete_done": "Todos los datos eliminados. Reinicia la aplicación.",
 
   "calendar.title": "Citas y calendario",
   "calendar.empty": "Aún no hay citas.",

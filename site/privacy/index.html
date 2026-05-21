@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index,follow">
+  <title>Datenschutzerklaerung</title>
+  <style>
+:root{
+  --surface:#ffffff; --surface-muted:#f5f6f8; --text:#1a1d21;
+  --text-muted:#5b636c; --border:#e2e5e9; --primary:#2563eb;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+body{margin:0;background:#eef0f3;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+main{padding:24px;}
+
+.doc {
+  max-width: 880px; margin: 0 auto; padding: 32px 24px 64px;
+  background: var(--surface); color: var(--text);
+  border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+  color: var(--text); line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+}
+.doc h1 { font-size: 28px; border-bottom: 1px solid var(--border);
+          padding-bottom: 8px; }
+.doc h2 { font-size: 22px; border-bottom: 1px solid var(--border);
+          padding-bottom: 6px; }
+.doc h3 { font-size: 18px; }
+.doc h4 { font-size: 16px; color: var(--text-muted); }
+.doc p  { margin: 0.7em 0; line-height: 1.6; }
+.doc a  { color: var(--primary); text-decoration: none; }
+.doc a:hover { text-decoration: underline; }
+.doc ul, .doc ol { padding-left: 24px; line-height: 1.6; }
+.doc li { margin: 0.2em 0; }
+.doc hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.doc code {
+  font-family: var(--mono); font-size: 12.5px;
+  background: var(--surface-muted); padding: 2px 6px;
+  border-radius: 4px; border: 1px solid var(--border);
+}
+.doc pre {
+  background: var(--surface-muted); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+}
+.doc pre code { background: transparent; border: none; padding: 0; }
+.doc blockquote {
+  margin: 0.7em 0; padding: 8px 14px;
+  border-left: 3px solid var(--primary);
+  background: var(--surface-muted); color: var(--text);
+  border-radius: 0 8px 8px 0;
+}
+.doc table {
+  width: 100%; border-collapse: collapse; margin: 1em 0;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  background: var(--surface);
+}
+.doc th, .doc td {
+  text-align: left; padding: 8px 12px; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.doc th { background: var(--surface-muted); color: var(--text-muted);
+          font-weight: 600; text-transform: uppercase;
+          font-size: 11px; letter-spacing: 0.04em; }
+.doc tr:last-child td { border-bottom: none; }
+.doc img { max-width: 100%; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <main><article class="doc">
+<h1 id="datenschutzerklaerung"><a href="#datenschutzerklaerung" style="color:inherit;text-decoration:none">Datenschutzerklaerung</a></h1>
+<p><strong>Diese Datei ist eine Vorlage.</strong> Eckige Klammern markieren auszufuellende Felder. Vor Veroeffentlichung anwaltlich pruefen lassen - insbesondere die Abschnitte zu KI-Verarbeitung, Sync-Server und Bezahldienstleister sind stark vom konkreten Setup abhaengig.</p>
+<hr />
+<h2 id="1-verantwortlicher"><a href="#1-verantwortlicher" style="color:inherit;text-decoration:none">1. Verantwortlicher</a></h2>
+<p>Verantwortlicher fuer die Datenverarbeitung im Sinne der DSGVO ist:</p>
+<p><strong>[ANBIETER_NAME]</strong> [STRASSE_NR], [PLZ_ORT] E-Mail: [EMAIL]</p>
+<h2 id="2-grundsatz---lokale-datenhaltung"><a href="#2-grundsatz---lokale-datenhaltung" style="color:inherit;text-decoration:none">2. Grundsatz - Lokale Datenhaltung</a></h2>
+<p>Alltagshelfer ist eine <strong>lokal laufende Anwendung</strong>. Alle Nutzdaten (Vertraege, Termine, Familie, Finanzen, Notizen) werden ausschliesslich auf dem Geraet des Nutzers in einer SQLite-Datenbank gespeichert - optional verschluesselt mit SQLCipher (siehe README).</p>
+<p>Eine Uebertragung an unsere Server findet <strong>nicht</strong> statt, soweit nicht ausdruecklich konfiguriert (siehe Punkt 4 - optionale Cloud-Dienste).</p>
+<h2 id="3-welche-daten-verarbeitet-werden"><a href="#3-welche-daten-verarbeitet-werden" style="color:inherit;text-decoration:none">3. Welche Daten verarbeitet werden</a></h2>
+<table><thead><tr><th>Datenart</th><th>Wo</th><th>Zweck</th><th>Rechtsgrundlage</th></tr></thead><tbody><tr><td>Vertraege, Termine, Finanzen, Familie, Kontakte</td><td>lokal</td><td>Kernfunktion der App</td><td>Art. 6 Abs. 1 lit. b DSGVO (Vertrag)</td></tr><tr><td>Crash-Logs (<code>logs/</code>)</td><td>lokal</td><td>Fehlersuche</td><td>Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse)</td></tr><tr><td>Lizenz-Token (signiert)</td><td>lokal</td><td>Pro-Aktivierung</td><td>Art. 6 Abs. 1 lit. b DSGVO</td></tr><tr><td>Zahlungsdaten</td><td>beim Bezahldienstleister</td><td>Abwicklung</td><td>Art. 6 Abs. 1 lit. b DSGVO</td></tr></tbody></table>
+<h2 id="4-optionale-cloud-dienste"><a href="#4-optionale-cloud-dienste" style="color:inherit;text-decoration:none">4. Optionale Cloud-Dienste</a></h2>
+<p>Folgende Dienste sind standardmaessig <strong>deaktiviert</strong> und werden nur nach ausdruecklicher Konfiguration durch den Nutzer aktiv:</p>
+<h3 id="41-google-gemini-ki-assistent"><a href="#41-google-gemini-ki-assistent" style="color:inherit;text-decoration:none">4.1 Google Gemini (KI-Assistent)</a></h3>
+<p>Wenn <code>GOOGLE_API_KEY</code> gesetzt ist, werden die Nutzer-Eingaben an die Chat-Funktion an Google ([Google Ireland Ltd., Dublin]) uebertragen. Datenschutzerklaerung: &lt;https://policies.google.com/privacy&gt;.</p>
+<h3 id="42-mehrgeraete-sync"><a href="#42-mehrgeraete-sync" style="color:inherit;text-decoration:none">4.2 Mehrgeraete-Sync</a></h3>
+<p>Sync-Daten werden entweder in einem geteilten Ordner (Dropbox/OneDrive</p>
+<ul><li>jeweils eigener Datenschutzhinweis des Anbieters) oder zu einem</li></ul>
+<p>selbst gehosteten HTTP/HTTPS-Sync-Server gespiegelt. Ohne Konfiguration findet keine Synchronisation statt.</p>
+<h3 id="43-imap-mail-import"><a href="#43-imap-mail-import" style="color:inherit;text-decoration:none">4.3 IMAP-Mail-Import</a></h3>
+<p>Wenn <code>ALLTAGSHELFER_IMAP_*</code> konfiguriert ist, werden Mails vom angegebenen Server abgerufen und lokal in Vorschlaege umgewandelt. Anmeldedaten verbleiben auf dem Endgeraet.</p>
+<h3 id="44-bezahldienstleister-lizenz-aktivierung"><a href="#44-bezahldienstleister-lizenz-aktivierung" style="color:inherit;text-decoration:none">4.4 Bezahldienstleister (Lizenz-Aktivierung)</a></h3>
+<p>Fuer den Erwerb einer Pro-Lizenz nutzen wir [PADDLE / LEMON SQUEEZY / STRIPE]. Dort gilt deren jeweilige Datenschutzerklaerung:</p>
+<ul><li>[LINK_DATENSCHUTZ_PADDLE]</li></ul>
+<p>Wir erhalten vom Bezahldienstleister: Kunden-ID, Abo-Status, Ablaufdatum.</p>
+<h2 id="5-ki-verarbeitung-gemini"><a href="#5-ki-verarbeitung-gemini" style="color:inherit;text-decoration:none">5. KI-Verarbeitung (Gemini)</a></h2>
+<p>Bei aktivem Gemini werden folgende Daten an Google uebertragen:</p>
+<ul><li>die konkrete Nutzer-Anfrage im Chat</li><li>ggf. zusammengefasster Kontext aus der App (z.B. anstehende Termine)</li></ul>
+<p>Die App <strong>uebertraegt nicht automatisch</strong>:</p>
+<ul><li>die gesamte DB</li><li>Vertragsdetails ohne ausdrueckliche Anfrage</li><li>Klartextfelder von Mails ausser im Posteingangs-Modul</li></ul>
+<p>Empfehlung: Wenn Sie keine Cloud-KI wollen, lassen Sie <code>GOOGLE_API_KEY</code> ungesetzt - die App laeuft dann im Offline-Modus mit regelbasiertem Router.</p>
+<h2 id="6-cookies-tracking-werbung"><a href="#6-cookies-tracking-werbung" style="color:inherit;text-decoration:none">6. Cookies, Tracking, Werbung</a></h2>
+<p>Die App setzt <strong>keine Cookies</strong>, sendet <strong>keine Telemetrie</strong> und zeigt <strong>keine Werbung</strong> an. Affiliate-Empfehlungen im Vertragsmodul sind statische Links ohne Tracking-Parameter.</p>
+<h2 id="7-ihre-rechte-art-15---22-dsgvo"><a href="#7-ihre-rechte-art-15---22-dsgvo" style="color:inherit;text-decoration:none">7. Ihre Rechte (Art. 15 - 22 DSGVO)</a></h2>
+<p>Sie haben das Recht auf:</p>
+<ul><li><strong>Auskunft</strong> (Art. 15): Was haben wir ueber Sie gespeichert?</li><li><strong>Berichtigung</strong> (Art. 16): Korrektur falscher Daten.</li><li><strong>Loeschung</strong> (Art. 17): Loeschung Ihrer Daten - bei lokalen Daten</li></ul>
+<p>durch Deinstallation, bei Lizenz-Daten durch Mail an uns.</p>
+<ul><li><strong>Einschraenkung</strong> (Art. 18) und <strong>Widerspruch</strong> (Art. 21).</li><li><strong>Datenuebertragbarkeit</strong> (Art. 20): CSV-Export ist in der App</li></ul>
+<p>eingebaut (<code>__main__.py --export</code>).</p>
+<ul><li><strong>Beschwerde bei der Aufsichtsbehoerde</strong> (Art. 77).</li></ul>
+<h2 id="8-speicherdauer"><a href="#8-speicherdauer" style="color:inherit;text-decoration:none">8. Speicherdauer</a></h2>
+<ul><li>Lokale Nutzdaten: bis zur Loeschung durch den Nutzer.</li><li>Lizenz-/Zahlungsdaten: bis 10 Jahre nach Ablauf der Lizenz</li></ul>
+<p>(handelsrechtliche Aufbewahrungsfrist).</p>
+<h2 id="9-aenderungen-dieser-erklaerung"><a href="#9-aenderungen-dieser-erklaerung" style="color:inherit;text-decoration:none">9. Aenderungen dieser Erklaerung</a></h2>
+<p>Wir behalten uns vor, diese Datenschutzerklaerung anzupassen, um sie an geaenderte Rechtslagen oder neue Funktionen anzupassen. Die jeweils aktuelle Version finden Sie in der App unter Einstellungen -&gt; Datenschutz.</p>
+<p>Stand: [DATUM]</p>
+  </article></main>
+</body>
+</html>

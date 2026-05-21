@@ -25,6 +25,34 @@ angepasst werden muessen.
    [services/license_gate.py](../services/license_gate.py) und
    `gui.py:_show_pro_activation_dialog`)
 
+## Mehrsprachige Rechtstexte
+
+Rechtstexte sind **rechtsverbindlich** und werden bewusst **nicht**
+maschinell uebersetzt - jede Sprachfassung muss von einer Anwaltskanzlei
+des jeweiligen Rechtsraums geprueft werden. Die App liefert technisch
+aber bereits eine lokalisierte Aufloesung mit Deutsch-Fallback:
+
+- Verbindliche deutsche Fassung: `legal/<DOK>.md` (z.B. `DATENSCHUTZ.md`)
+- Gepruefte Uebersetzung: `legal/<lang>/<DOK>.md` (z.B. `legal/fr/DATENSCHUTZ.md`)
+
+Der Loader [services/legal.py](../services/legal.py) waehlt automatisch
+die beste verfuegbare Fassung und faellt sonst auf Deutsch zurueck:
+
+```python
+from services.legal import resolve_legal
+text, effektive_sprache = resolve_legal("DATENSCHUTZ", "fr")
+```
+
+Den aktuellen Uebersetzungsstand zeigt:
+
+```text
+python -m tools.legal_status
+```
+
+Solange keine geprueften Uebersetzungen vorliegen, sieht der Nutzer die
+deutsche Fassung - das ist juristisch sauberer als eine ungepruefte
+Maschinenuebersetzung.
+
 ## Verkauf ueber Drittanbieter (empfohlen)
 
 Wenn du **Paddle** oder **Lemon Squeezy** als Merchant of Record nutzt,

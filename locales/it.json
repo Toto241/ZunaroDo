@@ -103,6 +103,13 @@
   "data.import_run": "Avvia importazione",
   "data.import_warning": "Le voci importate ricevono nuovi ID - non è un round-trip 1:1.",
   "data.last_backup": "Ultimo backup",
+  "data.delete_section": "Elimina dati",
+  "data.delete_button": "Elimina tutti i dati",
+  "data.delete_warning": "Elimina definitivamente tutti i contratti, gli appuntamenti, i contatti, le note e le impostazioni da questo dispositivo.",
+  "data.delete_confirm_title": "Eliminare davvero tutto?",
+  "data.delete_confirm_body": "Questa azione non può essere annullata. Tutti i tuoi dati verranno rimossi definitivamente da questo dispositivo.",
+  "data.delete_confirm_action": "Elimina definitivamente",
+  "data.delete_done": "Tutti i dati eliminati. Riavvia l'app.",
 
   "calendar.title": "Appuntamenti e calendario",
   "calendar.empty": "Ancora nessun appuntamento.",

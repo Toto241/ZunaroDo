@@ -20,6 +20,7 @@ from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import language_menu_items
 from services import config as app_config
+from services.data_deletion import delete_all_user_data, sandbox_data_dirs
 
 
 class _SimpleListPage(MDScreen):
@@ -138,6 +139,68 @@ class _LanguagePage(MDScreen):
             parent.remove_widget(self)
 
 
+class _DataDeletionPage(MDScreen):
+    """Voll-Loeschung aller Nutzerdaten mit ausdruecklicher Bestaetigung."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._done = False
+        self._build()
+
+    def _t(self, key: str, default: str = "") -> str:
+        app = MDApp.get_running_app()
+        return app.i18n.t(key, default) if app is not None else (default or key)
+
+    def _build(self) -> None:
+        root = BoxLayout(orientation="vertical")
+        root.add_widget(MDTopAppBar(
+            title=self._t("data.delete_section", "Daten loeschen"),
+            left_action_items=[["arrow-left", lambda *_: self._go_back()]],
+        ))
+        # Warnhinweis (mehrzeilig).
+        self.warning = MDLabel(
+            text=self._t("data.delete_warning"),
+            halign="center", valign="top",
+            padding=(dp(16), dp(16)),
+        )
+        root.add_widget(self.warning)
+
+        scroll = ScrollView()
+        self.list = MDList()
+        # Bewusst zweistufig: Eintrag im MoreScreen -> diese Seite ->
+        # dieser explizite, destruktiv beschriftete Bestaetigungsknopf.
+        self.confirm_item = OneLineIconListItem(
+            IconLeftWidget(icon="delete-alert"),
+            text=self._t("data.delete_confirm_action", "Endgueltig loeschen"),
+        )
+        self.confirm_item.bind(on_release=lambda *_: self._perform())
+        self.list.add_widget(self.confirm_item)
+        scroll.add_widget(self.list)
+        root.add_widget(scroll)
+        self.add_widget(root)
+
+    def _perform(self) -> None:
+        if self._done:
+            return
+        app = MDApp.get_running_app()
+        db = getattr(app, "_db", None) if app is not None else None
+        if db is None:
+            return
+        data_dirs = (sandbox_data_dirs(app.user_data_dir)
+                     if hasattr(app, "user_data_dir") else [])
+        delete_all_user_data(db, data_dirs=data_dirs, include_settings=True)
+        self._done = True
+        # Bestaetigungsknopf entfernen, Done-Hinweis anzeigen.
+        self.list.clear_widgets()
+        self.warning.text = self._t(
+            "data.delete_done", "Alle Daten geloescht. Bitte App neu starten.")
+
+    def _go_back(self) -> None:
+        parent = self.parent
+        if parent is not None and hasattr(parent, "remove_widget"):
+            parent.remove_widget(self)
+
+
 class MoreScreen(MDScreen):
 
     def __init__(self, registry, **kwargs):
@@ -191,6 +254,16 @@ class MoreScreen(MDScreen):
         lang_item.bind(on_release=lambda *_: self._open_language_page())
         self.list.add_widget(lang_item)
 
+        # Daten loeschen (DSGVO Art. 17 / Play Data-Deletion)
+        del_label = (app.i18n.t("data.delete_button")
+                     if app is not None else "Alle Daten loeschen")
+        del_item = OneLineIconListItem(
+            IconLeftWidget(icon="delete-forever"),
+            text=del_label,
+        )
+        del_item.bind(on_release=lambda *_: self._open_data_deletion_page())
+        self.list.add_widget(del_item)
+
         # Footer mit App-Info
         self.list.add_widget(OneLineIconListItem(
             IconLeftWidget(icon="information"),
@@ -199,6 +272,9 @@ class MoreScreen(MDScreen):
 
     def _open_language_page(self) -> None:
         self.add_widget(_LanguagePage())
+
+    def _open_data_deletion_page(self) -> None:
+        self.add_widget(_DataDeletionPage())
 
     def _make_handler(self, label_text: str):
         def handler(_widget):

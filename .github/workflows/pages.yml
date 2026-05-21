@@ -1,0 +1,49 @@
+name: Privacy-Policy Pages
+
+# Bewusst nur manuell: so faerbt der Deploy nichts rot auf Repos, in
+# denen GitHub Pages (noch) nicht aktiviert ist. Vor dem ersten Lauf
+# unter Settings -> Pages -> Source: GitHub Actions aktivieren.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nur ein Pages-Deploy gleichzeitig.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Privacy-Policy rendern
+        run: |
+          python -m pip install --quiet pyyaml
+          python -m tools.privacy_policy --build --out site/privacy/index.html
+          python -m tools.privacy_policy --check
+
+      - name: Pages-Konfiguration
+        uses: actions/configure-pages@v5
+
+      - name: Artefakt hochladen (site/)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

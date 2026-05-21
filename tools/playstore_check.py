@@ -445,6 +445,60 @@ def check_privacy_docs(report: Report) -> None:
                        message=f"{rel} fehlt - Pflicht-Artefakt.")
 
 
+def check_data_deletion(report: Report) -> None:
+    """
+    Play Store verlangt einen In-App-Weg zur vollstaendigen Loeschung der
+    Nutzerdaten (Data-Deletion / DSGVO Art. 17). Wir pruefen, dass der
+    Mechanismus existiert: services/data_deletion.py + Database.wipe_all_data.
+    """
+    name = "data_deletion"
+    ok = True
+    svc = REPO_ROOT / "services" / "data_deletion.py"
+    if not svc.exists():
+        report.add(check=name, level=Level.FAIL,
+                   message="services/data_deletion.py fehlt - kein "
+                           "Voll-Loeschungs-Pfad (Play Data-Deletion).")
+        ok = False
+    db = REPO_ROOT / "database.py"
+    if db.exists():
+        if "def wipe_all_data" not in db.read_text(encoding="utf-8", errors="ignore"):
+            report.add(check=name, level=Level.FAIL,
+                       message="Database.wipe_all_data() fehlt - DB kann "
+                               "nicht vollstaendig geleert werden.")
+            ok = False
+    else:
+        report.add(check=name, level=Level.FAIL, message="database.py fehlt.")
+        ok = False
+    if ok:
+        report.add(check=name, level=Level.PASS,
+                   message="Voll-Loeschung der Nutzerdaten vorhanden.")
+
+
+def check_i18n(report: Report) -> None:
+    """
+    Locale-Parität: keine Sprache hat Keys ausserhalb der Default-Sprache,
+    und jede vorhandene Locale-Datei deckt die Pflicht-CORE_KEYS ab.
+    Delegiert an tools.i18n_sync (dieselbe Logik wie der CI-i18n-Check).
+    """
+    name = "i18n"
+    try:
+        from tools import i18n_sync
+    except Exception as exc:                          # pragma: no cover
+        report.add(check=name, level=Level.WARN,
+                   message=f"i18n_sync nicht ladbar: {exc!r}")
+        return
+    rep = i18n_sync.analyze()
+    errors = i18n_sync.check(rep)
+    if errors:
+        for e in errors:
+            report.add(check=name, level=Level.FAIL, message=e)
+    else:
+        n_langs = sum(1 for v in rep["languages"].values() if v["exists"])
+        report.add(check=name, level=Level.PASS,
+                   message=f"Locale-Parität ok ({n_langs} Sprachen, "
+                           f"Basis {rep['default_key_count']} Keys).")
+
+
 def check_sdk_inventory(report: Report) -> None:
     """
     Vergleicht requirements.txt + buildozer.spec gegen DOCUMENTED_SDKS.
@@ -550,6 +604,8 @@ CHECKS: dict[str, Callable[..., None]] = {
     "code_smells":     lambda rep, ctx: check_smells(rep, ctx["files"]),
     "demo_data":       lambda rep, ctx: check_demo_data_excluded(rep, ctx["spec"]),
     "privacy_docs":    lambda rep, ctx: check_privacy_docs(rep),
+    "data_deletion":   lambda rep, ctx: check_data_deletion(rep),
+    "i18n":            lambda rep, ctx: check_i18n(rep),
     "sdk_inventory":   lambda rep, ctx: check_sdk_inventory(rep),
     "listing_strings": lambda rep, ctx: check_listing_strings(rep, ctx["files"]),
     "manifest":        lambda rep, ctx: check_manifest_if_present(rep),

@@ -103,6 +103,13 @@
   "data.import_run": "Démarrer l'import",
   "data.import_warning": "Les entrées importées reçoivent de nouveaux identifiants - pas d'aller-retour 1:1.",
   "data.last_backup": "Dernière sauvegarde",
+  "data.delete_section": "Supprimer les données",
+  "data.delete_button": "Supprimer toutes les données",
+  "data.delete_warning": "Supprime définitivement tous les contrats, rendez-vous, contacts, notes et paramètres de cet appareil.",
+  "data.delete_confirm_title": "Vraiment tout supprimer ?",
+  "data.delete_confirm_body": "Cette action est irréversible. Toutes vos données seront définitivement supprimées de cet appareil.",
+  "data.delete_confirm_action": "Supprimer définitivement",
+  "data.delete_done": "Toutes les données ont été supprimées. Veuillez redémarrer l'application.",
 
   "calendar.title": "Rendez-vous et calendrier",
   "calendar.empty": "Pas encore de rendez-vous.",

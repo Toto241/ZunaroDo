@@ -103,6 +103,13 @@
   "data.import_run": "Run import",
   "data.import_warning": "Imported entries get new IDs - no 1:1 round-trip.",
   "data.last_backup": "Last backup",
+  "data.delete_section": "Delete data",
+  "data.delete_button": "Delete all data",
+  "data.delete_warning": "Permanently deletes all contracts, appointments, contacts, notes and settings from this device.",
+  "data.delete_confirm_title": "Really delete everything?",
+  "data.delete_confirm_body": "This action cannot be undone. All your data will be permanently removed from this device.",
+  "data.delete_confirm_action": "Delete permanently",
+  "data.delete_done": "All data deleted. Please restart the app.",
 
   "calendar.title": "Calendar",
   "calendar.empty": "No events yet.",

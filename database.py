@@ -474,6 +474,51 @@ class Database:
         self.schema_version = after
         self._migration_jump = (before, after)
 
+    def wipe_all_data(self, include_settings: bool = True) -> dict[str, int]:
+        """
+        Loescht *alle* Nutzerdaten aus der DB (DSGVO Art. 17 / Play Store
+        Data-Deletion). Das Schema bleibt erhalten, die DB ist danach
+        wie frisch angelegt.
+
+        - leert dynamisch alle Tabellen aus sqlite_master (so wird keine
+          neue Tabelle vergessen),
+        - `include_settings=False` laesst 'app_settings' unangetastet
+          (z.B. um die Spracheinstellung zu behalten),
+        - laeuft mit abgeschalteten Foreign-Keys, damit die Loeschreihen-
+          folge egal ist, und ruft am Ende VACUUM, um die Daten auch
+          physisch aus den DB-Seiten zu entfernen.
+
+        Liefert ein Dict {tabelle: geloeschte_zeilen}.
+        """
+        rows = self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name NOT LIKE 'sqlite_%'").fetchall()
+        tables = [r["name"] for r in rows]
+        if not include_settings and "app_settings" in tables:
+            tables.remove("app_settings")
+
+        report: dict[str, int] = {}
+        # PRAGMA foreign_keys laesst sich nur ausserhalb einer Transaktion
+        # umschalten -> vorher sicher committen.
+        self.conn.commit()
+        self.conn.execute("PRAGMA foreign_keys = OFF")
+        try:
+            for table in tables:
+                # Tabellennamen stammen aus sqlite_master (vertrauenswuerdig),
+                # zusaetzlich defensiv auf Bezeichner-Form pruefen.
+                if not table.replace("_", "").isalnum():
+                    continue
+                before = self.conn.execute(
+                    f"SELECT COUNT(*) AS n FROM \"{table}\"").fetchone()["n"]
+                self.conn.execute(f"DELETE FROM \"{table}\"")
+                report[table] = before
+            self.conn.commit()
+        finally:
+            self.conn.execute("PRAGMA foreign_keys = ON")
+        # VACUUM ausserhalb jeder Transaktion - reclaimt + ueberschreibt Seiten.
+        self.conn.execute("VACUUM")
+        return report
+
     def close(self) -> None:
         self.conn.close()
 

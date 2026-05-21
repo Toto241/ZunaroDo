@@ -28,6 +28,36 @@ localizations:
 
       tasks - on-device, encrypted, no tracking, no ads.'
     video_url: ''
+  fr-FR:
+    title: Alltagshelfer
+    short_description: Contrats, rendez-vous, finances, famille - tout en local, sans cloud.
+    full_description: Alltagshelfer est un assistant respectueux de la vie privee pour les contrats, les rendez-vous, les finances et l'organisation du foyer. Toutes les donnees restent en local sur l'appareil - sans suivi, sans publicite.
+    video_url: ''
+  es-ES:
+    title: Alltagshelfer
+    short_description: 'Contratos, citas, finanzas, familia: todo local, sin nube obligatoria.'
+    full_description: 'Alltagshelfer es un asistente respetuoso con la privacidad para contratos, citas, finanzas y organizacion del hogar. Todos los datos permanecen localmente en el dispositivo: sin seguimiento, sin anuncios.'
+    video_url: ''
+  it-IT:
+    title: Alltagshelfer
+    short_description: Contratti, appuntamenti, finanze, famiglia - tutto in locale, no cloud.
+    full_description: Alltagshelfer e un assistente rispettoso della privacy per contratti, appuntamenti, finanze e gestione della casa. Tutti i dati restano in locale sul dispositivo - senza tracciamento, senza pubblicita.
+    video_url: ''
+  nl-NL:
+    title: Alltagshelfer
+    short_description: Contracten, afspraken, financien, gezin - lokaal, zonder cloud.
+    full_description: Alltagshelfer is een privacyvriendelijke assistent voor contracten, afspraken, financien en huishoudplanning. Alle gegevens blijven lokaal op het apparaat - geen tracking, geen advertenties.
+    video_url: ''
+  pl-PL:
+    title: Alltagshelfer
+    short_description: Umowy, terminy, finanse, rodzina - wszystko lokalnie, bez chmury.
+    full_description: Alltagshelfer to przyjazny prywatnosci asystent do umow, terminow, finansow i organizacji domu. Wszystkie dane pozostaja lokalnie na urzadzeniu - bez sledzenia, bez reklam.
+    video_url: ''
+  pt-PT:
+    title: Alltagshelfer
+    short_description: Contratos, compromissos, financas, familia - tudo local, sem nuvem.
+    full_description: Alltagshelfer e um assistente que respeita a privacidade para contratos, compromissos, financas e organizacao da casa. Todos os dados permanecem localmente no dispositivo - sem rastreio, sem publicidade.
+    video_url: ''
 images:
   icon: assets/store/icon-512.png
   feature_graphic: assets/store/feature.png
@@ -48,6 +78,11 @@ store_listing:
   ads_present: false
   in_app_purchases: false
 data_safety:
+  # WICHTIG: Diese Angaben werden aus den App-Fakten abgeleitet und per
+  # `python -m tools.data_safety --check` gegen den Code geprueft. Die App
+  # nutzt KEIN Firebase/Analytics/Tracking - daher wird nichts geteilt.
+  # Alle erfassten Daten dienen der App-Funktionalitaet und bleiben lokal
+  # (Off-Device nur, wenn der Nutzer IMAP/SMTP oder Sync selbst aktiviert).
   data_collected: true
   data_shared: false
   encrypted_in_transit: true
@@ -57,7 +92,7 @@ data_safety:
       collected: true
       shared: false
       purpose: APP_FUNCTIONALITY
-      optional: false
+      optional: true
     name:
       collected: true
       shared: false
@@ -68,35 +103,7 @@ data_safety:
       shared: false
       purpose: APP_FUNCTIONALITY
       optional: false
-    app_interactions:
-      collected: true
-      shared: false
-      purpose: ANALYTICS
-      optional: true
-    crash_logs:
-      collected: true
-      shared: true
-      purpose: APP_FUNCTIONALITY
-      shared_with:
-      - google_firebase
-      optional: false
-  sdk_inventory:
-  - name: Firebase Auth
-    data:
-    - email_hash
-    purpose: APP_FUNCTIONALITY
-  - name: Firebase Firestore
-    data:
-    - user_content
-    purpose: APP_FUNCTIONALITY
-  - name: Firebase Crashlytics
-    data:
-    - crash_logs
-    purpose: APP_FUNCTIONALITY
-  - name: Firebase Analytics
-    data:
-    - app_interactions
-    purpose: ANALYTICS
+  sdk_inventory: []
   privacy_policy_file: legal/DATENSCHUTZ.md
 permissions:
   declared:

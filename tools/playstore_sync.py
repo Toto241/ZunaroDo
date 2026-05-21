@@ -275,6 +275,8 @@ SAMPLE_CONFIG: dict[str, Any] = {
         "ads_present": False,
         "in_app_purchases": False,
     },
+    # Wahrheitsgemaess: die App nutzt kein Firebase/Analytics/Tracking.
+    # Quelle/Pruefung: tools/data_safety.py (--generate/--check).
     "data_safety": {
         "data_collected": True,
         "data_shared": False,
@@ -283,31 +285,15 @@ SAMPLE_CONFIG: dict[str, Any] = {
         "types": {
             "email":     {"collected": True,  "shared": False,
                            "purpose": "APP_FUNCTIONALITY",
-                           "optional": False},
+                           "optional": True},
             "name":      {"collected": True,  "shared": False,
                            "purpose": "APP_FUNCTIONALITY",
                            "optional": False},
             "user_content": {"collected": True, "shared": False,
                               "purpose": "APP_FUNCTIONALITY",
                               "optional": False},
-            "app_interactions": {"collected": True, "shared": False,
-                                  "purpose": "ANALYTICS",
-                                  "optional": True},
-            "crash_logs": {"collected": True, "shared": True,
-                            "purpose": "APP_FUNCTIONALITY",
-                            "shared_with": ["google_firebase"],
-                            "optional": False},
         },
-        "sdk_inventory": [
-            {"name": "Firebase Auth",       "data": ["email_hash"],
-             "purpose": "APP_FUNCTIONALITY"},
-            {"name": "Firebase Firestore",  "data": ["user_content"],
-             "purpose": "APP_FUNCTIONALITY"},
-            {"name": "Firebase Crashlytics", "data": ["crash_logs"],
-             "purpose": "APP_FUNCTIONALITY"},
-            {"name": "Firebase Analytics",  "data": ["app_interactions"],
-             "purpose": "ANALYTICS"},
-        ],
+        "sdk_inventory": [],
     },
     "permissions": {
         "declared": [

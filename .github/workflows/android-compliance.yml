@@ -32,6 +32,19 @@ jobs:
       - name: i18n-Locale-Parität (Keys + CORE_KEYS)
         run: python -m tools.i18n_sync --check
 
+      - name: Data-Safety-Konsistenz (playstore.yml vs. Code)
+        run: |
+          python -m pip install --quiet pyyaml
+          python -m tools.data_safety --check
+
+      - name: Privacy-Policy-Reife (lokal, ohne Netz)
+        run: python -m tools.privacy_policy --check
+
+      - name: Store-Listing-Lokalisierungen (Pflichtfelder + Limits)
+        run: |
+          python -m pip install --quiet pyyaml
+          python -m tools.store_listing --check
+
       - name: Compliance report (JSON artifact)
         if: always()
         run: python -m tools.playstore_check --json > playstore_report.json
