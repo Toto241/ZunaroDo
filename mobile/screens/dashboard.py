@@ -19,8 +19,8 @@ from kivymd.uix.list import (MDList, OneLineAvatarIconListItem,
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.toolbar import MDTopAppBar
 
-from mobile.helpers import (dashboard_summary, format_currency,
-                             relative_when, urgency_color, week_agenda)
+from mobile.helpers import format_currency, relative_when, urgency_color
+from mobile.presenters import DashboardPresenter
 
 
 _URGENCY_HEX = {
@@ -35,6 +35,7 @@ class DashboardScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = DashboardPresenter(registry.dispatch)
         self._mode = "upcoming"            # "upcoming" | "week"
         self._build()
 
@@ -106,7 +107,7 @@ class DashboardScreen(MDScreen):
         self._refresh()
 
     def _refresh(self) -> None:
-        data = dashboard_summary(self.registry.dispatch)
+        data = self.presenter.summary()
         n = data["contracts_count"]
         total = data["monthly_total"]
         self.hero_top.text = f"{n} aktive Vertraege"
@@ -157,7 +158,7 @@ class DashboardScreen(MDScreen):
 
     def _render_week(self) -> None:
         """Tages-/Wochenuebersicht (system.agenda), nach Tag gruppiert."""
-        agenda = week_agenda(self.registry.dispatch, horizon_days=7)
+        agenda = self.presenter.week(horizon_days=7)
         if agenda["overdue_count"]:
             self.list.add_widget(OneLineAvatarIconListItem(
                 IconLeftWidget(icon="alert-circle",

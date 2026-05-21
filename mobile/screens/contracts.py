@@ -21,6 +21,7 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import format_currency, truncate
+from mobile.presenters import ContractsPresenter
 
 
 class ContractsScreen(MDScreen):
@@ -28,6 +29,7 @@ class ContractsScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = ContractsPresenter(registry.dispatch)
         self._dialog = None
         self._build()
 
@@ -73,15 +75,12 @@ class ContractsScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        args: dict = {}
-        if hasattr(self, "category_filter"):
-            chosen = (self.category_filter.text or "").strip()
-            if chosen:
-                args["category"] = chosen
-        result = self.registry.dispatch("contracts.list", args)
+        category = (self.category_filter.text
+                    if hasattr(self, "category_filter") else None)
+        view = self.presenter.list(category)
         self.container.clear_widgets()
-        contracts = result.get("contracts", [])
-        total = result.get("total_monthly_cost", 0.0)
+        contracts = view["items"]
+        total = view["total_monthly_cost"]
 
         # Header-Card mit Summe
         if contracts:
@@ -144,10 +143,7 @@ class ContractsScreen(MDScreen):
     def _open_detail(self, cid):
         if cid is None:
             return
-        result = self.registry.dispatch("contracts.list", {})
-        contract = next(
-            (c for c in result.get("contracts", []) if c.get("id") == cid),
-            None)
+        contract = self.presenter.detail(cid)
         if contract is None:
             return
         text = (f"Anbieter: {contract.get('provider','-')}\n"
@@ -169,7 +165,7 @@ class ContractsScreen(MDScreen):
         self._dialog.open()
 
     def _delete(self, cid: int) -> None:
-        self.registry.dispatch("contracts.delete", {"contract_id": cid})
+        self.presenter.delete(cid)
         self._dismiss()
         self._refresh()
 
@@ -209,15 +205,7 @@ class ContractsScreen(MDScreen):
 
     def _submit_add(self, name: str, category: str, provider: str,
                      cost: str) -> None:
-        try:
-            cost_val = float(cost) if cost else 0.0
-        except ValueError:
-            cost_val = 0.0
-        self.registry.dispatch("contracts.add", {
-            "name": name.strip() or "Unbenannt",
-            "category": (category.strip() or "sonstiges"),
-            "provider": provider.strip(),
-            "monthly_cost": cost_val,
-        })
+        self.presenter.add(name=name, category=category, provider=provider,
+                           monthly_cost=cost)
         self._dismiss()
         self._refresh()

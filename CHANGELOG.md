@@ -6,6 +6,16 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Tests
 
+- **Headless-/Presenter-Schicht als testbare App-Variante** - das
+  Verhalten der Screens (Capability-Aufrufe + Anzeige-/Leer-/Fehlerzustände)
+  liegt jetzt toolkit-unabhängig in [mobile/presenters.py](mobile/presenters.py);
+  [mobile/headless_app.py](mobile/headless_app.py) (`HeadlessApp`) treibt es
+  über dieselbe Registry ohne Display/Kivy. Die Kivy-Screens (Dashboard,
+  Verträge, Suche, Aufträge) sind nun dünne Adapter ohne doppelte Logik.
+  Damit ist das UI-Verhalten vollautomatisch testbar
+  ([tests/test_presenters.py](tests/test_presenters.py),
+  [tests/test_headless_app.py](tests/test_headless_app.py)) - genau die
+  Tests, die sich mit der reinen Widget-UI nicht automatisieren ließen.
 - **Laufzeit-/Geräte-Tests für Google-Qualitätskonformität** - neben den
   bisherigen Headless-Logik- und statischen Compliance-Checks gibt es jetzt
   echte UI-Laufzeittests: ein Desktop-GUI-Boot-Smoke unter Xvfb

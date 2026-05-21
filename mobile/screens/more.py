@@ -21,8 +21,8 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
-from mobile.helpers import (build_order_payload, build_search_args,
-                            language_menu_items, search_args_valid, truncate)
+from mobile.helpers import language_menu_items, truncate
+from mobile.presenters import OrdersPresenter, SearchPresenter
 from services import config as app_config
 from services.data_deletion import delete_all_user_data, sandbox_data_dirs
 
@@ -277,6 +277,7 @@ class _SearchPage(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = SearchPresenter(registry.dispatch)
         self._build()
 
     def _build(self) -> None:
@@ -305,30 +306,19 @@ class _SearchPage(MDScreen):
         self.add_widget(root)
 
     def _run(self) -> None:
-        args = build_search_args(self.q.text, category=self.f_category.text,
-                                 status=self.f_status.text,
-                                 date_from=self.f_from.text,
-                                 date_to=self.f_to.text)
+        result = self.presenter.search(
+            self.q.text, category=self.f_category.text,
+            status=self.f_status.text, date_from=self.f_from.text,
+            date_to=self.f_to.text)
         self.list.clear_widgets()
-        if not search_args_valid(args):
+        if result["status"] != "ok":
+            icon = {"too_short": "information-outline",
+                    "error": "alert", "empty": "magnify"}.get(
+                        result["status"], "information-outline")
             self.list.add_widget(OneLineIconListItem(
-                IconLeftWidget(icon="information-outline"),
-                text="Mind. 2 Zeichen oder einen Filter angeben."))
+                IconLeftWidget(icon=icon), text=result["message"]))
             return
-        try:
-            result = self.registry.dispatch("system.search", args)
-        except Exception as exc:
-            result = {"error": str(exc)}
-        if "error" in result:
-            self.list.add_widget(OneLineIconListItem(
-                IconLeftWidget(icon="alert"), text=str(result["error"])))
-            return
-        hits = result.get("hits", [])
-        if not hits:
-            self.list.add_widget(OneLineIconListItem(
-                IconLeftWidget(icon="magnify"), text="Keine Treffer."))
-            return
-        for hit in hits:
+        for hit in result["hits"]:
             self.list.add_widget(OneLineIconListItem(
                 IconLeftWidget(icon="chevron-right"),
                 text=f"[{hit.get('source','?')}] "
@@ -346,6 +336,7 @@ class _OrdersPage(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = OrdersPresenter(registry.dispatch)
         self._dialog = None
         self._build()
         self._refresh()
@@ -365,16 +356,13 @@ class _OrdersPage(MDScreen):
         self.add_widget(root)
 
     def _refresh(self) -> None:
-        try:
-            result = self.registry.dispatch("family.orders", {})
-        except Exception:
-            result = {"orders": []}
+        view = self.presenter.list()
         self.list.clear_widgets()
-        orders = result.get("orders", [])
-        if not orders:
+        orders = view["items"]
+        if view["empty"]:
             self.list.add_widget(OneLineIconListItem(
                 IconLeftWidget(icon="information-outline"),
-                text="Keine Auftraege. Tipp auf +."))
+                text=view["empty_text"]))
             return
         for o in orders:
             done = o.get("status") == "erledigt"
@@ -393,7 +381,7 @@ class _OrdersPage(MDScreen):
 
     def _make_complete(self, oid: int):
         def handler(_w):
-            self.registry.dispatch("family.complete_order", {"order_id": oid})
+            self.presenter.complete(oid)
             self._refresh()
         return handler
 
@@ -420,13 +408,12 @@ class _OrdersPage(MDScreen):
         self._dialog.open()
 
     def _submit(self) -> None:
-        payload = build_order_payload(
+        result = self.presenter.add(
             self._in_title.text, assignee=self._in_assignee.text,
             due_date=self._in_due.text, priority=self._in_priority.text,
             category=self._in_category.text)
-        if payload is None:
+        if "error" in result:
             return                       # ohne Titel kein Auftrag
-        self.registry.dispatch("family.add_order", payload)
         self._dismiss()
         self._refresh()
 

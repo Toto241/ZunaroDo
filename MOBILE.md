@@ -123,3 +123,17 @@ Ein neuer Screen ist immer ein File unter `mobile/screens/`:
 Kein Direktzugriff auf Repositories - alles geht durch
 `registry.dispatch(...)`. So bleibt das Mobile-Frontend mit dem Desktop
 synchron, sobald eine neue Capability dazukommt.
+
+## Presenter-/Headless-Schicht (vollautomatisch testbar)
+
+Das **Verhalten** der Screens (welche Capability mit welchen Args, wie das
+Ergebnis zu Anzeige-Daten inkl. Leer-/Fehlerzuständen wird) liegt in
+`mobile/presenters.py`. Die Kivy-Screens sind nur noch dünne Adapter, die
+einen Presenter aufrufen und dessen Modell rendern - es gibt also **keine**
+doppelte Logik.
+
+`mobile/headless_app.py` (`HeadlessApp`) ist eine UI-freie Variante der App
+über dieselbe Registry. Damit lässt sich das komplette UI-Verhalten **ohne
+Display, Kivy oder Emulator** testen (`tests/test_presenters.py`,
+`tests/test_headless_app.py`). Neue Screen-Logik gehört in einen Presenter
+(+ Test); der Screen bleibt reines Rendering.
