@@ -58,14 +58,20 @@
    [tests/test_overview.py](test_overview.py):
    - `test_day_view_groups_due_items`, `test_week_view_spans_seven_days`.
 
-5. **R6 — Import-Robustheit.**
-   - `test_csv_import_rejects_malformed_row` (teilweise vorhanden — auf alle
-     Entitäten ausweiten).
-   - `test_ics_import_with_dst_recurrence` (Zeitzonen in Wiederholungen).
+5. **R6 — Import-Robustheit.** ✅ **ERLEDIGT**
+   [tests/test_import_robustness.py](test_import_robustness.py):
+   - CSV-Import überspringt Zeilen ohne Pflichtfeld für **alle** Entitäten
+     (Verträge/Ausgaben/Termine/Kontakte/Familie) und fällt bei kaputten
+     Zahlen/Daten auf Defaults zurück, statt zu crashen.
+   - `test_floating_time_on_dst_day_keeps_calendar_date` /
+     `test_tzid_parameter_is_stripped_date_stable` — iCal-Wiederholungen rund
+     um die DST-Umstellung verschieben das Kalenderdatum nicht.
 
-6. **R5 — Sync-Konflikt-Determinismus.**
+6. **R5 — Sync-Konflikt-Determinismus.** ✅ **ERLEDIGT**
+   [tests/test_sync_conflict.py](test_sync_conflict.py):
    - `test_concurrent_edit_same_record_resolves_deterministically` (zwei Geräte,
-     gleicher Datensatz, gleicher Lamport-Wert → Tie-Break über device_id).
+     gleicher Datensatz, gleicher Lamport-Wert → Tie-Break über device_id,
+     reihenfolge-unabhängig; LWW-Endzustand reproduzierbar).
 
 ### Play-Store-spezifisch 🟦 PLAY
 

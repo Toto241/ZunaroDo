@@ -4,6 +4,15 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ## [Unreleased]
 
+### Tests
+
+- **Import-Robustheit & Sync-Determinismus (R6/R5)** - neue Regressionstests:
+  CSV-Import überspringt fehlerhafte Zeilen für alle Entitäten und fällt bei
+  kaputten Werten auf Defaults zurück; iCal-Wiederholungen sind rund um die
+  DST-Umstellung datumsstabil ([tests/test_import_robustness.py](tests/test_import_robustness.py)).
+  Sync-Konflikte am selben Datensatz lösen sich deterministisch über den
+  device_id-Tie-Break auf ([tests/test_sync_conflict.py](tests/test_sync_conflict.py)).
+
 ### Neu
 
 - **UI-Sichtbarkeit der neuen Funktionen (Desktop + Mobile)** - die zuvor
