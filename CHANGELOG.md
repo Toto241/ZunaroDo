@@ -13,6 +13,11 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
   übersetzt: Werte/Sentinels, die zugleich Logik/Backend-Argumente sind
   (Prioritätswerte `hoch/mittel/normal`, Kategorie-Filterwerte, „Alle",
   Ansicht-Umschalter), um Vergleichs-/Dispatch-Brüche zu vermeiden.
+- **Desktop-GUI nutzt die geteilten Presenter** - die in dieser Session
+  ergänzten Desktop-Flows (Volltextsuche inkl. Filter/Status, Auftrag
+  anlegen/auflisten, Tages-/Wochen-Agenda) laufen jetzt über dieselbe
+  headless getestete `app_core`-Presenter-Schicht wie Mobile - dieselbe
+  Single Source of Truth, kein Desktop-spezifischer Doppel-Code mehr.
 - **Presenter-/Headless-Schicht nach `app_core/` verschoben** - die zuvor
   unter `mobile/` liegende Presenter-/Helfer-/HeadlessApp-Schicht ist jetzt
   toolkit-neutral in `app_core/` und damit von Mobile **und** Desktop
