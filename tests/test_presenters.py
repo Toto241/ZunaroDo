@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import unittest
 
-from mobile.headless_app import HeadlessApp
+from app_core.headless_app import HeadlessApp
 
 
 class TestPresenters(unittest.TestCase):
@@ -104,6 +104,24 @@ class TestPresenters(unittest.TestCase):
         self.app.dispatch("finance.add_expense",
                           {"description": "Kaffee", "amount": 3.5})
         self.assertEqual(self.app.finance.list()["count"], 1)
+
+    def test_finance_add_and_recent_total(self) -> None:
+        f = self.app.finance
+        self.assertNotIn("error", f.add("Kaffee", "3.50", "essen"))
+        self.assertNotIn("error", f.add("Bahn", 9, ""))
+        recent = f.recent(days=30)
+        self.assertEqual(recent["count"], 2)
+        self.assertEqual(recent["total"], 12.5)
+        self.assertFalse(recent["empty"])
+
+    def test_finance_add_rejects_bad_amount(self) -> None:
+        self.assertIn("error", self.app.finance.add("X", "keine-zahl"))
+
+    def test_calendar_add_via_presenter_defaults_title(self) -> None:
+        self.app.calendar.add("", due_date="2030-05-01")
+        titles = [e.get("title", "")
+                  for e in self.app.calendar.list(horizon_days=3650)["items"]]
+        self.assertTrue(any("Termin" in t for t in titles))
 
     # ---- Dashboard -----------------------------------------------------
     def test_dashboard_summary_and_week(self) -> None:

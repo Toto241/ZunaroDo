@@ -22,6 +22,7 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import relative_when, truncate, urgency_color
+from mobile.presenters import CalendarPresenter
 
 
 _URGENCY_HEX = {
@@ -36,6 +37,7 @@ class CalendarScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = CalendarPresenter(registry.dispatch)
         self._dialog = None
         self._build()
 
@@ -67,9 +69,7 @@ class CalendarScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        result = self.registry.dispatch(
-            "calendar.upcoming", {"horizon_days": 30})
-        events = result.get("events", [])
+        events = self.presenter.list(horizon_days=30)["items"]
         self.container.clear_widgets()
         if not events:
             self.container.add_widget(MDLabel(
@@ -150,12 +150,6 @@ class CalendarScreen(MDScreen):
         self._dialog.open()
 
     def _submit(self, title: str, due: str, category: str) -> None:
-        args = {
-            "title": title.strip() or "Termin",
-            "due_date": due.strip() or date.today().isoformat(),
-        }
-        if category.strip():
-            args["category"] = category.strip()
-        self.registry.dispatch("calendar.add_event", args)
+        self.presenter.add(title, due_date=due, category=category)
         self._dismiss()
         self._refresh()

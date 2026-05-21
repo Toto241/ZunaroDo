@@ -127,12 +127,13 @@ synchron, sobald eine neue Capability dazukommt.
 ## Presenter-/Headless-Schicht (vollautomatisch testbar)
 
 Das **Verhalten** der Screens (welche Capability mit welchen Args, wie das
-Ergebnis zu Anzeige-Daten inkl. Leer-/Fehlerzuständen wird) liegt in
-`mobile/presenters.py`. Die Kivy-Screens sind nur noch dünne Adapter, die
-einen Presenter aufrufen und dessen Modell rendern - es gibt also **keine**
-doppelte Logik.
+Ergebnis zu Anzeige-Daten inkl. Leer-/Fehlerzuständen wird) liegt
+toolkit-neutral in `app_core/presenters.py` (gemeinsame Helfer in
+`app_core/helpers.py`). Sowohl die KivyMD-Screens als auch die Desktop-GUI
+können sie nutzen - es gibt also **keine** doppelte Logik. `mobile/*` bietet
+schlanke Re-Export-Shims für bestehende Importe.
 
-`mobile/headless_app.py` (`HeadlessApp`) ist eine UI-freie Variante der App
+`app_core/headless_app.py` (`HeadlessApp`) ist eine UI-freie Variante der App
 über dieselbe Registry. Damit lässt sich das komplette UI-Verhalten **ohne
 Display, Kivy oder Emulator** testen (`tests/test_presenters.py`,
 `tests/test_headless_app.py`). Neue Screen-Logik gehört in einen Presenter

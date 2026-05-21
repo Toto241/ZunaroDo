@@ -4,6 +4,16 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ## [Unreleased]
 
+### Geändert
+
+- **Presenter-/Headless-Schicht nach `app_core/` verschoben** - die zuvor
+  unter `mobile/` liegende Presenter-/Helfer-/HeadlessApp-Schicht ist jetzt
+  toolkit-neutral in `app_core/` und damit von Mobile **und** Desktop
+  nutzbar; `mobile/*` sind schlanke Re-Export-Shims. Die Mobile-Screens
+  Kalender und Finanzen delegieren nun ebenfalls an Presenter
+  (`CalendarPresenter`, `FinancePresenter` inkl. `recent()`), sodass es im
+  gesamten Mobile-Client keine doppelte Screen-Logik mehr gibt.
+
 ### Tests
 
 - **Headless-/Presenter-Schicht als testbare App-Variante** - das

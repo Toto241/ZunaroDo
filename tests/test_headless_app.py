@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import unittest
 
-from mobile.headless_app import HeadlessApp
+from app_core.headless_app import HeadlessApp
 
 
 class TestHeadlessApp(unittest.TestCase):
