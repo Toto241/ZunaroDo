@@ -74,6 +74,7 @@ FILE_REQUIREMENTS = {
     "test_mobile_boot_smoke": ["R8"],
     "test_presenters":        ["R1", "R3", "R4", "R8"],
     "test_headless_app":      ["R8"],
+    "test_profiles":          ["R5", "R7"],
     "test_scheduler_reminders": ["R2"],
     "test_integration":       ["R5", "R6", "R7", "R8"],
     "test_performance":       ["R4", "R8"],

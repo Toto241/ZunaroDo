@@ -27,6 +27,7 @@ import customtkinter as ctk
 
 from app_core.presenters import (DashboardPresenter, OrdersPresenter,
                                  SearchPresenter)
+from app_core.profiles import ProfilesManager
 from assistant import Assistant
 from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, AuditLogRepository, Database,
@@ -138,7 +139,10 @@ def _seed_demo_data(registry: ModuleRegistry) -> None:
 def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
                           SettingsRepository, ModuleStateRepository, object,
                           str]:
-    profile = resolve_profile()
+    # Aktives Profil: Env (ALLTAGSHELFER_PROFILE) hat Vorrang, sonst die
+    # per UI/Assistent gesetzte Pointer-Datei (ProfilesManager) - so wirkt
+    # ein Profilwechsel ueber Neustarts hinweg.
+    profile = ProfilesManager().active()
     # Vereinheitlichter Basis-Dateiname: 'alltagshelfer.db', plus optional
     # ein '-<profil>'-Suffix. Frueher gab es zwei verschiedene Default-
     # Namen (alltagshelfer_demo / alltagshelfer_gui), das ist jetzt

@@ -6,7 +6,7 @@ Automatisch aus den geladenen Modulen erzeugt. Regenerieren mit:
 python tools/gen_api_doc.py > API.md
 ```
 
-Gesamtzahl: **89** Capabilities in **11** Modulen.
+Gesamtzahl: **92** Capabilities in **11** Modulen.
 
 ## Modul `calendar`
 
@@ -701,6 +701,26 @@ Gruppiert die anstehenden Fristen aller Module nach Kalendertag. Standard: komme
 **Parameter:**
 
 - `horizon_days` (integer) - Anzahl Tage ab heute (Standard: 7)
+
+### `system.profile_create`
+
+Legt ein neues Profil an und macht es aktiv (wirkt nach Neustart).
+
+**Parameter:**
+
+- `name` (string) **(erforderlich)** - Profilname (A-Z a-z 0-9 _-)
+
+### `system.profile_switch`
+
+Wechselt das aktive Profil (leer = Standard; wirkt nach Neustart).
+
+**Parameter:**
+
+- `name` (string) - Zielprofil (leer = Standard)
+
+### `system.profiles`
+
+Listet die Geraete-Profile (getrennte Datenbestaende) auf und markiert das aktive.
 
 ### `system.search`
 

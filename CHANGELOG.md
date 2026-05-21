@@ -65,6 +65,17 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Multi-User-Profile (Geräte-Profile)** - mehrere getrennte Datenbestände
+  (je eigene DB + State) auf einem Gerät, umschaltbar über Neustarts hinweg.
+  Toolkit-freier, vollautomatisch getesteter `ProfilesManager`
+  ([app_core/profiles.py](app_core/profiles.py)) persistiert das aktive
+  Profil in einer Pointer-Datei (Env `ALLTAGSHELFER_PROFILE` behält Vorrang);
+  `bootstrap()` der Desktop-App berücksichtigt es beim Start. Über das neue
+  Modul ([modules/profiles.py](modules/profiles.py)) sind
+  `system.profiles` / `system.profile_create` / `system.profile_switch`
+  per Assistent und UI nutzbar. Tests:
+  [tests/test_profiles.py](tests/test_profiles.py). (Ein dedizierter
+  Widget-Umschalter bleibt ein dünner UI-Folgeschritt.)
 - **UI-Sichtbarkeit der neuen Funktionen (Desktop + Mobile)** - die zuvor
   nur über Capability/Assistent nutzbaren Features sind jetzt in der
   Oberfläche bedienbar: Such-Filter (Kategorie/Status/Zeitraum) im Such-Tab,
