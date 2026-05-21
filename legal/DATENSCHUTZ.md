@@ -88,8 +88,12 @@ sind statische Links ohne Tracking-Parameter.
 Sie haben das Recht auf:
 - **Auskunft** (Art. 15): Was haben wir ueber Sie gespeichert?
 - **Berichtigung** (Art. 16): Korrektur falscher Daten.
-- **Loeschung** (Art. 17): Loeschung Ihrer Daten - bei lokalen Daten
-   durch Deinstallation, bei Lizenz-Daten durch Mail an uns.
+- **Loeschung** (Art. 17): Loeschung Ihrer Daten. Die App bietet einen
+   vollstaendigen In-App-Loeschpfad: **"Mehr" -> "Alle Daten loeschen"**
+   leert die lokale Datenbank und alle App-Verzeichnisse unwiderruflich
+   (es gibt kein Server-Konto, daher ist keine serverseitige Loeschung
+   noetig). Alternativ entfernt die Deinstallation alle lokalen Daten;
+   Lizenz-/Zahlungsdaten loeschen wir auf Anfrage per Mail.
 - **Einschraenkung** (Art. 18) und **Widerspruch** (Art. 21).
 - **Datenuebertragbarkeit** (Art. 20): CSV-Export ist in der App
    eingebaut (`__main__.py --export`).

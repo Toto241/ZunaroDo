@@ -80,26 +80,36 @@
    - `test_no_denied_sensitive_permission_in_manifest` — deckt zugleich
      Punkt 10 ab (keine sensible/verbotene Permission deklariert).
 
-8. **Konto-/Datenlöschung (Google Account Deletion Policy).**
-   - `test_data_deletion_reachable_from_ui` — In-App-Pfad zur vollständigen
-     Löschung vorhanden (ergänzt `services/data_deletion.py`-Tests um die
-     UI-Erreichbarkeit).
-   - `test_privacy_policy_contains_deletion_url` — Datenschutzerklärung nennt
-     die Web-Lösch-URL (Play verlangt erreichbaren Lösch-Pfad).
+8. **Konto-/Datenlöschung (Google Account Deletion Policy).** ✅ **ERLEDIGT**
+   App ist lokal-first ohne Entwickler-Server/Konto → In-App-Vollöschung ist
+   der maßgebliche Pfad. Tests in
+   [tests/test_compliance_gates.py](test_compliance_gates.py):
+   - `test_data_deletion_reachable_from_ui` — Mobile-„Mehr"-Screen ruft
+     `delete_all_user_data` auf.
+   - `test_privacy_policy_documents_inapp_deletion` — DATENSCHUTZ.md
+     beschreibt den In-App-Lösch-Pfad („Mehr → Alle Daten löschen").
 
-9. **Data-Safety-Konsistenz bei optionalen Features.**
-   - `test_data_safety_reflects_gemini_optin` — wird Gemini/IMAP aktiviert,
-     müssen die Data-Safety-Angaben „Daten geteilt/verarbeitet" konsistent
-     bleiben (aktuell nur „clean app shares nothing" geprüft).
+9. **Data-Safety-Konsistenz bei optionalen Features.** ✅ **ERLEDIGT**
+   Tests in [tests/test_data_safety.py](test_data_safety.py): Gemini/IMAP sind
+   als optional + App-Funktionalität modelliert, werden nicht für
+   Werbung/Analytics geteilt, und ihre Abhängigkeiten zählen nicht als
+   Tracking-SDK (`test_gemini_dependency_is_not_tracking`,
+   `test_email_modeled_as_optional_app_functionality`).
 
 10. **Foreground-/Background-Verhalten.** ✅ **ERLEDIGT** (zusammen mit Punkt 7)
     - `test_no_denied_sensitive_permission_in_manifest` /
       `test_only_whitelisted_permissions_declared` — keine sensiblen/verbotenen
       Berechtigungen im Manifest; nur Whitelist-Permissions deklariert.
 
-11. **Closed-Testing-Nachweis (≥12 Tester / 14 Tage).** 🟦 PLAY
-    - `test_release_gate_requires_closed_test_evidence` — Release-Gate prüft das
-      Vorhandensein der 14-Tage-Nachweisdokumente (Anhang F/13.2) vor „GO".
+11. **Closed-Testing-Nachweis (≥12 Tester / 14 Tage).** ✅ **ERLEDIGT** 🟦 PLAY
+    Gate in [tools/playstore_check.py](../tools/playstore_check.py)
+    (`evaluate_closed_test_gate` + Check `closed_test`), Tests in
+    [tests/test_compliance_gates.py](test_compliance_gates.py):
+    - `test_requires_evidence_before_go` / `test_ready_with_config_and_evidence`
+      — „GO" nur mit Mindestkonfiguration (≥12/≥14) **und** Nachweisdokument
+      (`release/closed-test-*.md`).
+    - Fehlender Nachweis ist im Pre-Merge-Check WARN (kein FAIL), falsche
+      Konfiguration ist FAIL.
 
 ## 3. Hinweis zur Traceability
 

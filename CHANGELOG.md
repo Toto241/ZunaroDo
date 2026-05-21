@@ -6,6 +6,17 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Play-Store-Compliance: Löschung, Data-Safety, Closed-Test** -
+  Datenschutzerklärung dokumentiert jetzt den In-App-Voll-Löschpfad
+  („Mehr → Alle Daten löschen"); die App ist lokal-first ohne
+  Entwickler-Server/Konto. Data-Safety-Tests stellen sicher, dass die
+  optionalen Online-Features (Gemini/IMAP) als optional + App-Funktionalität
+  modelliert sind und nicht als Tracking/Sharing zählen. Neues Release-Gate
+  `evaluate_closed_test_gate` ([tools/playstore_check.py](tools/playstore_check.py))
+  verlangt vor „GO" sowohl ≥12 Tester/≥14 Tage als auch ein Closed-Test-
+  Nachweisdokument; fehlender Nachweis ist im Pre-Merge-Check eine Warnung.
+  Tests: [tests/test_compliance_gates.py](tests/test_compliance_gates.py),
+  [tests/test_data_safety.py](tests/test_data_safety.py).
 - **POST_NOTIFICATIONS-Berechtigung (Play-Store, Android 13+)** -
   `buildozer.spec` und `playstore.yml` deklarieren jetzt
   `POST_NOTIFICATIONS` für die Erinnerungs-Benachrichtigungen. Wird die

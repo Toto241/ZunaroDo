@@ -474,6 +474,92 @@ def check_data_deletion(report: Report) -> None:
                    message="Voll-Loeschung der Nutzerdaten vorhanden.")
 
 
+#: Closed-Testing-Mindestvorgaben (Google Play: vor Produktion 14 Tage
+#: ununterbrochenes Testing mit >=12 Testern).
+CLOSED_TEST_MIN_TESTERS = 12
+CLOSED_TEST_MIN_DAYS = 14
+
+
+def _load_playstore_yml(path: Path | None = None) -> dict:
+    """Laedt playstore.yml (YAML, JSON-Fallback). Fehlt sie -> {}."""
+    p = path or (REPO_ROOT / "playstore.yml")
+    if not p.is_file():
+        return {}
+    text = p.read_text(encoding="utf-8")
+    try:
+        import yaml
+        return yaml.safe_load(text) or {}
+    except ImportError:
+        import json
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {}
+
+
+def evaluate_closed_test_gate(config: dict, evidence_dir: Path) -> dict:
+    """
+    Reines Release-Gate-Kriterium fuer den Closed-Test-Nachweis.
+
+    'ready' ist nur True, wenn (a) der closed-Track die Mindestvorgaben
+    (>=12 Tester, >=14 Tage) verlangt UND (b) ein Nachweisdokument
+    (release/closed-test-*.md) vorliegt. So kann es deterministisch
+    getestet werden, ohne externe Systeme.
+    """
+    closed = ((config.get("tracks") or {}).get("closed") or {})
+    min_testers = closed.get("min_testers", 0) or 0
+    min_days = closed.get("min_days", 0) or 0
+    config_ok = (min_testers >= CLOSED_TEST_MIN_TESTERS
+                 and min_days >= CLOSED_TEST_MIN_DAYS)
+    evidence = (sorted(evidence_dir.glob("closed-test-*.md"))
+                if evidence_dir.is_dir() else [])
+    evidence_present = bool(evidence)
+    reasons: list[str] = []
+    if not config_ok:
+        reasons.append(
+            f"closed-Track muss min_testers>={CLOSED_TEST_MIN_TESTERS} und "
+            f"min_days>={CLOSED_TEST_MIN_DAYS} verlangen "
+            f"(ist: {min_testers}/{min_days}).")
+    if not evidence_present:
+        reasons.append("Kein Closed-Test-Nachweis (release/closed-test-*.md) "
+                       "gefunden.")
+    return {
+        "config_ok": config_ok,
+        "evidence_present": evidence_present,
+        "ready": config_ok and evidence_present,
+        "evidence_files": [p.name for p in evidence],
+        "reasons": reasons,
+    }
+
+
+def check_closed_test_evidence(report: Report) -> None:
+    """
+    Prueft die Closed-Testing-Voraussetzungen. Eine falsche Konfiguration
+    (zu wenige Tester/Tage) ist ein FAIL; ein fehlender Nachweis ist ein
+    WARN (vor dem Produktions-Release zwingend, blockiert aber nicht den
+    Pre-Merge-Check).
+    """
+    name = "closed_test"
+    cfg = _load_playstore_yml()
+    gate = evaluate_closed_test_gate(cfg, REPO_ROOT / "release")
+    if not gate["config_ok"]:
+        report.add(check=name, level=Level.FAIL,
+                   message="; ".join(gate["reasons"]))
+        return
+    report.add(check=name, level=Level.PASS,
+               message=f"Closed-Track verlangt >={CLOSED_TEST_MIN_TESTERS} "
+                       f"Tester / >={CLOSED_TEST_MIN_DAYS} Tage.")
+    if gate["evidence_present"]:
+        report.add(check=name, level=Level.PASS,
+                   message="Closed-Test-Nachweis vorhanden: "
+                           + ", ".join(gate["evidence_files"]) + ".")
+    else:
+        report.add(check=name, level=Level.WARN,
+                   message="Noch kein Closed-Test-Nachweis "
+                           "(release/closed-test-*.md) - vor Produktions-GO "
+                           "erforderlich.")
+
+
 def check_i18n(report: Report) -> None:
     """
     Locale-Parität: keine Sprache hat Keys ausserhalb der Default-Sprache,
@@ -605,6 +691,7 @@ CHECKS: dict[str, Callable[..., None]] = {
     "demo_data":       lambda rep, ctx: check_demo_data_excluded(rep, ctx["spec"]),
     "privacy_docs":    lambda rep, ctx: check_privacy_docs(rep),
     "data_deletion":   lambda rep, ctx: check_data_deletion(rep),
+    "closed_test":     lambda rep, ctx: check_closed_test_evidence(rep),
     "i18n":            lambda rep, ctx: check_i18n(rep),
     "sdk_inventory":   lambda rep, ctx: check_sdk_inventory(rep),
     "listing_strings": lambda rep, ctx: check_listing_strings(rep, ctx["files"]),

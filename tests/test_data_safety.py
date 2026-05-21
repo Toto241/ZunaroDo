@@ -140,6 +140,43 @@ class TestRealRepo(unittest.TestCase):
         self.assertEqual(ds.detect_tracking_sdks(), [])
 
 
+class TestDataSafetyOptionalFeatures(unittest.TestCase):
+    """Konsistenz der Data-Safety-Angaben bei den optionalen Online-Features
+    (Gemini-KI / IMAP-Mail) - sie duerfen die App nicht in 'teilt Daten mit
+    Dritten zu Werbe-/Analytics-Zwecken' kippen."""
+
+    def test_email_modeled_as_optional_app_functionality(self) -> None:
+        # IMAP-Mail-Abruf ist optional und dient nur der App-Funktionalitaet.
+        email = ds.generate()["types"]["email"]
+        self.assertTrue(email["optional"])
+        self.assertFalse(email["shared"])
+        self.assertEqual(email["purpose"], "APP_FUNCTIONALITY")
+
+    def test_user_content_not_shared_for_ads(self) -> None:
+        uc = ds.generate()["types"]["user_content"]
+        self.assertFalse(uc["shared"])
+        self.assertNotIn(uc["purpose"], ("ADVERTISING", "ANALYTICS"))
+
+    def test_gemini_dependency_is_not_tracking(self) -> None:
+        # Das Gemini-SDK ist ein Verarbeitungs-API, kein Tracking-/Ad-SDK:
+        # ein Opt-in darf data_shared nicht auf true kippen.
+        with tempfile.TemporaryDirectory() as t:
+            repo = _make_repo(Path(t),
+                              requirements="kivy\ngoogle-generativeai==0.5\n")
+            self.assertEqual(ds.detect_tracking_sdks(repo), [])
+            model = ds.generate(repo)
+            self.assertFalse(model["data_shared"])
+            errors = [i for i in ds.check_consistency(model, repo)
+                      if i[0] == "error"]
+            self.assertEqual(errors, [])
+
+    def test_imap_dependency_is_not_tracking(self) -> None:
+        with tempfile.TemporaryDirectory() as t:
+            repo = _make_repo(Path(t), requirements="kivy\nimapclient\n")
+            self.assertEqual(ds.detect_tracking_sdks(repo), [])
+            self.assertFalse(ds.generate(repo)["data_shared"])
+
+
 class TestFormatMarkdown(unittest.TestCase):
 
     def test_contains_table(self) -> None:
