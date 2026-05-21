@@ -117,7 +117,7 @@ class AppConfig:
     notify_warn_within_days: int = 14
     #: Sprachwahl. Neben einem konkreten Code (z.B. "fr") ist der
     #: Sonderwert "auto" erlaubt: dann wird die Geraetesprache erkannt.
-    i18n_language: str = "de"
+    ii18n_language: str = "auto"
 
     backup_auto_enabled: bool = False
     backup_directory: str = "backups"
