@@ -327,3 +327,23 @@ nutzt `python-for-android` über vier GitHub-Secrets:
 Die verwendete Community-Action (`ArtemSBulgakov/buildozer-action`) stellt
 SDK/NDK bereit; vor produktivem Einsatz vom Release-Owner prüfen und auf
 einen Commit-SHA pinnen.
+
+## Privacy-Policy-Hosting (erreichbare URL)
+
+Google Play verlangt eine **öffentlich erreichbare** Datenschutz-URL. Der
+Workflow [`.github/workflows/pages.yml`](../../.github/workflows/pages.yml)
+rendert `legal/DATENSCHUTZ.md` nach `site/privacy/index.html` und deployt
+es via GitHub Pages. Einmalige Einrichtung (Repo-Settings, nicht im Code
+automatisierbar):
+
+1. **Settings → Pages → Source: GitHub Actions** aktivieren.
+2. Workflow „Privacy-Policy Pages" einmal manuell starten
+   (`workflow_dispatch`).
+3. Resultierende URL: `https://<owner>.github.io/<repo>/privacy/`
+   (für dieses Repo: `https://toto241.github.io/ZunaroDo/privacy/`).
+4. **Settings → Secrets and variables → Actions → Variables**:
+   `PRIVACY_POLICY_URL` auf diese URL setzen. Der Compliance-Job
+   „Privacy-Policy URL erreichbar" prüft dann per HEAD-Request HTTP 200
+   (ohne gesetzte Variable wird der Schritt nur übersprungen).
+5. Dieselbe URL im **Play-Console-Store-Listing** unter „Datenschutz­erklärung"
+   eintragen.

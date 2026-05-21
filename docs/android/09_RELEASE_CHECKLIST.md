@@ -51,6 +51,8 @@ Verantwortlicher: **Release-Owner** (rotierend, in `CODEOWNERS` markiert).
 - [ ] Release-Notes (max. 500 Zeichen pro Locale) in `legal/release_notes/`
       oder Play-Console-Form.
 - [ ] Privacy Policy URL (in Play Console hinterlegt) liefert HTTP 200.
+      Hosting via `pages.yml`; Setup + Repo-Variable `PRIVACY_POLICY_URL`
+      siehe [07_CICD.md → Privacy-Policy-Hosting](07_CICD.md).
 - [ ] AGB- und Impressum-Links in der App führen zu den aktuellen
       `legal/`-Dokumenten.
 - [ ] Keine "lorem ipsum"-Platzhalter im Settings-/About-Bildschirm.
