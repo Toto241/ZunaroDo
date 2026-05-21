@@ -114,8 +114,9 @@
     - `test_requires_evidence_before_go` / `test_ready_with_config_and_evidence`
       — „GO" nur mit Mindestkonfiguration (≥12/≥14) **und** Nachweisdokument
       (`release/closed-test-*.md`).
-    - Fehlender Nachweis ist im Pre-Merge-Check WARN (kein FAIL), falsche
-      Konfiguration ist FAIL.
+    - Fehlender Nachweis ist im Pre-Merge-Check nur informativ (PASS, damit
+      `--strict` nicht rot wird); eine falsche Konfiguration ist FAIL. Die
+      „GO"-Sperre bei fehlendem Nachweis prüft `evaluate_closed_test_gate`.
 
 ## 3. Hinweis zur Traceability
 

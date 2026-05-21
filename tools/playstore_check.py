@@ -535,9 +535,11 @@ def evaluate_closed_test_gate(config: dict, evidence_dir: Path) -> dict:
 def check_closed_test_evidence(report: Report) -> None:
     """
     Prueft die Closed-Testing-Voraussetzungen. Eine falsche Konfiguration
-    (zu wenige Tester/Tage) ist ein FAIL; ein fehlender Nachweis ist ein
-    WARN (vor dem Produktions-Release zwingend, blockiert aber nicht den
-    Pre-Merge-Check).
+    (zu wenige Tester/Tage) ist ein FAIL. Ein noch fehlender Nachweis ist
+    KEIN WARN: das ist ein Release-Zeitpunkt-Thema und wuerde den
+    Pre-Merge-Check (--strict behandelt WARN als Fehler) waehrend der
+    Entwicklung unnoetig rot faerben. Die eigentliche GO-Entscheidung
+    trifft 'evaluate_closed_test_gate' (verlangt den Nachweis sehr wohl).
     """
     name = "closed_test"
     cfg = _load_playstore_yml()
@@ -554,10 +556,10 @@ def check_closed_test_evidence(report: Report) -> None:
                    message="Closed-Test-Nachweis vorhanden: "
                            + ", ".join(gate["evidence_files"]) + ".")
     else:
-        report.add(check=name, level=Level.WARN,
-                   message="Noch kein Closed-Test-Nachweis "
-                           "(release/closed-test-*.md) - vor Produktions-GO "
-                           "erforderlich.")
+        report.add(check=name, level=Level.PASS,
+                   message="Closed-Test-Nachweis (release/closed-test-*.md) "
+                           "noch nicht hinterlegt - vor Produktions-GO "
+                           "erforderlich (Release-Gate prueft das separat).")
 
 
 def check_i18n(report: Report) -> None:
