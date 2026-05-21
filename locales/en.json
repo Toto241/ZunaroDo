@@ -204,5 +204,14 @@
   "action.reset": "Undo",
   "action.done": "Done",
   "action.contacted": "Contacted",
-  "action.draft": "Draft"
+  "action.draft": "Draft",
+
+  "search.filter_label": "Filter:",
+  "search.ph_category": "Category",
+  "search.ph_status": "Status",
+  "search.ph_date_from": "from YYYY-MM-DD",
+  "search.ph_date_to": "to YYYY-MM-DD",
+  "form.priority": "Priority",
+  "form.optional": "optional",
+  "dashboard.overdue": "Overdue"
 }

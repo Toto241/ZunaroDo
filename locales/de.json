@@ -204,5 +204,14 @@
   "action.reset": "Zuruecksetzen",
   "action.done": "Erledigt",
   "action.contacted": "Kontaktiert",
-  "action.draft": "Entwurf"
+  "action.draft": "Entwurf",
+
+  "search.filter_label": "Filter:",
+  "search.ph_category": "Kategorie",
+  "search.ph_status": "Status",
+  "search.ph_date_from": "von JJJJ-MM-TT",
+  "search.ph_date_to": "bis JJJJ-MM-TT",
+  "form.priority": "Prioritaet",
+  "form.optional": "optional",
+  "dashboard.overdue": "Ueberfaellig"
 }

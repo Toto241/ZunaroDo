@@ -741,7 +741,8 @@ class AlltagshelferGUI(ctk.CTk):
         if result.get("overdue_count"):
             ctk.CTkLabel(
                 self.dash_list,
-                text=f"Ueberfaellig ({result['overdue_count']})",
+                text=f"{self.i18n.t('dashboard.overdue')} "
+                     f"({result['overdue_count']})",
                 font=ctk.CTkFont(size=13, weight="bold"),
                 text_color=URGENCY_COLOR["hoch"]).pack(anchor="w", pady=(4, 2))
             for ev in result.get("overdue", []):
@@ -1062,10 +1063,11 @@ class AlltagshelferGUI(ctk.CTk):
             "assignee": _labeled_entry(form, t("form.who"), t("form.name")),
             "due_date": _labeled_entry(form, t("form.due_date")),
             "description": _labeled_entry(form, t("form.note")),
-            "category": _labeled_entry(form, "Kategorie", "optional"),
+            "category": _labeled_entry(form, t("form.category"),
+                                       t("form.optional")),
         }
         self.order_priority = _labeled_option_menu(
-            form, "Prioritaet", ["normal", "mittel", "hoch"], "normal")
+            form, t("form.priority"), ["normal", "mittel", "hoch"], "normal")
         ctk.CTkButton(form, text=t("action.add_order"),
                       command=self._on_order_add).pack(pady=6)
         self.order_list = ctk.CTkScrollableFrame(parent,
@@ -2378,21 +2380,22 @@ class AlltagshelferGUI(ctk.CTk):
         # ein gesetzter Filter erlaubt auch eine Suche ohne Stichwort.
         filt = ctk.CTkFrame(parent, fg_color="transparent")
         filt.grid(row=2, column=0, sticky="ew", pady=(0, 8))
-        ctk.CTkLabel(filt, text="Filter:", text_color="gray"
-                     ).pack(side="left", padx=(0, 6))
-        self.search_category = ctk.CTkEntry(filt, placeholder_text="Kategorie",
-                                            width=130)
+        ctk.CTkLabel(filt, text=self.i18n.t("search.filter_label"),
+                     text_color="gray").pack(side="left", padx=(0, 6))
+        self.search_category = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_category"),
+            width=130)
         self.search_category.pack(side="left", padx=4)
-        self.search_status = ctk.CTkEntry(filt, placeholder_text="Status",
-                                          width=110)
+        self.search_status = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_status"), width=110)
         self.search_status.pack(side="left", padx=4)
-        self.search_date_from = ctk.CTkEntry(filt,
-                                             placeholder_text="von JJJJ-MM-TT",
-                                             width=130)
+        self.search_date_from = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_date_from"),
+            width=130)
         self.search_date_from.pack(side="left", padx=4)
-        self.search_date_to = ctk.CTkEntry(filt,
-                                           placeholder_text="bis JJJJ-MM-TT",
-                                           width=130)
+        self.search_date_to = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_date_to"),
+            width=130)
         self.search_date_to.pack(side="left", padx=4)
         for _e in (self.search_category, self.search_status,
                    self.search_date_from, self.search_date_to):

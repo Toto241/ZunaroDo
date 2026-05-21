@@ -6,6 +6,13 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Geändert
 
+- **i18n für die neuen Desktop-Labels** - die in dieser Session ergänzten
+  Anzeige-Labels (Such-Filterzeile + Platzhalter, Auftrags-Prioritäts-/
+  Kategorie-Feld, Dashboard-„Überfällig") laufen jetzt über `i18n.t(...)`
+  mit Keys in `locales/de.json` + `locales/en.json`. Bewusst **nicht**
+  übersetzt: Werte/Sentinels, die zugleich Logik/Backend-Argumente sind
+  (Prioritätswerte `hoch/mittel/normal`, Kategorie-Filterwerte, „Alle",
+  Ansicht-Umschalter), um Vergleichs-/Dispatch-Brüche zu vermeiden.
 - **Presenter-/Headless-Schicht nach `app_core/` verschoben** - die zuvor
   unter `mobile/` liegende Presenter-/Helfer-/HeadlessApp-Schicht ist jetzt
   toolkit-neutral in `app_core/` und damit von Mobile **und** Desktop
