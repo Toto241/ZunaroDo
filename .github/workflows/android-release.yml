@@ -1,0 +1,86 @@
+name: Android Release (AAB)
+
+# Baut ein signiertes Android App Bundle (.aab) fuer den Play-Store-Upload.
+#
+# Bewusst NUR manuell ausloesbar (workflow_dispatch): ein Release-Build ist
+# teuer (Android SDK/NDK) und soll nie unbeaufsichtigt bei jedem Push laufen.
+# Der Workflow LAEDT NICHTS automatisch zu Google Play hoch - er erzeugt das
+# AAB als Build-Artefakt; der Upload bleibt eine bewusste Hand-Aktion.
+#
+# Benoetigte GitHub-Secrets (Settings -> Secrets and variables -> Actions):
+#   ANDROID_KEYSTORE_BASE64       base64 des Upload-Keystores (.keystore/.jks)
+#                                 z.B.: base64 -w0 upload.keystore
+#   ANDROID_KEYSTORE_PASSWORD     Keystore-Passwort
+#   ANDROID_KEY_ALIAS             Alias des Upload-Keys
+#   ANDROID_KEY_ALIAS_PASSWORD    Passwort des Alias
+#
+# Hinweis: 'ArtemSBulgakov/buildozer-action' ist eine Community-Action, die
+# das Android-SDK/NDK bereitstellt. Vor produktivem Einsatz vom Release-Owner
+# pruefen und idealerweise auf einen Commit-SHA pinnen (Supply-Chain).
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag oder Branch zum Bauen (leer = aktueller Ref)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  build-aab:
+    name: AAB bauen & signieren
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Secrets-Vorpruefung
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_ALIAS_PWD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+        run: |
+          missing=""
+          [ -z "$KEYSTORE_B64" ] && missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -z "$KEYSTORE_PWD" ] && missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ -z "$KEY_ALIAS" ]    && missing="$missing ANDROID_KEY_ALIAS"
+          [ -z "$KEY_ALIAS_PWD" ] && missing="$missing ANDROID_KEY_ALIAS_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Fehlende Release-Secrets:$missing"
+            echo "Siehe Kopf von .github/workflows/android-release.yml."
+            exit 1
+          fi
+
+      - name: Upload-Keystore wiederherstellen
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          test -s "$RUNNER_TEMP/upload.keystore"
+
+      - name: Compliance-Gate (strict) vor dem Build
+        run: python -m tools.playstore_check --strict
+
+      - name: AAB bauen (buildozer android release)
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android release
+        env:
+          P4A_RELEASE_KEYSTORE: ${{ runner.temp }}/upload.keystore
+          P4A_RELEASE_KEYSTORE_PASSWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          P4A_RELEASE_KEYALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          P4A_RELEASE_KEYALIAS_PASSWD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+
+      - name: AAB als Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: alltagshelfer-release-aab
+          path: bin/*.aab
+          if-no-files-found: error
+          retention-days: 14

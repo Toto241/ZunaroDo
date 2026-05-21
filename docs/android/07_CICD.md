@@ -304,3 +304,26 @@ buildozer android debug
 adb install -r dist/alltagshelfer-*-arm64-v8a-debug.apk
 adb logcat | grep -i python
 ```
+
+## Release-Build (signiertes AAB)
+
+Der Workflow [`.github/workflows/android-release.yml`](../../.github/workflows/android-release.yml)
+baut auf **manuelle Auslösung** (`workflow_dispatch`) ein signiertes
+**App Bundle** (`bin/*.aab`, da `android.release_artifact = aab` in
+`buildozer.spec`). Er lädt nichts automatisch zu Google Play hoch, sondern
+stellt das AAB als Build-Artefakt bereit; der Upload bleibt eine bewusste
+Hand-Aktion (Play App Signing übernimmt die finale Signatur).
+
+Vor dem Build läuft `playstore_check --strict` als Gate. Die Signierung
+nutzt `python-for-android` über vier GitHub-Secrets:
+
+| Secret | Inhalt |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 upload.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore-Passwort |
+| `ANDROID_KEY_ALIAS` | Alias des Upload-Keys |
+| `ANDROID_KEY_ALIAS_PASSWORD` | Passwort des Alias |
+
+Die verwendete Community-Action (`ArtemSBulgakov/buildozer-action`) stellt
+SDK/NDK bereit; vor produktivem Einsatz vom Release-Owner prüfen und auf
+einen Commit-SHA pinnen.
