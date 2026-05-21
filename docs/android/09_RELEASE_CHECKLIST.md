@@ -117,8 +117,15 @@ Verantwortlicher: **Release-Owner** (rotierend, in `CODEOWNERS` markiert).
 
 - [ ] Internal-Testing-Track-Upload erfolgreich.
 - [ ] Pre-Launch-Report ohne Crashes / Sicherheitsproblemen.
-- [ ] Closed Testing 7+ Tage gelaufen (Pflicht für neue Personal-
-      Developer-Accounts; ansonsten empfohlen).
+- [ ] Closed Testing **≥ 14 zusammenhängende Tage** mit **≥ 12 aktiven
+      Testern** gelaufen (Pflicht für neue Personal-Developer-Accounts).
+      Werte sind in `playstore.yml` (`tracks.closed.min_testers`/`min_days`)
+      hinterlegt.
+- [ ] Nachweis abgelegt unter `release/closed-test-JJJJ-MM.md` (Vorlage:
+      `release/CLOSED_TEST_EVIDENCE_TEMPLATE.md`). Erst dann liefert das
+      Release-Gate `evaluate_closed_test_gate` → `ready = true`
+      (`python -m tools.playstore_check` zeigt unter `[closed_test]` den
+      Nachweis).
 - [ ] Data-Safety-Form aktualisiert, falls Datenfluss geändert.
 - [ ] Content-Rating-Fragebogen aktuell.
 - [ ] Zielgruppe gesetzt (>= 13 Jahre, "Mixed audiences").
