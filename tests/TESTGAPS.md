@@ -13,7 +13,7 @@
 | R1 | Aufgaben- & Tagesplanung (Familie, Rotation, Catch-Up, Kalender) | ✅ gut | Rotation inkl. Mehrfach-Catch-Up (`test_overdue_task_advances_rotation_multiple_times`, `test_bulk_complete_overdue_*`), Mitglieder-Szenarien, Pairwise-Matrix. **Lücke:** Tages-/Wochenübersicht nicht explizit getestet. |
 | R2 | Erinnerungen & Benachrichtigungen | ⚠️ → ✅ | War nur über Lizenz-Events geprüft. **Neu geschlossen** durch `tests/test_scheduler_reminders.py` (Auslösen, Fälligkeits-Wording, Dedup). **Restlücke:** Persistenz der „gesehen"-Marker über echten Prozess-Neustart; Verhalten bei Systemzeit-/Zeitzonensprung (DST). |
 | R3 | Kategorien & Prioritäten | ⚠️ dünn | Nur `test_expenses_per_category_aggregates`, `test_calendar_unknown_category_normalizes`. **Lücke:** Prioritäten-Vergabe/-Sortierung; Kategorie-Filter über Verträge/Kontakte/Aufgaben. |
-| R4 | Suche & Filter | ⚠️ Implementierungslücke | `test_search_finds_multiple_sources`, `test_search_finds_notes`. **Befund:** `system.search` akzeptiert nur `query`+`limit` — die geforderten **Filteroptionen (Datum, Status, Kategorie)** sind weder implementiert noch testbar. |
+| R4 | Suche & Filter | ✅ geschlossen | `test_search_finds_multiple_sources`, `test_search_finds_notes` + **neu** `tests/test_search_filters.py`. **Geschlossen:** `system.search` akzeptiert jetzt `date_from`/`date_to`, `status`, `category`; Filter ohne Suchwort funktioniert, ein gesetzter Filter schliesst Quellen ohne das Feld aus. |
 | R5 | Datenpersistenz & Mehrgeräte-Sync | ✅ stark | LWW-Konfliktauflösung, Re-Entry-Schutz (`test_synced_outer_suppresses_synced_nested`), Kompaktierung, HTTP-Provider, TLS-Handshake, Pairing. |
 | R6 | Import/Export (CSV, ICS, VCF, PDF) | ✅ gut | Export/Import-Roundtrips für alle Entitäten, ICS/VCF-Validierung & Negativfälle, PDF-Report (`test_pdf_report_produced`). |
 | R7 | Datenschutz & Sicherheit | ✅ sehr stark | 270+ Privacy-Scan-Tests, Data-Safety-Konsistenz, Datenrechte/Löschung, Consent-Gating (IMAP/Gemini via Env), Secret-Scan, Legal. |
@@ -25,9 +25,10 @@
 
 ### Hoch — funktionale Kernanforderungen
 
-1. **R4 — Such-Filter (Implementierung + Test).** 🟦 PLAY (Datensparsamkeit/Nutzbarkeit)
+1. **R4 — Such-Filter (Implementierung + Test).** ✅ **ERLEDIGT** 🟦 PLAY (Datensparsamkeit/Nutzbarkeit)
    `system.search` um optionale Parameter `date_from`/`date_to`, `status`,
-   `category` erweitern; Tests:
+   `category` erweitert ([modules/search.py](../modules/search.py)). Tests in
+   [tests/test_search_filters.py](test_search_filters.py):
    - `test_search_filters_by_category` — nur Treffer der gewählten Kategorie.
    - `test_search_filters_by_date_range` — Termine außerhalb des Zeitraums fehlen.
    - `test_search_filters_by_status` — z. B. nur offene Vorschläge.

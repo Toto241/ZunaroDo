@@ -6,6 +6,12 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Such-Filter (R4)** - `system.search` akzeptiert nun optionale Filter
+  `date_from`/`date_to` (Zeitraum), `status` und `category`
+  ([modules/search.py](modules/search.py)). Ein gesetzter Filter schliesst
+  Quellen ohne das jeweilige Feld aus; bei gesetztem Filter entfaellt das
+  2-Zeichen-Minimum fuer das Suchwort. Tests:
+  [tests/test_search_filters.py](tests/test_search_filters.py).
 - **Mehrsprachigkeit (i18n-Fundament)** - alle 24 EU-Amtssprachen sind
   als Locale-Datei angelegt ([locales/](locales/)). Vollstaendig
   uebersetzt: DE, EN, FR, ES, IT, NL, PL, PT; die uebrigen 16 Sprachen
