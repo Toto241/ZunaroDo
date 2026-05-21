@@ -10,7 +10,7 @@
 
 | ID | Anforderung | Status | Bewertung |
 |----|-------------|--------|-----------|
-| R1 | Aufgaben- & Tagesplanung (Familie, Rotation, Catch-Up, Kalender) | ✅ gut | Rotation inkl. Mehrfach-Catch-Up (`test_overdue_task_advances_rotation_multiple_times`, `test_bulk_complete_overdue_*`), Mitglieder-Szenarien, Pairwise-Matrix. **Lücke:** Tages-/Wochenübersicht nicht explizit getestet. |
+| R1 | Aufgaben- & Tagesplanung (Familie, Rotation, Catch-Up, Kalender) | ✅ stark | Rotation inkl. Mehrfach-Catch-Up (`test_overdue_task_advances_rotation_multiple_times`, `test_bulk_complete_overdue_*`), Mitglieder-Szenarien, Pairwise-Matrix. **Geschlossen:** modulübergreifende Tages-/Wochenübersicht `system.agenda` (Gruppierung nach Kalendertag, 7-Tage-Span, Überfällige separat) in `tests/test_overview.py`. |
 | R2 | Erinnerungen & Benachrichtigungen | ✅ geschlossen | `tests/test_scheduler_reminders.py` (Auslösen, Fälligkeits-Wording, Dedup) + **neu** Persistenz-Klasse: „gesehen"-Marker werden atomar nach `reminder_seen.json` im State-Ordner persistiert und beim Start geladen (kein Doppelmelden nach Neustart); Marker sind datumsfrei → DST-/Zeitsprung löst keine erneute Meldung aus; defekte State-Datei wird ignoriert. |
 | R3 | Kategorien & Prioritäten | ✅ geschlossen | `test_expenses_per_category_aggregates`, `test_calendar_unknown_category_normalizes` + **neu** `tests/test_priority_category.py`. **Geschlossen:** Kategorie-Filter für Verträge (`contracts.list`), Kontakte (`social.contacts`, nach Beziehung) und Aufträge (`family.orders`); Prioritäts-Vergabe (`family.add_order`) + stabile Sortierung; additive Migration v2→v3. |
 | R4 | Suche & Filter | ✅ geschlossen | `test_search_finds_multiple_sources`, `test_search_finds_notes` + **neu** `tests/test_search_filters.py`. **Geschlossen:** `system.search` akzeptiert jetzt `date_from`/`date_to`, `status`, `category`; Filter ohne Suchwort funktioniert, ein gesetzter Filter schliesst Quellen ohne das Feld aus. |
@@ -52,7 +52,10 @@
 
 ### Mittel — Robustheit & UX
 
-4. **R1 — Tages-/Wochenübersicht.**
+4. **R1 — Tages-/Wochenübersicht.** ✅ **ERLEDIGT**
+   Umgesetzt als Capability `system.agenda`
+   ([modules/overview.py](../modules/overview.py)), Tests in
+   [tests/test_overview.py](test_overview.py):
    - `test_day_view_groups_due_items`, `test_week_view_spans_seven_days`.
 
 5. **R6 — Import-Robustheit.**

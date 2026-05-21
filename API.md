@@ -6,7 +6,7 @@ Automatisch aus den geladenen Modulen erzeugt. Regenerieren mit:
 python tools/gen_api_doc.py > API.md
 ```
 
-Gesamtzahl: **88** Capabilities in **11** Modulen.
+Gesamtzahl: **89** Capabilities in **11** Modulen.
 
 ## Modul `calendar`
 
@@ -693,6 +693,14 @@ Gesamtsicht fuer ein Jahr: Summe aller Ausgaben, Top-Kategorien, monatlicher Sch
 
 
 ## Modul `system`
+
+### `system.agenda`
+
+Gruppiert die anstehenden Fristen aller Module nach Kalendertag. Standard: kommende 7 Tage (Wochenuebersicht). Ueberfaellige Eintraege kommen separat zurueck.
+
+**Parameter:**
+
+- `horizon_days` (integer) - Anzahl Tage ab heute (Standard: 7)
 
 ### `system.search`
 

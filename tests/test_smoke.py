@@ -35,6 +35,7 @@ from modules.family import FamilyModule
 from modules.finance import FinanceModule
 from modules.inbox import InboxModule
 from modules.notes import NotesModule
+from modules.overview import OverviewModule
 from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
@@ -106,6 +107,7 @@ def _build_system(llm=None) -> tuple[Database, ModuleRegistry, Assistant, str]:
         contracts_repo, expense_repo, calendar_repo,
         family_repo, social_repo, proposal_repo, notes=notes_repo))
     registry.register(StatisticsModule(expense_repo, contracts_repo))
+    registry.register(OverviewModule())
     return db, registry, Assistant(registry, llm=llm), tmp.name
 
 

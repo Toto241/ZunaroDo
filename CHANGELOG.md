@@ -6,6 +6,12 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Tages-/Wochenübersicht (R1)** - neue Capability `system.agenda`
+  ([modules/overview.py](modules/overview.py)) bündelt die Fristen aller
+  aktiven Module und gruppiert sie nach Kalendertag (Standard: kommende 7
+  Tage = Wochenübersicht); überfällige Einträge kommen separat zurück. Der
+  `ModuleContext` exponiert dafür `collect_events`. Tests:
+  [tests/test_overview.py](tests/test_overview.py).
 - **Persistente Erinnerungs-Marker (R2)** - der `ProactiveScheduler`
   ([services/scheduler.py](services/scheduler.py)) speichert die bereits
   gemeldeten Erinnerungen atomar in `reminder_seen.json` im State-Ordner
