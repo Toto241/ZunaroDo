@@ -6,6 +6,14 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Persistente Erinnerungs-Marker (R2)** - der `ProactiveScheduler`
+  ([services/scheduler.py](services/scheduler.py)) speichert die bereits
+  gemeldeten Erinnerungen atomar in `reminder_seen.json` im State-Ordner
+  und lädt sie beim Start. Dadurch keine Doppelmeldung nach einem Neustart.
+  Die Marker sind bewusst datumsfrei (`module_id` + Titel), sodass ein
+  System-/Zeitzonensprung (DST) keine erneute Meldung auslöst; eine defekte
+  State-Datei wird ignoriert. Tests:
+  [tests/test_scheduler_reminders.py](tests/test_scheduler_reminders.py).
 - **Prioritäten & Kategorie-Filter (R3)** - einmalige Aufträge haben jetzt
   eine Priorität (`hoch`/`mittel`/`normal`) und eine optionale Kategorie
   ([models.py](models.py), Schema-Migration v2→v3). `family.orders` sortiert

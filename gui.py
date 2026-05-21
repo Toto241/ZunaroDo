@@ -262,7 +262,9 @@ class AlltagshelferGUI(ctk.CTk):
             extra_event_sources=[
                 license_event_source(
                     lambda: _load_license_for_sched(self.settings_repo)),
-            ])
+            ],
+            state_path=(state_dir(self.profile)
+                        / ProactiveScheduler.STATE_FILE_NAME))
         self.sync_worker = PeriodicSyncWorker(
             synced, interval_seconds=config.sync_interval_seconds) \
             if synced is not None else None

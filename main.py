@@ -355,6 +355,7 @@ def main() -> None:
         extra_event_sources=[
             license_event_source(lambda: load_license(settings)),
         ],
+        state_path=state_path / ProactiveScheduler.STATE_FILE_NAME,
     )
     triggered = scheduler.check_now()
     print(f"  Notifikationen ausgeloest: {len(triggered)}")

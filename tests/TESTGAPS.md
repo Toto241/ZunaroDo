@@ -11,7 +11,7 @@
 | ID | Anforderung | Status | Bewertung |
 |----|-------------|--------|-----------|
 | R1 | Aufgaben- & Tagesplanung (Familie, Rotation, Catch-Up, Kalender) | ✅ gut | Rotation inkl. Mehrfach-Catch-Up (`test_overdue_task_advances_rotation_multiple_times`, `test_bulk_complete_overdue_*`), Mitglieder-Szenarien, Pairwise-Matrix. **Lücke:** Tages-/Wochenübersicht nicht explizit getestet. |
-| R2 | Erinnerungen & Benachrichtigungen | ⚠️ → ✅ | War nur über Lizenz-Events geprüft. **Neu geschlossen** durch `tests/test_scheduler_reminders.py` (Auslösen, Fälligkeits-Wording, Dedup). **Restlücke:** Persistenz der „gesehen"-Marker über echten Prozess-Neustart; Verhalten bei Systemzeit-/Zeitzonensprung (DST). |
+| R2 | Erinnerungen & Benachrichtigungen | ✅ geschlossen | `tests/test_scheduler_reminders.py` (Auslösen, Fälligkeits-Wording, Dedup) + **neu** Persistenz-Klasse: „gesehen"-Marker werden atomar nach `reminder_seen.json` im State-Ordner persistiert und beim Start geladen (kein Doppelmelden nach Neustart); Marker sind datumsfrei → DST-/Zeitsprung löst keine erneute Meldung aus; defekte State-Datei wird ignoriert. |
 | R3 | Kategorien & Prioritäten | ✅ geschlossen | `test_expenses_per_category_aggregates`, `test_calendar_unknown_category_normalizes` + **neu** `tests/test_priority_category.py`. **Geschlossen:** Kategorie-Filter für Verträge (`contracts.list`), Kontakte (`social.contacts`, nach Beziehung) und Aufträge (`family.orders`); Prioritäts-Vergabe (`family.add_order`) + stabile Sortierung; additive Migration v2→v3. |
 | R4 | Suche & Filter | ✅ geschlossen | `test_search_finds_multiple_sources`, `test_search_finds_notes` + **neu** `tests/test_search_filters.py`. **Geschlossen:** `system.search` akzeptiert jetzt `date_from`/`date_to`, `status`, `category`; Filter ohne Suchwort funktioniert, ein gesetzter Filter schliesst Quellen ohne das Feld aus. |
 | R5 | Datenpersistenz & Mehrgeräte-Sync | ✅ stark | LWW-Konfliktauflösung, Re-Entry-Schutz (`test_synced_outer_suppresses_synced_nested`), Kompaktierung, HTTP-Provider, TLS-Handshake, Pairing. |
@@ -34,12 +34,14 @@
    - `test_search_filters_by_status` — z. B. nur offene Vorschläge.
    - `test_search_empty_query_with_filter_lists_filtered` — Filter ohne Suchwort.
 
-2. **R2 — Erinnerungs-Persistenz über Neustart.**
-   - `test_seen_markers_survive_restart` — `_seen` aus Persistenz laden, sodass
-     nach Neustart keine Doppelmeldung erfolgt (erfordert Persistierung der
-     Marker; aktuell nur In-Memory).
-   - `test_clock_change_does_not_resend` — Systemzeit/Zeitzonen-Sprung (DST)
-     führt nicht zu erneuten oder verpassten Meldungen.
+2. **R2 — Erinnerungs-Persistenz über Neustart.** ✅ **ERLEDIGT**
+   Umgesetzt in [services/scheduler.py](../services/scheduler.py)
+   (`state_path` + atomare `reminder_seen.json`), Tests in
+   [tests/test_scheduler_reminders.py](test_scheduler_reminders.py):
+   - `test_seen_markers_survive_restart` — Marker werden persistiert/geladen,
+     keine Doppelmeldung nach Neustart.
+   - `test_clock_change_does_not_resend` — datumsfreie Marker → Zeit-/DST-Sprung
+     löst keine erneute Meldung aus.
 
 3. **R3 — Prioritäten & Kategorie-Filter.** ✅ **ERLEDIGT**
    Umgesetzt in [tests/test_priority_category.py](test_priority_category.py):

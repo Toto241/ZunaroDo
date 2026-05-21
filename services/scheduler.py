@@ -11,8 +11,10 @@ Thread-Schleife zurueck, sodass die Demo auch ohne Extra-Paket startet.
 """
 from __future__ import annotations
 
+import json
 import threading
 import time
+from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 from core.interface import ModuleRegistry
@@ -30,17 +32,23 @@ EventSource = Callable[[int], list[Event]]
 class ProactiveScheduler:
     """Periodischer Check anstehender Ereignisse mit Notifikation."""
 
+    STATE_FILE_NAME = "reminder_seen.json"
+
     def __init__(self, registry: ModuleRegistry,
                  notifier: Optional[Notifier] = None,
                  warn_within_days: int = 14,
                  interval_seconds: int = 3600,
-                 extra_event_sources: Optional[Iterable[EventSource]] = None):
+                 extra_event_sources: Optional[Iterable[EventSource]] = None,
+                 state_path: Optional[Path] = None):
         self.registry = registry
         self.notifier = notifier or Notifier()
         self.warn_within_days = warn_within_days
         self.interval_seconds = interval_seconds
         self._extra_sources: list[EventSource] = list(extra_event_sources or [])
-        self._seen: set[tuple[str, str]] = set()
+        # Marker bewusst zeit-/datumsfrei (module_id, title): so loest ein
+        # System-/Zeitzonen-Sprung (DST) keine erneute Meldung aus.
+        self.state_path = Path(state_path) if state_path else None
+        self._seen: set[tuple[str, str]] = self._load_seen()
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._aps = None                              # APScheduler-Instanz
@@ -88,7 +96,35 @@ class ProactiveScheduler:
                     else f"{-d} Tage ueberfaellig")
             self.notifier.notify(ev.title, f"{when} - {ev.module_name}")
             triggered.append(ev.title)
+        if triggered:
+            self._persist_seen()
         return triggered
+
+    # ---- Persistenz der gesehenen Marker ------------------------------
+    def _load_seen(self) -> set[tuple[str, str]]:
+        """Laedt die persistierten Marker. Fehlt/kaputt -> leere Menge,
+        damit ein Defekt nie den Start blockiert."""
+        if not self.state_path or not self.state_path.exists():
+            return set()
+        try:
+            data = json.loads(self.state_path.read_text(encoding="utf-8"))
+            return {(str(m), str(t)) for m, t in data}
+        except (json.JSONDecodeError, ValueError, TypeError, OSError):
+            return set()
+
+    def _persist_seen(self) -> None:
+        """Schreibt die Marker atomar (tmp + replace), damit ein Absturz
+        keine halbe Datei hinterlaesst."""
+        if not self.state_path:
+            return
+        try:
+            self.state_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = sorted([m, t] for m, t in self._seen)
+            tmp = self.state_path.with_name(self.state_path.name + ".tmp")
+            tmp.write_text(json.dumps(payload), encoding="utf-8")
+            tmp.replace(self.state_path)
+        except OSError:                                # pragma: no cover
+            pass
 
     # ---- intern --------------------------------------------------------
     def _try_start_apscheduler(self) -> bool:
