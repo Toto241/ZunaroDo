@@ -4,9 +4,9 @@ Leichtes i18n-Scaffolding fuer den Alltagshelfer.
 Bewusst minimal: ein in JSON gepflegter Key-Value-Speicher pro Sprache.
 'de' ist die Default-Sprache und enthaelt den vollstaendigen Satz an
 Strings. Weitere Sprachen liefern eine Teil- oder Vollmenge; fehlende
-Schluessel fallen auf die Default-Sprache zurueck (und zuletzt auf den
-Key selbst, damit ein im Code vergessener Eintrag sichtbar bleibt, aber
-nichts crasht).
+oder leere Schluessel fallen auf die Default-Sprache zurueck (und zuletzt
+auf den Key selbst, damit ein im Code vergessener Eintrag sichtbar
+bleibt, aber nichts crasht).
 
 Unterstuetzt werden die 24 EU-Amtssprachen. Welche davon wie weit
 uebersetzt sind, zeigt `python -m tools.i18n_sync --coverage`.
@@ -160,7 +160,7 @@ def resolve_language(
 
 
 class I18n:
-    """Sehr schlanker Uebersetzungs-Lookup."""
+    """Sehr schlanker Uebersetzungs-Lookup mit EU-Sprachunterstuetzung."""
 
     DEFAULT_LANGUAGE = "de"
     #: Alle Sprachen, fuer die ein Locale-File existieren *darf*.
@@ -181,10 +181,14 @@ class I18n:
                            else {})
 
     def t(self, key: str, default: Optional[str] = None) -> str:
-        """Liefert die Uebersetzung. Reihenfolge: lang -> default-lang -> arg -> key."""
-        if key in self._strings:
+        """Liefert die Uebersetzung. Reihenfolge: lang -> default-lang -> arg -> key.
+
+        Leere Strings gelten als 'nicht uebersetzt' und loesen denselben
+        Fallback aus wie ein fehlender Key.
+        """
+        if key in self._strings and self._strings[key]:
             return self._strings[key]
-        if key in self._fallback:
+        if key in self._fallback and self._fallback[key]:
             return self._fallback[key]
         return default if default is not None else key
 
