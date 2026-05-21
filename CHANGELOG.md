@@ -65,6 +65,14 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **TLS-Zertifikatserstellung für den Sync-Server** - neuer Helfer
+  [services/tls_certs.py](services/tls_certs.py) erzeugt ein
+  selbstsigniertes Cert+Key-Paar (RSA-2048, SubjectAltName für
+  Hostname/localhost/127.0.0.1, Schlüssel 0600). `python -m
+  services.sync_server --self-signed` erzeugt es bei Bedarf und startet den
+  Server direkt mit TLS. `cryptography` wird lazy importiert; Tests
+  ([tests/test_tls_certs.py](tests/test_tls_certs.py)) laufen auf CI und
+  überspringen sauber, wo kein cryptography-Backend verfügbar ist.
 - **Multi-User-Profile (Geräte-Profile)** - mehrere getrennte Datenbestände
   (je eigene DB + State) auf einem Gerät, umschaltbar über Neustarts hinweg.
   Toolkit-freier, vollautomatisch getesteter `ProfilesManager`

@@ -237,7 +237,18 @@ def main() -> None:
                          help="Pfad zum TLS-Zertifikat (PEM)")
     parser.add_argument("--key", default=None,
                          help="Pfad zum privaten TLS-Schluessel (PEM)")
+    parser.add_argument("--self-signed", action="store_true",
+                         help="Erzeugt bei Bedarf ein selbstsigniertes "
+                              "Zertifikat unter --cert/--key (Default: "
+                              "./sync-cert.pem / ./sync-key.pem) und nutzt es.")
     args = parser.parse_args()
+
+    if args.self_signed:
+        # Default-Pfade, falls nicht angegeben; dann Cert bei Bedarf erzeugen.
+        args.cert = args.cert or "sync-cert.pem"
+        args.key = args.key or "sync-key.pem"
+        from services.tls_certs import generate_self_signed_cert
+        generate_self_signed_cert(args.cert, args.key, common_name=args.host)
 
     if bool(args.cert) != bool(args.key):
         parser.error("--cert UND --key muessen gemeinsam gesetzt sein")

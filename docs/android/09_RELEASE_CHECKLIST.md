@@ -89,6 +89,9 @@ Verantwortlicher: **Release-Owner** (rotierend, in `CODEOWNERS` markiert).
 - [ ] Sync-Endpoint-URL in `settings` ist Production-URL, nicht
       Staging.
 - [ ] TLS-Zertifikat des Sync-Servers gültig (HSTS, kein Mixed Content).
+      Für lokale/Heimnetz-Setups erzeugt
+      `python -m services.sync_server --self-signed` ein selbstsigniertes
+      Cert+Key (siehe `services/tls_certs.py`); der Client pinnt es.
 - [ ] Sync mit zweitem Demo-Gerät: Änderung von Gerät A erscheint auf
       Gerät B innerhalb < 60 s.
 - [ ] Conflict-Replay-Test: parallele Änderung → last-writer-wins
