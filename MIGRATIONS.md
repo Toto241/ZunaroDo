@@ -32,6 +32,18 @@ Indizes:
 - `idx_notes_attachment(entity_type, entity_id)`
 - `idx_audit_log_created_at(created_at DESC)`
 
+## Version 3 - Prioritaeten & Kategorien fuer Auftraege
+
+Hinzugefuegt (additiv, beide via `_ensure_column`):
+
+- `household_orders.priority` (TEXT, Default `'normal'`) - Werte
+  `hoch` | `mittel` | `normal`. Steuert die Sortierung in `family.orders`.
+- `household_orders.category` (TEXT, Default `''`) - frei waehlbare
+  Kategorie zum Filtern (`family.orders` mit `category`).
+
+Bestandszeilen erhalten die Defaults; der Migrations-Roundtrip ist in
+`tests/test_priority_category.py` (`TestOrderSchemaMigration`) abgedeckt.
+
 ## Roundtrip-Tests
 
 Jede Migration wird durch einen Test in `tests/test_smoke.py` abgedeckt,

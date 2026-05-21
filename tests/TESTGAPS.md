@@ -12,7 +12,7 @@
 |----|-------------|--------|-----------|
 | R1 | Aufgaben- & Tagesplanung (Familie, Rotation, Catch-Up, Kalender) | ✅ gut | Rotation inkl. Mehrfach-Catch-Up (`test_overdue_task_advances_rotation_multiple_times`, `test_bulk_complete_overdue_*`), Mitglieder-Szenarien, Pairwise-Matrix. **Lücke:** Tages-/Wochenübersicht nicht explizit getestet. |
 | R2 | Erinnerungen & Benachrichtigungen | ⚠️ → ✅ | War nur über Lizenz-Events geprüft. **Neu geschlossen** durch `tests/test_scheduler_reminders.py` (Auslösen, Fälligkeits-Wording, Dedup). **Restlücke:** Persistenz der „gesehen"-Marker über echten Prozess-Neustart; Verhalten bei Systemzeit-/Zeitzonensprung (DST). |
-| R3 | Kategorien & Prioritäten | ⚠️ dünn | Nur `test_expenses_per_category_aggregates`, `test_calendar_unknown_category_normalizes`. **Lücke:** Prioritäten-Vergabe/-Sortierung; Kategorie-Filter über Verträge/Kontakte/Aufgaben. |
+| R3 | Kategorien & Prioritäten | ✅ geschlossen | `test_expenses_per_category_aggregates`, `test_calendar_unknown_category_normalizes` + **neu** `tests/test_priority_category.py`. **Geschlossen:** Kategorie-Filter für Verträge (`contracts.list`), Kontakte (`social.contacts`, nach Beziehung) und Aufträge (`family.orders`); Prioritäts-Vergabe (`family.add_order`) + stabile Sortierung; additive Migration v2→v3. |
 | R4 | Suche & Filter | ✅ geschlossen | `test_search_finds_multiple_sources`, `test_search_finds_notes` + **neu** `tests/test_search_filters.py`. **Geschlossen:** `system.search` akzeptiert jetzt `date_from`/`date_to`, `status`, `category`; Filter ohne Suchwort funktioniert, ein gesetzter Filter schliesst Quellen ohne das Feld aus. |
 | R5 | Datenpersistenz & Mehrgeräte-Sync | ✅ stark | LWW-Konfliktauflösung, Re-Entry-Schutz (`test_synced_outer_suppresses_synced_nested`), Kompaktierung, HTTP-Provider, TLS-Handshake, Pairing. |
 | R6 | Import/Export (CSV, ICS, VCF, PDF) | ✅ gut | Export/Import-Roundtrips für alle Entitäten, ICS/VCF-Validierung & Negativfälle, PDF-Report (`test_pdf_report_produced`). |
@@ -41,10 +41,12 @@
    - `test_clock_change_does_not_resend` — Systemzeit/Zeitzonen-Sprung (DST)
      führt nicht zu erneuten oder verpassten Meldungen.
 
-3. **R3 — Prioritäten & Kategorie-Filter.**
-   - `test_tasks_filter_by_category`, `test_contracts_filter_by_category`,
-     `test_contacts_filter_by_category`.
-   - `test_task_priority_sort_order` — Sortierung nach Priorität stabil.
+3. **R3 — Prioritäten & Kategorie-Filter.** ✅ **ERLEDIGT**
+   Umgesetzt in [tests/test_priority_category.py](test_priority_category.py):
+   - `test_orders_filter_by_category`, `test_contracts_filter_by_category`,
+     `test_contacts_filter_by_relation`.
+   - `test_order_priority_sort_order` — Sortierung nach Priorität stabil.
+   - `test_migration_adds_columns_and_keeps_rows` — Schema v2→v3.
 
 ### Mittel — Robustheit & UX
 

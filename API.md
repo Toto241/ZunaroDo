@@ -122,7 +122,11 @@ Erstellt ein fristgerechtes Kuendigungsschreiben fuer einen Vertrag - als druckb
 
 ### `contracts.list`
 
-Listet alle aktiven Vertraege mit Kosten auf.
+Listet alle aktiven Vertraege mit Kosten auf. Optional nach Kategorie filterbar.
+
+**Parameter:**
+
+- `category` (string) - Nur Vertraege dieser Kategorie
 
 ### `contracts.list_deleted`
 
@@ -217,6 +221,8 @@ Legt einen einmaligen Auftrag an, gezielt einer Person zugewiesen (mit Termin).
 - `assignee` (string) - Name der zustaendigen Person
 - `due_date` (string) - Faelligkeit ISO (YYYY-MM-DD)
 - `description` (string) - Zusatzinfo zum Auftrag
+- `priority` (string) - Prioritaet: hoch | mittel | normal (Standard: normal)
+- `category` (string) - Kategorie zum Filtern
 
 ### `family.add_task`
 
@@ -267,7 +273,11 @@ Listet die Haushaltsmitglieder auf. Auch von anderen Modulen nutzbar, um Eintrae
 
 ### `family.orders`
 
-Listet die einmaligen Auftraege mit Zustaendigkeit und Status auf.
+Listet die einmaligen Auftraege mit Zustaendigkeit und Status auf, sortiert nach Prioritaet. Optional nach Kategorie filterbar.
+
+**Parameter:**
+
+- `category` (string) - Nur Auftraege dieser Kategorie
 
 ### `family.purge_member` *(destruktiv)*
 
@@ -573,7 +583,11 @@ Legt einen Kontakt fuer die soziale Pflege an.
 
 ### `social.contacts`
 
-Listet alle Kontakte mit Resttagen bis zum naechsten Melden auf.
+Listet alle Kontakte mit Resttagen bis zum naechsten Melden auf. Optional nach Beziehung (Kategorie) filterbar.
+
+**Parameter:**
+
+- `relation` (string) - Nur Kontakte mit dieser Beziehung (z.B. Familie, Freund)
 
 ### `social.delete_contact` *(destruktiv)*
 
@@ -682,12 +696,16 @@ Gesamtsicht fuer ein Jahr: Summe aller Ausgaben, Top-Kategorien, monatlicher Sch
 
 ### `system.search`
 
-Sucht querbeet in Vertraegen, Ausgaben, Terminen, Familienmitgliedern, Kontakten und Vorschlaegen. Eingabe ist ein Stichwort - Treffer kommen vereinheitlicht zurueck.
+Sucht querbeet in Vertraegen, Ausgaben, Terminen, Familienmitgliedern, Kontakten und Vorschlaegen. Eingabe ist ein Stichwort - Treffer kommen vereinheitlicht zurueck. Optional filterbar nach Zeitraum, Status und Kategorie.
 
 **Parameter:**
 
-- `query` (string) **(erforderlich)** - Suchbegriff (mindestens 2 Zeichen)
+- `query` (string) - Suchbegriff (mindestens 2 Zeichen; entfaellt, wenn ein Filter gesetzt ist)
 - `limit` (integer) - Maximale Treffer (Standard: 50)
+- `date_from` (string) - Nur Treffer ab diesem Datum (ISO JJJJ-MM-TT)
+- `date_to` (string) - Nur Treffer bis zu diesem Datum (ISO JJJJ-MM-TT)
+- `status` (string) - Nur Treffer mit diesem Status (z.B. 'offen', 'active')
+- `category` (string) - Nur Treffer dieser Kategorie
 
 
 ## Modul `templates`

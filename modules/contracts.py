@@ -186,8 +186,13 @@ class ContractModule(ModuleInterface):
         return [
             Capability(
                 name="contracts.list",
-                description="Listet alle aktiven Vertraege mit Kosten auf.",
-                parameters={},
+                description="Listet alle aktiven Vertraege mit Kosten auf. "
+                            "Optional nach Kategorie filterbar.",
+                parameters={
+                    "category": {"type": "string",
+                                 "description": "Nur Vertraege dieser "
+                                                "Kategorie"},
+                },
                 handler=self._cap_list,
             ),
             Capability(
@@ -325,8 +330,12 @@ class ContractModule(ModuleInterface):
         ]
 
     # ---- Handler-Implementierungen ------------------------------------
-    def _cap_list(self) -> dict:
+    def _cap_list(self, category: str | None = None) -> dict:
         contracts = self.repo.list_all(only_active=True)
+        if category:
+            wanted = category.strip().lower()
+            contracts = [c for c in contracts
+                         if (c.category or "").lower() == wanted]
         return {
             "count": len(contracts),
             "total_monthly_cost": round(sum(c.monthly_cost for c in contracts), 2),

@@ -115,6 +115,8 @@ CREATE TABLE IF NOT EXISTS household_orders (
     due_date    TEXT,
     description TEXT DEFAULT '',
     status      TEXT DEFAULT 'offen',
+    priority    TEXT DEFAULT 'normal',
+    category    TEXT DEFAULT '',
     created_at  TEXT,
     FOREIGN KEY (assignee_id) REFERENCES family_members(id) ON DELETE SET NULL
 );
@@ -233,7 +235,7 @@ def _ensure_column(conn, table: str,
 # 'CURRENT_SCHEMA_VERSION' ist die Version, die der Code erwartet. Wird
 # bei jedem Open verglichen mit PRAGMA user_version - bei Bedarf
 # laufen die Migrations-Steps nacheinander.
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 
 # Migrations werden als (von, nach, SQL-Skript)-Tupel registriert.
 # Schritt 1 -> 2: Soft-Delete-Spalten + Audit-Log + Task-Templates +
@@ -337,6 +339,13 @@ def _migrate_schema(conn) -> tuple[int, int]:
         CREATE INDEX IF NOT EXISTS idx_note_attachments_note
             ON note_attachments(note_id);
         """)
+    if current < 3:
+        # Schritt 2 -> 3: Prioritaet + Kategorie fuer einmalige Auftraege
+        # (R3). Additiv via _ensure_column, damit Bestands-DBs nicht crashen.
+        _ensure_column(conn, "household_orders", "priority",
+                       "TEXT DEFAULT 'normal'")
+        _ensure_column(conn, "household_orders", "category",
+                       "TEXT DEFAULT ''")
     conn.execute(f"PRAGMA user_version = {target}")
     conn.commit()
     return current, target
@@ -946,22 +955,33 @@ class FamilyRepository:
         now = _now_utc_iso()
         cur = self.db.conn.execute(
             "INSERT INTO household_orders (title, assignee_id, due_date,"
-            " description, status, created_at) VALUES (?,?,?,?,?,?)",
+            " description, status, priority, category, created_at)"
+            " VALUES (?,?,?,?,?,?,?,?)",
             (o.title, o.assignee_id,
              o.due_date.isoformat() if o.due_date else None,
-             o.description, o.status, now),
+             o.description, o.status, o.priority, o.category, now),
         )
         self.db.conn.commit()
         o.id = cur.lastrowid
         return o
 
-    def list_orders(self, only_open: bool = False) -> list[HouseholdOrder]:
+    def list_orders(self, only_open: bool = False,
+                    category: Optional[str] = None) -> list[HouseholdOrder]:
         sql = "SELECT * FROM household_orders"
+        conditions = []
+        params: list = []
         if only_open:
-            sql += " WHERE status='offen'"
-        sql += " ORDER BY due_date"
+            conditions.append("status='offen'")
+        if category:
+            conditions.append("LOWER(category)=LOWER(?)")
+            params.append(category)
+        if conditions:
+            sql += " WHERE " + " AND ".join(conditions)
+        # Sortierung: hoehere Prioritaet zuerst, dann nach Faelligkeit.
+        sql += (" ORDER BY CASE priority WHEN 'hoch' THEN 0"
+                " WHEN 'mittel' THEN 1 ELSE 2 END, due_date")
         orders = []
-        for row in self.db.conn.execute(sql):
+        for row in self.db.conn.execute(sql, params):
             order = HouseholdOrder(
                 id=row["id"],
                 title=row["title"],
@@ -970,6 +990,9 @@ class FamilyRepository:
                           if row["due_date"] else None),
                 description=row["description"],
                 status=row["status"],
+                priority=row["priority"] if "priority" in row.keys()
+                else "normal",
+                category=row["category"] if "category" in row.keys() else "",
             )
             if order.assignee_id:
                 member = self.get_member(order.assignee_id)

@@ -6,6 +6,13 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Prioritäten & Kategorie-Filter (R3)** - einmalige Aufträge haben jetzt
+  eine Priorität (`hoch`/`mittel`/`normal`) und eine optionale Kategorie
+  ([models.py](models.py), Schema-Migration v2→v3). `family.orders` sortiert
+  nach Priorität und filtert optional nach Kategorie; `family.add_order`
+  nimmt `priority`/`category` entgegen. Kategorie-/Beziehungs-Filter auch für
+  `contracts.list` und `social.contacts`. Tests:
+  [tests/test_priority_category.py](tests/test_priority_category.py).
 - **Such-Filter (R4)** - `system.search` akzeptiert nun optionale Filter
   `date_from`/`date_to` (Zeitraum), `status` und `category`
   ([modules/search.py](modules/search.py)). Ein gesetzter Filter schliesst

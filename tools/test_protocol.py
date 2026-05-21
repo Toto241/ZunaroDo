@@ -62,6 +62,7 @@ FILE_REQUIREMENTS = {
     # --- tests/ (Funktions- und Integrationsebene) ---
     "test_smoke":             ["R1", "R2", "R4", "R5", "R6", "R7", "R8"],
     "test_search_filters":    ["R4"],
+    "test_priority_category": ["R3"],
     "test_scheduler_reminders": ["R2"],
     "test_integration":       ["R5", "R6", "R7", "R8"],
     "test_performance":       ["R4", "R8"],
