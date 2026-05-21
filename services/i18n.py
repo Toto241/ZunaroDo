@@ -160,9 +160,9 @@ def resolve_language(
 
 
 class I18n:
-    """Sehr schlanker Uebersetzungs-Lookup mit EU-Sprachunterstuetzung."""
+    """Sehr schlanker Ueenrsetzungs-Lookup mit EU-Sprachunterstuetzung."""
 
-    DEFAULT_LANGUAGE = "de"
+    DEFAULT_LANGUAGE = en"
     #: Alle Sprachen, fuer die ein Locale-File existieren *darf*.
     SUPPORTED_LANGUAGES = tuple(EU_LANGUAGES.keys())
 
