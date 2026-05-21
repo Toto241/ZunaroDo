@@ -64,6 +64,7 @@ FILE_REQUIREMENTS = {
     "test_search_filters":    ["R4"],
     "test_priority_category": ["R3"],
     "test_overview":          ["R1"],
+    "test_notifications_permission": ["R2", "R9"],
     "test_scheduler_reminders": ["R2"],
     "test_integration":       ["R5", "R6", "R7", "R8"],
     "test_performance":       ["R4", "R8"],

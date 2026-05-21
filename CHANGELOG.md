@@ -6,6 +6,13 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **POST_NOTIFICATIONS-Berechtigung (Play-Store, Android 13+)** -
+  `buildozer.spec` und `playstore.yml` deklarieren jetzt
+  `POST_NOTIFICATIONS` für die Erinnerungs-Benachrichtigungen. Wird die
+  Berechtigung verweigert, bleibt die App nutzbar (der Notifier degradiert
+  auf In-App/Print statt zu crashen). Keine sensible/verbotene Permission
+  im Manifest. Tests:
+  [tests/test_notifications_permission.py](tests/test_notifications_permission.py).
 - **Tages-/Wochenübersicht (R1)** - neue Capability `system.agenda`
   ([modules/overview.py](modules/overview.py)) bündelt die Fristen aller
   aktiven Module und gruppiert sie nach Kalendertag (Standard: kommende 7

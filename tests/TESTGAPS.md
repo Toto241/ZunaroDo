@@ -69,13 +69,16 @@
 
 ### Play-Store-spezifisch 🟦 PLAY
 
-7. **POST_NOTIFICATIONS (Android 13+).** Laufzeitberechtigung für
-   Benachrichtigungen.
+7. **POST_NOTIFICATIONS (Android 13+).** ✅ **ERLEDIGT** Laufzeitberechtigung
+   für Benachrichtigungen — in `buildozer.spec` + `playstore.yml` deklariert.
+   Tests in [tests/test_notifications_permission.py](test_notifications_permission.py):
    - `test_manifest_declares_post_notifications` — buildozer.spec/Manifest
-     deklariert die Permission.
-   - `test_app_degrades_without_notification_permission` — App bleibt nutzbar,
-     wenn die Berechtigung verweigert wird (Erinnerungen werden in-App
-     angezeigt statt als System-Notification).
+     deklariert die Permission (+ `test_playstore_yml_declares_post_notifications`).
+   - `test_notify_does_not_raise_without_permission` — App bleibt nutzbar,
+     wenn die Berechtigung verweigert wird (Notifier degradiert auf In-App/Print
+     statt zu crashen).
+   - `test_no_denied_sensitive_permission_in_manifest` — deckt zugleich
+     Punkt 10 ab (keine sensible/verbotene Permission deklariert).
 
 8. **Konto-/Datenlöschung (Google Account Deletion Policy).**
    - `test_data_deletion_reachable_from_ui` — In-App-Pfad zur vollständigen
@@ -89,9 +92,10 @@
      müssen die Data-Safety-Angaben „Daten geteilt/verarbeitet" konsistent
      bleiben (aktuell nur „clean app shares nothing" geprüft).
 
-10. **Foreground-/Background-Verhalten.**
-    - `test_no_undeclared_background_location_or_sensitive_permission` — keine
-      sensiblen Berechtigungen ohne Deklaration/Begründung.
+10. **Foreground-/Background-Verhalten.** ✅ **ERLEDIGT** (zusammen mit Punkt 7)
+    - `test_no_denied_sensitive_permission_in_manifest` /
+      `test_only_whitelisted_permissions_declared` — keine sensiblen/verbotenen
+      Berechtigungen im Manifest; nur Whitelist-Permissions deklariert.
 
 11. **Closed-Testing-Nachweis (≥12 Tester / 14 Tage).** 🟦 PLAY
     - `test_release_gate_requires_closed_test_evidence` — Release-Gate prüft das
