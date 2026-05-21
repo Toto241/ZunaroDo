@@ -73,10 +73,35 @@ class TestClosedTestGate(unittest.TestCase):
         self.assertTrue(gate["config_ok"], gate["reasons"])
 
     def test_checker_does_not_fail_on_missing_evidence(self) -> None:
-        # Fehlender Nachweis ist WARN (vor Produktion noetig), kein FAIL.
+        # Fehlender Nachweis ist informativ (kein WARN/FAIL).
         report = pc.Report()
         pc.check_closed_test_evidence(report)
         self.assertEqual(report.by_level(pc.Level.FAIL), [])
+
+    def test_checker_skips_when_config_unreadable(self) -> None:
+        # CI-Step laeuft ohne PyYAML -> _load_playstore_yml liefert {}.
+        # Das darf KEIN FAIL ausloesen (sonst rot unter --strict).
+        orig = pc._load_playstore_yml
+        pc._load_playstore_yml = lambda *a, **k: {}
+        try:
+            report = pc.Report()
+            pc.check_closed_test_evidence(report)
+            self.assertEqual(report.by_level(pc.Level.FAIL), [])
+            self.assertEqual(report.by_level(pc.Level.WARN), [])
+        finally:
+            pc._load_playstore_yml = orig
+
+    def test_checker_fails_on_weak_config_when_readable(self) -> None:
+        # Ist der closed-Track lesbar, aber zu schwach -> FAIL bleibt.
+        orig = pc._load_playstore_yml
+        pc._load_playstore_yml = lambda *a, **k: {
+            "tracks": {"closed": {"min_testers": 5, "min_days": 3}}}
+        try:
+            report = pc.Report()
+            pc.check_closed_test_evidence(report)
+            self.assertTrue(report.by_level(pc.Level.FAIL))
+        finally:
+            pc._load_playstore_yml = orig
 
 
 if __name__ == "__main__":
