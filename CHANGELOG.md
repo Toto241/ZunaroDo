@@ -6,6 +6,13 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Tests
 
+- **Automatisch erzwungene Anforderungs-Abdeckung** - neuer Meta-Test
+  [tests/test_requirements_coverage.py](tests/test_requirements_coverage.py)
+  prüft, dass jede Anforderung R1–R10 mindestens einer Testdatei zugeordnet
+  ist, dass das Mapping nur bekannte IDs nutzt und dass jede gemappte Datei
+  existiert und echte `test_*`-Fälle enthält. Damit färbt die CI automatisch
+  rot, sobald eine Anforderung ohne Test bleibt oder eine Zuordnung ins
+  Leere zeigt.
 - **Import-Robustheit & Sync-Determinismus (R6/R5)** - neue Regressionstests:
   CSV-Import überspringt fehlerhafte Zeilen für alle Entitäten und fällt bei
   kaputten Werten auf Defaults zurück; iCal-Wiederholungen sind rund um die
