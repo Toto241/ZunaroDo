@@ -6,6 +6,17 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Tests
 
+- **Laufzeit-/Geräte-Tests für Google-Qualitätskonformität** - neben den
+  bisherigen Headless-Logik- und statischen Compliance-Checks gibt es jetzt
+  echte UI-Laufzeittests: ein Desktop-GUI-Boot-Smoke unter Xvfb
+  ([tests/test_gui_boot_smoke.py](tests/test_gui_boot_smoke.py)) und ein
+  headless KivyMD-Boot-Smoke
+  ([tests/test_mobile_boot_smoke.py](tests/test_mobile_boot_smoke.py)),
+  ausgeführt von [`.github/workflows/ui-runtime.yml`](.github/workflows/ui-runtime.yml)
+  (zunächst beratend). Dazu ein manueller Emulator-Monkey-Lauf
+  ([`.github/workflows/android-robo.yml`](.github/workflows/android-robo.yml))
+  als Repo-Pendant zu Googles Pre-Launch-Report. Beide Smoke-Tests skippen
+  sauber, wo GUI/Kivy fehlen.
 - **Automatisch erzwungene Anforderungs-Abdeckung** - neuer Meta-Test
   [tests/test_requirements_coverage.py](tests/test_requirements_coverage.py)
   prüft, dass jede Anforderung R1–R10 mindestens einer Testdatei zugeordnet

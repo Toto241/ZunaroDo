@@ -1,0 +1,74 @@
+name: Android Robo/Monkey (Emulator)
+
+# Pendant zu Googles Pre-Launch-Report: baut ein Debug-APK und laesst es
+# auf einem echten Android-Emulator mit dem Stress-Tester 'monkey' laufen,
+# um Crashes/ANRs zu finden, die nur zur Laufzeit auf einem Geraet
+# auftreten.
+#
+# Bewusst NUR manuell (workflow_dispatch) - der Build (buildozer) und der
+# Emulator sind teuer/langsam. Fuer die Produktion ist Googles eigener
+# Pre-Launch-Report (Upload in den Internal-Track) der maßgebliche,
+# kostenlose Weg auf echten Geraeten; dieser Workflow ist die
+# Repo-seitige Vorab-Absicherung.
+
+on:
+  workflow_dispatch:
+    inputs:
+      monkey_events:
+        description: "Anzahl Monkey-Events"
+        required: false
+        default: "500"
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Debug-APK bauen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Debug-APK (buildozer)
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android debug
+      - name: APK als Artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: bin/*.apk
+          if-no-files-found: error
+
+  robo:
+    name: Monkey auf Emulator
+    needs: build-apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: APK-Artefakt holen
+        uses: actions/download-artifact@v4
+        with:
+          name: debug-apk
+          path: bin
+      - name: KVM freigeben
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Emulator + Monkey
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_5
+          script: |
+            adb install -r bin/*.apk
+            PKG=de.alltagshelfer.alltagshelfer
+            adb shell monkey -p "$PKG" --throttle 200 \
+              --pct-syskeys 0 -v ${{ github.event.inputs.monkey_events || '500' }}
+            # Auf Crashes/ANRs im Logcat pruefen
+            if adb logcat -d | grep -E "FATAL EXCEPTION|ANR in $PKG"; then
+              echo "::error::Crash/ANR im Monkey-Lauf gefunden"
+              exit 1
+            fi

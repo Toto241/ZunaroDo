@@ -347,3 +347,31 @@ automatisierbar):
    (ohne gesetzte Variable wird der Schritt nur übersprungen).
 5. Dieselbe URL im **Play-Console-Store-Listing** unter „Datenschutz­erklärung"
    eintragen.
+
+## Laufzeit-/Geräte-Qualität (über statische Checks hinaus)
+
+Google bewertet App-Qualität primär am **Laufzeitverhalten auf echten
+Geräten** (Android Vitals, Pre-Launch-Report). Dafür gibt es zusätzlich
+zu den Unit-/Compliance-Checks:
+
+- **UI-Boot-Smoke** ([`.github/workflows/ui-runtime.yml`](../../.github/workflows/ui-runtime.yml)):
+  startet die echten Oberflächen statt nur statisch zu prüfen.
+  - `desktop-gui-smoke`: baut die customtkinter-App unter `xvfb` auf,
+    ruft `_refresh_all` und fängt Render-/Boot-Crashes
+    ([tests/test_gui_boot_smoke.py](../../tests/test_gui_boot_smoke.py)).
+  - `mobile-kivy-smoke`: bootet die KivyMD-App headless (Mock-Window)
+    und baut alle fünf Tabs
+    ([tests/test_mobile_boot_smoke.py](../../tests/test_mobile_boot_smoke.py)).
+  - Beide Jobs sind **zunächst beratend** (`continue-on-error: true`), da
+    ohne lokale Ausführungs-Umgebung erstellt. Nach dem ersten grünen Lauf
+    vom Release-Owner verpflichtend machen (Flag entfernen).
+- **Android Robo/Monkey** ([`.github/workflows/android-robo.yml`](../../.github/workflows/android-robo.yml),
+  manuell): baut ein Debug-APK und stresst es mit `monkey` auf einem
+  Emulator; bricht bei `FATAL EXCEPTION`/ANR ab.
+- **Pre-Launch-Report (maßgeblich):** Upload in den Internal-Track lässt
+  Google die App auf **echten Geräten** testen (Crashes, Accessibility,
+  Sicherheit) — der kostenlose, authoritative Weg; siehe
+  [11_PLAY_SUBMISSION.md](11_PLAY_SUBMISSION.md).
+- **Android Vitals** (Crash-free ≥ 99,5 %, ANR < 0,47 %) werden erst nach
+  Veröffentlichung gemessen und sind in der Release-Checkliste (Abschnitt M)
+  als Gate hinterlegt.

@@ -76,6 +76,20 @@ Pflicht-Assets (aktuell, ohne Skeleton/Lorem-ipsum):
   Nachweis als `release/closed-test-JJJJ-MM.md` ablegen (Vorlage:
   `release/CLOSED_TEST_EVIDENCE_TEMPLATE.md`).
 
+## 7a. Geräte-Qualität (Pre-Launch-Report)
+
+Google bewertet die technische Qualität auf echten Geräten — das ersetzt
+kein statischer Check. Pflicht/empfohlen:
+
+- **Pre-Launch-Report**: Nach dem Upload in den Internal-/Closed-Track
+  testet Google die App automatisch auf physischen Geräten (Crashes,
+  Accessibility, Sicherheit, Performance). Befunde vor Produktion abarbeiten.
+- **Repo-seitige Vorab-Absicherung** (CI): UI-Boot-Smoke
+  (`ui-runtime.yml`) und der manuelle Emulator-Monkey (`android-robo.yml`)
+  fangen Boot-/Render-Crashes schon vor dem Upload.
+- **Android Vitals** nach Rollout beobachten: Crash-free Users ≥ 99,5 %,
+  ANR < 0,47 % (Release-Checkliste Abschnitt M).
+
 ## 8. Reihenfolge
 
 1. Identitäts-/Kontoverifizierung abschließen.
