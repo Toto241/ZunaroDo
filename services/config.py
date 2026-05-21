@@ -48,7 +48,7 @@ DEFAULTS: dict[str, str] = {
     "sync.enabled": "auto",                # auto | true | false
     "db.key": "",
     "notify.warn_within_days": "14",
-    "i18n.language": "de",
+    "i18n.language": "auto",               # auto | de | en | fr | ...
     "backup.auto_enabled": "false",
     "backup.directory": "backups",
     "backup.retention_count": "10",
@@ -117,7 +117,7 @@ class AppConfig:
     notify_warn_within_days: int = 14
     #: Sprachwahl. Neben einem konkreten Code (z.B. "fr") ist der
     #: Sonderwert "auto" erlaubt: dann wird die Geraetesprache erkannt.
-    ii18n_language: str = "auto"
+    i18n_language: str = "auto"
 
     backup_auto_enabled: bool = False
     backup_directory: str = "backups"

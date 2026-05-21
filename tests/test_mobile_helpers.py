@@ -199,10 +199,10 @@ class TestLanguageMenuItems(unittest.TestCase):
                 selected = [i for i in items if i["selected"]]
                 self.assertEqual(len(selected), 1)
 
-    def test_default_selects_german(self) -> None:
+    def test_default_selects_english(self) -> None:
         items = language_menu_items(None)
         sel = next(i for i in items if i["selected"])
-        self.assertEqual(sel["code"], "de")
+        self.assertEqual(sel["code"], "en")
 
     def test_auto_selected(self) -> None:
         items = language_menu_items("auto")
@@ -213,10 +213,10 @@ class TestLanguageMenuItems(unittest.TestCase):
         sel = next(i for i in items if i["selected"])
         self.assertEqual(sel["code"], "fr")
 
-    def test_unknown_setting_falls_back_to_german(self) -> None:
+    def test_unknown_setting_falls_back_to_default(self) -> None:
         items = language_menu_items("xx")
         sel = next(i for i in items if i["selected"])
-        self.assertEqual(sel["code"], "de")
+        self.assertEqual(sel["code"], "en")
 
     def test_contains_all_available_languages(self) -> None:
         from services.i18n import I18n

@@ -1365,7 +1365,7 @@ class TestI18n(unittest.TestCase):
     def test_unknown_language_falls_back_to_default(self) -> None:
         from services.i18n import I18n
         i18n = I18n("kl")     # Klingonisch - nicht unterstuetzt
-        self.assertEqual(i18n.language, "de")
+        self.assertEqual(i18n.language, "en")
 
     def test_missing_key_returns_key(self) -> None:
         from services.i18n import I18n

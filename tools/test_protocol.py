@@ -20,6 +20,8 @@ Exit-Code = 0 bei vollstaendig gruen + erfuelltem Release-Gate, sonst 1.
 from __future__ import annotations
 
 import argparse
+import importlib
+import inspect
 import json
 import os
 import platform
@@ -32,6 +34,143 @@ from xml.etree import ElementTree as ET
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+
+# ---------------------------------------------------------------------------
+# Anforderungs-Katalog (Traceability Anforderung <-> Test)
+# ---------------------------------------------------------------------------
+# Leitet sich aus der Modulbeschreibung der App ab. Jeder Test wird ueber
+# seine Datei einem oder mehreren Anforderungsbereichen zugeordnet, sodass
+# das Dashboard eine Abdeckungsmatrix und Luecken anzeigen kann.
+REQUIREMENTS = {
+    "R1":  "Aufgaben- & Tagesplanung (Familie, Rotation, Catch-Up, Kalender)",
+    "R2":  "Erinnerungen & Benachrichtigungen (Scheduler, Persistenz, Systemzeit)",
+    "R3":  "Kategorien & Prioritaeten (Filter/Sortierung)",
+    "R4":  "Suche & Filter (Volltextsuche, grosse Datenmengen)",
+    "R5":  "Datenpersistenz & Mehrgeraete-Sync (FileSync/HttpSync, Konflikt, Re-Entry, TLS/Token)",
+    "R6":  "Import/Export (CSV, ICS, VCF, PDF)",
+    "R7":  "Datenschutz & Sicherheit (Policy, Data-Safety, Consent, SQLCipher, Loeschung)",
+    "R8":  "Stabilitaet & Tests (Smoke, Integration, GUI-Boot, Property/Fuzz, Negativ)",
+    "R9":  "Play-Store-Release (Check, Store-Listing, Release-Gate, Build/AAB)",
+    "R10": "QA / Testuebersicht (Protokoll- & Dashboard-Generatoren)",
+}
+
+# Test-Datei (stem) -> Liste von Anforderungs-IDs
+FILE_REQUIREMENTS = {
+    # --- tests/ (Funktions- und Integrationsebene) ---
+    "test_smoke":             ["R1", "R2", "R5", "R6", "R7", "R8"],
+    "test_scheduler_reminders": ["R2"],
+    "test_integration":       ["R5", "R6", "R7", "R8"],
+    "test_performance":       ["R4", "R8"],
+    "test_property":          ["R6", "R8"],
+    "test_data_deletion":     ["R7"],
+    "test_data_safety":       ["R7", "R9"],
+    "test_gui_smoke":         ["R8"],
+    "test_i18n":              ["R8"],
+    "test_mobile_helpers":    ["R8"],
+    "test_legal":             ["R7", "R9"],
+    "test_privacy_policy":    ["R7", "R9"],
+    "test_playstore_check":   ["R9"],
+    "test_store_listing":     ["R9"],
+    "test_pairing":           ["R5", "R7"],
+    "test_pairing_handshake": ["R5", "R7"],
+    # --- tests/concept/ (Konzept-, Negativ-, Compliance-Ebene) ---
+    "test_members_scenarios":     ["R1", "R5"],
+    "test_roles_permissions":     ["R1", "R7"],
+    "test_pairwise_matrix":       ["R1", "R3"],
+    "test_properties_concept":    ["R8"],
+    "test_negative_inputs":       ["R8"],
+    "test_negative_network":      ["R5", "R8"],
+    "test_negative_security":     ["R7", "R8"],
+    "test_privacy_scan":          ["R7"],
+    "test_privacy_data_rights":   ["R7"],
+    "test_gitignore_completeness": ["R7"],
+    "test_gui_free_tier_boot":    ["R8"],
+    "test_gui_refresh_guards":    ["R8"],
+    "test_gui_widget_guards":     ["R8"],
+    "test_playstore_sync":        ["R9"],
+    "test_release_gate":          ["R9"],
+    "test_release_gate_extended": ["R9"],
+    "test_build_status":          ["R9", "R10"],
+    "test_control_panel":         ["R10"],
+    "test_dashboard_generator":   ["R10"],
+    "test_protocol_generator":    ["R10"],
+    "test_md_to_html":            ["R10"],
+}
+
+
+def _module_stem(classname: str) -> str:
+    """Liefert den Dateinamen-Stamm (z.B. 'test_smoke') aus dem Classname."""
+    for part in reversed(classname.split(".")):
+        if part.startswith("test_"):
+            return part
+    return classname.split(".")[-1]
+
+
+_SOURCE_CACHE: dict[tuple, dict] = {}
+
+
+def _resolve_source(classname: str, name: str) -> dict:
+    """Loest den Quelltext/Docstring eines Testfalls via Introspection auf.
+
+    Liefert ein Dict mit file/lineno/doc/source. Parametrisierte Namen
+    (``test_x[a-b]``) werden auf die Basisfunktion reduziert. Fehler
+    werden still verschluckt - dann bleiben die Felder leer.
+    """
+    base = name.split("[")[0]
+    key = (classname, base)
+    if key in _SOURCE_CACHE:
+        return _SOURCE_CACHE[key]
+    info = {"file": "", "lineno": 0, "doc": "", "source": ""}
+    obj = None
+    parts = classname.split(".")
+    try:
+        mod = importlib.import_module(classname)
+        obj = getattr(mod, base, None)
+    except Exception:
+        mod = None
+    if obj is None and len(parts) >= 2:
+        # classname koennte 'modul.Klasse' sein -> Methode in der Klasse
+        try:
+            m2 = importlib.import_module(".".join(parts[:-1]))
+            cls = getattr(m2, parts[-1], None)
+            if cls is not None:
+                obj = getattr(cls, base, None)
+        except Exception:
+            obj = None
+    if obj is not None:
+        try:
+            src = inspect.getsource(obj)
+            info["source"] = src if len(src) <= 12000 else src[:12000] + "\n# ... (gekuerzt)"
+            info["doc"] = (inspect.getdoc(obj) or "")[:800]
+            srcfile = inspect.getsourcefile(obj) or inspect.getfile(obj)
+            if srcfile:
+                try:
+                    info["file"] = os.path.relpath(
+                        srcfile, REPO_ROOT).replace(os.sep, "/")
+                except ValueError:
+                    info["file"] = srcfile
+            _, lineno = inspect.getsourcelines(obj)
+            info["lineno"] = lineno
+        except (OSError, TypeError):
+            pass
+    _SOURCE_CACHE[key] = info
+    return info
+
+
+def _enrich_records(records: list[dict]) -> None:
+    """Reichert jeden Test-Record um Modul, Anforderungen und Quelltext an."""
+    for r in records:
+        stem = _module_stem(r.get("classname", ""))
+        r["module"] = stem
+        r["requirements"] = FILE_REQUIREMENTS.get(stem, [])
+        src = _resolve_source(r.get("classname", ""), r.get("name", ""))
+        r["file"] = src["file"]
+        r["lineno"] = src["lineno"]
+        r["doc"] = src["doc"]
+        r["source"] = src["source"]
 REPORT_DIR = REPO_ROOT / "tests" / "concept" / "reports"
 JUNIT_XML = REPORT_DIR / "junit.xml"
 PROTOCOL_MD = REPORT_DIR / "protocol.md"
@@ -167,6 +306,34 @@ def _stats_by_marker(records: list[dict]) -> dict[str, dict]:
         b[r["status"]] += 1
         b["count"] += 1
         b["duration_s"] += r["time_s"]
+    return out
+
+
+def _stats_by_requirement(records: list[dict]) -> dict[str, dict]:
+    """Aggregiert Test-Ergebnisse pro Anforderungs-ID (R1..R10).
+
+    Ein Test, der mehreren Anforderungen zugeordnet ist, zaehlt in jeder
+    mit. Bereiche ohne Tests bleiben mit count=0 sichtbar, damit Luecken
+    im Dashboard auffallen.
+    """
+    out: dict[str, dict] = {
+        rid: {"label": label, "passed": 0, "failed": 0, "error": 0,
+              "skipped": 0, "count": 0, "duration_s": 0.0,
+              "files": set()}
+        for rid, label in REQUIREMENTS.items()
+    }
+    for r in records:
+        for rid in r.get("requirements", []):
+            b = out.get(rid)
+            if b is None:
+                continue
+            b[r["status"]] += 1
+            b["count"] += 1
+            b["duration_s"] += r.get("time_s", 0.0)
+            b["files"].add(r.get("module", ""))
+    # set -> sortierte Liste, damit JSON-serialisierbar
+    for b in out.values():
+        b["files"] = sorted(f for f in b["files"] if f)
     return out
 
 
@@ -339,8 +506,10 @@ def main(argv: list[str] | None = None) -> int:
     if not records:
         print("WARN: JUnit-XML enthielt keine Testfaelle.")
         return rc or 1
+    _enrich_records(records)
     classified = _classify(records)
     marker_stats = _stats_by_marker(records)
+    req_stats = _stats_by_requirement(records)
     decision, reasons = _go_no_go(classified["totals"], marker_stats)
     md = _format_protocol_md(records, classified, marker_stats, decision,
                               reasons, target, args.marker, elapsed)
@@ -352,6 +521,8 @@ def main(argv: list[str] | None = None) -> int:
         "by_file": {f: {k: v for k, v in b.items() if k != "tests"}
                       for f, b in classified["by_file"].items()},
         "by_marker": marker_stats,
+        "requirements": REQUIREMENTS,
+        "by_requirement": req_stats,
         "decision": decision,
         "reasons": reasons,
         "elapsed_s": elapsed,

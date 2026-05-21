@@ -263,6 +263,60 @@ nav.toc a:hover { color: var(--primary); background: var(--surface);
   content: " (nicht gefunden)"; color: var(--block);
 }
 
+/* ---- Aufklappbare Testzeilen ---- */
+details.test-item { border-bottom: 1px solid var(--border); }
+details.test-item:last-child { border-bottom: none; }
+details.test-item > summary {
+  display: grid; grid-template-columns: 92px 1fr auto 70px;
+  align-items: center; gap: 12px; padding: 8px 12px;
+  cursor: pointer; list-style: none; font-family: var(--mono);
+  font-size: 12px;
+}
+details.test-item > summary::-webkit-details-marker { display: none; }
+details.test-item > summary:hover { background: var(--surface-muted); }
+details.test-item[open] > summary { background: var(--surface-muted); }
+.test-item .t-id { color: var(--text); word-break: break-all; }
+.test-item .t-time { color: var(--text-muted); text-align: right;
+                     font-variant-numeric: tabular-nums; }
+.test-item .t-reqs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.req-tag {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 5px; background: var(--surface-muted);
+  color: var(--text-muted); border: 1px solid var(--border);
+}
+.test-body {
+  padding: 4px 14px 14px 14px; background: var(--bg);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.test-body .t-meta {
+  font-family: var(--mono); font-size: 12px; color: var(--text-muted);
+  display: flex; gap: 14px; flex-wrap: wrap;
+}
+.test-body .t-doc {
+  font-size: 13px; line-height: 1.5; color: var(--text);
+  border-left: 3px solid var(--primary); padding: 4px 0 4px 10px;
+  white-space: pre-wrap;
+}
+.test-body .t-fail {
+  background: var(--block-bg); border: 1px solid var(--block);
+  border-radius: 6px; padding: 8px 10px; color: var(--block);
+  font-family: var(--mono); font-size: 12px; white-space: pre-wrap;
+  overflow-x: auto;
+}
+.test-body pre.t-src {
+  margin: 0; padding: 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.45;
+  overflow-x: auto; white-space: pre; color: var(--text);
+}
+.test-body .t-src-missing { font-size: 12px; color: var(--text-muted); }
+
+/* ---- Anforderungs-Abdeckungsmatrix ---- */
+.req-row td.req-id { font-family: var(--mono); font-weight: 700; }
+.req-row td.req-label { color: var(--text); }
+.req-row.gap td { background: var(--block-bg); }
+.req-row.thin td { background: var(--hold-bg); }
+
 .doc {
   max-width: 880px; margin: 0 auto; padding: 32px 24px 64px;
   background: var(--surface); color: var(--text);

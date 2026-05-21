@@ -96,7 +96,7 @@ class TestI18nClass(unittest.TestCase):
 
     def test_unknown_language_falls_back_to_default(self) -> None:
         t = I18n("xx")
-        self.assertEqual(t.language, "de")
+        self.assertEqual(t.language, "en")
 
     def test_translation_lookup(self) -> None:
         t = I18n("fr")
@@ -104,10 +104,10 @@ class TestI18nClass(unittest.TestCase):
         self.assertEqual(t.t("common.save"), "Enregistrer")
 
     def test_missing_key_falls_back_to_default_lang(self) -> None:
-        # 'bg' hat nur CORE_KEYS - ein Nicht-Core-Key faellt auf de zurueck.
+        # 'bg' hat nur CORE_KEYS - ein Nicht-Core-Key faellt auf en zurueck.
         t = I18n("bg")
         self.assertEqual(t.t("tab.dashboard"), "Табло")        # uebersetzt
-        self.assertEqual(t.t("chat.thinking"), "denkt nach ...")  # Fallback de
+        self.assertEqual(t.t("chat.thinking"), "thinking ...")  # Fallback en
 
     def test_unknown_key_returns_key(self) -> None:
         t = I18n("de")

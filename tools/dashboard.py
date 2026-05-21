@@ -346,6 +346,60 @@ nav.toc a:hover { color: var(--primary); background: var(--surface);
 .artifact-link.missing .desc::after {
   content: " (nicht gefunden)"; color: var(--block);
 }
+
+/* ---- Aufklappbare Testzeilen ---- */
+details.test-item { border-bottom: 1px solid var(--border); }
+details.test-item:last-child { border-bottom: none; }
+details.test-item > summary {
+  display: grid; grid-template-columns: 92px 1fr auto 70px;
+  align-items: center; gap: 12px; padding: 8px 12px;
+  cursor: pointer; list-style: none; font-family: var(--mono);
+  font-size: 12px;
+}
+details.test-item > summary::-webkit-details-marker { display: none; }
+details.test-item > summary:hover { background: var(--surface-muted); }
+details.test-item[open] > summary { background: var(--surface-muted); }
+.test-item .t-id { color: var(--text); word-break: break-all; }
+.test-item .t-time { color: var(--text-muted); text-align: right;
+                     font-variant-numeric: tabular-nums; }
+.test-item .t-reqs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.req-tag {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 5px; background: var(--surface-muted);
+  color: var(--text-muted); border: 1px solid var(--border);
+}
+.test-body {
+  padding: 4px 14px 14px 14px; background: var(--bg);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.test-body .t-meta {
+  font-family: var(--mono); font-size: 12px; color: var(--text-muted);
+  display: flex; gap: 14px; flex-wrap: wrap;
+}
+.test-body .t-doc {
+  font-size: 13px; line-height: 1.5; color: var(--text);
+  border-left: 3px solid var(--primary); padding: 4px 0 4px 10px;
+  white-space: pre-wrap;
+}
+.test-body .t-fail {
+  background: var(--block-bg); border: 1px solid var(--block);
+  border-radius: 6px; padding: 8px 10px; color: var(--block);
+  font-family: var(--mono); font-size: 12px; white-space: pre-wrap;
+  overflow-x: auto;
+}
+.test-body pre.t-src {
+  margin: 0; padding: 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.45;
+  overflow-x: auto; white-space: pre; color: var(--text);
+}
+.test-body .t-src-missing { font-size: 12px; color: var(--text-muted); }
+
+/* ---- Anforderungs-Abdeckungsmatrix ---- */
+.req-row td.req-id { font-family: var(--mono); font-weight: 700; }
+.req-row td.req-label { color: var(--text); }
+.req-row.gap td { background: var(--block-bg); }
+.req-row.thin td { background: var(--hold-bg); }
 """
 
 
@@ -378,10 +432,10 @@ function attachSearch(inputId, listId) {
   input.addEventListener('input', () => {
     const q = input.value.trim().toLowerCase();
     let visible = 0;
-    list.querySelectorAll('.row-item').forEach(row => {
+    list.querySelectorAll('.test-item').forEach(row => {
       const txt = row.dataset.searchKey || '';
       const show = !q || txt.indexOf(q) !== -1;
-      row.style.display = show ? 'grid' : 'none';
+      row.style.display = show ? 'block' : 'none';
       if (show) visible++;
     });
     const c = document.getElementById('search-count');
@@ -774,6 +828,11 @@ def _build_center(source_path: Path) -> str:
     """
 
 
+def _req_tags_html(reqs: list[str]) -> str:
+    return "".join(f"<span class='req-tag' title='{_esc(REQ_TITLE.get(rid, rid))}'>"
+                   f"{_esc(rid)}</span>" for rid in reqs)
+
+
 def _test_list(records: list[dict]) -> str:
     rows: list[str] = []
     # nach Status sortiert: fail/error zuerst, dann skipped, dann passed
@@ -786,27 +845,119 @@ def _test_list(records: list[dict]) -> str:
         state = {"passed": "go", "failed": "block", "error": "block",
                  "skipped": "hold", "running": "hold"}.get(status, "unknown")
         rid = r.get("id", "")
+        reqs = r.get("requirements", []) or []
+        file_ = r.get("file", "")
+        lineno = r.get("lineno", 0)
+        doc = r.get("doc", "")
+        source = r.get("source", "")
+        message = r.get("message", "")
+        module = r.get("module", "")
+
+        # Suchschluessel enthaelt ID, Status, Anforderungen, Modul
+        search_key = " ".join([rid.lower(), status,
+                               " ".join(reqs).lower(), module.lower()])
+
+        meta_bits = []
+        if file_:
+            loc = f"{file_}:{lineno}" if lineno else file_
+            meta_bits.append(f"<span>📄 {_esc(loc)}</span>")
+        if module:
+            meta_bits.append(f"<span>🧩 {_esc(module)}</span>")
+        if reqs:
+            meta_bits.append("<span>🎯 " + ", ".join(
+                _esc(f"{rid} {REQ_TITLE.get(rid, '')}") for rid in reqs)
+                + "</span>")
+        meta_html = ("<div class='t-meta'>" + "".join(meta_bits) + "</div>"
+                     if meta_bits else "")
+        doc_html = (f"<div class='t-doc'>{_esc(doc)}</div>" if doc else "")
+        fail_html = (f"<div class='t-fail'>{_esc(message[:4000])}</div>"
+                     if message and status in ("failed", "error") else "")
+        if source:
+            src_html = f"<pre class='t-src'>{_esc(source)}</pre>"
+        else:
+            src_html = ("<div class='t-src-missing'>Quelltext nicht "
+                        "aufloesbar (z. B. dynamisch erzeugter Test).</div>")
+
         rows.append(
-            f"<div class='row-item' "
-            f"data-search-key='{_esc(rid.lower())} {_esc(status)}'>"
-            f"<div class='col-status'>{_pill(state, status)}</div>"
-            f"<div class='col-name'>{_esc(rid)}</div>"
-            f"<div class='col-time'>{r.get('time_s', 0):.3f}s</div>"
-            f"</div>"
+            f"<details class='test-item' data-search-key='{_esc(search_key)}'>"
+            f"<summary>"
+            f"<span class='col-status'>{_pill(state, status)}</span>"
+            f"<span class='t-id'>{_esc(rid)}</span>"
+            f"<span class='t-reqs'>{_req_tags_html(reqs)}</span>"
+            f"<span class='t-time'>{r.get('time_s', 0):.3f}s</span>"
+            f"</summary>"
+            f"<div class='test-body'>{meta_html}{doc_html}{fail_html}{src_html}</div>"
+            f"</details>"
         )
     return f"""
     <div class="card span-3">
       <div class="title">
-        <h3>Vollständige Test-Liste</h3>
+        <h3>Vollständige Test-Liste — Zeile anklicken zeigt den Testfall</h3>
         <span class="sub" id="search-count">{len(records)} Tests sichtbar</span>
       </div>
       <div class="searchbar">
         <input id="test-filter" type="search"
-               placeholder="Filter (Test-ID oder Status, z. B. 'privacy' oder 'failed')…">
+               placeholder="Filter (Test-ID, Status, Anforderung z. B. 'R5', oder Modul)…">
       </div>
       <div class="list" id="test-list">
         {''.join(rows)}
       </div>
+    </div>
+    """
+
+
+REQ_TITLE: dict[str, str] = {}
+
+
+def _requirement_matrix(data: dict) -> str:
+    """Abdeckungsmatrix Anforderung (R1..R10) -> Tests, mit Lueckenmarkierung."""
+    reqs = data.get("requirements", {}) or {}
+    by_req = data.get("by_requirement", {}) or {}
+    REQ_TITLE.update(reqs)
+    rows: list[str] = []
+    for rid in reqs:
+        b = by_req.get(rid, {}) or {}
+        n = b.get("count", 0)
+        p = b.get("passed", 0)
+        f = b.get("failed", 0)
+        e = b.get("error", 0)
+        sk = b.get("skipped", 0)
+        files = b.get("files", []) or []
+        if f or e:
+            state, klass = "block", "req-row gap"
+        elif n == 0:
+            state, klass = "unknown", "req-row gap"
+        elif n < 5:
+            state, klass = "hold", "req-row thin"
+        else:
+            state, klass = "go", "req-row"
+        rows.append(
+            f"<tr class='{klass}'>"
+            f"<td class='req-id'>{_esc(rid)}</td>"
+            f"<td class='req-label'>{_esc(reqs.get(rid, ''))}</td>"
+            f"<td>{_pill(state, state.upper())}</td>"
+            f"<td class='num'>{n}</td>"
+            f"<td class='num'>{p}</td>"
+            f"<td class='num'>{f}</td>"
+            f"<td class='num'>{e}</td>"
+            f"<td class='num'>{sk}</td>"
+            f"<td class='id'>{_esc(', '.join(files)) if files else '—'}</td>"
+            "</tr>"
+        )
+    return f"""
+    <div class="card span-3" id="anforderungen">
+      <div class="title">
+        <h3>Anforderungs-Abdeckung (Traceability R1–R10)</h3>
+        <span class="sub">Rot = Lücke/Fehlschlag · Gelb = dünn (&lt;5 Tests)</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Anforderung</th><th>Status</th><th>Tests</th>
+          <th>passed</th><th>failed</th><th>error</th><th>skipped</th>
+          <th>Test-Dateien</th>
+        </tr></thead>
+        <tbody>{''.join(rows)}</tbody>
+      </table>
     </div>
     """
 
@@ -819,6 +970,8 @@ def render_dashboard(data: dict, source_path: Path) -> str:
     generated = data.get("generated_at") \
         or dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     by_marker = data.get("by_marker", {}) or {}
+    # Anforderungs-Titel global verfuegbar machen (fuer Tags in der Testliste)
+    REQ_TITLE.update(data.get("requirements", {}) or {})
 
     kpi_markers = [m for m in MARKER_LABEL if m in by_marker]
     kpi_html = "".join(_kpi_card(m, data) for m in kpi_markers)
@@ -858,6 +1011,7 @@ def render_dashboard(data: dict, source_path: Path) -> str:
     <a href="#artefakte">Artefakte</a>
     <a href="#build">Build</a>
     <a href="#kpis">KPIs</a>
+    <a href="#anforderungen">Anforderungen</a>
     <a href="#bereiche">Bereiche</a>
     <a href="#fehler">Fehler</a>
     <a href="#tests">Test-Liste</a>
@@ -876,6 +1030,9 @@ def render_dashboard(data: dict, source_path: Path) -> str:
       <div class="kpi-grid">
         {kpi_html}
       </div>
+    </section>
+    <section id="anforderungen" class="row">
+      {_requirement_matrix(data)}
     </section>
     <section id="bereiche" class="row">
       {_marker_table(data)}
