@@ -200,9 +200,12 @@ def _load_declared() -> dict:
     text = PLAYSTORE_YML.read_text(encoding="utf-8")
     try:
         import yaml
-        data = yaml.safe_load(text) or {}
     except ImportError:                               # pragma: no cover
-        data = json.loads(text)
+        # Ohne YAML-Parser laesst sich playstore.yml nicht lesen - der
+        # Aufrufer (CI-Check) installiert pyyaml; hier degradieren wir
+        # leise statt zu crashen.
+        return {}
+    data = yaml.safe_load(text) or {}
     return data.get("data_safety") or {}
 
 

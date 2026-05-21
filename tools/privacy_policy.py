@@ -85,10 +85,9 @@ def _privacy_url() -> str:
     text = PLAYSTORE_YML.read_text(encoding="utf-8")
     try:
         import yaml
-        data = yaml.safe_load(text) or {}
     except ImportError:                               # pragma: no cover
-        import json
-        data = json.loads(text)
+        return ""
+    data = yaml.safe_load(text) or {}
     return ((data.get("contact") or {}).get("privacy_policy_url") or "")
 
 

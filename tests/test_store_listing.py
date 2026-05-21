@@ -7,6 +7,12 @@ import unittest
 
 from tools import store_listing as sl
 
+try:
+    import yaml as _yaml  # noqa: F401
+    _HAS_YAML = True
+except ImportError:
+    _HAS_YAML = False
+
 
 class TestValidateLocalizations(unittest.TestCase):
 
@@ -65,6 +71,7 @@ class TestCuratedQuality(unittest.TestCase):
                     f"{loc}.{fld} ueberschreitet {limit}")
 
 
+@unittest.skipUnless(_HAS_YAML, "PyYAML nicht installiert")
 class TestRealRepo(unittest.TestCase):
 
     def test_real_localizations_valid(self) -> None:

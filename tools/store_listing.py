@@ -131,9 +131,9 @@ def _load_localizations() -> dict:
     text = PLAYSTORE_YML.read_text(encoding="utf-8")
     try:
         import yaml
-        data = yaml.safe_load(text) or {}
     except ImportError:                               # pragma: no cover
-        data = json.loads(text)
+        return {}
+    data = yaml.safe_load(text) or {}
     return data.get("localizations") or {}
 
 

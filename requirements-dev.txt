@@ -1,0 +1,12 @@
+# Entwicklungs-/Test-Abhaengigkeiten - NICHT Teil der App-Runtime.
+# Installieren mit:  pip install -r requirements-dev.txt
+-r requirements.txt
+
+# Test-Runner: die Konzept-/Property-Tests unter tests/concept/ sind im
+# pytest-Stil geschrieben und importieren pytest beim Modul-Load.
+pytest>=7.0
+
+# YAML-Parser fuer das Play-Store-Tooling (playstore_sync, data_safety,
+# store_listing, privacy_policy). Bewusst NICHT in requirements.txt, damit
+# der Android-/SDK-Inventar-Check keine ungenutzte Runtime-Lib meldet.
+PyYAML>=6.0
