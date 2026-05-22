@@ -294,10 +294,12 @@ class SyncedRegistry:
         self.registry = registry
         self.provider = provider
         self.synced = synced or DEFAULT_SYNCED_CAPABILITIES
-        self._replaying = False
         # Thread-Local-Marker: True, wenn der aktuelle Thread bereits
-        # mitten in einem synced dispatch() steckt. So werden Modul-zu-
-        # Modul-Aufrufe nicht doppelt geloggt.
+        # mitten in einem synced dispatch() steckt ('in_synced') bzw. einen
+        # Replay anwendet ('replaying'). BEIDE muessen thread-lokal sein:
+        # liefe 'replaying' als gemeinsames Flag, wuerde ein paralleler
+        # GUI-Dispatch waehrend eines Worker-Replays sein Event NICHT
+        # loggen und damit still nicht synchronisieren (N5-Race).
         self._local = threading.local()
         # ueberbruecken den Hook, indem wir den ORIGINAL-dispatch merken
         self._inner_dispatch = inner_dispatch or registry.dispatch
@@ -341,7 +343,7 @@ class SyncedRegistry:
             result = self._inner_dispatch(capability, args)
             if (is_synced
                     and not in_synced_outer
-                    and not self._replaying
+                    and not getattr(self._local, "replaying", False)
                     and "error" not in result):
                 # Tief kopierte Args: das Event darf nicht auf das
                 # urspruengliche dict referenzieren, sonst kann ein
@@ -374,7 +376,7 @@ class SyncedRegistry:
         """
         applied = 0
         with self._replay_lock:
-            self._replaying = True
+            self._local.replaying = True
             try:
                 for event in self.provider.unseen_events():
                     # Lamport: lokalen Counter auf >= empfangenen Wert
@@ -386,7 +388,7 @@ class SyncedRegistry:
                         applied += 1
                     self.provider.mark_seen(event.event_id)
             finally:
-                self._replaying = False
+                self._local.replaying = False
         return applied
 
     # ---- Pass-through: registry-aehnliche API -------------------------

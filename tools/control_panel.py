@@ -80,9 +80,13 @@ WIN11 = {
     "accent":       ("#005FB8", "#0078D4"),   # Akzent-Button
     "accent_hover": ("#1A6FC0", "#1A86D9"),
     "subtle_hover": ("#ECECEC", "#383838"),   # Hover fuer transparente Knoepfe
+    "nav_active":   ("#E8E8E8", "#383838"),    # aktiver Sidebar-Eintrag
     "text":         ("#1A1A1A", "#FFFFFF"),
     "text_muted":   ("#5A5A5A", "#9A9A9A"),
     "log_bg":       ("#FFFFFF", "#1B1B1B"),
+    "ok":           ("#1b873b", "#3fb950"),
+    "warn":         ("#b54708", "#e08a3c"),
+    "err":          ("#b42318", "#f85149"),
 }
 # Kandidaten in Reihenfolge der Bevorzugung (Windows 11 -> generisch).
 _FONT_CANDIDATES = ("Segoe UI Variable Text", "Segoe UI", "Segoe UI Emoji")
@@ -310,18 +314,30 @@ class CommandRunner:
 # UI
 # ---------------------------------------------------------------------------
 class ControlPanel(ctk.CTk):
-    """Hauptfenster - 4 Sektionen + Live-Log."""
+    """Hauptfenster - Sidebar-Navigation + Inhaltsbereich + Live-Log.
+
+    Die vier Sektionen (Tests, Build, Play-Store, Dokumentation) werden
+    EINMAL aufgebaut und ueber die Sidebar nur ein-/ausgeblendet - so sind
+    alle Aktionsknoepfe von Anfang an vorhanden (busy-Sperre + Tests).
+    """
 
     LOG_LIMIT = 4000      # max. Zeilen im Log (FIFO)
+
+    # (key, Sidebar-Titel, Aktions-Factory)
+    _SECTIONS = [
+        ("tests", "Tests & Cockpit", actions_tests),
+        ("build", "Build · Android / iOS / PC", actions_build),
+        ("playstore", "Play-Store-Sync", actions_playstore),
+    ]
 
     def __init__(self) -> None:
         super().__init__()
         ctk.set_appearance_mode("system")
         ctk.set_default_color_theme("blue")
         self._font_family = self._pick_font_family()
-        self.title("Zunarodo  -  Control Panel")
-        self.geometry("1120x780")
-        self.minsize(900, 640)
+        self.title("ZunaroDo  -  Control Panel")
+        self.geometry("1180x820")
+        self.minsize(960, 660)
         # Mica-aehnlicher Fensterhintergrund (statt CTk-Standardgrau).
         self.configure(fg_color=WIN11["window_bg"])
 
@@ -330,13 +346,34 @@ class ControlPanel(ctk.CTk):
         self._runner = CommandRunner(
             on_line=self._log_queue.put,
             on_done=self._exit_queue.put)
-        self._busy_buttons: list[ctk.CTkButton] = []
+        self._busy_buttons: list[ctk.CTkButton] = []     # Aktions-Knoepfe
+        self._nav_buttons: dict[str, ctk.CTkButton] = {}
+        self._section_frames: dict[str, ctk.CTkFrame] = {}
+        self._current_section = ""
         self._current_action_label = ""
+        self._after_ids: set[str] = set()
 
         self._build_ui()
+        self._select_section("tests")
         self._refresh_status()
         # ueber after() kontinuierlich die Queues pumpen
-        self.after(100, self._drain_queues)
+        self._safe_after(100, self._drain_queues)
+
+    # ---- after()-Verwaltung (sauberes Canceln beim Schliessen) ---------
+    def _safe_after(self, ms: int, fn: Callable[[], None]) -> str:
+        ident = self.after(ms, fn)
+        self._after_ids.add(ident)
+        return ident
+
+    def _on_close(self) -> None:
+        for ident in list(self._after_ids):
+            try:
+                self.after_cancel(ident)
+            except Exception:                             # noqa: BLE001
+                pass
+        self._after_ids.clear()
+        self._runner.stop()
+        self.destroy()
 
     # ---- Look & Feel ---------------------------------------------------
     def _pick_font_family(self) -> str:
@@ -360,73 +397,192 @@ class ControlPanel(ctk.CTk):
 
     # ---- Aufbau --------------------------------------------------------
     def _build_ui(self) -> None:
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self._build_sidebar()
+        self._build_main()
+        # Fenster-Lebenszyklus + Tastatur-Shortcuts
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+        self.bind("<Escape>", lambda _e: self._stop_current())
+        self.bind("<Control-l>", lambda _e: self._clear_log())
 
-        # Header
-        header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 6))
-        header.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(
-            header, text="Zunarodo  ·  Control Panel",
-            text_color=WIN11["text"],
-            font=self._font(size=20, weight="bold")
-        ).grid(row=0, column=0, sticky="w")
+    def _build_sidebar(self) -> None:
+        side = ctk.CTkFrame(self, width=232, corner_radius=0,
+                            fg_color=WIN11["card_bg"])
+        side.grid(row=0, column=0, sticky="nsew")
+        side.grid_propagate(False)
+        side.grid_columnconfigure(0, weight=1)
+        side.grid_rowconfigure(20, weight=1)            # Spacer nach unten
+
+        ctk.CTkLabel(side, text="ZunaroDo", text_color=WIN11["text"],
+                      font=self._font(20, "bold")
+                      ).grid(row=0, column=0, sticky="w", padx=18,
+                             pady=(18, 0))
+        ctk.CTkLabel(side, text="Control Panel", text_color=WIN11["text_muted"],
+                      font=self._font(12)
+                      ).grid(row=1, column=0, sticky="w", padx=18, pady=(0, 14))
+
+        nav = [(k, t) for k, t, _ in self._SECTIONS]
+        nav.append(("docs", "Dokumentation"))
+        for i, (key, title) in enumerate(nav):
+            btn = ctk.CTkButton(
+                side, text=title, anchor="w", height=38, corner_radius=6,
+                font=self._font(13), fg_color="transparent",
+                text_color=WIN11["text"], hover_color=WIN11["subtle_hover"],
+                command=lambda k=key: self._select_section(k))
+            btn.grid(row=2 + i, column=0, sticky="ew", padx=10, pady=2)
+            self._nav_buttons[key] = btn
+
+        ctk.CTkLabel(side, text="Darstellung", text_color=WIN11["text_muted"],
+                      font=self._font(11)
+                      ).grid(row=21, column=0, sticky="w", padx=18, pady=(8, 0))
+        self.mode_switch = ctk.CTkSegmentedButton(
+            side, values=["System", "Hell", "Dunkel"],
+            command=self._on_mode_change, font=self._font(12))
+        self.mode_switch.set("System")
+        self.mode_switch.grid(row=22, column=0, sticky="ew", padx=10,
+                              pady=(2, 16))
+
+    def _build_main(self) -> None:
+        main = ctk.CTkFrame(self, fg_color="transparent")
+        main.grid(row=0, column=1, sticky="nsew")
+        main.grid_columnconfigure(0, weight=1)
+        main.grid_rowconfigure(1, weight=3)             # Inhalt groesser
+        main.grid_rowconfigure(2, weight=2)             # Log darunter
+
+        # Topbar: Sektionstitel + Status
+        top = ctk.CTkFrame(main, fg_color="transparent")
+        top.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 6))
+        top.grid_columnconfigure(0, weight=1)
+        self.section_title = ctk.CTkLabel(
+            top, text="", text_color=WIN11["text"],
+            font=self._font(20, "bold"))
+        self.section_title.grid(row=0, column=0, sticky="w")
         self.status_label = ctk.CTkLabel(
-            header, text="Status: -", text_color=WIN11["text_muted"],
-            font=self._font(size=13))
-        self.status_label.grid(row=0, column=2, sticky="e")
+            top, text="Status: -", text_color=WIN11["text_muted"],
+            font=self._font(13))
+        self.status_label.grid(row=0, column=1, sticky="e")
 
-        # Sektionen
-        self._build_section(
-            row=1, title="Tests & Cockpit",
-            actions=actions_tests(),
-            extra=[self._subtle_button(self, "Cockpit oeffnen",
-                                       self._open_index)])
-        self._build_section(
-            row=2, title="Build  -  Android / iOS / PC",
-            actions=actions_build())
-        self._build_section(
-            row=3, title="Play-Store-Sync",
-            actions=actions_playstore())
-        self._build_link_section(
-            row=4, title="Dokumentation & Schnellzugriff",
-            items=links())
+        # Inhalt: alle Sektionen vorab bauen, nur aktive sichtbar
+        self.content_host = ctk.CTkFrame(main, fg_color="transparent")
+        self.content_host.grid(row=1, column=0, sticky="nsew", padx=20, pady=6)
+        self.content_host.grid_columnconfigure(0, weight=1)
+        self.content_host.grid_rowconfigure(0, weight=1)
+        for key, _title, factory in self._SECTIONS:
+            self._section_frames[key] = self._build_action_section(factory())
+        self._section_frames["docs"] = self._build_links_section(links())
 
-        # Live-Log
-        log_frame = ctk.CTkFrame(
-            self, corner_radius=8, fg_color=WIN11["card_bg"],
+        self._build_log(main, row=2)
+
+    def _build_action_section(self, actions: list[Action]) -> "ctk.CTkFrame":
+        frame = ctk.CTkScrollableFrame(self.content_host, fg_color="transparent")
+        frame.grid(row=0, column=0, sticky="nsew")
+        frame.grid_remove()
+        frame.grid_columnconfigure(0, weight=1)
+        for i, action in enumerate(actions):
+            self._action_card(frame, action).grid(
+                row=i, column=0, sticky="ew", pady=5)
+        return frame
+
+    def _build_links_section(self, items: list[LinkAction]) -> "ctk.CTkFrame":
+        frame = ctk.CTkScrollableFrame(self.content_host, fg_color="transparent")
+        frame.grid(row=0, column=0, sticky="nsew")
+        frame.grid_remove()
+        frame.grid_columnconfigure(0, weight=1)
+        for i, link in enumerate(items):
+            self._link_card(frame, link).grid(
+                row=i, column=0, sticky="ew", pady=5)
+        return frame
+
+    def _card_shell(self, parent) -> "ctk.CTkFrame":
+        card = ctk.CTkFrame(
+            parent, corner_radius=8, fg_color=WIN11["card_bg"],
             border_width=1, border_color=WIN11["card_border"])
-        log_frame.grid(row=5, column=0, sticky="nsew", padx=20, pady=6)
+        card.grid_columnconfigure(0, weight=1)
+        return card
+
+    def _action_card(self, parent, action: Action) -> "ctk.CTkFrame":
+        card = self._card_shell(parent)
+        info = ctk.CTkFrame(card, fg_color="transparent")
+        info.grid(row=0, column=0, sticky="ew", padx=14, pady=12)
+        info.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(info, text=action.label, text_color=WIN11["text"],
+                      font=self._font(14, "bold"), anchor="w", justify="left"
+                      ).grid(row=0, column=0, sticky="w")
+        if action.description:
+            ctk.CTkLabel(info, text=action.description,
+                          text_color=WIN11["text_muted"], font=self._font(12),
+                          anchor="w", justify="left", wraplength=620
+                          ).grid(row=1, column=0, sticky="w", pady=(2, 0))
+        label = "Bestaetigen ..." if action.confirm else "Ausfuehren"
+        btn = ctk.CTkButton(
+            card, text=label, width=140, corner_radius=6,
+            font=self._font(13), fg_color=WIN11["accent"],
+            hover_color=WIN11["accent_hover"], text_color="#FFFFFF",
+            command=lambda a=action: self._run_action(a))
+        btn.grid(row=0, column=1, padx=(8, 14), pady=12)
+        self._busy_buttons.append(btn)
+        return card
+
+    def _link_card(self, parent, link: LinkAction) -> "ctk.CTkFrame":
+        card = self._card_shell(parent)
+        info = ctk.CTkFrame(card, fg_color="transparent")
+        info.grid(row=0, column=0, sticky="ew", padx=14, pady=12)
+        info.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(info, text=link.label, text_color=WIN11["text"],
+                      font=self._font(14, "bold"), anchor="w", justify="left"
+                      ).grid(row=0, column=0, sticky="w")
+        if link.description:
+            ctk.CTkLabel(info, text=link.description,
+                          text_color=WIN11["text_muted"], font=self._font(12),
+                          anchor="w", justify="left", wraplength=620
+                          ).grid(row=1, column=0, sticky="w", pady=(2, 0))
+        ctk.CTkButton(
+            card, text="Oeffnen", width=140, corner_radius=6,
+            font=self._font(13), fg_color="transparent", border_width=1,
+            border_color=WIN11["card_border"], text_color=WIN11["text"],
+            hover_color=WIN11["subtle_hover"],
+            command=lambda l=link: self._open_link(l)
+        ).grid(row=0, column=1, padx=(8, 14), pady=12)
+        return card
+
+    def _build_log(self, master, row: int) -> None:
+        log_frame = ctk.CTkFrame(
+            master, corner_radius=8, fg_color=WIN11["card_bg"],
+            border_width=1, border_color=WIN11["card_border"])
+        log_frame.grid(row=row, column=0, sticky="nsew", padx=20, pady=(6, 10))
         log_frame.grid_columnconfigure(0, weight=1)
         log_frame.grid_rowconfigure(1, weight=1)
 
-        log_head = ctk.CTkFrame(log_frame, fg_color="transparent")
-        log_head.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 6))
-        log_head.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(log_head, text="Live-Log", text_color=WIN11["text"],
-                      font=self._font(size=14, weight="bold")
+        head = ctk.CTkFrame(log_frame, fg_color="transparent")
+        head.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 6))
+        head.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(head, text="Live-Log", text_color=WIN11["text"],
+                      font=self._font(14, "bold")
                       ).grid(row=0, column=0, sticky="w")
-        self.action_label = ctk.CTkLabel(log_head, text="bereit",
-                                           text_color=WIN11["text_muted"],
-                                           font=self._font(size=12))
-        self.action_label.grid(row=0, column=1, padx=(8, 8))
-        ctk.CTkButton(log_head, text="Log loeschen", width=120,
-                       corner_radius=6, font=self._font(size=13),
-                       fg_color="transparent", border_width=1,
-                       border_color=WIN11["card_border"],
-                       text_color=WIN11["text"],
-                       hover_color=WIN11["subtle_hover"],
-                       command=self._clear_log
-                       ).grid(row=0, column=2, padx=3)
+        self.action_label = ctk.CTkLabel(
+            head, text="bereit", text_color=WIN11["text_muted"],
+            font=self._font(12))
+        self.action_label.grid(row=0, column=1, sticky="w", padx=(10, 8))
+        self.exit_badge = ctk.CTkLabel(head, text="", font=self._font(12,
+                                       "bold"))
+        self.exit_badge.grid(row=0, column=2, padx=(0, 8))
+        for col, (txt, cmd) in enumerate((
+                ("Kopieren", self._copy_log),
+                ("Log loeschen", self._clear_log))):
+            ctk.CTkButton(
+                head, text=txt, width=110, corner_radius=6,
+                font=self._font(13), fg_color="transparent", border_width=1,
+                border_color=WIN11["card_border"], text_color=WIN11["text"],
+                hover_color=WIN11["subtle_hover"], command=cmd
+            ).grid(row=0, column=3 + col, padx=3)
         self.stop_button = ctk.CTkButton(
-            log_head, text="Stoppen", width=120, state="disabled",
-            corner_radius=6, font=self._font(size=13),
-            fg_color="transparent", border_width=1,
-            border_color=WIN11["card_border"], text_color=WIN11["text"],
-            hover_color=WIN11["subtle_hover"],
+            head, text="Stoppen", width=110, state="disabled",
+            corner_radius=6, font=self._font(13), fg_color="transparent",
+            border_width=1, border_color=WIN11["card_border"],
+            text_color=WIN11["text"], hover_color=WIN11["subtle_hover"],
             command=self._stop_current)
-        self.stop_button.grid(row=0, column=3, padx=3)
+        self.stop_button.grid(row=0, column=5, padx=3)
 
         self.log_text = ctk.CTkTextbox(
             log_frame, wrap="word", activate_scrollbars=True,
@@ -437,77 +593,33 @@ class ControlPanel(ctk.CTk):
                             pady=(0, 12))
         self.log_text.configure(state="disabled")
 
-        # Statuszeile unten
-        footer = ctk.CTkLabel(
-            self, text=f"Projekt: {REPO_ROOT}",
-            text_color=WIN11["text_muted"], font=self._font(size=11))
-        footer.grid(row=6, column=0, sticky="w", padx=20, pady=(0, 10))
+    # ---- Navigation ----------------------------------------------------
+    def _select_section(self, key: str) -> None:
+        if key not in self._section_frames:
+            return
+        for k, frame in self._section_frames.items():
+            if k == key:
+                frame.grid()
+            else:
+                frame.grid_remove()
+        for k, btn in self._nav_buttons.items():
+            active = (k == key)
+            btn.configure(
+                fg_color=WIN11["nav_active"] if active else "transparent",
+                text_color=WIN11["accent"] if active else WIN11["text"])
+        titles = {
+            "tests": "Tests & Cockpit",
+            "build": "Build · Android / iOS / PC",
+            "playstore": "Play-Store-Sync",
+            "docs": "Dokumentation & Schnellzugriff",
+        }
+        self.section_title.configure(text=titles.get(key, key))
+        self._current_section = key
 
-    def _card(self, row: int, title: str) -> "ctk.CTkFrame":
-        """Erzeugt eine Windows-11-Card (abgerundet, Layer-Farbe, Titel)."""
-        frame = ctk.CTkFrame(
-            self, corner_radius=8, fg_color=WIN11["card_bg"],
-            border_width=1, border_color=WIN11["card_border"])
-        frame.grid(row=row, column=0, sticky="ew", padx=20, pady=6)
-        frame.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(frame, text=title, text_color=WIN11["text"],
-                      font=self._font(size=15, weight="bold")
-                      ).grid(row=0, column=0, sticky="w", padx=14,
-                             pady=(12, 4))
-        return frame
-
-    def _accent_button(self, master, text, command) -> "ctk.CTkButton":
-        return ctk.CTkButton(
-            master, text=text, command=command, width=240,
-            corner_radius=6, font=self._font(size=13),
-            fg_color=WIN11["accent"], hover_color=WIN11["accent_hover"],
-            text_color="#FFFFFF")
-
-    def _subtle_button(self, master, text, command) -> "ctk.CTkButton":
-        return ctk.CTkButton(
-            master, text=text, command=command, width=240,
-            corner_radius=6, font=self._font(size=13),
-            fg_color="transparent", border_width=1,
-            border_color=WIN11["card_border"], text_color=WIN11["text"],
-            hover_color=WIN11["subtle_hover"])
-
-    def _build_section(self, row: int, title: str,
-                        actions: list[Action],
-                        extra: Optional[list[ctk.CTkButton]] = None) -> None:
-        frame = self._card(row, title)
-        btn_row = ctk.CTkFrame(frame, fg_color="transparent")
-        btn_row.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 12))
-        col = 0
-        for action in actions:
-            btn = self._accent_button(
-                btn_row, action.label,
-                command=lambda a=action: self._run_action(a))
-            btn.grid(row=col // 4, column=col % 4, padx=4, pady=4,
-                      sticky="ew")
-            self._busy_buttons.append(btn)
-            col += 1
-        for c in range(4):
-            btn_row.grid_columnconfigure(c, weight=1)
-        if extra:
-            for w in extra:
-                w.master = btn_row
-                w.grid(row=(col // 4), column=(col % 4), padx=4, pady=4,
-                        sticky="ew")
-                col += 1
-
-    def _build_link_section(self, row: int, title: str,
-                             items: list[LinkAction]) -> None:
-        frame = self._card(row, title)
-        btn_row = ctk.CTkFrame(frame, fg_color="transparent")
-        btn_row.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 12))
-        for idx, link in enumerate(items):
-            btn = self._subtle_button(
-                btn_row, link.label,
-                command=lambda l=link: self._open_link(l))
-            btn.grid(row=idx // 4, column=idx % 4, padx=4, pady=4,
-                      sticky="ew")
-        for c in range(4):
-            btn_row.grid_columnconfigure(c, weight=1)
+    def _on_mode_change(self, value: str) -> None:
+        ctk.set_appearance_mode(
+            {"System": "system", "Hell": "light", "Dunkel": "dark"}
+            .get(value, "system"))
 
     # ---- Aktionen ------------------------------------------------------
     def _run_action(self, action: Action) -> None:
@@ -529,6 +641,7 @@ class ControlPanel(ctk.CTk):
                     "'wsl' wurde nicht gefunden. Installiere WSL2 + "
                     "Ubuntu 22.04 zuerst (siehe MOBILE.md).")
                 return
+        self.exit_badge.configure(text="")
         self._append_log(f"\n$ {' '.join(self._quote_args(action.command))}\n")
         self._set_busy(True, action.label)
         ok = self._runner.start(action.command)
@@ -553,9 +666,16 @@ class ControlPanel(ctk.CTk):
         self.stop_button.configure(state="normal" if busy else "disabled")
         self.action_label.configure(
             text=f"laeuft: {label}" if busy else "bereit",
-            text_color=(("#b54708", "#e08a3c") if busy
-                        else WIN11["text_muted"]))
+            text_color=WIN11["warn"] if busy else WIN11["text_muted"])
         self._current_action_label = label
+
+    def _copy_log(self) -> None:
+        try:
+            text = self.log_text.get("1.0", "end-1c")
+            self.clipboard_clear()
+            self.clipboard_append(text)
+        except Exception:                                 # noqa: BLE001
+            pass
 
     # ---- Log -----------------------------------------------------------
     def _append_log(self, text: str) -> None:
@@ -589,10 +709,13 @@ class ControlPanel(ctk.CTk):
                 self._on_command_done(rc)
         except queue.Empty:
             pass
-        self.after(100, self._drain_queues)
+        self._safe_after(100, self._drain_queues)
 
     def _on_command_done(self, rc: int) -> None:
         self._append_log(f"[fertig - Exit-Code {rc}]\n")
+        self.exit_badge.configure(
+            text="OK" if rc == 0 else f"Exit {rc}",
+            text_color=WIN11["ok"] if rc == 0 else WIN11["err"])
         self._set_busy(False, "")
         # Wenn die Tests gelaufen sind, Status oben neu lesen
         self._refresh_status()
@@ -620,15 +743,6 @@ class ControlPanel(ctk.CTk):
         self.status_label.configure(text=text, text_color=color)
 
     # ---- Schnellaktionen ----------------------------------------------
-    def _open_index(self) -> None:
-        if INDEX_HTML.is_file():
-            webbrowser.open(INDEX_HTML.as_uri())
-        else:
-            messagebox.showinfo(
-                "Noch keine index.html",
-                "Bitte zuerst 'Volle Test-Suite' oder 'Dashboard neu rendern' "
-                "ausfuehren.")
-
     def _open_link(self, link: LinkAction) -> None:
         target = link.target
         if not target.exists():

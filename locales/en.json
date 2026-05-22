@@ -99,6 +99,7 @@
   "data.delete_done": "All data deleted. Please restart the app.",
   "calendar.title": "Calendar",
   "calendar.empty": "No events in the next {days} days.",
+  "calendar.no_events": "No events yet.",
   "calendar.recurring_suffix": ", recurring every {days} days",
   "social.title": "Social",
   "social.no_contacts": "No contacts yet.",

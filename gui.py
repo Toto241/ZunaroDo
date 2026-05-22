@@ -51,6 +51,9 @@ SAMPLE_MAIL = (
 
 URGENCY_COLOR = {"hoch": "#d9534f", "mittel": "#e8a33d", "normal": "#5b9bd5"}
 URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
+# Einheitliche Karten-/Trennlinien-Farbe (Light, Dark) - Windows-11-Fluent.
+# Zentral, damit alle Tabs denselben Rahmen verwenden.
+CARD_BORDER = ("#E5E5E5", "#3A3A3A")
 APP_DISPLAY_NAME = "ZunaroDo"
 _WIN11_APPEARANCE_MODE = "light"
 _CRITICAL_CONFIRMATION_CAPABILITIES = {
@@ -295,7 +298,7 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
 def _labeled_entry(parent, label: str, placeholder: str = "",
                    width: int = 200) -> ctk.CTkEntry:
     row = ctk.CTkFrame(parent, fg_color="transparent")
-    row.pack(fill="x", pady=2)
+    row.pack(fill="x", padx=12, pady=3)
     ctk.CTkLabel(row, text=label, width=130, anchor="w").pack(side="left")
     entry = ctk.CTkEntry(row, placeholder_text=placeholder, width=width)
     entry.pack(side="left", fill="x", expand=True)
@@ -305,7 +308,7 @@ def _labeled_entry(parent, label: str, placeholder: str = "",
 def _labeled_option_menu(parent, label: str, values: list[str],
                          default: str = "") -> ctk.CTkOptionMenu:
     row = ctk.CTkFrame(parent, fg_color="transparent")
-    row.pack(fill="x", pady=2)
+    row.pack(fill="x", padx=12, pady=3)
     ctk.CTkLabel(row, text=label, width=130, anchor="w").pack(side="left")
     menu = ctk.CTkOptionMenu(row, values=values)
     menu.set(default or (values[0] if values else ""))
@@ -316,6 +319,20 @@ def _labeled_option_menu(parent, label: str, values: list[str],
 def _clear(frame) -> None:
     for w in frame.winfo_children():
         w.destroy()
+
+
+def _empty_state(parent, text: str) -> None:
+    """Einheitlicher, zentrierter Leer-Zustand fuer Listen/Tabs.
+
+    Wird ueber alle Tabs hinweg verwendet, damit ein leerer Bereich immer
+    gleich aussieht (statt ad-hoc grauer Labels mit wechselndem Padding).
+    """
+    box = ctk.CTkFrame(parent, fg_color="transparent")
+    box.pack(fill="x", pady=(46, 0))
+    ctk.CTkLabel(box, text="—", text_color="gray",
+                 font=_win11_font(size=22, weight="bold")).pack()
+    ctk.CTkLabel(box, text=text, text_color="gray",
+                 font=_win11_font(size=13)).pack(pady=(2, 0))
 
 
 # ---------------------------------------------------------------------
@@ -448,8 +465,9 @@ class AlltagshelferGUI(ctk.CTk):
         self._append_chat(self.i18n.t("common.assistant"),
                            self.i18n.t("chat.greeting"))
         # Onboarding-Dialog erst nach mainloop-Start zeigen, damit alle
-        # Widgets sichtbar sind.
-        self.after(200, self._maybe_run_onboarding)
+        # Widgets sichtbar sind. ueber _safe_after, damit der Callback beim
+        # Schliessen gecancelt wird (kein Feuern ins zerstoerte Fenster).
+        self._safe_after(200, self._maybe_run_onboarding)
 
     def _tab_display_label(self, plain_label: str) -> str:
         """Schloss-Marker vor Tab-Labels von Modulen, die die Lizenz sperrt."""
@@ -799,6 +817,10 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkLabel(header, text=t("dashboard.title"),
                      font=_win11_font(size=18, weight="bold")
                      ).pack(side="left")
+        # Kompakte Kennzahl neben dem Titel (Anzahl / ueberfaellig).
+        self.dash_count = ctk.CTkLabel(
+            header, text="", text_color="gray", font=_win11_font(size=12))
+        self.dash_count.pack(side="left", padx=(10, 0))
         self.horizon = ctk.CTkSegmentedButton(
             header,
             values=[t("dashboard.horizon.30"),
@@ -832,9 +854,13 @@ class AlltagshelferGUI(ctk.CTk):
         }[self.horizon.get()]
         events = self.registry.collect_events(horizon)
         if not events:
-            ctk.CTkLabel(self.dash_list, text=t("dashboard.none"),
-                         text_color="gray").pack(pady=30)
+            self.dash_count.configure(text="")
+            _empty_state(self.dash_list, t("dashboard.none"))
             return
+        overdue = sum(1 for e in events if getattr(e, "days_remaining", 0) < 0)
+        self.dash_count.configure(
+            text=(f"{len(events)} Ereignisse"
+                  + (f"  ·  {overdue} ueberfaellig" if overdue else "")))
         for event in events:
             self._event_card(event)
 
@@ -844,6 +870,11 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "dash_list"):
             return
         result = self._present_dashboard.week(horizon_days=7)
+        if hasattr(self, "dash_count"):
+            oc = result.get("overdue_count", 0)
+            self.dash_count.configure(
+                text=(f"{result.get('total', 0)} diese Woche"
+                      + (f"  ·  {oc} ueberfaellig" if oc else "")))
         if result.get("overdue_count"):
             ctk.CTkLabel(
                 self.dash_list,
@@ -878,7 +909,7 @@ class AlltagshelferGUI(ctk.CTk):
         color = URGENCY_COLOR[event.urgency]
         card = ctk.CTkFrame(
             self.dash_list, height=88,
-            border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            border_width=1, border_color=CARD_BORDER,
         )
         card.pack(fill="x", pady=4, padx=4)
         card.pack_propagate(False)
@@ -937,7 +968,7 @@ class AlltagshelferGUI(ctk.CTk):
         self.contract_filter.grid(row=0, column=1, sticky="e")
 
         form = ctk.CTkFrame(
-            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            parent, border_width=1, border_color=CARD_BORDER,
         )
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.contract_inputs = {
@@ -1006,9 +1037,7 @@ class AlltagshelferGUI(ctk.CTk):
         contracts = self.registry.dispatch("contracts.list",
                                              args).get("contracts", [])
         if not contracts:
-            ctk.CTkLabel(self.contract_list,
-                         text="Noch keine Vertraege.",
-                         text_color="gray").pack(pady=20)
+            _empty_state(self.contract_list, "Noch keine Vertraege.")
             return
         for c in contracts:
             self._contract_row(c)
@@ -1071,7 +1100,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_members(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.pack(fill="x", pady=(6, 8))
         self.member_inputs = {
             "name": _labeled_entry(form, t("form.name")),
@@ -1110,7 +1139,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_tasks(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.pack(fill="x", pady=(6, 8))
         self.task_inputs = {
             "title": _labeled_entry(form, t("form.title")),
@@ -1174,7 +1203,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_orders(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.pack(fill="x", pady=(6, 8))
         self.order_inputs = {
             "title": _labeled_entry(form, t("form.title")),
@@ -1231,7 +1260,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_shopping(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.pack(fill="x", pady=(6, 8))
         self.shopping_inputs = {
             "name": _labeled_entry(form, t("form.what")),
@@ -1294,7 +1323,7 @@ class AlltagshelferGUI(ctk.CTk):
         self.finance_summary = ctk.CTkLabel(header, text="", text_color="gray")
         self.finance_summary.pack(side="right")
 
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.expense_inputs = {
             "description": _labeled_entry(form, t("form.description"),
@@ -1340,6 +1369,10 @@ class AlltagshelferGUI(ctk.CTk):
             return
         _clear(self.expense_list)
         over = self.registry.dispatch("finance.monthly_overview", {})
+        if "error" in over:
+            # Modul deaktiviert o.ae. - nicht mit KeyError den ganzen
+            # _refresh_all abbrechen.
+            return
         self.finance_summary.configure(
             text=(f"{over['month']}: Vertraege {over['recurring_contracts']:.2f} "
                    f"+ einmalig {over['one_time_this_month']:.2f} = "
@@ -1366,7 +1399,7 @@ class AlltagshelferGUI(ctk.CTk):
                      font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.calendar_inputs = {
             "title": _labeled_entry(form, t("form.title")),
@@ -1415,8 +1448,7 @@ class AlltagshelferGUI(ctk.CTk):
         events = self.registry.dispatch("calendar.list_events",
                                             {}).get("events", [])
         if not events:
-            ctk.CTkLabel(self.calendar_list, text=t("calendar.empty"),
-                         text_color="gray").pack(pady=20)
+            _empty_state(self.calendar_list, t("calendar.no_events"))
             return
         for e in events:
             row = ctk.CTkFrame(self.calendar_list, fg_color="transparent")
@@ -1456,7 +1488,7 @@ class AlltagshelferGUI(ctk.CTk):
         self.social_filter.set("Alle")
         self.social_filter.grid(row=0, column=1, sticky="e")
 
-        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
+        form = ctk.CTkFrame(parent, border_width=1, border_color=CARD_BORDER)
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.social_inputs = {
             "name": _labeled_entry(form, t("form.name")),
@@ -1505,9 +1537,7 @@ class AlltagshelferGUI(ctk.CTk):
         contacts = (self.registry.dispatch("social.contacts", args)
                     .get("contacts", []) if args else all_contacts)
         if not contacts:
-            ctk.CTkLabel(self.social_list,
-                         text=t("social.no_contacts"),
-                         text_color="gray").pack(pady=20)
+            _empty_state(self.social_list, t("social.no_contacts"))
             return
         for c in contacts:
             row = ctk.CTkFrame(self.social_list, fg_color="transparent")
@@ -1632,8 +1662,7 @@ class AlltagshelferGUI(ctk.CTk):
             self.inbox_info.configure(
                 text=t("inbox.proposals_count").format(count=count))
         if count == 0:
-            ctk.CTkLabel(self.proposal_list, text=t("inbox.no_proposals"),
-                         text_color="gray").pack(pady=24)
+            _empty_state(self.proposal_list, t("inbox.no_proposals"))
             return
         for proposal in data["proposals"]:
             self._proposal_card(proposal)
@@ -1641,7 +1670,7 @@ class AlltagshelferGUI(ctk.CTk):
     def _proposal_card(self, p: dict) -> None:
         card = ctk.CTkFrame(
             self.proposal_list,
-            border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            border_width=1, border_color=CARD_BORDER,
         )
         card.pack(fill="x", pady=4, padx=4)
         body = ctk.CTkFrame(card, fg_color="transparent")
@@ -2057,8 +2086,7 @@ class AlltagshelferGUI(ctk.CTk):
             "stats.expenses_per_month", {"months": 12}).get("buckets", [])
         max_value = max((b["total"] for b in per_month), default=0.0)
         if max_value <= 0 and not per_month:
-            ctk.CTkLabel(self.stats_box, text=t("stats.no_data"),
-                         text_color="gray").pack(pady=20)
+            _empty_state(self.stats_box, t("stats.no_data"))
             return
 
         ctk.CTkLabel(self.stats_box, text=t("stats.expenses_per_month"),
@@ -2169,7 +2197,7 @@ class AlltagshelferGUI(ctk.CTk):
 
         # Backup
         backup_card = ctk.CTkFrame(
-            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            parent, border_width=1, border_color=CARD_BORDER,
         )
         backup_card.grid(row=2, column=0, sticky="ew", pady=4)
         backup_body = ctk.CTkFrame(backup_card, fg_color="transparent")
@@ -2198,7 +2226,7 @@ class AlltagshelferGUI(ctk.CTk):
 
         # Export
         export_card = ctk.CTkFrame(
-            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            parent, border_width=1, border_color=CARD_BORDER,
         )
         export_card.grid(row=3, column=0, sticky="ew", pady=4)
         export_body = ctk.CTkFrame(export_card, fg_color="transparent")
@@ -2217,7 +2245,7 @@ class AlltagshelferGUI(ctk.CTk):
 
         # Import
         import_card = ctk.CTkFrame(
-            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            parent, border_width=1, border_color=CARD_BORDER,
         )
         import_card.grid(row=4, column=0, sticky="ew", pady=4)
         import_body = ctk.CTkFrame(import_card, fg_color="transparent")
@@ -2719,7 +2747,7 @@ class AlltagshelferGUI(ctk.CTk):
         from services.licensing import recommended_tier
 
         section = ctk.CTkFrame(
-            body, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            body, border_width=1, border_color=CARD_BORDER,
         )
         section.pack(fill="x", pady=(24, 6), padx=4)
         ctk.CTkLabel(section, text="Lizenz",
@@ -2804,7 +2832,7 @@ class AlltagshelferGUI(ctk.CTk):
         if not info.has_subscription:
             return
         block = ctk.CTkFrame(
-            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+            parent, border_width=1, border_color=CARD_BORDER,
         )
         block.pack(fill="x", pady=(0, 12), padx=14)
         ctk.CTkLabel(block, text="Mein Abo",
@@ -2890,10 +2918,15 @@ class AlltagshelferGUI(ctk.CTk):
             pass
         # Hinweis: Tab-Labels neu zu setzen erfordert in CTkTabview einen
         # Rebuild - wir zeigen den Hinweis im Status statt zu spammen.
-        if self._current_license.is_pro():
-            self._license_action_status.configure(
-                text=(self._license_action_status.cget("text")
-                      + "  Tipp: Neustart laedt gesperrte Tabs neu."))
+        # Wie die Bloecke oben abgesichert: das Widget existiert erst, wenn
+        # die Lizenz-/Settings-Sektion gebaut wurde.
+        try:
+            if self._current_license.is_pro():
+                self._license_action_status.configure(
+                    text=(self._license_action_status.cget("text")
+                          + "  Tipp: Neustart laedt gesperrte Tabs neu."))
+        except Exception:
+            pass
 
     def _save_settings(self) -> None:
         saved = 0
