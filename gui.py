@@ -448,8 +448,9 @@ class AlltagshelferGUI(ctk.CTk):
         self._append_chat(self.i18n.t("common.assistant"),
                            self.i18n.t("chat.greeting"))
         # Onboarding-Dialog erst nach mainloop-Start zeigen, damit alle
-        # Widgets sichtbar sind.
-        self.after(200, self._maybe_run_onboarding)
+        # Widgets sichtbar sind. ueber _safe_after, damit der Callback beim
+        # Schliessen gecancelt wird (kein Feuern ins zerstoerte Fenster).
+        self._safe_after(200, self._maybe_run_onboarding)
 
     def _tab_display_label(self, plain_label: str) -> str:
         """Schloss-Marker vor Tab-Labels von Modulen, die die Lizenz sperrt."""
@@ -1340,6 +1341,10 @@ class AlltagshelferGUI(ctk.CTk):
             return
         _clear(self.expense_list)
         over = self.registry.dispatch("finance.monthly_overview", {})
+        if "error" in over:
+            # Modul deaktiviert o.ae. - nicht mit KeyError den ganzen
+            # _refresh_all abbrechen.
+            return
         self.finance_summary.configure(
             text=(f"{over['month']}: Vertraege {over['recurring_contracts']:.2f} "
                    f"+ einmalig {over['one_time_this_month']:.2f} = "
@@ -2890,10 +2895,15 @@ class AlltagshelferGUI(ctk.CTk):
             pass
         # Hinweis: Tab-Labels neu zu setzen erfordert in CTkTabview einen
         # Rebuild - wir zeigen den Hinweis im Status statt zu spammen.
-        if self._current_license.is_pro():
-            self._license_action_status.configure(
-                text=(self._license_action_status.cget("text")
-                      + "  Tipp: Neustart laedt gesperrte Tabs neu."))
+        # Wie die Bloecke oben abgesichert: das Widget existiert erst, wenn
+        # die Lizenz-/Settings-Sektion gebaut wurde.
+        try:
+            if self._current_license.is_pro():
+                self._license_action_status.configure(
+                    text=(self._license_action_status.cget("text")
+                          + "  Tipp: Neustart laedt gesperrte Tabs neu."))
+        except Exception:
+            pass
 
     def _save_settings(self) -> None:
         saved = 0

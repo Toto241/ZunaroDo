@@ -68,6 +68,7 @@ FILE_REQUIREMENTS = {
     "test_compliance_gates":  ["R7", "R9"],
     "test_import_robustness": ["R6"],
     "test_sync_conflict":     ["R5"],
+    "test_sync_threadsafety": ["R5"],
     "test_mobile_screen_capabilities": ["R1", "R3", "R4"],
     "test_requirements_coverage": ["R8", "R10"],
     "test_gui_boot_smoke":    ["R8"],
