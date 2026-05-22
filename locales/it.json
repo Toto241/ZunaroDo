@@ -218,5 +218,9 @@
   "filter.category_hint": "Filtra per categoria (opzionale)",
   "filter.relation_hint": "Filtra per relazione (opzionale)",
   "dashboard.all_clear": "Niente in sospeso. Goditela!",
-  "dashboard.week_clear": "Niente da fare questa settimana."
+  "dashboard.week_clear": "Niente da fare questa settimana.",
+  "page.profiles": "Profili",
+  "more.profiles": "Profili (dispositivo)",
+  "profiles.new_hint": "Nuovo profilo",
+  "action.create": "Crea"
 }

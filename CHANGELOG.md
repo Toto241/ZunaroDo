@@ -4,6 +4,22 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ## [Unreleased]
 
+### Neu
+
+- **Profil-Umschalter im Mobile-UI** - der „Mehr"-Screen hat jetzt einen
+  Eintrag „Profile (Gerät)", der die Geräte-Profile auflistet, das aktive
+  markiert und Wechseln/Anlegen erlaubt (über die getesteten
+  `system.profile*`-Capabilities; wirkt nach Neustart). Schließt die letzte
+  UI-Lücke für die Multi-User-Profile. Neue `more.profiles`/`page.profiles`/
+  `profiles.new_hint`/`action.create`-Keys in allen 8 Voll-Sprachen.
+
+### Sicherheit / CI
+
+- **buildozer-action auf Commit-SHA gepinnt** - die Community-Action in
+  `android-release.yml` und `android-robo.yml` ist jetzt auf den
+  v1-Commit-SHA `3808a27` festgenagelt (Supply-Chain-Härtung) statt auf den
+  beweglichen Tag `@v1`.
+
 ### Geändert
 
 - **i18n-Abschluss: „Mehr"-Menü & Sub-Page-Titel** - die Listen-Einträge im

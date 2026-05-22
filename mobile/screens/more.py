@@ -144,6 +144,85 @@ class _LanguagePage(MDScreen):
             parent.remove_widget(self)
 
 
+class _ProfilesPage(MDScreen):
+    """Profil-Umschalter: listet Geraete-Profile, wechselt und legt sie an.
+    Wirkt nach Neustart (die DB wird beim Start gewaehlt). Nutzt die
+    getesteten system.profile*-Capabilities."""
+
+    def __init__(self, registry, **kwargs):
+        super().__init__(**kwargs)
+        self.registry = registry
+        self._build()
+        self._refresh()
+
+    def _restart_hint(self) -> str:
+        app = MDApp.get_running_app()
+        if app is not None and getattr(app, "i18n", None) is not None:
+            return app.i18n.t("settings.save")
+        return "Bitte App neu starten."
+
+    def _build(self) -> None:
+        root = BoxLayout(orientation="vertical")
+        root.add_widget(MDTopAppBar(
+            title=_t("page.profiles", "Profile"),
+            left_action_items=[["arrow-left", lambda *_: self._go_back()]],
+        ))
+        self.hint = MDLabel(text="", halign="center", size_hint_y=None,
+                            height=dp(28), theme_text_color="Custom")
+        root.add_widget(self.hint)
+        fbox = MDBoxLayout(orientation="horizontal", adaptive_height=True,
+                           padding=dp(8), spacing=dp(8), size_hint=(1, None))
+        self.new_name = MDTextField(
+            hint_text=_t("profiles.new_hint", "Neues Profil"))
+        fbox.add_widget(self.new_name)
+        fbox.add_widget(MDFlatButton(text=_t("action.create", "Anlegen"),
+                                     on_release=lambda *_: self._create()))
+        root.add_widget(fbox)
+        scroll = ScrollView()
+        self.list = MDList()
+        scroll.add_widget(self.list)
+        root.add_widget(scroll)
+        self.add_widget(root)
+
+    def _refresh(self) -> None:
+        self.list.clear_widgets()
+        try:
+            data = self.registry.dispatch("system.profiles", {})
+        except Exception:
+            data = {"profiles": []}
+        for p in data.get("profiles", []):
+            icon = "check-circle" if p.get("active") else "circle-outline"
+            item = OneLineIconListItem(
+                IconLeftWidget(icon=icon), text=p.get("label", "?"))
+            item.bind(on_release=self._make_switch(p.get("name", "")))
+            self.list.add_widget(item)
+
+    def _make_switch(self, name: str):
+        def handler(_w):
+            self.registry.dispatch("system.profile_switch", {"name": name})
+            self._refresh()
+            self.hint.text = self._restart_hint()
+        return handler
+
+    def _create(self) -> None:
+        name = (self.new_name.text or "").strip()
+        if not name:
+            return
+        result = self.registry.dispatch("system.profile_create",
+                                        {"name": name})
+        if "error" in result:
+            self.hint.text = result["error"]
+            return
+        self.new_name.text = ""
+        self._refresh()
+        self.hint.text = self._restart_hint()
+
+    def _go_back(self) -> None:
+        parent = self.parent
+        if parent is not None and hasattr(parent, "remove_widget"):
+            parent.remove_widget(self)
+
+
 class _DataDeletionPage(MDScreen):
     """Voll-Loeschung aller Nutzerdaten mit ausdruecklicher Bestaetigung."""
 
@@ -498,6 +577,13 @@ class MoreScreen(MDScreen):
         contacts_item.bind(on_release=lambda *_: self._open_contacts())
         self.list.add_widget(contacts_item)
 
+        # Profil-Umschalter (mehrere getrennte Datenbestaende auf dem Geraet)
+        profiles_item = OneLineIconListItem(
+            IconLeftWidget(icon="account-switch"),
+            text=_t("more.profiles", "Profile (Geraet)"))
+        profiles_item.bind(on_release=lambda *_: self._open_profiles_page())
+        self.list.add_widget(profiles_item)
+
         # Sprachumschalter
         app = MDApp.get_running_app()
         lang_label = (app.i18n.t("tab.settings") + " · Sprache / Language"
@@ -524,6 +610,9 @@ class MoreScreen(MDScreen):
             IconLeftWidget(icon="information"),
             text="Version 0.9 (Android)",
         ))
+
+    def _open_profiles_page(self) -> None:
+        self.add_widget(_ProfilesPage(registry=self.registry))
 
     def _open_language_page(self) -> None:
         self.add_widget(_LanguagePage())

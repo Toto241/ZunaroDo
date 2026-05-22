@@ -15,8 +15,8 @@ name: Android Release (AAB)
 #   ANDROID_KEY_ALIAS_PASSWORD    Passwort des Alias
 #
 # Hinweis: 'ArtemSBulgakov/buildozer-action' ist eine Community-Action, die
-# das Android-SDK/NDK bereitstellt. Vor produktivem Einsatz vom Release-Owner
-# pruefen und idealerweise auf einen Commit-SHA pinnen (Supply-Chain).
+# das Android-SDK/NDK bereitstellt. Sie ist unten auf einen Commit-SHA
+# gepinnt (Supply-Chain); bei einem Versions-Update den SHA neu setzen.
 
 on:
   workflow_dispatch:
@@ -68,7 +68,8 @@ jobs:
         run: python -m tools.playstore_check --strict
 
       - name: AAB bauen (buildozer android release)
-        uses: ArtemSBulgakov/buildozer-action@v1
+        # Auf Commit-SHA gepinnt (Supply-Chain); entspricht Tag v1.
+        uses: ArtemSBulgakov/buildozer-action@3808a27e5d64e3921ed1735dacc214aeaec38080  # v1
         with:
           command: buildozer android release
         env:
