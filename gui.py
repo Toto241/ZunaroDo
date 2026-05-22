@@ -1130,8 +1130,12 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "member_list"):
             return
         _clear(self.member_list)
-        for m in self.registry.dispatch("family.members",
-                                          {}).get("members", []):
+        members = self.registry.dispatch("family.members",
+                                          {}).get("members", [])
+        if not members:
+            _empty_state(self.member_list, "Noch keine Familienmitglieder.")
+            return
+        for m in members:
             bday = f"  - Geburtstag {m['birthday']}" if m.get("birthday") else ""
             ctk.CTkLabel(self.member_list,
                          text=f"#{m['id']}  {m['name']} ({m['role']}){bday}",
@@ -1186,8 +1190,11 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "task_list"):
             return
         _clear(self.task_list)
-        for t in self.registry.dispatch("family.tasks",
-                                          {}).get("tasks", []):
+        tasks = self.registry.dispatch("family.tasks", {}).get("tasks", [])
+        if not tasks:
+            _empty_state(self.task_list, "Keine Aufgaben angelegt.")
+            return
+        for t in tasks:
             row = ctk.CTkFrame(self.task_list, fg_color="transparent")
             row.pack(fill="x", padx=12, pady=3)
             ctk.CTkLabel(row,
@@ -1238,7 +1245,11 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "order_list"):
             return
         _clear(self.order_list)
-        for o in self._present_orders.list()["items"]:
+        orders = self._present_orders.list()["items"]
+        if not orders:
+            _empty_state(self.order_list, "Noch keine Auftraege.")
+            return
+        for o in orders:
             row = ctk.CTkFrame(self.order_list, fg_color="transparent")
             row.pack(fill="x", padx=12, pady=3)
             status_mark = "[ok]" if o["status"] == "erledigt" else "[offen]"
@@ -1290,6 +1301,9 @@ class AlltagshelferGUI(ctk.CTk):
         items = self.registry.dispatch(
             "family.shopping_list",
             {"include_bought": True}).get("items", [])
+        if not items:
+            _empty_state(self.shopping_list, "Einkaufsliste ist leer.")
+            return
         for item in items:
             row = ctk.CTkFrame(self.shopping_list, fg_color="transparent")
             row.pack(fill="x", padx=12, pady=3)
