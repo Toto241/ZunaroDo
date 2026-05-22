@@ -613,7 +613,7 @@ class AlltagshelferGUI(ctk.CTk):
         dlg.transient(self)
         dlg.grab_set()
         ctk.CTkLabel(dlg, text=f"Willkommen bei {APP_DISPLAY_NAME}",
-                      font=ctk.CTkFont(size=16, weight="bold")
+                      font=_win11_font(size=18, weight="bold")
                       ).pack(padx=20, pady=(20, 4), anchor="w")
         ctk.CTkLabel(
             dlg, wraplength=500, justify="left", anchor="w",
@@ -1591,7 +1591,7 @@ class AlltagshelferGUI(ctk.CTk):
         t = self.i18n.t
 
         ctk.CTkLabel(parent, text=t("inbox.title"),
-                     font=ctk.CTkFont(size=16, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
         entry = ctk.CTkFrame(parent, fg_color="transparent")
