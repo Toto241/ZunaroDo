@@ -52,6 +52,57 @@ SAMPLE_MAIL = (
 URGENCY_COLOR = {"hoch": "#d9534f", "mittel": "#e8a33d", "normal": "#5b9bd5"}
 URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
 
+# ---------------------------------------------------------------------------
+# Windows-11-Look (Fluent / Mica) fuer die Desktop-Oberflaeche
+# ---------------------------------------------------------------------------
+_FONT_CANDIDATES = (
+    "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI",
+    "Segoe UI Emoji", "Helvetica", "Arial",
+)
+
+
+def _win11_font(size: int = 13, weight: str = "normal") -> ctk.CTkFont:
+    """Liefert einen CTkFont im Windows-11-Stil mit Fallback."""
+    # tkinter.font.families() braucht einen laufenden Interpreter;
+    # da das GUI erst spaeter erzeugt wird, versuchen wir stur jede
+    # Familie, bis customtkinter einen passenden Fallback findet.
+    for family in _FONT_CANDIDATES:
+        return ctk.CTkFont(family=family, size=size, weight=weight)
+    return ctk.CTkFont(size=size, weight=weight)
+
+
+def _apply_win11_theme() -> None:
+    """
+    Patched die globalen customtkinter-Theme-Werte fuer einen
+    Windows-11-Look (abgerundete Ecken, Segoe UI, sanfte Farben).
+    Muss VOR Erzeugung der Widgets aufgerufen werden.
+    """
+    ctk.set_appearance_mode("system")
+    ctk.set_default_color_theme("blue")
+
+    theme = ctk.ThemeManager.theme
+    # Buttons: moderate Abrundung wie Win11
+    theme["CTkButton"]["corner_radius"] = 6
+    theme["CTkButton"]["border_spacing"] = 6
+    # Frames / Cards
+    theme["CTkFrame"]["corner_radius"] = 8
+    # Eingabefelder
+    theme["CTkEntry"]["corner_radius"] = 6
+    theme["CTkOptionMenu"]["corner_radius"] = 6
+    theme["CTkComboBox"]["corner_radius"] = 6
+    # Tabs
+    theme["CTkTabview"]["corner_radius"] = 8
+    theme["CTkTabview"]["segmented_button"]["corner_radius"] = 6
+    # Texte
+    theme["CTkTextbox"]["corner_radius"] = 6
+    theme["CTkScrollableFrame"]["corner_radius"] = 8
+    # Schriftfamilie global bevorzugen
+    for widget_key in theme:
+        if isinstance(theme[widget_key], dict) and "font" in theme[widget_key]:
+            font_spec = theme[widget_key]["font"]
+            if isinstance(font_spec, tuple) and len(font_spec) >= 2:
+                theme[widget_key]["font"] = (_FONT_CANDIDATES[2],) + font_spec[1:]
+
 
 # Tk-Geometry-String: 'WIDTHxHEIGHT' oder 'WIDTHxHEIGHT+X+Y' (X/Y koennen
 # auch negativ sein). Mit Sanity-Bounds: kein Fenster ausserhalb realer
@@ -406,7 +457,7 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkLabel(
             wrap,
             text=f"{plain_label} ist eine Pro-Funktion",
-            font=ctk.CTkFont(size=18, weight="bold")
+            font=_win11_font(size=18, weight="bold")
         ).pack(anchor="w", pady=(0, 6))
 
         st = make_tier_status(self._current_license)
@@ -653,42 +704,66 @@ class AlltagshelferGUI(ctk.CTk):
     #  Sidebar
     # ================================================================
     def _build_sidebar(self) -> None:
+        # Sidebar im Win11-Look: sanfter Hintergrund, keine harte Kante
         bar = ctk.CTkFrame(self, width=260, corner_radius=0)
         bar.grid(row=0, column=0, sticky="nsew")
 
         t = self.i18n.t
-        ctk.CTkLabel(bar, text=t("app.title"),
-                     font=ctk.CTkFont(size=20, weight="bold")
-                     ).pack(padx=20, pady=(20, 2))
+        # App-Titel mit etwas Abstand und Segoe-UI-Gewichtung
+        ctk.CTkLabel(
+            bar, text=t("app.title"),
+            font=_win11_font(size=20, weight="bold"),
+        ).pack(padx=24, pady=(24, 2))
+
         ctk.CTkLabel(
             bar,
             text=f"{t('sidebar.assistant_mode')}: {self.assistant.mode}",
-            text_color="gray").pack(padx=20, pady=(0, 2))
+            font=_win11_font(size=11),
+            text_color="gray",
+        ).pack(padx=24, pady=(0, 2))
+
         ctk.CTkLabel(
             bar,
             text=f"{t('sidebar.profile')}: "
-                  f"{self.profile or t('sidebar.profile.default')}",
-            text_color="gray").pack(padx=20, pady=(0, 4))
+                 f"{self.profile or t('sidebar.profile.default')}",
+            font=_win11_font(size=11),
+            text_color="gray",
+        ).pack(padx=24, pady=(0, 4))
 
         # Tier-Indikator (Free / Trial XYd / Pro XYd / Karenz)
         from services.license_ui import sidebar_indicator
         self.tier_indicator = ctk.CTkLabel(
             bar,
             text=sidebar_indicator(self._current_license),
-            text_color="gray")
-        self.tier_indicator.pack(padx=20, pady=(0, 14))
+            font=_win11_font(size=11),
+            text_color="gray",
+        )
+        self.tier_indicator.pack(padx=24, pady=(0, 16))
 
-        ctk.CTkLabel(bar, text=t("sidebar.module_status"),
-                     font=ctk.CTkFont(weight="bold")
-                     ).pack(padx=20, anchor="w")
-        self.status_box = ctk.CTkTextbox(bar, width=240, height=320, wrap="word")
-        self.status_box.pack(padx=10, pady=8)
+        # Modulstatus als "Card" im Sidebar-Look
+        ctk.CTkLabel(
+            bar, text=t("sidebar.module_status"),
+            font=_win11_font(size=12, weight="bold"),
+        ).pack(padx=24, anchor="w")
 
-        ctk.CTkButton(bar, text=t("sidebar.refresh_all"),
-                      command=self._refresh_all).pack(padx=15, pady=4, fill="x")
-        ctk.CTkButton(bar, text=t("sidebar.check_now"),
-                      command=self._check_notifications
-                      ).pack(padx=15, pady=4, fill="x")
+        self.status_box = ctk.CTkTextbox(
+            bar, width=220, height=320, wrap="word",
+            font=_win11_font(size=11),
+        )
+        self.status_box.pack(padx=16, pady=8, fill="both", expand=True)
+
+        # Aktionsbuttons unten mit etwas Abstand
+        btn_pad = {"padx": 16, "pady": 3, "fill": "x"}
+        ctk.CTkButton(
+            bar, text=t("sidebar.refresh_all"),
+            font=_win11_font(weight="bold"),
+            command=self._refresh_all,
+        ).pack(**btn_pad)
+        ctk.CTkButton(
+            bar, text=t("sidebar.check_now"),
+            font=_win11_font(weight="bold"),
+            command=self._check_notifications,
+        ).pack(**btn_pad)
 
     # ================================================================
     #  Dashboard
@@ -701,7 +776,7 @@ class AlltagshelferGUI(ctk.CTk):
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 8))
         ctk.CTkLabel(header, text=t("dashboard.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).pack(side="left")
         self.horizon = ctk.CTkSegmentedButton(
             header,
@@ -780,33 +855,43 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _event_card(self, event) -> None:
         color = URGENCY_COLOR[event.urgency]
-        card = ctk.CTkFrame(self.dash_list, height=84)
-        card.pack(fill="x", pady=3, padx=2)
+        card = ctk.CTkFrame(
+            self.dash_list, height=88,
+            border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
+        card.pack(fill="x", pady=4, padx=4)
         card.pack_propagate(False)
-        ctk.CTkFrame(card, width=6, fg_color=color, corner_radius=0
-                     ).pack(side="left", fill="y")
+        # Farbiger Akzentstreifen links mit Abrundung oben/unen
+        accent = ctk.CTkFrame(card, width=5, fg_color=color, corner_radius=3)
+        accent.pack(side="left", fill="y", padx=(4, 0), pady=4)
         body = ctk.CTkFrame(card, fg_color="transparent")
-        body.pack(side="left", fill="both", expand=True, padx=12, pady=8)
+        body.pack(side="left", fill="both", expand=True, padx=14, pady=10)
         top = ctk.CTkFrame(body, fg_color="transparent")
         top.pack(fill="x")
         days = event.days_remaining
         when = (f"in {days} Tagen" if days > 0
                 else "heute faellig" if days == 0
                 else f"{-days} Tage ueberfaellig")
-        ctk.CTkLabel(top, text=f"{event.due_date.strftime('%d.%m.%Y')}  -  {when}",
-                     height=16, font=ctk.CTkFont(size=11), text_color="gray"
-                     ).pack(side="left")
-        ctk.CTkLabel(top, text=URGENCY_LABEL[event.urgency], height=16,
-                     font=ctk.CTkFont(size=10, weight="bold"),
-                     text_color=color).pack(side="right")
-        ctk.CTkLabel(body, text=event.title, height=22,
-                     font=ctk.CTkFont(size=14, weight="bold")
-                     ).pack(anchor="w")
+        ctk.CTkLabel(
+            top,
+            text=f"{event.due_date.strftime('%d.%m.%Y')}  -  {when}",
+            height=16, font=_win11_font(size=11), text_color="gray",
+        ).pack(side="left")
+        ctk.CTkLabel(
+            top, text=URGENCY_LABEL[event.urgency], height=16,
+            font=_win11_font(size=10, weight="bold"),
+            text_color=color,
+        ).pack(side="right")
+        ctk.CTkLabel(
+            body, text=event.title, height=22,
+            font=_win11_font(size=14, weight="bold"),
+        ).pack(anchor="w")
         if event.detail:
-            ctk.CTkLabel(body, text=event.detail, height=16,
-                         font=ctk.CTkFont(size=11),
-                         text_color="gray", wraplength=560, justify="left"
-                         ).pack(anchor="w")
+            ctk.CTkLabel(
+                body, text=event.detail, height=16,
+                font=_win11_font(size=11),
+                text_color="gray", wraplength=560, justify="left",
+            ).pack(anchor="w")
 
     # ================================================================
     #  Vertraege
@@ -820,7 +905,7 @@ class AlltagshelferGUI(ctk.CTk):
         header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
         header.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(header, text=t("tab.contracts"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w")
         self.contract_filter = ctk.CTkOptionMenu(
             header, width=170,
@@ -830,7 +915,9 @@ class AlltagshelferGUI(ctk.CTk):
         self.contract_filter.set("Alle")
         self.contract_filter.grid(row=0, column=1, sticky="e")
 
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(
+            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.contract_inputs = {
             "name": _labeled_entry(form, t("form.name"), "z.B. Stromvertrag"),
@@ -963,7 +1050,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_members(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.pack(fill="x", pady=(6, 8))
         self.member_inputs = {
             "name": _labeled_entry(form, t("form.name")),
@@ -1002,7 +1089,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_tasks(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.pack(fill="x", pady=(6, 8))
         self.task_inputs = {
             "title": _labeled_entry(form, t("form.title")),
@@ -1066,7 +1153,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_orders(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.pack(fill="x", pady=(6, 8))
         self.order_inputs = {
             "title": _labeled_entry(form, t("form.title")),
@@ -1123,7 +1210,7 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _build_family_shopping(self, parent) -> None:
         t = self.i18n.t
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.pack(fill="x", pady=(6, 8))
         self.shopping_inputs = {
             "name": _labeled_entry(form, t("form.what")),
@@ -1181,12 +1268,12 @@ class AlltagshelferGUI(ctk.CTk):
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
         ctk.CTkLabel(header, text=t("tab.finance"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).pack(side="left")
         self.finance_summary = ctk.CTkLabel(header, text="", text_color="gray")
         self.finance_summary.pack(side="right")
 
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.expense_inputs = {
             "description": _labeled_entry(form, t("form.description"),
@@ -1255,10 +1342,10 @@ class AlltagshelferGUI(ctk.CTk):
         t = self.i18n.t
 
         ctk.CTkLabel(parent, text=t("calendar.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 4))
 
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.calendar_inputs = {
             "title": _labeled_entry(form, t("form.title")),
@@ -1340,7 +1427,7 @@ class AlltagshelferGUI(ctk.CTk):
         header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
         header.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(header, text=t("social.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w")
         self.social_filter = ctk.CTkOptionMenu(
             header, width=170, values=["Alle"],
@@ -1348,7 +1435,7 @@ class AlltagshelferGUI(ctk.CTk):
         self.social_filter.set("Alle")
         self.social_filter.grid(row=0, column=1, sticky="e")
 
-        form = ctk.CTkFrame(parent)
+        form = ctk.CTkFrame(parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"))
         form.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.social_inputs = {
             "name": _labeled_entry(form, t("form.name")),
@@ -1531,18 +1618,21 @@ class AlltagshelferGUI(ctk.CTk):
             self._proposal_card(proposal)
 
     def _proposal_card(self, p: dict) -> None:
-        card = ctk.CTkFrame(self.proposal_list, corner_radius=8)
-        card.pack(fill="x", pady=4, padx=2)
+        card = ctk.CTkFrame(
+            self.proposal_list,
+            border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
+        card.pack(fill="x", pady=4, padx=4)
         body = ctk.CTkFrame(card, fg_color="transparent")
-        body.pack(fill="x", padx=12, pady=10)
+        body.pack(fill="x", padx=14, pady=10)
         ctk.CTkLabel(body, text=p["summary"], anchor="w", justify="left",
                      wraplength=560,
-                     font=ctk.CTkFont(size=13, weight="bold")
+                     font=_win11_font(size=13, weight="bold")
                      ).pack(anchor="w")
         ctk.CTkLabel(body,
                      text=f"Quelle: {p['source']}  -  Ziel: {p['target_capability']}",
                      anchor="w", text_color="gray",
-                     font=ctk.CTkFont(size=10)).pack(anchor="w", pady=(2, 6))
+                     font=_win11_font(size=10)).pack(anchor="w", pady=(2, 6))
         buttons = ctk.CTkFrame(body, fg_color="transparent")
         buttons.pack(anchor="w")
         t = self.i18n.t
@@ -1925,7 +2015,7 @@ class AlltagshelferGUI(ctk.CTk):
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 6))
         ctk.CTkLabel(header, text=t("stats.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).pack(side="left")
         ctk.CTkButton(header, text=t("common.refresh"), width=120,
                       command=self._refresh_statistics).pack(side="right")
@@ -1956,8 +2046,15 @@ class AlltagshelferGUI(ctk.CTk):
 
         chart_w = 720
         chart_h = 180
+        # Canvas-Hintergrund an Light/Dark-Mode anpassen
+        bg_hex = ctk.ThemeManager.theme["CTkFrame"]["fg_color"][
+            1 if ctk.get_appearance_mode() == "Dark" else 0]
+        text_hex = ctk.ThemeManager.theme["CTkLabel"]["text_color"][
+            1 if ctk.get_appearance_mode() == "Dark" else 0]
+        muted_hex = ctk.ThemeManager.theme["CTkLabel"]["text_color_disabled"][
+            1 if ctk.get_appearance_mode() == "Dark" else 0]
         canvas = tk.Canvas(self.stats_box, width=chart_w, height=chart_h,
-                            bg="#1a1a1a", highlightthickness=0)
+                           bg=bg_hex, highlightthickness=0)
         canvas.pack(padx=12, pady=4)
         n = max(1, len(per_month))
         bar_w = (chart_w - 40) / n
@@ -1970,16 +2067,16 @@ class AlltagshelferGUI(ctk.CTk):
             y0 = chart_h - 20 - bar_h
             y1 = chart_h - 20
             canvas.create_rectangle(
-                x0, y0, x1, y1, fill="#5b9bd5", outline="")
+                x0, y0, x1, y1, fill="#0078D4", outline="")
             canvas.create_text((x0 + x1) / 2, chart_h - 8,
-                                text=bucket["month"][-2:],     # nur Monat
-                                fill="#aaa",
-                                font=("Helvetica", 9))
+                               text=bucket["month"][-2:],     # nur Monat
+                               fill=muted_hex,
+                               font=("Segoe UI", 9))
             if value > 0:
                 canvas.create_text((x0 + x1) / 2, y0 - 8,
-                                    text=f"{value:.0f}",
-                                    fill="#ddd",
-                                    font=("Helvetica", 9))
+                                   text=f"{value:.0f}",
+                                   fill=text_hex,
+                                   font=("Segoe UI", 9))
 
         # 2) Vertraege-Ueberblick
         overview = self.registry.dispatch("stats.contracts_overview", {})
@@ -2034,7 +2131,7 @@ class AlltagshelferGUI(ctk.CTk):
         t = self.i18n.t
 
         ctk.CTkLabel(parent, text=t("data.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 6))
 
         # Profil-Info
@@ -2049,12 +2146,14 @@ class AlltagshelferGUI(ctk.CTk):
             anchor="w").pack(side="left")
 
         # Backup
-        backup_card = ctk.CTkFrame(parent)
+        backup_card = ctk.CTkFrame(
+            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
         backup_card.grid(row=2, column=0, sticky="ew", pady=4)
         backup_body = ctk.CTkFrame(backup_card, fg_color="transparent")
         backup_body.pack(fill="x", padx=14, pady=10)
         ctk.CTkLabel(backup_body, text=t("data.backup_section"),
-                     font=ctk.CTkFont(size=13, weight="bold")
+                     font=_win11_font(size=13, weight="bold")
                      ).pack(anchor="w")
         backup_btn_row = ctk.CTkFrame(backup_body, fg_color="transparent")
         backup_btn_row.pack(fill="x", pady=(4, 4))
@@ -2076,12 +2175,14 @@ class AlltagshelferGUI(ctk.CTk):
         last_label.pack(anchor="w")
 
         # Export
-        export_card = ctk.CTkFrame(parent)
+        export_card = ctk.CTkFrame(
+            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
         export_card.grid(row=3, column=0, sticky="ew", pady=4)
         export_body = ctk.CTkFrame(export_card, fg_color="transparent")
         export_body.pack(fill="x", padx=14, pady=10)
         ctk.CTkLabel(export_body, text=t("data.export_section"),
-                     font=ctk.CTkFont(size=13, weight="bold")
+                     font=_win11_font(size=13, weight="bold")
                      ).pack(anchor="w")
         export_row = ctk.CTkFrame(export_body, fg_color="transparent")
         export_row.pack(fill="x", pady=(4, 4))
@@ -2093,12 +2194,14 @@ class AlltagshelferGUI(ctk.CTk):
         self.export_info.pack(side="left")
 
         # Import
-        import_card = ctk.CTkFrame(parent)
+        import_card = ctk.CTkFrame(
+            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
         import_card.grid(row=4, column=0, sticky="ew", pady=4)
         import_body = ctk.CTkFrame(import_card, fg_color="transparent")
         import_body.pack(fill="x", padx=14, pady=10)
         ctk.CTkLabel(import_body, text=t("data.import_section"),
-                     font=ctk.CTkFont(size=13, weight="bold")
+                     font=_win11_font(size=13, weight="bold")
                      ).pack(anchor="w")
         ctk.CTkLabel(import_body, text=t("data.import_warning"),
                      text_color="gray",
@@ -2181,7 +2284,7 @@ class AlltagshelferGUI(ctk.CTk):
         t = self.i18n.t
 
         ctk.CTkLabel(parent, text=t("modules.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 8))
         ctk.CTkLabel(parent, text=t("modules.hint"),
                      text_color="gray", wraplength=720, justify="left"
@@ -2368,7 +2471,7 @@ class AlltagshelferGUI(ctk.CTk):
         parent.grid_rowconfigure(3, weight=1)
 
         ctk.CTkLabel(parent, text=self.i18n.t("search.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 6))
 
         bar = ctk.CTkFrame(parent, fg_color="transparent")
@@ -2466,7 +2569,7 @@ class AlltagshelferGUI(ctk.CTk):
         header = ctk.CTkFrame(parent, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", pady=(6, 4))
         ctk.CTkLabel(header, text=self.i18n.t("history.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).pack(side="left")
         ctk.CTkButton(header, text=self.i18n.t("history.refresh"),
                       width=120,
@@ -2537,7 +2640,7 @@ class AlltagshelferGUI(ctk.CTk):
         t = self.i18n.t
 
         ctk.CTkLabel(parent, text=t("settings.title"),
-                     font=ctk.CTkFont(size=18, weight="bold")
+                     font=_win11_font(size=18, weight="bold")
                      ).grid(row=0, column=0, sticky="w", pady=(6, 6))
 
         ctk.CTkLabel(parent, text=t("settings.intro"), text_color="gray",
@@ -2602,25 +2705,28 @@ class AlltagshelferGUI(ctk.CTk):
         from services.license_ui import (build_pricing_rows, make_tier_status)
         from services.licensing import recommended_tier
 
-        section = ctk.CTkFrame(body, fg_color="transparent")
-        section.pack(fill="x", pady=(24, 6))
+        section = ctk.CTkFrame(
+            body, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
+        section.pack(fill="x", pady=(24, 6), padx=4)
         ctk.CTkLabel(section, text="Lizenz",
-                     font=ctk.CTkFont(size=14, weight="bold")
-                     ).pack(anchor="w")
+                     font=_win11_font(size=14, weight="bold")
+                     ).pack(anchor="w", padx=14, pady=(10, 0))
 
         st = make_tier_status(self._current_license)
         self._license_status_label = ctk.CTkLabel(
             section, text=f"Aktueller Tier: {st.headline}\n{st.detail}",
             justify="left", anchor="w", wraplength=720)
-        self._license_status_label.pack(anchor="w", pady=(4, 12), fill="x")
+        self._license_status_label.pack(anchor="w", pady=(4, 12),
+                                         fill="x", padx=14)
 
         # 'Mein Abo': sichtbar nur, wenn ein Pro-Abo aktiv ist
         self._build_subscription_block(section)
 
         # Pricing-Tabelle
         ctk.CTkLabel(section, text="Preise (Brutto, inkl. USt.)",
-                     font=ctk.CTkFont(weight="bold")
-                     ).pack(anchor="w", pady=(4, 4))
+                     font=_win11_font(weight="bold")
+                     ).pack(anchor="w", pady=(4, 4), padx=14)
         persons = max(1, self._current_license.persons)
         rec = recommended_tier(persons)
         for row in build_pricing_rows(persons, recommended=rec):
@@ -2628,15 +2734,15 @@ class AlltagshelferGUI(ctk.CTk):
             text = f"{marker}{row.label:24} {row.price_text}"
             ctk.CTkLabel(section, text=text, justify="left",
                           anchor="w", font=ctk.CTkFont(family="Courier")
-                          ).pack(anchor="w")
+                          ).pack(anchor="w", padx=14)
             ctk.CTkLabel(section, text=f"      {row.description}",
                           text_color="gray",
                           font=ctk.CTkFont(family="Courier", size=10),
-                          ).pack(anchor="w", pady=(0, 2))
+                          ).pack(anchor="w", pady=(0, 2), padx=14)
 
         # Trial-Button + Checkout-Buttons (falls Checkout-URLs konfiguriert)
         actions_frame = ctk.CTkFrame(section, fg_color="transparent")
-        actions_frame.pack(fill="x", pady=(12, 4))
+        actions_frame.pack(fill="x", pady=(12, 4), padx=14)
         trial_btn = ctk.CTkButton(
             actions_frame,
             text=("14 Tage Trial starten"
@@ -2658,7 +2764,7 @@ class AlltagshelferGUI(ctk.CTk):
 
         # Token-Paste
         token_frame = ctk.CTkFrame(section, fg_color="transparent")
-        token_frame.pack(fill="x", pady=(12, 4))
+        token_frame.pack(fill="x", pady=(12, 4), padx=14)
         ctk.CTkLabel(token_frame, text="Pro-Lizenz-Token einfuegen:"
                      ).pack(anchor="w")
         entry_row = ctk.CTkFrame(token_frame, fg_color="transparent")
@@ -2673,7 +2779,8 @@ class AlltagshelferGUI(ctk.CTk):
         self._license_action_status = ctk.CTkLabel(
             section, text="", text_color="gray", wraplength=720,
             justify="left", anchor="w")
-        self._license_action_status.pack(anchor="w", pady=(8, 0), fill="x")
+        self._license_action_status.pack(anchor="w", pady=(8, 10),
+                                         fill="x", padx=14)
 
     def _build_subscription_block(self, parent) -> None:
         """'Mein Abo': Vertragsdaten + Kuendigungs-Link beim Provider."""
@@ -2683,11 +2790,13 @@ class AlltagshelferGUI(ctk.CTk):
             manage_url=self.config.checkout_manage_url)
         if not info.has_subscription:
             return
-        block = ctk.CTkFrame(parent)
-        block.pack(fill="x", pady=(0, 12))
+        block = ctk.CTkFrame(
+            parent, border_width=1, border_color=("#E5E5E5", "#3A3A3A"),
+        )
+        block.pack(fill="x", pady=(0, 12), padx=14)
         ctk.CTkLabel(block, text="Mein Abo",
-                      font=ctk.CTkFont(weight="bold")
-                      ).pack(anchor="w", padx=10, pady=(8, 4))
+                      font=_win11_font(weight="bold")
+                      ).pack(anchor="w", padx=14, pady=(10, 4))
         lines = [
             f"Tier:           {info.tier_label}",
             f"Personen:       {info.persons}",
@@ -2812,8 +2921,7 @@ class AlltagshelferGUI(ctk.CTk):
 
 
 def main() -> None:
-    ctk.set_appearance_mode("system")
-    ctk.set_default_color_theme("blue")
+    _apply_win11_theme()
     (db, registry, assistant, config, settings, module_states,
      synced, profile, auto_backup) = bootstrap()
     app = AlltagshelferGUI(registry, assistant, config,

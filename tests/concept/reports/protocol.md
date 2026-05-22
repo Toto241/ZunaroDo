@@ -1,10 +1,10 @@
 # Test-Protokoll
 
-- Datum: 2026-05-21 16:39:39 UTC
+- Datum: 2026-05-22 12:03:24 UTC
 - Host: Toto241 (Windows-10-10.0.26200-SP0)
 - Python: 3.11.9
 - Target: `tests`
-- Laufzeit pytest: 173.42 s
+- Laufzeit pytest: 1.83 s
 
 **Entscheidung:** GO
 
