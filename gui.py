@@ -17,6 +17,7 @@ Start:  python gui.py
 from __future__ import annotations
 
 import os
+import queue
 import re
 import threading
 from datetime import date, timedelta
@@ -376,6 +377,11 @@ class AlltagshelferGUI(ctk.CTk):
         # beim Fenster-Close - frueher lazy, jetzt explizit (F2).
         self._after_ids: set[str] = set()
         self._streaming_active: bool = False
+        # Tk/Tcl ist NICHT thread-sicher: Hintergrund-Worker duerfen .after()
+        # nicht direkt aufrufen. Stattdessen legen sie Callables in diese
+        # Queue, die ein Main-Thread-Loop (_drain_ui_queue) abarbeitet.
+        self._ui_queue: "queue.Queue" = queue.Queue()
+        self._drain_ui_queue()
         from services.license_events import license_event_source
         from services.licensing import load_license as _load_license_for_sched
         self.scheduler = ProactiveScheduler(
@@ -1681,7 +1687,7 @@ class AlltagshelferGUI(ctk.CTk):
 
         def worker():
             result = self.registry.dispatch("inbox.fetch_imap", {})
-            self.after(0, lambda: self._on_imap_done(result))
+            self._post(lambda: self._on_imap_done(result))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -1946,21 +1952,22 @@ class AlltagshelferGUI(ctk.CTk):
         artiges Auftauchen.
         """
         def stream_callback(chunk: str) -> None:
-            self._safe_after(0, lambda c=chunk: self._append_to_stream(c))
+            self._post(lambda c=chunk: self._append_to_stream(c))
 
         try:
             if self.assistant.llm is not None:
                 answer = self.assistant.ask(prompt,
                                               stream_callback=stream_callback)
-                self._safe_after(
-                    0, lambda a=answer: self._finalize_stream(a))
+                self._post(lambda a=answer: self._finalize_stream(a))
             else:
                 answer = self.assistant.ask(prompt)
-                self._simulate_word_stream(answer)
+                # Wort-fuer-Wort-Simulation auf dem Main-Thread laufen lassen,
+                # damit ihre after()-Timer nicht aus diesem Worker stammen.
+                self._post(lambda a=answer: self._simulate_word_stream(a))
         finally:
             # Streaming-Lock immer freigeben, damit naechster Send geht.
-            self._safe_after(0, self._end_stream)
-        self._safe_after(0, self._refresh_all)
+            self._post(self._end_stream)
+        self._post(self._refresh_all)
 
     def _begin_assistant_stream(self) -> None:
         """
@@ -2530,6 +2537,27 @@ class AlltagshelferGUI(ctk.CTk):
             return ""
         self._after_ids.add(after_id)
         return after_id
+
+    def _post(self, callback) -> None:
+        """Thread-sicher: aus JEDEM Thread aufrufbar. Reiht einen Callback
+        ein, den _drain_ui_queue auf dem Main-Thread ausfuehrt. So ruft kein
+        Worker-Thread jemals direkt eine Tk/Tcl-Funktion auf."""
+        self._ui_queue.put(callback)
+
+    def _drain_ui_queue(self) -> None:
+        """Main-Thread-Loop: arbeitet eingereihte Worker-Callbacks ab und
+        plant sich selbst neu ein. Reschedule laeuft ueber _safe_after, wird
+        also beim Fenster-Close mit abgebrochen."""
+        try:
+            while True:
+                callback = self._ui_queue.get_nowait()
+                try:
+                    callback()
+                except Exception:
+                    pass
+        except queue.Empty:
+            pass
+        self._safe_after(20, self._drain_ui_queue)
 
     def _cancel_pending_after(self) -> None:
         for aid in list(self._after_ids):
