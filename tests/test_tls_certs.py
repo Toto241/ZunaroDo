@@ -39,9 +39,10 @@ class TestSelfSignedCert(unittest.TestCase):
             self.cert, self.key, common_name="example.lan")
         self.assertTrue(cert.exists() and key.exists())
         from cryptography import x509
+        from cryptography.x509.oid import NameOID
         loaded = x509.load_pem_x509_certificate(cert.read_bytes())
         cn = loaded.subject.get_attributes_for_oid(
-            x509.NameOID.COMMON_NAME)[0].value
+            NameOID.COMMON_NAME)[0].value
         self.assertEqual(cn, "example.lan")
         # SANs enthalten CN + localhost + 127.0.0.1
         san = loaded.extensions.get_extension_for_class(
