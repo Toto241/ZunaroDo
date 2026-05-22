@@ -25,6 +25,9 @@ from typing import Callable, Optional
 
 import customtkinter as ctk
 
+from app_core.presenters import (DashboardPresenter, OrdersPresenter,
+                                 SearchPresenter)
+from app_core.profiles import ProfilesManager
 from assistant import Assistant
 from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, AuditLogRepository, Database,
@@ -136,7 +139,10 @@ def _seed_demo_data(registry: ModuleRegistry) -> None:
 def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
                           SettingsRepository, ModuleStateRepository, object,
                           str]:
-    profile = resolve_profile()
+    # Aktives Profil: Env (ALLTAGSHELFER_PROFILE) hat Vorrang, sonst die
+    # per UI/Assistent gesetzte Pointer-Datei (ProfilesManager) - so wirkt
+    # ein Profilwechsel ueber Neustarts hinweg.
+    profile = ProfilesManager().active()
     # Vereinheitlichter Basis-Dateiname: 'alltagshelfer.db', plus optional
     # ein '-<profil>'-Suffix. Frueher gab es zwei verschiedene Default-
     # Namen (alltagshelfer_demo / alltagshelfer_gui), das ist jetzt
@@ -254,6 +260,10 @@ class AlltagshelferGUI(ctk.CTk):
                  auto_backup=None):
         super().__init__()
         self.registry = registry
+        # Geteilte, headless getestete Verhaltens-Schicht (app_core).
+        self._present_search = SearchPresenter(registry.dispatch)
+        self._present_orders = OrdersPresenter(registry.dispatch)
+        self._present_dashboard = DashboardPresenter(registry.dispatch)
         self.assistant = assistant
         self.config = config
         self.settings_repo = settings_repo
@@ -737,11 +747,12 @@ class AlltagshelferGUI(ctk.CTk):
         gruppiert, Ueberfaellige zuerst."""
         if not hasattr(self, "dash_list"):
             return
-        result = self.registry.dispatch("system.agenda", {"horizon_days": 7})
+        result = self._present_dashboard.week(horizon_days=7)
         if result.get("overdue_count"):
             ctk.CTkLabel(
                 self.dash_list,
-                text=f"Ueberfaellig ({result['overdue_count']})",
+                text=f"{self.i18n.t('dashboard.overdue')} "
+                     f"({result['overdue_count']})",
                 font=ctk.CTkFont(size=13, weight="bold"),
                 text_color=URGENCY_COLOR["hoch"]).pack(anchor="w", pady=(4, 2))
             for ev in result.get("overdue", []):
@@ -1062,10 +1073,11 @@ class AlltagshelferGUI(ctk.CTk):
             "assignee": _labeled_entry(form, t("form.who"), t("form.name")),
             "due_date": _labeled_entry(form, t("form.due_date")),
             "description": _labeled_entry(form, t("form.note")),
-            "category": _labeled_entry(form, "Kategorie", "optional"),
+            "category": _labeled_entry(form, t("form.category"),
+                                       t("form.optional")),
         }
         self.order_priority = _labeled_option_menu(
-            form, "Prioritaet", ["normal", "mittel", "hoch"], "normal")
+            form, t("form.priority"), ["normal", "mittel", "hoch"], "normal")
         ctk.CTkButton(form, text=t("action.add_order"),
                       command=self._on_order_add).pack(pady=6)
         self.order_list = ctk.CTkScrollableFrame(parent,
@@ -1074,16 +1086,12 @@ class AlltagshelferGUI(ctk.CTk):
 
     def _on_order_add(self) -> None:
         v = {k: e.get().strip() for k, e in self.order_inputs.items()}
-        if not v["title"]:
+        result = self._present_orders.add(
+            v["title"], assignee=v["assignee"], due_date=v["due_date"],
+            description=v["description"], priority=self.order_priority.get(),
+            category=v.get("category", ""))
+        if "error" in result:
             return
-        payload = {"title": v["title"], "assignee": v["assignee"],
-                    "description": v["description"],
-                    "priority": self.order_priority.get()}
-        if v["due_date"]:
-            payload["due_date"] = v["due_date"]
-        if v.get("category"):
-            payload["category"] = v["category"]
-        self.registry.dispatch("family.add_order", payload)
         for e in self.order_inputs.values():
             e.delete(0, "end")
         self.order_priority.set("normal")
@@ -1093,8 +1101,7 @@ class AlltagshelferGUI(ctk.CTk):
         if not hasattr(self, "order_list"):
             return
         _clear(self.order_list)
-        for o in self.registry.dispatch("family.orders",
-                                           {}).get("orders", []):
+        for o in self._present_orders.list()["items"]:
             row = ctk.CTkFrame(self.order_list, fg_color="transparent")
             row.pack(fill="x", padx=12, pady=3)
             status_mark = "[ok]" if o["status"] == "erledigt" else "[offen]"
@@ -2378,21 +2385,22 @@ class AlltagshelferGUI(ctk.CTk):
         # ein gesetzter Filter erlaubt auch eine Suche ohne Stichwort.
         filt = ctk.CTkFrame(parent, fg_color="transparent")
         filt.grid(row=2, column=0, sticky="ew", pady=(0, 8))
-        ctk.CTkLabel(filt, text="Filter:", text_color="gray"
-                     ).pack(side="left", padx=(0, 6))
-        self.search_category = ctk.CTkEntry(filt, placeholder_text="Kategorie",
-                                            width=130)
+        ctk.CTkLabel(filt, text=self.i18n.t("search.filter_label"),
+                     text_color="gray").pack(side="left", padx=(0, 6))
+        self.search_category = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_category"),
+            width=130)
         self.search_category.pack(side="left", padx=4)
-        self.search_status = ctk.CTkEntry(filt, placeholder_text="Status",
-                                          width=110)
+        self.search_status = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_status"), width=110)
         self.search_status.pack(side="left", padx=4)
-        self.search_date_from = ctk.CTkEntry(filt,
-                                             placeholder_text="von JJJJ-MM-TT",
-                                             width=130)
+        self.search_date_from = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_date_from"),
+            width=130)
         self.search_date_from.pack(side="left", padx=4)
-        self.search_date_to = ctk.CTkEntry(filt,
-                                           placeholder_text="bis JJJJ-MM-TT",
-                                           width=130)
+        self.search_date_to = ctk.CTkEntry(
+            filt, placeholder_text=self.i18n.t("search.ph_date_to"),
+            width=130)
         self.search_date_to.pack(side="left", padx=4)
         for _e in (self.search_category, self.search_status,
                    self.search_date_from, self.search_date_to):
@@ -2403,42 +2411,26 @@ class AlltagshelferGUI(ctk.CTk):
         self.search_results.grid(row=3, column=0, sticky="nsew")
 
     def _run_search(self) -> None:
-        query = self.search_entry.get().strip()
         _clear(self.search_results)
-        args: dict = {"limit": 100}
-        if query:
-            args["query"] = query
-        for key, widget in (("category", self.search_category),
-                            ("status", self.search_status),
-                            ("date_from", self.search_date_from),
-                            ("date_to", self.search_date_to)):
-            val = widget.get().strip()
-            if val:
-                args[key] = val
-        has_filter = any(k in args for k in
-                         ("category", "status", "date_from", "date_to"))
-        if len(query) < 2 and not has_filter:
-            ctk.CTkLabel(self.search_results,
-                         text=self.i18n.t("search.too_short"),
-                         text_color="gray").pack(pady=20)
-            return
-        result = self.registry.dispatch("system.search", args)
-        if "error" in result:
-            ctk.CTkLabel(self.search_results,
-                         text=result["error"], text_color="gray"
-                         ).pack(pady=20)
-            return
-        hits = result.get("hits", [])
-        if not hits:
-            ctk.CTkLabel(self.search_results,
-                         text=self.i18n.t("search.no_hits"),
+        result = self._present_search.search(
+            self.search_entry.get(),
+            category=self.search_category.get(),
+            status=self.search_status.get(),
+            date_from=self.search_date_from.get(),
+            date_to=self.search_date_to.get())
+        if result["status"] != "ok":
+            text = (self.i18n.t("search.too_short")
+                    if result["status"] == "too_short"
+                    else result["message"] if result["status"] == "error"
+                    else self.i18n.t("search.no_hits"))
+            ctk.CTkLabel(self.search_results, text=text,
                          text_color="gray").pack(pady=20)
             return
         ctk.CTkLabel(self.search_results,
                      text=self.i18n.t("search.results_count").format(
                          count=result['count']),
                      text_color="gray").pack(anchor="w", pady=(4, 8))
-        for hit in hits:
+        for hit in result["hits"]:
             self._search_card(hit)
 
     def _search_card(self, hit: dict) -> None:

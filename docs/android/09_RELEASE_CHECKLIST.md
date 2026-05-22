@@ -51,6 +51,8 @@ Verantwortlicher: **Release-Owner** (rotierend, in `CODEOWNERS` markiert).
 - [ ] Release-Notes (max. 500 Zeichen pro Locale) in `legal/release_notes/`
       oder Play-Console-Form.
 - [ ] Privacy Policy URL (in Play Console hinterlegt) liefert HTTP 200.
+      Hosting via `pages.yml`; Setup + Repo-Variable `PRIVACY_POLICY_URL`
+      siehe [07_CICD.md → Privacy-Policy-Hosting](07_CICD.md).
 - [ ] AGB- und Impressum-Links in der App führen zu den aktuellen
       `legal/`-Dokumenten.
 - [ ] Keine "lorem ipsum"-Platzhalter im Settings-/About-Bildschirm.
@@ -87,6 +89,9 @@ Verantwortlicher: **Release-Owner** (rotierend, in `CODEOWNERS` markiert).
 - [ ] Sync-Endpoint-URL in `settings` ist Production-URL, nicht
       Staging.
 - [ ] TLS-Zertifikat des Sync-Servers gültig (HSTS, kein Mixed Content).
+      Für lokale/Heimnetz-Setups erzeugt
+      `python -m services.sync_server --self-signed` ein selbstsigniertes
+      Cert+Key (siehe `services/tls_certs.py`); der Client pinnt es.
 - [ ] Sync mit zweitem Demo-Gerät: Änderung von Gerät A erscheint auf
       Gerät B innerhalb < 60 s.
 - [ ] Conflict-Replay-Test: parallele Änderung → last-writer-wins
@@ -117,8 +122,15 @@ Verantwortlicher: **Release-Owner** (rotierend, in `CODEOWNERS` markiert).
 
 - [ ] Internal-Testing-Track-Upload erfolgreich.
 - [ ] Pre-Launch-Report ohne Crashes / Sicherheitsproblemen.
-- [ ] Closed Testing 7+ Tage gelaufen (Pflicht für neue Personal-
-      Developer-Accounts; ansonsten empfohlen).
+- [ ] Closed Testing **≥ 14 zusammenhängende Tage** mit **≥ 12 aktiven
+      Testern** gelaufen (Pflicht für neue Personal-Developer-Accounts).
+      Werte sind in `playstore.yml` (`tracks.closed.min_testers`/`min_days`)
+      hinterlegt.
+- [ ] Nachweis abgelegt unter `release/closed-test-JJJJ-MM.md` (Vorlage:
+      `release/CLOSED_TEST_EVIDENCE_TEMPLATE.md`). Erst dann liefert das
+      Release-Gate `evaluate_closed_test_gate` → `ready = true`
+      (`python -m tools.playstore_check` zeigt unter `[closed_test]` den
+      Nachweis).
 - [ ] Data-Safety-Form aktualisiert, falls Datenfluss geändert.
 - [ ] Content-Rating-Fragebogen aktuell.
 - [ ] Zielgruppe gesetzt (>= 13 Jahre, "Mixed audiences").

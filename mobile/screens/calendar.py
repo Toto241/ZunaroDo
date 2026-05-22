@@ -22,6 +22,8 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import relative_when, truncate, urgency_color
+from mobile.presenters import CalendarPresenter
+from mobile.ui_text import t as _t
 
 
 _URGENCY_HEX = {
@@ -36,6 +38,7 @@ class CalendarScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = CalendarPresenter(registry.dispatch)
         self._dialog = None
         self._build()
 
@@ -45,7 +48,7 @@ class CalendarScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Termine",
+            title=_t("tab.calendar", "Termine"),
             right_action_items=[["refresh", lambda *_: self._refresh()]],
         ))
         scroll = ScrollView()
@@ -67,13 +70,13 @@ class CalendarScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        result = self.registry.dispatch(
-            "calendar.upcoming", {"horizon_days": 30})
-        events = result.get("events", [])
+        view = self.presenter.list(horizon_days=30)
+        events = view["items"]
         self.container.clear_widgets()
         if not events:
             self.container.add_widget(MDLabel(
-                text="Keine Termine in den naechsten 30 Tagen.",
+                text=_t(view["empty_text_key"], view["empty_text"]).format(
+                    **view.get("empty_text_params", {})),
                 halign="center",
                 size_hint=(1, None),
                 height=dp(48)))
@@ -128,21 +131,22 @@ class CalendarScreen(MDScreen):
                              spacing=dp(8),
                              adaptive_height=True,
                              padding=dp(8))
-        title = MDTextField(hint_text="Titel")
-        due = MDTextField(hint_text="Datum (YYYY-MM-DD)",
+        title = MDTextField(hint_text=_t("form.title", "Titel"))
+        due = MDTextField(hint_text=_t("form.due_date", "Datum (YYYY-MM-DD)"),
                            text=date.today().isoformat())
-        category = MDTextField(hint_text="Kategorie (optional)")
+        category = MDTextField(hint_text=_t("form.category", "Kategorie")
+                               + " (" + _t("form.optional", "optional") + ")")
         for w in (title, due, category):
             body.add_widget(w)
         self._dialog = MDDialog(
-            title="Neuer Termin",
+            title=_t("action.add_event", "Neuer Termin"),
             type="custom",
             content_cls=body,
             buttons=[
-                MDFlatButton(text="Abbrechen",
+                MDFlatButton(text=_t("action.cancel", "Abbrechen"),
                               on_release=lambda *_: self._dismiss()),
                 MDFlatButton(
-                    text="Speichern",
+                    text=_t("action.save", "Speichern"),
                     on_release=lambda *_: self._submit(
                         title.text, due.text, category.text)),
             ],
@@ -150,12 +154,6 @@ class CalendarScreen(MDScreen):
         self._dialog.open()
 
     def _submit(self, title: str, due: str, category: str) -> None:
-        args = {
-            "title": title.strip() or "Termin",
-            "due_date": due.strip() or date.today().isoformat(),
-        }
-        if category.strip():
-            args["category"] = category.strip()
-        self.registry.dispatch("calendar.add_event", args)
+        self.presenter.add(title, due_date=due, category=category)
         self._dismiss()
         self._refresh()

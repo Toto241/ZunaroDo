@@ -8,7 +8,7 @@ Phone-Design:
 """
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
@@ -23,6 +23,8 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import format_currency, truncate
+from mobile.presenters import FinancePresenter
+from mobile.ui_text import t as _t
 
 
 class FinanceScreen(MDScreen):
@@ -30,6 +32,7 @@ class FinanceScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = FinancePresenter(registry.dispatch)
         self._dialog = None
         self._build()
 
@@ -39,7 +42,7 @@ class FinanceScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Finanzen",
+            title=_t("tab.finance", "Finanzen"),
             right_action_items=[["refresh", lambda *_: self._refresh()]],
         ))
 
@@ -71,25 +74,12 @@ class FinanceScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        result = self.registry.dispatch("finance.list_expenses", {})
-        expenses = result.get("expenses", [])
-        # Letzte 30 Tage
-        cutoff = date.today() - timedelta(days=30)
-        recent = []
-        total = 0.0
-        for e in expenses:
-            spent = e.get("spent_on")
-            try:
-                d = date.fromisoformat(spent) if spent else date.today()
-            except ValueError:
-                d = date.today()
-            if d >= cutoff:
-                recent.append((d, e))
-                total += float(e.get("amount", 0) or 0)
-        recent.sort(key=lambda kv: kv[0], reverse=True)
+        view = self.presenter.recent(days=30)
+        recent = [(date.fromisoformat(e["spent_on"]) if e.get("spent_on")
+                   else date.today(), e) for e in view["items"]]
 
         self.summary_label.text = (f"Letzte 30 Tage: "
-                                     f"{format_currency(total)}")
+                                     f"{format_currency(view['total'])}")
         self.container.clear_widgets()
 
         last_day = None
@@ -108,7 +98,8 @@ class FinanceScreen(MDScreen):
 
         if not recent:
             self.container.add_widget(MDLabel(
-                text="Noch keine Ausgaben in den letzten 30 Tagen.",
+                text=_t(view["empty_text_key"], view["empty_text"]).format(
+                    **view.get("empty_text_params", {})),
                 halign="center",
                 size_hint=(1, None),
                 height=dp(48)))
@@ -141,21 +132,22 @@ class FinanceScreen(MDScreen):
                              spacing=dp(8),
                              adaptive_height=True,
                              padding=dp(8))
-        desc = MDTextField(hint_text="Beschreibung")
-        amount = MDTextField(hint_text="Betrag (EUR)",
+        desc = MDTextField(hint_text=_t("form.note", "Beschreibung"))
+        amount = MDTextField(hint_text=_t("form.amount", "Betrag (EUR)"),
                               input_filter="float")
-        category = MDTextField(hint_text="Kategorie (optional)")
+        category = MDTextField(hint_text=_t("form.category", "Kategorie")
+                               + " (" + _t("form.optional", "optional") + ")")
         for w in (desc, amount, category):
             body.add_widget(w)
         self._dialog = MDDialog(
-            title="Neue Ausgabe",
+            title=_t("action.add_expense", "Neue Ausgabe"),
             type="custom",
             content_cls=body,
             buttons=[
-                MDFlatButton(text="Abbrechen",
+                MDFlatButton(text=_t("action.cancel", "Abbrechen"),
                               on_release=lambda *_: self._dismiss()),
                 MDFlatButton(
-                    text="Speichern",
+                    text=_t("action.save", "Speichern"),
                     on_release=lambda *_: self._submit(
                         desc.text, amount.text, category.text)),
             ],
@@ -163,16 +155,8 @@ class FinanceScreen(MDScreen):
         self._dialog.open()
 
     def _submit(self, description: str, amount: str, category: str) -> None:
-        try:
-            amt = float(amount)
-        except ValueError:
+        result = self.presenter.add(description, amount, category)
+        if "error" in result:
             return
-        args = {
-            "description": description.strip() or "Ausgabe",
-            "amount": amt,
-        }
-        if category.strip():
-            args["category"] = category.strip()
-        self.registry.dispatch("finance.add_expense", args)
         self._dismiss()
         self._refresh()

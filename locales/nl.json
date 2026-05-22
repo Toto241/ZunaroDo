@@ -1,6 +1,5 @@
 {
   "app.title": "Alltagshelfer",
-
   "tab.dashboard": "Dashboard",
   "tab.contracts": "Contracten",
   "tab.family": "Gezin",
@@ -14,12 +13,10 @@
   "tab.modules": "Modules",
   "tab.settings": "Instellingen",
   "tab.more": "Meer",
-
   "sidebar.module_status": "Modulestatus",
   "sidebar.assistant_mode": "Assistentmodus",
   "sidebar.refresh_all": "Alles vernieuwen",
   "sidebar.check_now": "Nu naar meldingen zoeken",
-
   "dashboard.title": "Volgende gebeurtenissen",
   "dashboard.none": "Geen aankomende gebeurtenissen.",
   "dashboard.horizon.30": "30 dagen",
@@ -28,18 +25,15 @@
   "dashboard.urgency.high": "DRINGEND",
   "dashboard.urgency.medium": "BINNENKORT",
   "dashboard.urgency.normal": "GEPLAND",
-
   "search.title": "Zoeken in volledige tekst",
   "search.placeholder": "Minstens 2 tekens ...",
   "search.button": "Zoeken",
   "search.no_hits": "Geen resultaten.",
   "search.too_short": "Voer minstens 2 tekens in.",
   "search.results_count": "{count} resultaten:",
-
   "history.title": "Geschiedenis van de assistent",
   "history.empty": "Nog geen items - stel de assistent een vraag.",
   "history.refresh": "Vernieuwen",
-
   "common.you": "Jij",
   "common.assistant": "Assistent",
   "common.save": "Opslaan",
@@ -52,12 +46,10 @@
   "common.send": "Verzenden",
   "common.refresh": "Vernieuwen",
   "common.placeholder.question": "Voer een vraag in ...",
-
   "modules.title": "Modules in-/uitschakelen",
   "modules.hint": "Uitgeschakelde modules leveren geen capabilities en geen dashboarditems. De gegevens blijven in de database bewaard.",
   "modules.active": "actief",
   "modules.capabilities_label": "{n} capabilities:",
-
   "settings.title": "Instellingen",
   "settings.intro": "Waarden worden opgeslagen in de database. Geheime velden (API-sleutels, wachtwoorden) worden uitsluitend uit omgevingsvariabelen gelezen en worden NIET in de database opgeslagen.",
   "settings.save": "Opslaan (herstart nodig)",
@@ -67,18 +59,14 @@
   "settings.secret_unset": "niet ingesteld",
   "settings.saved": "{count} waarden opgeslagen. Herstart nodig voor sommige velden.",
   "settings.reset_done": "Teruggezet naar standaardwaarden.",
-
   "family.sub.members": "Leden",
   "family.sub.tasks": "Taken",
   "family.sub.orders": "Opdrachten",
   "family.sub.shopping": "Boodschappenlijst",
-
   "sidebar.profile": "Profiel",
   "sidebar.profile.default": "(Standaard)",
-
   "tab.statistics": "Statistieken",
   "tab.data": "Gegevens",
-
   "stats.title": "Statistieken en trends",
   "stats.expenses_per_month": "Uitgaven per maand (laatste 12)",
   "stats.contracts_overview": "Contractenoverzicht",
@@ -89,7 +77,6 @@
   "stats.yearly_total": "{amount:.2f} EUR/jaar",
   "stats.top_3": "Top 3 op prijs",
   "stats.average_per_month": "Gemiddeld per maand",
-
   "data.title": "Gegevens beheren",
   "data.profile_label": "Actief profiel",
   "data.profile_default": "(Standaard)",
@@ -110,30 +97,24 @@
   "data.delete_confirm_body": "Deze actie kan niet ongedaan worden gemaakt. Al je gegevens worden permanent van dit apparaat verwijderd.",
   "data.delete_confirm_action": "Definitief verwijderen",
   "data.delete_done": "Alle gegevens verwijderd. Start de app opnieuw.",
-
   "calendar.title": "Afspraken en agenda",
-  "calendar.empty": "Nog geen afspraken.",
+  "calendar.empty": "Geen afspraken in de komende {days} dagen.",
   "calendar.recurring_suffix": ", terugkerend elke {days} dagen",
-
   "social.title": "Sociaal onderhoud",
   "social.no_contacts": "Nog geen contacten vastgelegd.",
   "social.next_due": "volgende keer contact {when}",
   "social.due_today": "vandaag",
   "social.due_in": "over {days} dagen",
   "social.due_overdue": "{days} dagen te laat",
-
   "module_admin.toggle": "actief",
-
   "onboarding.title": "Welkom bij Alltagshelfer",
   "onboarding.intro": "Je database is leeg. Hoe wil je beginnen?",
   "onboarding.option_demo": "Beginnen met voorbeeldgegevens (2 contracten, 3 gezinsleden, een paar afspraken)",
   "onboarding.option_empty": "Beginnen met een lege database",
   "onboarding.choose_demo": "Voorbeeldgegevens laden",
   "onboarding.choose_empty": "Leeg beginnen",
-
   "shortcuts.quit_title": "Afsluiten bevestigen",
   "shortcuts.quit_message": "Alltagshelfer echt afsluiten?",
-
   "inbox.analyze": "Analyseren",
   "inbox.fetch_imap": "IMAP ophalen",
   "inbox.accept": "Overnemen",
@@ -147,10 +128,8 @@
   "inbox.imap_querying": "IMAP wordt opgevraagd ...",
   "inbox.imap_not_configured": "IMAP niet geconfigureerd",
   "inbox.imap_result": "IMAP: {checked} e-mails gecontroleerd, {found} nieuwe voorstellen",
-
   "chat.thinking": "denkt na ...",
   "chat.greeting": "Hallo! Op het dashboard zie je je volgende gebeurtenissen. Hier kun je me alles vragen.",
-
   "proposal_editor.title": "Voorstel bewerken",
   "proposal_editor.summary": "Korte beschrijving",
   "proposal_editor.save_only": "Opslaan",
@@ -160,7 +139,6 @@
   "proposal_editor.target_unavailable": "De doel-capability '{target}' is niet beschikbaar. Controleer of de verantwoordelijke module is ingeschakeld.",
   "proposal_editor.field_required": "'{name}' is een verplicht veld",
   "proposal_editor.field_invalid": "'{name}' verwacht {ptype}, '{raw}' ongeldig",
-
   "form.name": "Naam",
   "form.provider": "Aanbieder",
   "form.category": "Categorie",
@@ -190,7 +168,6 @@
   "form.recurrence_days": "Herhaling (dagen)",
   "form.relation": "Relatie",
   "form.cadence_days": "Ritme (dagen)",
-
   "action.bulk_complete_overdue": "Alle verlopen afvinken",
   "action.create_contract": "Contract aanmaken",
   "action.cancellation_letter": "Opzegbrief",
@@ -204,5 +181,42 @@
   "action.reset": "Resetten",
   "action.done": "Klaar",
   "action.contacted": "Gecontacteerd",
-  "action.draft": "Concept"
+  "action.draft": "Concept",
+  "search.filter_label": "Filter:",
+  "search.ph_category": "Categorie",
+  "search.ph_status": "Status",
+  "search.ph_date_from": "van JJJJ-MM-DD",
+  "search.ph_date_to": "tot JJJJ-MM-DD",
+  "form.priority": "Prioriteit",
+  "form.optional": "optioneel",
+  "dashboard.overdue": "Te laat",
+  "action.save": "Opslaan",
+  "action.cancel": "Annuleren",
+  "action.delete": "Verwijderen",
+  "action.close": "Sluiten",
+  "action.add_contract": "Contract toevoegen",
+  "contracts.empty": "Nog geen contracten. Tik op +.",
+  "orders.empty": "Geen taken. Tik op +.",
+  "contacts.empty": "Geen contacten.",
+  "finance.empty": "Nog geen uitgaven vastgelegd.",
+  "finance.recent_empty": "Geen uitgaven in de laatste {days} dagen.",
+  "dashboard.upcoming": "Aankomend",
+  "common.no_entries": "Geen items.",
+  "more.family": "Gezin / huishouden",
+  "more.notes": "Notities",
+  "more.inbox": "Suggesties (inbox)",
+  "more.search": "Zoeken (met filters)",
+  "more.orders": "Taken (prioriteit/categorie)",
+  "more.contacts": "Contacten (op relatie)",
+  "page.search": "Zoeken",
+  "page.orders": "Taken",
+  "page.contacts": "Contacten",
+  "action.filter": "Filteren",
+  "search.query_hint": "Zoekterm",
+  "form.assignee": "Verantwoordelijke",
+  "form.priority_hint": "Prioriteit hoog/middel/normaal",
+  "filter.category_hint": "Op categorie filteren (optioneel)",
+  "filter.relation_hint": "Op relatie filteren (optioneel)",
+  "dashboard.all_clear": "Niets openstaand. Geniet ervan!",
+  "dashboard.week_clear": "Niets te doen deze week."
 }

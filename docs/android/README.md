@@ -31,6 +31,7 @@ wird.
 | 08   | [Accessibility & UX](08_ACCESSIBILITY.md) | Screenreader, Kontraste, Touch-Targets, dynamische Texte |
 | 09   | [Release-Checkliste](09_RELEASE_CHECKLIST.md) | Pre-Flight-Liste vor jedem Play-Store-Upload |
 | 10   | [Typische Ablehnungsgründe & Gegenmaßnahmen](10_REJECTION_REASONS.md) | Realer Katalog inkl. Maßnahmen |
+| 11   | [Play-Console-Einreichung](11_PLAY_SUBMISSION.md) | Hand-Schritte (Data-Safety, Content-Rating, Assets, Identität) mit generierten Antworten |
 
 ## Automatisierte Prüfmechanismen
 

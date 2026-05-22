@@ -4,8 +4,88 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ## [Unreleased]
 
+### Geändert
+
+- **i18n-Abschluss: „Mehr"-Menü & Sub-Page-Titel** - die Listen-Einträge im
+  „Mehr"-Screen (Familie/Notizen/Inbox/Suche/Aufträge/Kontakte) und die
+  Sub-Page-Titel sind nun ebenfalls lokalisiert (`more.*`/`page.*`-Keys).
+  Damit gibt es im Phone-Client keine sichtbaren hartcodierten Labels mehr.
+- **i18n-Ausbau Stufe 3: interpolierte Leertexte + Abschluss** -
+  zählerbasierte Leertexte (Kalender „nächste {days} Tage", Finanzen
+  „letzte {days} Tage") sind jetzt über Platzhalter-Keys
+  (`calendar.empty`/`finance.recent_empty`) lokalisierbar - der Presenter
+  liefert `empty_text_key` + `empty_text_params`, der Screen formatiert.
+  Außerdem „Anstehend" (`dashboard.upcoming`) und die generische
+  „Keine Einträge"-Liste (`common.no_entries`). Damit sind die sichtbaren
+  Phone-Texte (Titel, Buttons, Labels, Leerzustände, Hinweise) lokalisierbar.
+- **i18n-Ausbau Stufe 2: lokalisierbare Leer-/Hinweistexte (Presenter)** -
+  die Presenter liefern neben dem deutschen `empty_text` jetzt zusätzlich
+  einen i18n-Key (`empty_text_key`) bzw. die Suche einen `message_key`; die
+  Screens lösen ihn über `i18n.t(...)` auf (deutscher Text bleibt Default).
+  So sind Leerzustände (Verträge/Aufträge/Kontakte/Finanzen) und
+  Such-Hinweise lokalisierbar, ohne den Presenter-Vertrag zu brechen - die
+  headless Tests prüfen weiterhin Text **und** Key. Neue `*.empty`-Keys in
+  `de.json`/`en.json`.
+- **i18n-Ausbau der Mobile-Screens (erste Stufe)** - die Phone-Screens
+  nutzten bisher gar kein i18n. Über den neuen Helfer
+  [mobile/ui_text.py](mobile/ui_text.py) (`t(key, default)`, holt die
+  Übersetzung aus der laufenden App, fällt sonst auf den deutschen Default
+  zurück → kein Regressionsrisiko) sind jetzt Toolbar-Titel, Dialog-Titel
+  und die Standard-Buttons (Speichern/Abbrechen/Löschen/Schließen) sowie
+  gängige Feld-Labels über `i18n.t(...)` lokalisierbar. Datenwerte/Sentinels
+  bleiben unangetastet. Neue Keys in `de.json`/`en.json`; Tests:
+  [tests/test_ui_text.py](tests/test_ui_text.py). (Empty-States/Detailtexte
+  folgen als nächste Stufe.)
+- **i18n für die neuen Desktop-Labels** - die in dieser Session ergänzten
+  Anzeige-Labels (Such-Filterzeile + Platzhalter, Auftrags-Prioritäts-/
+  Kategorie-Feld, Dashboard-„Überfällig") laufen jetzt über `i18n.t(...)`
+  mit Keys in `locales/de.json` + `locales/en.json`. Bewusst **nicht**
+  übersetzt: Werte/Sentinels, die zugleich Logik/Backend-Argumente sind
+  (Prioritätswerte `hoch/mittel/normal`, Kategorie-Filterwerte, „Alle",
+  Ansicht-Umschalter), um Vergleichs-/Dispatch-Brüche zu vermeiden.
+- **Desktop-GUI nutzt die geteilten Presenter** - die in dieser Session
+  ergänzten Desktop-Flows (Volltextsuche inkl. Filter/Status, Auftrag
+  anlegen/auflisten, Tages-/Wochen-Agenda) laufen jetzt über dieselbe
+  headless getestete `app_core`-Presenter-Schicht wie Mobile - dieselbe
+  Single Source of Truth, kein Desktop-spezifischer Doppel-Code mehr.
+- **Presenter-/Headless-Schicht nach `app_core/` verschoben** - die zuvor
+  unter `mobile/` liegende Presenter-/Helfer-/HeadlessApp-Schicht ist jetzt
+  toolkit-neutral in `app_core/` und damit von Mobile **und** Desktop
+  nutzbar; `mobile/*` sind schlanke Re-Export-Shims. Die Mobile-Screens
+  Kalender und Finanzen delegieren nun ebenfalls an Presenter
+  (`CalendarPresenter`, `FinancePresenter` inkl. `recent()`), sodass es im
+  gesamten Mobile-Client keine doppelte Screen-Logik mehr gibt.
+
 ### Tests
 
+- **Headless-/Presenter-Schicht als testbare App-Variante** - das
+  Verhalten der Screens (Capability-Aufrufe + Anzeige-/Leer-/Fehlerzustände)
+  liegt jetzt toolkit-unabhängig in [mobile/presenters.py](mobile/presenters.py);
+  [mobile/headless_app.py](mobile/headless_app.py) (`HeadlessApp`) treibt es
+  über dieselbe Registry ohne Display/Kivy. Die Kivy-Screens (Dashboard,
+  Verträge, Suche, Aufträge) sind nun dünne Adapter ohne doppelte Logik.
+  Damit ist das UI-Verhalten vollautomatisch testbar
+  ([tests/test_presenters.py](tests/test_presenters.py),
+  [tests/test_headless_app.py](tests/test_headless_app.py)) - genau die
+  Tests, die sich mit der reinen Widget-UI nicht automatisieren ließen.
+- **Laufzeit-/Geräte-Tests für Google-Qualitätskonformität** - neben den
+  bisherigen Headless-Logik- und statischen Compliance-Checks gibt es jetzt
+  echte UI-Laufzeittests: ein Desktop-GUI-Boot-Smoke unter Xvfb
+  ([tests/test_gui_boot_smoke.py](tests/test_gui_boot_smoke.py)) und ein
+  headless KivyMD-Boot-Smoke
+  ([tests/test_mobile_boot_smoke.py](tests/test_mobile_boot_smoke.py)),
+  ausgeführt von [`.github/workflows/ui-runtime.yml`](.github/workflows/ui-runtime.yml)
+  (zunächst beratend). Dazu ein manueller Emulator-Monkey-Lauf
+  ([`.github/workflows/android-robo.yml`](.github/workflows/android-robo.yml))
+  als Repo-Pendant zu Googles Pre-Launch-Report. Beide Smoke-Tests skippen
+  sauber, wo GUI/Kivy fehlen.
+- **Automatisch erzwungene Anforderungs-Abdeckung** - neuer Meta-Test
+  [tests/test_requirements_coverage.py](tests/test_requirements_coverage.py)
+  prüft, dass jede Anforderung R1–R10 mindestens einer Testdatei zugeordnet
+  ist, dass das Mapping nur bekannte IDs nutzt und dass jede gemappte Datei
+  existiert und echte `test_*`-Fälle enthält. Damit färbt die CI automatisch
+  rot, sobald eine Anforderung ohne Test bleibt oder eine Zuordnung ins
+  Leere zeigt.
 - **Import-Robustheit & Sync-Determinismus (R6/R5)** - neue Regressionstests:
   CSV-Import überspringt fehlerhafte Zeilen für alle Entitäten und fällt bei
   kaputten Werten auf Defaults zurück; iCal-Wiederholungen sind rund um die
@@ -15,6 +95,25 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **TLS-Zertifikatserstellung für den Sync-Server** - neuer Helfer
+  [services/tls_certs.py](services/tls_certs.py) erzeugt ein
+  selbstsigniertes Cert+Key-Paar (RSA-2048, SubjectAltName für
+  Hostname/localhost/127.0.0.1, Schlüssel 0600). `python -m
+  services.sync_server --self-signed` erzeugt es bei Bedarf und startet den
+  Server direkt mit TLS. `cryptography` wird lazy importiert; Tests
+  ([tests/test_tls_certs.py](tests/test_tls_certs.py)) laufen auf CI und
+  überspringen sauber, wo kein cryptography-Backend verfügbar ist.
+- **Multi-User-Profile (Geräte-Profile)** - mehrere getrennte Datenbestände
+  (je eigene DB + State) auf einem Gerät, umschaltbar über Neustarts hinweg.
+  Toolkit-freier, vollautomatisch getesteter `ProfilesManager`
+  ([app_core/profiles.py](app_core/profiles.py)) persistiert das aktive
+  Profil in einer Pointer-Datei (Env `ALLTAGSHELFER_PROFILE` behält Vorrang);
+  `bootstrap()` der Desktop-App berücksichtigt es beim Start. Über das neue
+  Modul ([modules/profiles.py](modules/profiles.py)) sind
+  `system.profiles` / `system.profile_create` / `system.profile_switch`
+  per Assistent und UI nutzbar. Tests:
+  [tests/test_profiles.py](tests/test_profiles.py). (Ein dedizierter
+  Widget-Umschalter bleibt ein dünner UI-Folgeschritt.)
 - **UI-Sichtbarkeit der neuen Funktionen (Desktop + Mobile)** - die zuvor
   nur über Capability/Assistent nutzbaren Features sind jetzt in der
   Oberfläche bedienbar: Such-Filter (Kategorie/Status/Zeitraum) im Such-Tab,

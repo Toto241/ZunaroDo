@@ -304,3 +304,74 @@ buildozer android debug
 adb install -r dist/alltagshelfer-*-arm64-v8a-debug.apk
 adb logcat | grep -i python
 ```
+
+## Release-Build (signiertes AAB)
+
+Der Workflow [`.github/workflows/android-release.yml`](../../.github/workflows/android-release.yml)
+baut auf **manuelle Auslösung** (`workflow_dispatch`) ein signiertes
+**App Bundle** (`bin/*.aab`, da `android.release_artifact = aab` in
+`buildozer.spec`). Er lädt nichts automatisch zu Google Play hoch, sondern
+stellt das AAB als Build-Artefakt bereit; der Upload bleibt eine bewusste
+Hand-Aktion (Play App Signing übernimmt die finale Signatur).
+
+Vor dem Build läuft `playstore_check --strict` als Gate. Die Signierung
+nutzt `python-for-android` über vier GitHub-Secrets:
+
+| Secret | Inhalt |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 upload.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore-Passwort |
+| `ANDROID_KEY_ALIAS` | Alias des Upload-Keys |
+| `ANDROID_KEY_ALIAS_PASSWORD` | Passwort des Alias |
+
+Die verwendete Community-Action (`ArtemSBulgakov/buildozer-action`) stellt
+SDK/NDK bereit; vor produktivem Einsatz vom Release-Owner prüfen und auf
+einen Commit-SHA pinnen.
+
+## Privacy-Policy-Hosting (erreichbare URL)
+
+Google Play verlangt eine **öffentlich erreichbare** Datenschutz-URL. Der
+Workflow [`.github/workflows/pages.yml`](../../.github/workflows/pages.yml)
+rendert `legal/DATENSCHUTZ.md` nach `site/privacy/index.html` und deployt
+es via GitHub Pages. Einmalige Einrichtung (Repo-Settings, nicht im Code
+automatisierbar):
+
+1. **Settings → Pages → Source: GitHub Actions** aktivieren.
+2. Workflow „Privacy-Policy Pages" einmal manuell starten
+   (`workflow_dispatch`).
+3. Resultierende URL: `https://<owner>.github.io/<repo>/privacy/`
+   (für dieses Repo: `https://toto241.github.io/ZunaroDo/privacy/`).
+4. **Settings → Secrets and variables → Actions → Variables**:
+   `PRIVACY_POLICY_URL` auf diese URL setzen. Der Compliance-Job
+   „Privacy-Policy URL erreichbar" prüft dann per HEAD-Request HTTP 200
+   (ohne gesetzte Variable wird der Schritt nur übersprungen).
+5. Dieselbe URL im **Play-Console-Store-Listing** unter „Datenschutz­erklärung"
+   eintragen.
+
+## Laufzeit-/Geräte-Qualität (über statische Checks hinaus)
+
+Google bewertet App-Qualität primär am **Laufzeitverhalten auf echten
+Geräten** (Android Vitals, Pre-Launch-Report). Dafür gibt es zusätzlich
+zu den Unit-/Compliance-Checks:
+
+- **UI-Boot-Smoke** ([`.github/workflows/ui-runtime.yml`](../../.github/workflows/ui-runtime.yml)):
+  startet die echten Oberflächen statt nur statisch zu prüfen.
+  - `desktop-gui-smoke`: baut die customtkinter-App unter `xvfb` auf,
+    ruft `_refresh_all` und fängt Render-/Boot-Crashes
+    ([tests/test_gui_boot_smoke.py](../../tests/test_gui_boot_smoke.py)).
+  - `mobile-kivy-smoke`: bootet die KivyMD-App headless (Mock-Window)
+    und baut alle fünf Tabs
+    ([tests/test_mobile_boot_smoke.py](../../tests/test_mobile_boot_smoke.py)).
+  - Beide Jobs sind **zunächst beratend** (`continue-on-error: true`), da
+    ohne lokale Ausführungs-Umgebung erstellt. Nach dem ersten grünen Lauf
+    vom Release-Owner verpflichtend machen (Flag entfernen).
+- **Android Robo/Monkey** ([`.github/workflows/android-robo.yml`](../../.github/workflows/android-robo.yml),
+  manuell): baut ein Debug-APK und stresst es mit `monkey` auf einem
+  Emulator; bricht bei `FATAL EXCEPTION`/ANR ab.
+- **Pre-Launch-Report (maßgeblich):** Upload in den Internal-Track lässt
+  Google die App auf **echten Geräten** testen (Crashes, Accessibility,
+  Sicherheit) — der kostenlose, authoritative Weg; siehe
+  [11_PLAY_SUBMISSION.md](11_PLAY_SUBMISSION.md).
+- **Android Vitals** (Crash-free ≥ 99,5 %, ANR < 0,47 %) werden erst nach
+  Veröffentlichung gemessen und sind in der Release-Checkliste (Abschnitt M)
+  als Gate hinterlegt.

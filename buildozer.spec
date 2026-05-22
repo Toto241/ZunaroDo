@@ -47,6 +47,12 @@ android.minapi = 24
 android.ndk_api = 24
 android.archs = arm64-v8a, armeabi-v7a
 
+# Release-Artefakt: Google Play verlangt ein App Bundle (.aab), kein APK.
+# 'buildozer android release' erzeugt damit bin/*.aab. Die Signierung
+# uebernimmt python-for-android ueber die P4A_RELEASE_*-Umgebungsvariablen
+# (im Release-Workflow aus GitHub-Secrets gesetzt) bzw. Play App Signing.
+android.release_artifact = aab
+
 # Release-Build packt nur das hier definierte; debug-only Strings via
 # Build-Time-Env-Var (siehe docs/android/01_ARCHITECTURE.md#6).
 # Cleartext-Traffic ist im generierten Manifest standardmaessig aus

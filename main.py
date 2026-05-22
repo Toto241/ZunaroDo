@@ -28,6 +28,7 @@ from modules.finance import FinanceModule
 from modules.inbox import InboxModule
 from modules.notes import NotesModule
 from modules.overview import OverviewModule
+from modules.profiles import ProfilesModule
 from modules.search import SearchModule
 from modules.social import SocialModule
 from modules.statistics import StatisticsModule
@@ -118,6 +119,7 @@ def build_registry(db: Database, output: OutputService,
     registry.register(StatisticsModule(expense_repo, contracts_repo))
     registry.register(TaskTemplatesModule(TaskTemplateRepository(db)))
     registry.register(OverviewModule())
+    registry.register(ProfilesModule())
     return registry
 
 

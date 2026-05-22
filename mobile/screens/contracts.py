@@ -21,6 +21,8 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import format_currency, truncate
+from mobile.presenters import ContractsPresenter
+from mobile.ui_text import t as _t
 
 
 class ContractsScreen(MDScreen):
@@ -28,6 +30,7 @@ class ContractsScreen(MDScreen):
     def __init__(self, registry, **kwargs):
         super().__init__(**kwargs)
         self.registry = registry
+        self.presenter = ContractsPresenter(registry.dispatch)
         self._dialog = None
         self._build()
 
@@ -37,7 +40,7 @@ class ContractsScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Vertraege",
+            title=_t("tab.contracts", "Vertraege"),
             right_action_items=[["refresh", lambda *_: self._refresh()]],
         ))
 
@@ -45,10 +48,11 @@ class ContractsScreen(MDScreen):
         fbox = MDBoxLayout(orientation="horizontal", adaptive_height=True,
                             padding=dp(8), spacing=dp(8), size_hint=(1, None))
         self.category_filter = MDTextField(
-            hint_text="Kategorie filtern (optional)")
+            hint_text=_t("filter.category_hint",
+                         "Kategorie filtern (optional)"))
         self.category_filter.bind(on_text_validate=lambda *_: self._refresh())
         fbox.add_widget(self.category_filter)
-        fbox.add_widget(MDFlatButton(text="Filtern",
+        fbox.add_widget(MDFlatButton(text=_t("action.filter", "Filtern"),
                                      on_release=lambda *_: self._refresh()))
         root.add_widget(fbox)
 
@@ -73,15 +77,12 @@ class ContractsScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        args: dict = {}
-        if hasattr(self, "category_filter"):
-            chosen = (self.category_filter.text or "").strip()
-            if chosen:
-                args["category"] = chosen
-        result = self.registry.dispatch("contracts.list", args)
+        category = (self.category_filter.text
+                    if hasattr(self, "category_filter") else None)
+        view = self.presenter.list(category)
         self.container.clear_widgets()
-        contracts = result.get("contracts", [])
-        total = result.get("total_monthly_cost", 0.0)
+        contracts = view["items"]
+        total = view["total_monthly_cost"]
 
         # Header-Card mit Summe
         if contracts:
@@ -100,7 +101,7 @@ class ContractsScreen(MDScreen):
             self.container.add_widget(header)
         else:
             self.container.add_widget(MDLabel(
-                text="Noch keine Vertraege. Tipp auf +.",
+                text=_t(view["empty_text_key"], view["empty_text"]),
                 halign="center",
                 size_hint=(1, None),
                 height=dp(48)))
@@ -144,10 +145,7 @@ class ContractsScreen(MDScreen):
     def _open_detail(self, cid):
         if cid is None:
             return
-        result = self.registry.dispatch("contracts.list", {})
-        contract = next(
-            (c for c in result.get("contracts", []) if c.get("id") == cid),
-            None)
+        contract = self.presenter.detail(cid)
         if contract is None:
             return
         text = (f"Anbieter: {contract.get('provider','-')}\n"
@@ -160,16 +158,16 @@ class ContractsScreen(MDScreen):
             title=contract.get("name", "Vertrag"),
             text=text,
             buttons=[
-                MDFlatButton(text="Loeschen",
+                MDFlatButton(text=_t("action.delete", "Loeschen"),
                               on_release=lambda *_: self._delete(cid)),
-                MDFlatButton(text="Schliessen",
+                MDFlatButton(text=_t("action.close", "Schliessen"),
                               on_release=lambda *_: self._dismiss()),
             ],
         )
         self._dialog.open()
 
     def _delete(self, cid: int) -> None:
-        self.registry.dispatch("contracts.delete", {"contract_id": cid})
+        self.presenter.delete(cid)
         self._dismiss()
         self._refresh()
 
@@ -183,23 +181,23 @@ class ContractsScreen(MDScreen):
                              spacing=dp(8),
                              adaptive_height=True,
                              padding=dp(8))
-        name = MDTextField(hint_text="Name")
-        category = MDTextField(hint_text="Kategorie "
-                                 "(streaming/mobilfunk/...)")
-        provider = MDTextField(hint_text="Anbieter")
-        cost = MDTextField(hint_text="Monatlich (EUR)",
+        name = MDTextField(hint_text=_t("form.name", "Name"))
+        category = MDTextField(hint_text=_t("form.category", "Kategorie")
+                               + " (streaming/mobilfunk/...)")
+        provider = MDTextField(hint_text=_t("form.provider", "Anbieter"))
+        cost = MDTextField(hint_text=_t("form.monthly_cost", "Monatlich (EUR)"),
                             input_filter="float")
         for w in (name, category, provider, cost):
             body.add_widget(w)
         self._dialog = MDDialog(
-            title="Neuer Vertrag",
+            title=_t("action.add_contract", "Neuer Vertrag"),
             type="custom",
             content_cls=body,
             buttons=[
-                MDFlatButton(text="Abbrechen",
+                MDFlatButton(text=_t("action.cancel", "Abbrechen"),
                               on_release=lambda *_: self._dismiss()),
                 MDFlatButton(
-                    text="Speichern",
+                    text=_t("action.save", "Speichern"),
                     on_release=lambda *_: self._submit_add(
                         name.text, category.text, provider.text,
                         cost.text)),
@@ -209,15 +207,7 @@ class ContractsScreen(MDScreen):
 
     def _submit_add(self, name: str, category: str, provider: str,
                      cost: str) -> None:
-        try:
-            cost_val = float(cost) if cost else 0.0
-        except ValueError:
-            cost_val = 0.0
-        self.registry.dispatch("contracts.add", {
-            "name": name.strip() or "Unbenannt",
-            "category": (category.strip() or "sonstiges"),
-            "provider": provider.strip(),
-            "monthly_cost": cost_val,
-        })
+        self.presenter.add(name=name, category=category, provider=provider,
+                           monthly_cost=cost)
         self._dismiss()
         self._refresh()
