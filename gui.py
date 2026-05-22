@@ -1077,10 +1077,7 @@ class AlltagshelferGUI(ctk.CTk):
             self._contract_row(c)
 
     def _contract_row(self, c: dict) -> None:
-        card = ctk.CTkFrame(self.contract_list)
-        card.pack(fill="x", pady=4, padx=2)
-        body = ctk.CTkFrame(card, fg_color="transparent")
-        body.pack(fill="x", padx=12, pady=8)
+        body = _card_row(self.contract_list)
 
         owner = f" - {c['owner']}" if c.get("owner") else ""
         ctk.CTkLabel(body,
@@ -2659,10 +2656,7 @@ class AlltagshelferGUI(ctk.CTk):
             self._search_card(hit)
 
     def _search_card(self, hit: dict) -> None:
-        card = ctk.CTkFrame(self.search_results)
-        card.pack(fill="x", pady=3, padx=2)
-        body = ctk.CTkFrame(card, fg_color="transparent")
-        body.pack(fill="x", padx=12, pady=8)
+        body = _card_row(self.search_results)
         top = ctk.CTkFrame(body, fg_color="transparent")
         top.pack(fill="x")
         ctk.CTkLabel(top, text=f"[{hit['source']}]", height=18,
