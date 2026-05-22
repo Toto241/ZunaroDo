@@ -14030,7 +14030,7 @@
         "R8"
       ],
       "file": "tests/test_gui_smoke.py",
-      "lineno": 54,
+      "lineno": 68,
       "doc": "Sicherstellen, dass die Aktivierungs-UI-Methoden existieren -\nverhindert dass die Bindings in __init__ ins Leere zeigen.",
       "source": "    def test_gui_has_license_section_methods(self) -> None:\n        \"\"\"Sicherstellen, dass die Aktivierungs-UI-Methoden existieren -\n        verhindert dass die Bindings in __init__ ins Leere zeigen.\"\"\"\n        import gui\n        for cls_name in dir(gui):\n            cls = getattr(gui, cls_name)\n            if not isinstance(cls, type):\n                continue\n            if not (cls_name.endswith(\"App\") or cls_name.endswith(\"GUI\")):\n                continue\n            for method in (\"_build_license_section\",\n                            \"_build_subscription_block\",\n                            \"_on_start_trial\",\n                            \"_on_apply_token\",\n                            \"_refresh_license_state\",\n                            \"_build_upgrade_panel\",\n                            \"_is_tab_locked\",\n                            \"_tab_display_label\",\n                            \"_show_pricing_reveal\",\n                            \"_show_token_paste_dialog\",\n                            \"_show_demo_data_onboarding\"):\n                self.assertTrue(hasattr(cls, method),\n                                  f\"{cls_name}.{method} fehlt\")\n            return\n        self.fail(\"Keine GUI-Hauptklasse gefunden, um Hooks zu pruefen\")\n"
     },
@@ -14062,7 +14062,7 @@
         "R8"
       ],
       "file": "tests/test_gui_smoke.py",
-      "lineno": 42,
+      "lineno": 56,
       "doc": "Lizenz-UI-Helfer muessen ohne Tk-Display funktionieren.",
       "source": "    def test_license_ui_helpers_callable_headless(self) -> None:\n        \"\"\"Lizenz-UI-Helfer muessen ohne Tk-Display funktionieren.\"\"\"\n        from services.license_ui import (build_pricing_rows,\n                                            make_tier_status,\n                                            sidebar_indicator)\n        from services.licensing import License, Tier\n        st = make_tier_status(License())\n        self.assertEqual(st.tier, Tier.FREE)\n        self.assertEqual(sidebar_indicator(License()), \"Tier: Free\")\n        rows = build_pricing_rows(2)\n        self.assertGreater(len(rows), 0)\n"
     },
@@ -14078,7 +14078,7 @@
         "R8"
       ],
       "file": "tests/test_gui_smoke.py",
-      "lineno": 32,
+      "lineno": 46,
       "doc": "",
       "source": "    def test_main_app_class_exists(self) -> None:\n        import gui\n        # Eine zentrale GUI-Klasse muss existieren, sonst startet\n        # nichts. Wir erlauben verschiedene Namen ('App', 'GUI', ...).\n        gui_classes = [name for name in dir(gui)\n                        if (name.endswith(\"App\") or name.endswith(\"GUI\"))\n                        and isinstance(getattr(gui, name), type)]\n        self.assertTrue(gui_classes,\n                          \"Keine GUI-Hauptklasse in gui.py gefunden\")\n"
     },
@@ -14094,7 +14094,7 @@
         "R8"
       ],
       "file": "tests/test_gui_smoke.py",
-      "lineno": 87,
+      "lineno": 101,
       "doc": "",
       "source": "    def test_build_registry_signature(self) -> None:\n        import inspect\n        from main import build_registry\n        sig = inspect.signature(build_registry)\n        # build_registry darf keine Argumente brauchen\n        # (oder nur Defaults haben) - sonst kaputt\n        required = [p for p in sig.parameters.values()\n                     if p.default is inspect.Parameter.empty\n                     and p.kind not in (inspect.Parameter.VAR_POSITIONAL,\n                                          inspect.Parameter.VAR_KEYWORD)]\n        # db + output sind Pflicht; llm hat Default None\n        self.assertEqual(len(required), 2,\n                          f\"build_registry erwartet {len(required)} \"\n                          \"Pflicht-Args; db und output muessen reichen\")\n        names = {p.name for p in required}\n        self.assertIn(\"db\", names)\n        self.assertIn(\"output\", names)\n"
     },
@@ -14110,7 +14110,7 @@
         "R8"
       ],
       "file": "tests/test_gui_smoke.py",
-      "lineno": 83,
+      "lineno": 97,
       "doc": "",
       "source": "    def test_main_module_imports(self) -> None:\n        import main\n        self.assertTrue(hasattr(main, \"main\"))\n"
     },
@@ -22018,7 +22018,7 @@
       "file": "tests/test_store_listing.py",
       "lineno": 46,
       "doc": "",
-      "source": "    def test_merges_curated_into_base(self) -> None:\n        base = {\"de-DE\": {\"title\": \"Alltagshelfer\", \"short_description\": \"s\",\n                           \"full_description\": \"f\"}}\n        out = sl.generate_localizations(base)\n        self.assertIn(\"de-DE\", out)\n        self.assertIn(\"fr-FR\", out)\n"
+      "source": "    def test_merges_curated_into_base(self) -> None:\n        base = {\"de-DE\": {\"title\": \"ZunaroDo\", \"short_description\": \"s\",\n                           \"full_description\": \"f\"}}\n        out = sl.generate_localizations(base)\n        self.assertIn(\"de-DE\", out)\n        self.assertIn(\"fr-FR\", out)\n"
     },
     {
       "classname": "tests.test_store_listing.TestCuratedQuality",
@@ -23482,6 +23482,6 @@
   },
   "decision": "GO",
   "reasons": [],
-  "elapsed_s": 1.8290000000270084,
-  "generated_at": "2026-05-22T12:03:24.882829+00:00"
+  "elapsed_s": 0.8599999999860302,
+  "generated_at": "2026-05-22T14:52:20.689177+00:00"
 }
