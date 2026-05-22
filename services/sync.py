@@ -229,8 +229,13 @@ class FileSyncProvider:
     def unseen_events(self) -> list[SyncEvent]:
         # Last-Write-Wins: chronologisch sortieren, damit die spaeteste
         # Anwendung bei nicht-idempotenten Operationen am Ende kommt.
+        # _seen wird unter Lock von append()/mark_seen() mutiert - hier
+        # einen Snapshot ziehen, damit ein gerade markiertes Event nicht
+        # uebersehen oder doppelt angewendet wird.
+        with self._lock:
+            seen = set(self._seen)
         events = [e for e in self.read_all()
-                   if e.event_id not in self._seen
+                   if e.event_id not in seen
                    and e.device_id != self.device_id]
         events.sort(key=lambda ev: ev.order_key())
         return events
@@ -248,14 +253,18 @@ class FileSyncProvider:
         """
         if not self.log_path.exists():
             return 0
-        lines = self.log_path.read_text(encoding="utf-8").splitlines()
-        if len(lines) <= max_lines:
-            return 0
-        keep = lines[-max_lines:]
-        tmp = self.log_path.with_suffix(".jsonl.tmp")
-        tmp.write_text("\n".join(keep) + "\n", encoding="utf-8")
-        tmp.replace(self.log_path)
-        return len(lines) - len(keep)
+        # Unter Lock, damit ein gleichzeitiges append() nicht in einen
+        # gerade per replace() ausgetauschten Log schreibt (auf Windows
+        # schlaegt replace() ueber einem offenen Handle sonst fehl).
+        with self._lock:
+            lines = self.log_path.read_text(encoding="utf-8").splitlines()
+            if len(lines) <= max_lines:
+                return 0
+            keep = lines[-max_lines:]
+            tmp = self.log_path.with_suffix(".jsonl.tmp")
+            tmp.write_text("\n".join(keep) + "\n", encoding="utf-8")
+            tmp.replace(self.log_path)
+            return len(lines) - len(keep)
 
     # ---- Lokales Logbuch ----------------------------------------------
     def _load_seen(self) -> set[str]:
