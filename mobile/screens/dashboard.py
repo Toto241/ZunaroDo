@@ -154,7 +154,8 @@ class DashboardScreen(MDScreen):
         if not self.list.children:
             self.list.add_widget(OneLineAvatarIconListItem(
                 IconLeftWidget(icon="check-circle"),
-                text="Keine offenen Punkte. Schoenes Leben!",
+                text=_t("dashboard.all_clear",
+                        "Keine offenen Punkte. Schoenes Leben!"),
             ))
 
     def _render_week(self) -> None:
@@ -187,5 +188,5 @@ class DashboardScreen(MDScreen):
         if not self.list.children:
             self.list.add_widget(OneLineAvatarIconListItem(
                 IconLeftWidget(icon="check-circle"),
-                text="Diese Woche nichts faellig.",
+                text=_t("dashboard.week_clear", "Diese Woche nichts faellig."),
             ))

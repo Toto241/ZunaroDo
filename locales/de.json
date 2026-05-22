@@ -237,5 +237,13 @@
   "more.contacts": "Kontakte (nach Beziehung)",
   "page.search": "Suche",
   "page.orders": "Auftraege",
-  "page.contacts": "Kontakte"
+  "page.contacts": "Kontakte",
+  "action.filter": "Filtern",
+  "search.query_hint": "Suchbegriff",
+  "form.assignee": "Zustaendig",
+  "form.priority_hint": "Prioritaet hoch/mittel/normal",
+  "filter.category_hint": "Kategorie filtern (optional)",
+  "filter.relation_hint": "Beziehung filtern (optional)",
+  "dashboard.all_clear": "Keine offenen Punkte. Schoenes Leben!",
+  "dashboard.week_clear": "Diese Woche nichts faellig."
 }

@@ -48,10 +48,11 @@ class ContractsScreen(MDScreen):
         fbox = MDBoxLayout(orientation="horizontal", adaptive_height=True,
                             padding=dp(8), spacing=dp(8), size_hint=(1, None))
         self.category_filter = MDTextField(
-            hint_text="Kategorie filtern (optional)")
+            hint_text=_t("filter.category_hint",
+                         "Kategorie filtern (optional)"))
         self.category_filter.bind(on_text_validate=lambda *_: self._refresh())
         fbox.add_widget(self.category_filter)
-        fbox.add_widget(MDFlatButton(text="Filtern",
+        fbox.add_widget(MDFlatButton(text=_t("action.filter", "Filtern"),
                                      on_release=lambda *_: self._refresh()))
         root.add_widget(fbox)
 

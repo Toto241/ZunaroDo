@@ -236,7 +236,7 @@ class _FilteredListPage(MDScreen):
         self.filter_field = MDTextField(hint_text=self.filter_hint)
         self.filter_field.bind(on_text_validate=lambda *_: self._refresh())
         fbox.add_widget(self.filter_field)
-        fbox.add_widget(MDFlatButton(text="Filtern",
+        fbox.add_widget(MDFlatButton(text=_t("action.filter", "Filtern"),
                                      on_release=lambda *_: self._refresh()))
         root.add_widget(fbox)
         scroll = ScrollView()
@@ -289,16 +289,22 @@ class _SearchPage(MDScreen):
         ))
         form = MDBoxLayout(orientation="vertical", adaptive_height=True,
                            padding=dp(8), spacing=dp(4), size_hint=(1, None))
-        self.q = MDTextField(hint_text="Suchbegriff")
-        self.f_category = MDTextField(hint_text="Kategorie (optional)")
-        self.f_status = MDTextField(hint_text="Status (optional)")
-        self.f_from = MDTextField(hint_text="von JJJJ-MM-TT (optional)")
-        self.f_to = MDTextField(hint_text="bis JJJJ-MM-TT (optional)")
+        opt = " (" + _t("form.optional", "optional") + ")"
+        self.q = MDTextField(hint_text=_t("search.query_hint", "Suchbegriff"))
+        self.f_category = MDTextField(
+            hint_text=_t("search.ph_category", "Kategorie") + opt)
+        self.f_status = MDTextField(
+            hint_text=_t("search.ph_status", "Status") + opt)
+        self.f_from = MDTextField(
+            hint_text=_t("search.ph_date_from", "von JJJJ-MM-TT") + opt)
+        self.f_to = MDTextField(
+            hint_text=_t("search.ph_date_to", "bis JJJJ-MM-TT") + opt)
         for w in (self.q, self.f_category, self.f_status,
                   self.f_from, self.f_to):
             form.add_widget(w)
         form.add_widget(MDRaisedButton(
-            text="Suchen", on_release=lambda *_: self._run()))
+            text=_t("search.button", "Suchen"),
+            on_release=lambda *_: self._run()))
         root.add_widget(form)
         scroll = ScrollView()
         self.list = MDList()
@@ -391,12 +397,17 @@ class _OrdersPage(MDScreen):
     def _open_add(self) -> None:
         body = MDBoxLayout(orientation="vertical", spacing=dp(8),
                            adaptive_height=True, padding=dp(8))
-        self._in_title = MDTextField(hint_text="Titel")
-        self._in_assignee = MDTextField(hint_text="Zustaendig (optional)")
-        self._in_due = MDTextField(hint_text="Faellig JJJJ-MM-TT (optional)")
+        opt = " (" + _t("form.optional", "optional") + ")"
+        self._in_title = MDTextField(hint_text=_t("form.title", "Titel"))
+        self._in_assignee = MDTextField(
+            hint_text=_t("form.assignee", "Zustaendig") + opt)
+        self._in_due = MDTextField(
+            hint_text=_t("form.due_date", "Faellig JJJJ-MM-TT") + opt)
         self._in_priority = MDTextField(
-            hint_text="Prioritaet hoch/mittel/normal", text="normal")
-        self._in_category = MDTextField(hint_text="Kategorie (optional)")
+            hint_text=_t("form.priority_hint", "Prioritaet hoch/mittel/normal"),
+            text="normal")
+        self._in_category = MDTextField(
+            hint_text=_t("form.category", "Kategorie") + opt)
         for w in (self._in_title, self._in_assignee, self._in_due,
                   self._in_priority, self._in_category):
             body.add_widget(w)
@@ -532,7 +543,9 @@ class MoreScreen(MDScreen):
             result_key="contacts",
             label_fn=lambda c: f"{c.get('name','?')} "
                                f"({c.get('relation','-')})",
-            filter_key="relation", filter_hint="Beziehung filtern (optional)",
+            filter_key="relation",
+            filter_hint=_t("filter.relation_hint",
+                           "Beziehung filtern (optional)"),
             registry=self.registry))
 
     def _make_handler(self, label_text: str):

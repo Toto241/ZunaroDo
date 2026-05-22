@@ -237,5 +237,13 @@
   "more.contacts": "Contacts (by relation)",
   "page.search": "Search",
   "page.orders": "Tasks",
-  "page.contacts": "Contacts"
+  "page.contacts": "Contacts",
+  "action.filter": "Filter",
+  "search.query_hint": "Search term",
+  "form.assignee": "Assignee",
+  "form.priority_hint": "Priority high/medium/normal",
+  "filter.category_hint": "Filter by category (optional)",
+  "filter.relation_hint": "Filter by relation (optional)",
+  "dashboard.all_clear": "Nothing pending. Enjoy!",
+  "dashboard.week_clear": "Nothing due this week."
 }
