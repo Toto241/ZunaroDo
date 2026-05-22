@@ -2646,10 +2646,13 @@ class AlltagshelferGUI(ctk.CTk):
             date_from=self.search_date_from.get(),
             date_to=self.search_date_to.get())
         if result["status"] != "ok":
+            if result["status"] == "empty":
+                _empty_state(self.search_results,
+                             self.i18n.t("search.no_hits"))
+                return
             text = (self.i18n.t("search.too_short")
                     if result["status"] == "too_short"
-                    else result["message"] if result["status"] == "error"
-                    else self.i18n.t("search.no_hits"))
+                    else result["message"])
             ctk.CTkLabel(self.search_results, text=text,
                          text_color="gray").pack(pady=20)
             return
