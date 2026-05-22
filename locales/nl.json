@@ -99,6 +99,7 @@
   "data.delete_done": "Alle gegevens verwijderd. Start de app opnieuw.",
   "calendar.title": "Afspraken en agenda",
   "calendar.empty": "Geen afspraken in de komende {days} dagen.",
+  "calendar.no_events": "Nog geen afspraken.",
   "calendar.recurring_suffix": ", terugkerend elke {days} dagen",
   "social.title": "Sociaal onderhoud",
   "social.no_contacts": "Nog geen contacten vastgelegd.",

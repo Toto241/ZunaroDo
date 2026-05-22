@@ -99,6 +99,7 @@
   "data.delete_done": "Todos os dados eliminados. Reinicie a aplicação.",
   "calendar.title": "Compromissos e calendário",
   "calendar.empty": "Sem compromissos nos próximos {days} dias.",
+  "calendar.no_events": "Ainda não há compromissos.",
   "calendar.recurring_suffix": ", recorrente a cada {days} dias",
   "social.title": "Cuidado das relações",
   "social.no_contacts": "Ainda sem contactos registados.",

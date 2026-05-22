@@ -99,6 +99,7 @@
   "data.delete_done": "Todos los datos eliminados. Reinicia la aplicación.",
   "calendar.title": "Citas y calendario",
   "calendar.empty": "Sin citas en los próximos {days} días.",
+  "calendar.no_events": "Aún no hay citas.",
   "calendar.recurring_suffix": ", recurrente cada {days} días",
   "social.title": "Cuidado de relaciones",
   "social.no_contacts": "Aún no hay contactos registrados.",

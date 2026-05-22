@@ -99,6 +99,7 @@
   "data.delete_done": "Alle Daten geloescht. Bitte starte die App neu.",
   "calendar.title": "Termine & Kalender",
   "calendar.empty": "Keine Termine in den naechsten {days} Tagen.",
+  "calendar.no_events": "Noch keine Termine.",
   "calendar.recurring_suffix": ", wiederkehrend alle {days} Tage",
   "social.title": "Soziale Pflege",
   "social.no_contacts": "Noch keine Kontakte erfasst.",

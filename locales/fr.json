@@ -99,6 +99,7 @@
   "data.delete_done": "Toutes les données ont été supprimées. Veuillez redémarrer l'application.",
   "calendar.title": "Rendez-vous et calendrier",
   "calendar.empty": "Aucun rendez-vous dans les {days} prochains jours.",
+  "calendar.no_events": "Aucun rendez-vous pour le moment.",
   "calendar.recurring_suffix": ", récurrent tous les {days} jours",
   "social.title": "Entretien des relations",
   "social.no_contacts": "Aucun contact enregistré pour l'instant.",

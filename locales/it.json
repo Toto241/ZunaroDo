@@ -99,6 +99,7 @@
   "data.delete_done": "Tutti i dati eliminati. Riavvia l'app.",
   "calendar.title": "Appuntamenti e calendario",
   "calendar.empty": "Nessun appuntamento nei prossimi {days} giorni.",
+  "calendar.no_events": "Ancora nessun appuntamento.",
   "calendar.recurring_suffix": ", ricorrente ogni {days} giorni",
   "social.title": "Cura delle relazioni",
   "social.no_contacts": "Ancora nessun contatto registrato.",

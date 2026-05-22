@@ -298,7 +298,7 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
 def _labeled_entry(parent, label: str, placeholder: str = "",
                    width: int = 200) -> ctk.CTkEntry:
     row = ctk.CTkFrame(parent, fg_color="transparent")
-    row.pack(fill="x", pady=2)
+    row.pack(fill="x", padx=12, pady=3)
     ctk.CTkLabel(row, text=label, width=130, anchor="w").pack(side="left")
     entry = ctk.CTkEntry(row, placeholder_text=placeholder, width=width)
     entry.pack(side="left", fill="x", expand=True)
@@ -308,7 +308,7 @@ def _labeled_entry(parent, label: str, placeholder: str = "",
 def _labeled_option_menu(parent, label: str, values: list[str],
                          default: str = "") -> ctk.CTkOptionMenu:
     row = ctk.CTkFrame(parent, fg_color="transparent")
-    row.pack(fill="x", pady=2)
+    row.pack(fill="x", padx=12, pady=3)
     ctk.CTkLabel(row, text=label, width=130, anchor="w").pack(side="left")
     menu = ctk.CTkOptionMenu(row, values=values)
     menu.set(default or (values[0] if values else ""))
@@ -1448,7 +1448,7 @@ class AlltagshelferGUI(ctk.CTk):
         events = self.registry.dispatch("calendar.list_events",
                                             {}).get("events", [])
         if not events:
-            _empty_state(self.calendar_list, t("calendar.empty"))
+            _empty_state(self.calendar_list, t("calendar.no_events"))
             return
         for e in events:
             row = ctk.CTkFrame(self.calendar_list, fg_color="transparent")
