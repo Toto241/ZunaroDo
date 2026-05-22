@@ -36,6 +36,18 @@ def _now_utc_iso() -> str:
     """
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
+
+def _existing_owner_id(conn, owner_id):
+    """Liefert owner_id nur, wenn das Mitglied wirklich existiert - sonst
+    None. Verhindert, dass ein verwaister owner_id (z.B. aus einem
+    Sync-Replay von einem Geraet mit anderem Mitglieder-Stand) den ganzen
+    INSERT/UPDATE per FOREIGN-KEY-IntegrityError abbrechen laesst."""
+    if not owner_id:
+        return None
+    row = conn.execute(
+        "SELECT 1 FROM family_members WHERE id=?", (owner_id,)).fetchone()
+    return owner_id if row else None
+
 from models import (AssistantLogEntry, AuditLogEntry, CalendarEvent,
                     Contract, DayEntry, Expense, FamilyMember,
                     HouseholdOrder, HouseholdTask, Note, PriceMemory,
@@ -552,7 +564,8 @@ class ContractRepository:
              c.start_date.isoformat() if c.start_date else None,
              c.minimum_term_months, c.notice_period_months,
              c.auto_renew_months, c.monthly_cost, c.currency,
-             c.notes, c.status, c.owner_id, now, now),
+             c.notes, c.status,
+             _existing_owner_id(self.db.conn, c.owner_id), now, now),
         )
         self.db.conn.commit()
         c.id = cur.lastrowid
@@ -584,7 +597,8 @@ class ContractRepository:
     def set_owner(self, contract_id: int, owner_id: Optional[int]) -> None:
         self.db.conn.execute(
             "UPDATE contracts SET owner_id=?, updated_at=? WHERE id=?",
-            (owner_id, _now_utc_iso(), contract_id))
+            (_existing_owner_id(self.db.conn, owner_id),
+             _now_utc_iso(), contract_id))
         self.db.conn.commit()
 
     def get(self, contract_id: int) -> Optional[Contract]:
@@ -685,7 +699,7 @@ class ExpenseRepository:
             " owner_id, created_at) VALUES (?,?,?,?,?,?)",
             (e.description, e.amount, e.category,
              e.spent_on.isoformat() if e.spent_on else None,
-             e.owner_id, now),
+             _existing_owner_id(self.db.conn, e.owner_id), now),
         )
         self.db.conn.commit()
         e.id = cur.lastrowid
@@ -1129,6 +1143,14 @@ class ProposalRepository:
 
     @staticmethod
     def _row_to_proposal(row: sqlite3.Row) -> Proposal:
+        created_raw = (row["created_at"]
+                       if "created_at" in row.keys() else None)
+        created_at = None
+        if created_raw:
+            try:
+                created_at = datetime.fromisoformat(created_raw)
+            except ValueError:
+                created_at = None
         return Proposal(
             id=row["id"],
             source=row["source"],
@@ -1136,6 +1158,7 @@ class ProposalRepository:
             target_capability=row["target_capability"],
             payload=json.loads(row["payload"]) if row["payload"] else {},
             status=row["status"],
+            created_at=created_at,
         )
 
 
@@ -1191,7 +1214,7 @@ class CalendarRepository:
 
     @staticmethod
     def _next_occurrence(e: CalendarEvent, today: date) -> Optional[date]:
-        if not e.recurrence_days:
+        if not e.recurrence_days or e.recurrence_days <= 0:
             return e.due_date if e.due_date >= today - timedelta(days=30) else None
         d = e.due_date
         while d < today:
