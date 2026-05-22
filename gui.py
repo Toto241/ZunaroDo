@@ -347,6 +347,17 @@ def _empty_state(parent, text: str) -> None:
                  font=_win11_font(size=13)).pack(pady=(2, 0))
 
 
+def _card_row(parent):
+    """Einheitliche Listenzeile als dezente Karte (gleiches Aussehen wie die
+    Vertraege-/Posteingang-Karten). Gibt den inneren Body-Frame zurueck, in
+    den der Aufrufer Label/Buttons packt."""
+    card = ctk.CTkFrame(parent)
+    card.pack(fill="x", pady=4, padx=2)
+    body = ctk.CTkFrame(card, fg_color="transparent")
+    body.pack(fill="x", padx=12, pady=8)
+    return body
+
+
 # ---------------------------------------------------------------------
 #  Hauptfenster
 # ---------------------------------------------------------------------
@@ -1160,9 +1171,10 @@ class AlltagshelferGUI(ctk.CTk):
             return
         for m in members:
             bday = f"  - Geburtstag {m['birthday']}" if m.get("birthday") else ""
-            ctk.CTkLabel(self.member_list,
+            row = _card_row(self.member_list)
+            ctk.CTkLabel(row,
                          text=f"#{m['id']}  {m['name']} ({m['role']}){bday}",
-                         anchor="w").pack(fill="x", padx=12, pady=2)
+                         anchor="w").pack(side="left", fill="x", expand=True)
 
     def _build_family_tasks(self, parent) -> None:
         t = self.i18n.t
@@ -1224,8 +1236,7 @@ class AlltagshelferGUI(ctk.CTk):
             _empty_state(self.task_list, "Keine Aufgaben angelegt.")
             return
         for t in tasks:
-            row = ctk.CTkFrame(self.task_list, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=3)
+            row = _card_row(self.task_list)
             ctk.CTkLabel(row,
                          text=(f"{t['title']}  -  faellig {t['next_due']}, "
                                 f"zustaendig {t['current_assignee']} "
@@ -1279,8 +1290,7 @@ class AlltagshelferGUI(ctk.CTk):
             _empty_state(self.order_list, "Noch keine Auftraege.")
             return
         for o in orders:
-            row = ctk.CTkFrame(self.order_list, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=3)
+            row = _card_row(self.order_list)
             status_mark = "[ok]" if o["status"] == "erledigt" else "[offen]"
             faellig = f", bis {o['due_date']}" if o.get("due_date") else ""
             prio = o.get("priority", "normal")
@@ -1334,8 +1344,7 @@ class AlltagshelferGUI(ctk.CTk):
             _empty_state(self.shopping_list, "Einkaufsliste ist leer.")
             return
         for item in items:
-            row = ctk.CTkFrame(self.shopping_list, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=3)
+            row = _card_row(self.shopping_list)
             qty = f" ({item['quantity']})" if item.get("quantity") else ""
             by = f" - von {item['added_by']}" if item.get("added_by") else ""
             mark = "[x]" if item.get("bought") else "[ ]"
@@ -1429,8 +1438,7 @@ class AlltagshelferGUI(ctk.CTk):
                    f"{over['total_monthly']:.2f} EUR"))
         for e in self.registry.dispatch("finance.list_expenses",
                                             {}).get("expenses", []):
-            row = ctk.CTkFrame(self.expense_list, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=3)
+            row = _card_row(self.expense_list)
             owner = f"  -  {e['owner']}" if e.get("owner") else ""
             ctk.CTkLabel(row,
                          text=(f"{e.get('spent_on', '?')}  {e['description']}: "
@@ -1501,8 +1509,7 @@ class AlltagshelferGUI(ctk.CTk):
             _empty_state(self.calendar_list, t("calendar.no_events"))
             return
         for e in events:
-            row = ctk.CTkFrame(self.calendar_list, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=3)
+            row = _card_row(self.calendar_list)
             extra = f" - {e['person']}" if e.get("person") else ""
             recur = (t("calendar.recurring_suffix").format(
                          days=e['recurrence_days'])
@@ -1595,8 +1602,7 @@ class AlltagshelferGUI(ctk.CTk):
             _empty_state(self.social_list, t("social.no_contacts"))
             return
         for c in contacts:
-            row = ctk.CTkFrame(self.social_list, fg_color="transparent")
-            row.pack(fill="x", padx=12, pady=3)
+            row = _card_row(self.social_list)
             days = c.get("days_until_due", 0)
             when = (t("social.due_in").format(days=days) if days > 0
                     else t("social.due_today") if days == 0
