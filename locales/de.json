@@ -228,5 +228,14 @@
   "calendar.empty": "Keine Termine in den naechsten {days} Tagen.",
   "finance.recent_empty": "Noch keine Ausgaben in den letzten {days} Tagen.",
   "dashboard.upcoming": "Anstehend",
-  "common.no_entries": "Keine Eintraege."
+  "common.no_entries": "Keine Eintraege.",
+  "more.family": "Familie / Haushalt",
+  "more.notes": "Notizen",
+  "more.inbox": "Vorschlaege (Inbox)",
+  "more.search": "Suche (mit Filtern)",
+  "more.orders": "Auftraege (Prioritaet/Kategorie)",
+  "more.contacts": "Kontakte (nach Beziehung)",
+  "page.search": "Suche",
+  "page.orders": "Auftraege",
+  "page.contacts": "Kontakte"
 }

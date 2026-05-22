@@ -228,5 +228,14 @@
   "calendar.empty": "No events in the next {days} days.",
   "finance.recent_empty": "No expenses in the last {days} days.",
   "dashboard.upcoming": "Upcoming",
-  "common.no_entries": "No entries."
+  "common.no_entries": "No entries.",
+  "more.family": "Family / household",
+  "more.notes": "Notes",
+  "more.inbox": "Suggestions (inbox)",
+  "more.search": "Search (with filters)",
+  "more.orders": "Tasks (priority/category)",
+  "more.contacts": "Contacts (by relation)",
+  "page.search": "Search",
+  "page.orders": "Tasks",
+  "page.contacts": "Contacts"
 }

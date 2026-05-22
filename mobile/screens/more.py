@@ -284,7 +284,7 @@ class _SearchPage(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Suche",
+            title=_t("page.search", "Suche"),
             left_action_items=[["arrow-left", lambda *_: self._go_back()]],
         ))
         form = MDBoxLayout(orientation="vertical", adaptive_height=True,
@@ -347,7 +347,7 @@ class _OrdersPage(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Auftraege",
+            title=_t("page.orders", "Auftraege"),
             left_action_items=[["arrow-left", lambda *_: self._go_back()]],
             right_action_items=[["plus", lambda *_: self._open_add()],
                                 ["refresh", lambda *_: self._refresh()]],
@@ -450,13 +450,13 @@ class MoreScreen(MDScreen):
 
         # Generische Listen-Eintraege (ohne Filter)
         self._entries = [
-            ("account-multiple", "Familie / Haushalt",
+            ("account-multiple", _t("more.family", "Familie / Haushalt"),
              "family.members", "members",
              lambda m: f"{m.get('name','?')} ({m.get('role','-')})"),
-            ("note", "Notizen",
+            ("note", _t("more.notes", "Notizen"),
              "notes.list", "notes",
              lambda n: n.get("title", "?")),
-            ("clipboard-list", "Vorschlaege (Inbox)",
+            ("clipboard-list", _t("more.inbox", "Vorschlaege (Inbox)"),
              "inbox.proposals", "proposals",
              lambda p: p.get("summary", "?")),
         ]
@@ -470,19 +470,20 @@ class MoreScreen(MDScreen):
 
         # Dedizierte Seiten mit eigener Bedienung
         search_item = OneLineIconListItem(
-            IconLeftWidget(icon="magnify"), text="Suche (mit Filtern)")
+            IconLeftWidget(icon="magnify"),
+            text=_t("more.search", "Suche (mit Filtern)"))
         search_item.bind(on_release=lambda *_: self._open_search())
         self.list.add_widget(search_item)
 
         orders_item = OneLineIconListItem(
             IconLeftWidget(icon="clipboard-check"),
-            text="Auftraege (Prioritaet/Kategorie)")
+            text=_t("more.orders", "Auftraege (Prioritaet/Kategorie)"))
         orders_item.bind(on_release=lambda *_: self._open_orders())
         self.list.add_widget(orders_item)
 
         contacts_item = OneLineIconListItem(
             IconLeftWidget(icon="account-heart"),
-            text="Kontakte (nach Beziehung)")
+            text=_t("more.contacts", "Kontakte (nach Beziehung)"))
         contacts_item.bind(on_release=lambda *_: self._open_contacts())
         self.list.add_widget(contacts_item)
 
@@ -527,7 +528,7 @@ class MoreScreen(MDScreen):
 
     def _open_contacts(self) -> None:
         self.add_widget(_FilteredListPage(
-            title="Kontakte", capability="social.contacts",
+            title=_t("page.contacts", "Kontakte"), capability="social.contacts",
             result_key="contacts",
             label_fn=lambda c: f"{c.get('name','?')} "
                                f"({c.get('relation','-')})",

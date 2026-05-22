@@ -6,6 +6,10 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Geändert
 
+- **i18n-Abschluss: „Mehr"-Menü & Sub-Page-Titel** - die Listen-Einträge im
+  „Mehr"-Screen (Familie/Notizen/Inbox/Suche/Aufträge/Kontakte) und die
+  Sub-Page-Titel sind nun ebenfalls lokalisiert (`more.*`/`page.*`-Keys).
+  Damit gibt es im Phone-Client keine sichtbaren hartcodierten Labels mehr.
 - **i18n-Ausbau Stufe 3: interpolierte Leertexte + Abschluss** -
   zählerbasierte Leertexte (Kalender „nächste {days} Tage", Finanzen
   „letzte {days} Tage") sind jetzt über Platzhalter-Keys
