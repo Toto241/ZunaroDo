@@ -1729,13 +1729,8 @@ class AlltagshelferGUI(ctk.CTk):
             self._proposal_card(proposal)
 
     def _proposal_card(self, p: dict) -> None:
-        card = ctk.CTkFrame(
-            self.proposal_list,
-            border_width=1, border_color=CARD_BORDER,
-        )
-        card.pack(fill="x", pady=4, padx=4)
-        body = ctk.CTkFrame(card, fg_color="transparent")
-        body.pack(fill="x", padx=14, pady=10)
+        # Randlose Listen-Karte wie alle anderen Listeneintraege.
+        body = _card_row(self.proposal_list)
         ctk.CTkLabel(body, text=p["summary"], anchor="w", justify="left",
                      wraplength=560,
                      font=_win11_font(size=13, weight="bold")
