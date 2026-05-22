@@ -1,6 +1,5 @@
 {
   "app.title": "Alltagshelfer",
-
   "tab.dashboard": "Pulpit",
   "tab.contracts": "Umowy",
   "tab.family": "Rodzina",
@@ -14,12 +13,10 @@
   "tab.modules": "Moduły",
   "tab.settings": "Ustawienia",
   "tab.more": "Więcej",
-
   "sidebar.module_status": "Stan modułów",
   "sidebar.assistant_mode": "Tryb asystenta",
   "sidebar.refresh_all": "Odśwież wszystko",
   "sidebar.check_now": "Sprawdź powiadomienia teraz",
-
   "dashboard.title": "Najbliższe wydarzenia",
   "dashboard.none": "Brak nadchodzących wydarzeń.",
   "dashboard.horizon.30": "30 dni",
@@ -28,18 +25,15 @@
   "dashboard.urgency.high": "PILNE",
   "dashboard.urgency.medium": "WKRÓTCE",
   "dashboard.urgency.normal": "ZAPLANOWANE",
-
   "search.title": "Wyszukiwanie pełnotekstowe",
   "search.placeholder": "Co najmniej 2 znaki ...",
   "search.button": "Szukaj",
   "search.no_hits": "Brak wyników.",
   "search.too_short": "Wprowadź co najmniej 2 znaki.",
   "search.results_count": "{count} wyników:",
-
   "history.title": "Historia asystenta",
   "history.empty": "Brak wpisów - zapytaj asystenta o coś.",
   "history.refresh": "Odśwież",
-
   "common.you": "Ty",
   "common.assistant": "Asystent",
   "common.save": "Zapisz",
@@ -52,12 +46,10 @@
   "common.send": "Wyślij",
   "common.refresh": "Odśwież",
   "common.placeholder.question": "Wpisz pytanie ...",
-
   "modules.title": "Włącz/wyłącz moduły",
   "modules.hint": "Wyłączone moduły nie dostarczają ani funkcji, ani wpisów na pulpicie. Dane pozostają w bazie danych.",
   "modules.active": "aktywny",
   "modules.capabilities_label": "{n} funkcji:",
-
   "settings.title": "Ustawienia",
   "settings.intro": "Wartości są zapisywane w bazie danych. Pola tajne (klucze API, hasła) są odczytywane wyłącznie ze zmiennych środowiskowych i NIE są zapisywane w bazie danych.",
   "settings.save": "Zapisz (wymagany restart)",
@@ -67,18 +59,14 @@
   "settings.secret_unset": "nie ustawiono",
   "settings.saved": "Zapisano {count} wartości. Dla niektórych pól wymagany restart.",
   "settings.reset_done": "Przywrócono wartości domyślne.",
-
   "family.sub.members": "Członkowie",
   "family.sub.tasks": "Zadania",
   "family.sub.orders": "Zlecenia",
   "family.sub.shopping": "Lista zakupów",
-
   "sidebar.profile": "Profil",
   "sidebar.profile.default": "(Domyślny)",
-
   "tab.statistics": "Statystyki",
   "tab.data": "Dane",
-
   "stats.title": "Statystyki i trendy",
   "stats.expenses_per_month": "Wydatki miesięcznie (ostatnie 12)",
   "stats.contracts_overview": "Przegląd umów",
@@ -89,7 +77,6 @@
   "stats.yearly_total": "{amount:.2f} EUR/rok",
   "stats.top_3": "Top 3 wg ceny",
   "stats.average_per_month": "Średnio na miesiąc",
-
   "data.title": "Zarządzaj danymi",
   "data.profile_label": "Aktywny profil",
   "data.profile_default": "(Domyślny)",
@@ -110,30 +97,24 @@
   "data.delete_confirm_body": "Tej operacji nie można cofnąć. Wszystkie Twoje dane zostaną trwale usunięte z tego urządzenia.",
   "data.delete_confirm_action": "Usuń trwale",
   "data.delete_done": "Wszystkie dane usunięte. Uruchom ponownie aplikację.",
-
   "calendar.title": "Terminy i kalendarz",
-  "calendar.empty": "Brak terminów.",
+  "calendar.empty": "Brak terminów w ciągu najbliższych {days} dni.",
   "calendar.recurring_suffix": ", powtarza się co {days} dni",
-
   "social.title": "Pielęgnowanie relacji",
   "social.no_contacts": "Brak zapisanych kontaktów.",
   "social.next_due": "następny kontakt {when}",
   "social.due_today": "dzisiaj",
   "social.due_in": "za {days} dni",
   "social.due_overdue": "{days} dni po terminie",
-
   "module_admin.toggle": "aktywny",
-
   "onboarding.title": "Witamy w Alltagshelfer",
   "onboarding.intro": "Twoja baza danych jest pusta. Jak chcesz zacząć?",
   "onboarding.option_demo": "Zacznij od danych przykładowych (2 umowy, 3 członków rodziny, kilka terminów)",
   "onboarding.option_empty": "Zacznij od pustej bazy danych",
   "onboarding.choose_demo": "Wczytaj dane przykładowe",
   "onboarding.choose_empty": "Zacznij od pustej",
-
   "shortcuts.quit_title": "Potwierdź zamknięcie",
   "shortcuts.quit_message": "Czy na pewno zamknąć Alltagshelfer?",
-
   "inbox.analyze": "Analizuj",
   "inbox.fetch_imap": "Pobierz IMAP",
   "inbox.accept": "Zatwierdź",
@@ -147,10 +128,8 @@
   "inbox.imap_querying": "Trwa odpytywanie IMAP ...",
   "inbox.imap_not_configured": "IMAP nie skonfigurowany",
   "inbox.imap_result": "IMAP: sprawdzono {checked} wiadomości, {found} nowych propozycji",
-
   "chat.thinking": "myśli ...",
   "chat.greeting": "Cześć! Na pulpicie widzisz swoje najbliższe wydarzenia. Tutaj możesz mnie o wszystko zapytać.",
-
   "proposal_editor.title": "Edytuj propozycję",
   "proposal_editor.summary": "Krótki opis",
   "proposal_editor.save_only": "Zapisz",
@@ -160,7 +139,6 @@
   "proposal_editor.target_unavailable": "Docelowa funkcja '{target}' jest niedostępna. Sprawdź, czy odpowiedzialny moduł jest włączony.",
   "proposal_editor.field_required": "'{name}' jest polem wymaganym",
   "proposal_editor.field_invalid": "'{name}' oczekuje {ptype}, '{raw}' nieprawidłowe",
-
   "form.name": "Nazwa",
   "form.provider": "Dostawca",
   "form.category": "Kategoria",
@@ -190,7 +168,6 @@
   "form.recurrence_days": "Powtórzenie (dni)",
   "form.relation": "Relacja",
   "form.cadence_days": "Rytm (dni)",
-
   "action.bulk_complete_overdue": "Odhacz wszystkie zaległe",
   "action.create_contract": "Utwórz umowę",
   "action.cancellation_letter": "Pismo wypowiedzenia",
@@ -204,5 +181,42 @@
   "action.reset": "Resetuj",
   "action.done": "Gotowe",
   "action.contacted": "Skontaktowano",
-  "action.draft": "Wersja robocza"
+  "action.draft": "Wersja robocza",
+  "search.filter_label": "Filtr:",
+  "search.ph_category": "Kategoria",
+  "search.ph_status": "Status",
+  "search.ph_date_from": "od RRRR-MM-DD",
+  "search.ph_date_to": "do RRRR-MM-DD",
+  "form.priority": "Priorytet",
+  "form.optional": "opcjonalnie",
+  "dashboard.overdue": "Zaległe",
+  "action.save": "Zapisz",
+  "action.cancel": "Anuluj",
+  "action.delete": "Usuń",
+  "action.close": "Zamknij",
+  "action.add_contract": "Dodaj umowę",
+  "contracts.empty": "Brak umów. Naciśnij +.",
+  "orders.empty": "Brak zadań. Naciśnij +.",
+  "contacts.empty": "Brak kontaktów.",
+  "finance.empty": "Brak zarejestrowanych wydatków.",
+  "finance.recent_empty": "Brak wydatków w ciągu ostatnich {days} dni.",
+  "dashboard.upcoming": "Nadchodzące",
+  "common.no_entries": "Brak wpisów.",
+  "more.family": "Rodzina / gospodarstwo",
+  "more.notes": "Notatki",
+  "more.inbox": "Sugestie (skrzynka)",
+  "more.search": "Szukaj (z filtrami)",
+  "more.orders": "Zadania (priorytet/kategoria)",
+  "more.contacts": "Kontakty (wg relacji)",
+  "page.search": "Szukaj",
+  "page.orders": "Zadania",
+  "page.contacts": "Kontakty",
+  "action.filter": "Filtruj",
+  "search.query_hint": "Szukana fraza",
+  "form.assignee": "Odpowiedzialny",
+  "form.priority_hint": "Priorytet wysoki/średni/normalny",
+  "filter.category_hint": "Filtruj wg kategorii (opcjonalnie)",
+  "filter.relation_hint": "Filtruj wg relacji (opcjonalnie)",
+  "dashboard.all_clear": "Nic w toku. Miłego dnia!",
+  "dashboard.week_clear": "Nic do zrobienia w tym tygodniu."
 }

@@ -1,6 +1,5 @@
 {
   "app.title": "Alltagshelfer",
-
   "tab.dashboard": "Tableau de bord",
   "tab.contracts": "Contrats",
   "tab.family": "Famille",
@@ -14,12 +13,10 @@
   "tab.modules": "Modules",
   "tab.settings": "Paramètres",
   "tab.more": "Plus",
-
   "sidebar.module_status": "État des modules",
   "sidebar.assistant_mode": "Mode assistant",
   "sidebar.refresh_all": "Tout actualiser",
   "sidebar.check_now": "Rechercher les notifications maintenant",
-
   "dashboard.title": "Prochains événements",
   "dashboard.none": "Aucun événement à venir.",
   "dashboard.horizon.30": "30 jours",
@@ -28,18 +25,15 @@
   "dashboard.urgency.high": "URGENT",
   "dashboard.urgency.medium": "BIENTÔT",
   "dashboard.urgency.normal": "PLANIFIÉ",
-
   "search.title": "Recherche plein texte",
   "search.placeholder": "Au moins 2 caractères ...",
   "search.button": "Rechercher",
   "search.no_hits": "Aucun résultat.",
   "search.too_short": "Veuillez saisir au moins 2 caractères.",
   "search.results_count": "{count} résultats :",
-
   "history.title": "Historique de l'assistant",
   "history.empty": "Aucune entrée pour l'instant - posez une question à l'assistant.",
   "history.refresh": "Actualiser",
-
   "common.you": "Vous",
   "common.assistant": "Assistant",
   "common.save": "Enregistrer",
@@ -52,12 +46,10 @@
   "common.send": "Envoyer",
   "common.refresh": "Actualiser",
   "common.placeholder.question": "Saisir une question ...",
-
   "modules.title": "Activer/désactiver les modules",
   "modules.hint": "Les modules désactivés ne fournissent ni capacités ni entrées du tableau de bord. Les données restent dans la base.",
   "modules.active": "actif",
   "modules.capabilities_label": "{n} capacités :",
-
   "settings.title": "Paramètres",
   "settings.intro": "Les valeurs sont enregistrées dans la base de données. Les champs secrets (clés API, mots de passe) sont lus uniquement depuis des variables d'environnement, ils ne sont PAS stockés dans la base.",
   "settings.save": "Enregistrer (redémarrage requis)",
@@ -67,18 +59,14 @@
   "settings.secret_unset": "non défini",
   "settings.saved": "{count} valeurs enregistrées. Redémarrage nécessaire pour certains champs.",
   "settings.reset_done": "Réinitialisé aux valeurs par défaut.",
-
   "family.sub.members": "Membres",
   "family.sub.tasks": "Tâches",
   "family.sub.orders": "Missions",
   "family.sub.shopping": "Liste de courses",
-
   "sidebar.profile": "Profil",
   "sidebar.profile.default": "(Par défaut)",
-
   "tab.statistics": "Statistiques",
   "tab.data": "Données",
-
   "stats.title": "Statistiques et tendances",
   "stats.expenses_per_month": "Dépenses par mois (12 derniers)",
   "stats.contracts_overview": "Aperçu des contrats",
@@ -89,7 +77,6 @@
   "stats.yearly_total": "{amount:.2f} EUR/an",
   "stats.top_3": "Top 3 par prix",
   "stats.average_per_month": "Moyenne par mois",
-
   "data.title": "Gérer les données",
   "data.profile_label": "Profil actif",
   "data.profile_default": "(Par défaut)",
@@ -110,30 +97,24 @@
   "data.delete_confirm_body": "Cette action est irréversible. Toutes vos données seront définitivement supprimées de cet appareil.",
   "data.delete_confirm_action": "Supprimer définitivement",
   "data.delete_done": "Toutes les données ont été supprimées. Veuillez redémarrer l'application.",
-
   "calendar.title": "Rendez-vous et calendrier",
-  "calendar.empty": "Pas encore de rendez-vous.",
+  "calendar.empty": "Aucun rendez-vous dans les {days} prochains jours.",
   "calendar.recurring_suffix": ", récurrent tous les {days} jours",
-
   "social.title": "Entretien des relations",
   "social.no_contacts": "Aucun contact enregistré pour l'instant.",
   "social.next_due": "prochain contact {when}",
   "social.due_today": "aujourd'hui",
   "social.due_in": "dans {days} jours",
   "social.due_overdue": "{days} jours de retard",
-
   "module_admin.toggle": "actif",
-
   "onboarding.title": "Bienvenue dans Alltagshelfer",
   "onboarding.intro": "Votre base de données est vide. Comment voulez-vous commencer ?",
   "onboarding.option_demo": "Commencer avec des données d'exemple (2 contrats, 3 membres de la famille, quelques rendez-vous)",
   "onboarding.option_empty": "Commencer avec une base vide",
   "onboarding.choose_demo": "Charger les données d'exemple",
   "onboarding.choose_empty": "Démarrer à vide",
-
   "shortcuts.quit_title": "Confirmer la fermeture",
   "shortcuts.quit_message": "Voulez-vous vraiment quitter Alltagshelfer ?",
-
   "inbox.analyze": "Analyser",
   "inbox.fetch_imap": "Récupérer IMAP",
   "inbox.accept": "Accepter",
@@ -147,10 +128,8 @@
   "inbox.imap_querying": "Interrogation IMAP en cours ...",
   "inbox.imap_not_configured": "IMAP non configuré",
   "inbox.imap_result": "IMAP : {checked} e-mails vérifiés, {found} nouvelles propositions",
-
   "chat.thinking": "réfléchit ...",
   "chat.greeting": "Bonjour ! Le tableau de bord affiche vos prochains événements. Ici, vous pouvez me poser toutes vos questions.",
-
   "proposal_editor.title": "Modifier la proposition",
   "proposal_editor.summary": "Brève description",
   "proposal_editor.save_only": "Enregistrer",
@@ -160,7 +139,6 @@
   "proposal_editor.target_unavailable": "La capacité cible '{target}' n'est pas disponible. Vérifiez que le module responsable est activé.",
   "proposal_editor.field_required": "'{name}' est un champ obligatoire",
   "proposal_editor.field_invalid": "'{name}' attend {ptype}, '{raw}' invalide",
-
   "form.name": "Nom",
   "form.provider": "Fournisseur",
   "form.category": "Catégorie",
@@ -190,7 +168,6 @@
   "form.recurrence_days": "Récurrence (jours)",
   "form.relation": "Relation",
   "form.cadence_days": "Rythme (jours)",
-
   "action.bulk_complete_overdue": "Cocher tous les éléments en retard",
   "action.create_contract": "Créer un contrat",
   "action.cancellation_letter": "Lettre de résiliation",
@@ -204,5 +181,42 @@
   "action.reset": "Réinitialiser",
   "action.done": "Terminé",
   "action.contacted": "Contacté",
-  "action.draft": "Brouillon"
+  "action.draft": "Brouillon",
+  "search.filter_label": "Filtre :",
+  "search.ph_category": "Catégorie",
+  "search.ph_status": "Statut",
+  "search.ph_date_from": "de AAAA-MM-JJ",
+  "search.ph_date_to": "à AAAA-MM-JJ",
+  "form.priority": "Priorité",
+  "form.optional": "optionnel",
+  "dashboard.overdue": "En retard",
+  "action.save": "Enregistrer",
+  "action.cancel": "Annuler",
+  "action.delete": "Supprimer",
+  "action.close": "Fermer",
+  "action.add_contract": "Ajouter un contrat",
+  "contracts.empty": "Aucun contrat. Touchez +.",
+  "orders.empty": "Aucune tâche. Touchez +.",
+  "contacts.empty": "Aucun contact.",
+  "finance.empty": "Aucune dépense enregistrée.",
+  "finance.recent_empty": "Aucune dépense ces {days} derniers jours.",
+  "dashboard.upcoming": "À venir",
+  "common.no_entries": "Aucune entrée.",
+  "more.family": "Famille / foyer",
+  "more.notes": "Notes",
+  "more.inbox": "Suggestions (boîte de réception)",
+  "more.search": "Recherche (avec filtres)",
+  "more.orders": "Tâches (priorité/catégorie)",
+  "more.contacts": "Contacts (par relation)",
+  "page.search": "Recherche",
+  "page.orders": "Tâches",
+  "page.contacts": "Contacts",
+  "action.filter": "Filtrer",
+  "search.query_hint": "Terme de recherche",
+  "form.assignee": "Responsable",
+  "form.priority_hint": "Priorité haute/moyenne/normale",
+  "filter.category_hint": "Filtrer par catégorie (optionnel)",
+  "filter.relation_hint": "Filtrer par relation (optionnel)",
+  "dashboard.all_clear": "Rien en attente. Profitez-en !",
+  "dashboard.week_clear": "Rien à faire cette semaine."
 }
