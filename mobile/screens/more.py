@@ -67,7 +67,7 @@ class _SimpleListPage(MDScreen):
         if not items:
             self.list.add_widget(OneLineIconListItem(
                 IconLeftWidget(icon="information-outline"),
-                text="Noch keine Eintraege.",
+                text=_t("common.no_entries", "Noch keine Eintraege."),
             ))
             return
         for item in items:
@@ -259,7 +259,7 @@ class _FilteredListPage(MDScreen):
         if not items:
             self.list.add_widget(OneLineIconListItem(
                 IconLeftWidget(icon="information-outline"),
-                text="Keine Eintraege."))
+                text=_t("common.no_entries", "Keine Eintraege.")))
             return
         for item in items:
             self.list.add_widget(OneLineIconListItem(

@@ -6,6 +6,14 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Geändert
 
+- **i18n-Ausbau Stufe 3: interpolierte Leertexte + Abschluss** -
+  zählerbasierte Leertexte (Kalender „nächste {days} Tage", Finanzen
+  „letzte {days} Tage") sind jetzt über Platzhalter-Keys
+  (`calendar.empty`/`finance.recent_empty`) lokalisierbar - der Presenter
+  liefert `empty_text_key` + `empty_text_params`, der Screen formatiert.
+  Außerdem „Anstehend" (`dashboard.upcoming`) und die generische
+  „Keine Einträge"-Liste (`common.no_entries`). Damit sind die sichtbaren
+  Phone-Texte (Titel, Buttons, Labels, Leerzustände, Hinweise) lokalisierbar.
 - **i18n-Ausbau Stufe 2: lokalisierbare Leer-/Hinweistexte (Presenter)** -
   die Presenter liefern neben dem deutschen `empty_text` jetzt zusätzlich
   einen i18n-Key (`empty_text_key`) bzw. die Suche einen `message_key`; die

@@ -50,6 +50,14 @@ class TestPresenters(unittest.TestCase):
         self.assertEqual(self.app.finance.list()["empty_text_key"],
                          "finance.empty")
 
+    def test_interpolated_empty_views_expose_key_and_params(self) -> None:
+        cal = self.app.calendar.list(horizon_days=14)
+        self.assertEqual(cal["empty_text_key"], "calendar.empty")
+        self.assertEqual(cal["empty_text_params"], {"days": 14})
+        fin = self.app.finance.recent(days=7)
+        self.assertEqual(fin["empty_text_key"], "finance.recent_empty")
+        self.assertEqual(fin["empty_text_params"], {"days": 7})
+
     def test_search_states_expose_message_keys(self) -> None:
         self.assertEqual(self.app.search.search("a")["message_key"],
                          "search.too_short")

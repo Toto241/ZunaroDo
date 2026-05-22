@@ -224,5 +224,9 @@
   "contracts.empty": "Noch keine Vertraege. Tipp auf +.",
   "orders.empty": "Keine Auftraege. Tipp auf +.",
   "contacts.empty": "Keine Kontakte.",
-  "finance.empty": "Noch keine Ausgaben erfasst."
+  "finance.empty": "Noch keine Ausgaben erfasst.",
+  "calendar.empty": "Keine Termine in den naechsten {days} Tagen.",
+  "finance.recent_empty": "Noch keine Ausgaben in den letzten {days} Tagen.",
+  "dashboard.upcoming": "Anstehend",
+  "common.no_entries": "Keine Eintraege."
 }

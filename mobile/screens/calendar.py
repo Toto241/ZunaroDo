@@ -70,11 +70,13 @@ class CalendarScreen(MDScreen):
         self.add_widget(fab)
 
     def _refresh(self) -> None:
-        events = self.presenter.list(horizon_days=30)["items"]
+        view = self.presenter.list(horizon_days=30)
+        events = view["items"]
         self.container.clear_widgets()
         if not events:
             self.container.add_widget(MDLabel(
-                text="Keine Termine in den naechsten 30 Tagen.",
+                text=_t(view["empty_text_key"], view["empty_text"]).format(
+                    **view.get("empty_text_params", {})),
                 halign="center",
                 size_hint=(1, None),
                 height=dp(48)))

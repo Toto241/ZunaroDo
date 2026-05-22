@@ -184,6 +184,8 @@ class CalendarPresenter:
             "empty": not events,
             "empty_text": f"Keine Termine in den naechsten "
                           f"{horizon_days} Tagen.",
+            "empty_text_key": "calendar.empty",
+            "empty_text_params": {"days": horizon_days},
         }
 
     def add(self, title: str, due_date: str, category: str = "") -> dict:
@@ -227,6 +229,8 @@ class FinancePresenter:
             "days": days,
             "empty": not recent,
             "empty_text": f"Noch keine Ausgaben in den letzten {days} Tagen.",
+            "empty_text_key": "finance.recent_empty",
+            "empty_text_params": {"days": days},
         }
 
     def add(self, description: str, amount: str | float,

@@ -224,5 +224,9 @@
   "contracts.empty": "No contracts yet. Tap +.",
   "orders.empty": "No tasks. Tap +.",
   "contacts.empty": "No contacts.",
-  "finance.empty": "No expenses recorded yet."
+  "finance.empty": "No expenses recorded yet.",
+  "calendar.empty": "No events in the next {days} days.",
+  "finance.recent_empty": "No expenses in the last {days} days.",
+  "dashboard.upcoming": "Upcoming",
+  "common.no_entries": "No entries."
 }

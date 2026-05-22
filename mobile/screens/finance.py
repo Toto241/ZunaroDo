@@ -98,7 +98,8 @@ class FinanceScreen(MDScreen):
 
         if not recent:
             self.container.add_widget(MDLabel(
-                text="Noch keine Ausgaben in den letzten 30 Tagen.",
+                text=_t(view["empty_text_key"], view["empty_text"]).format(
+                    **view.get("empty_text_params", {})),
                 halign="center",
                 size_hint=(1, None),
                 height=dp(48)))

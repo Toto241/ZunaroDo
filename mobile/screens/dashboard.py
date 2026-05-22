@@ -88,7 +88,7 @@ class DashboardScreen(MDScreen):
 
         # Listen-Sektion 'Anstehend'
         section_label = MDLabel(
-            text="Anstehend",
+            text=_t("dashboard.upcoming", "Anstehend"),
             font_style="Subtitle1",
             size_hint=(1, None),
             height=dp(32),
