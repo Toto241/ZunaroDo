@@ -59,6 +59,7 @@ class ContractsPresenter:
             "total_monthly_cost": result.get("total_monthly_cost", 0.0),
             "empty": not contracts,
             "empty_text": "Noch keine Vertraege. Tipp auf +.",
+            "empty_text_key": "contracts.empty",
             "filter": chosen,
         }
 
@@ -99,6 +100,7 @@ class OrdersPresenter:
             "count": len(orders),
             "empty": not orders,
             "empty_text": "Keine Auftraege. Tipp auf +.",
+            "empty_text_key": "orders.empty",
         }
 
     def add(self, title: str, assignee: str = "", due_date: str = "",
@@ -135,6 +137,7 @@ class ContactsPresenter:
             "count": len(contacts),
             "empty": not contacts,
             "empty_text": "Keine Kontakte.",
+            "empty_text_key": "contacts.empty",
             "relations": relations,
             "filter": chosen,
         }
@@ -151,17 +154,19 @@ class SearchPresenter:
                                  date_from=date_from, date_to=date_to)
         if not search_args_valid(args):
             return {"status": "too_short", "hits": [], "count": 0,
-                    "message": "Mind. 2 Zeichen oder einen Filter angeben."}
+                    "message": "Mind. 2 Zeichen oder einen Filter angeben.",
+                    "message_key": "search.too_short"}
         result = self.dispatch("system.search", args) or {}
         if "error" in result:
             return {"status": "error", "hits": [], "count": 0,
-                    "message": str(result["error"])}
+                    "message": str(result["error"]), "message_key": None}
         hits = result.get("hits", [])
         return {
             "status": "ok" if hits else "empty",
             "hits": hits,
             "count": result.get("count", len(hits)),
             "message": "" if hits else "Keine Treffer.",
+            "message_key": None if hits else "search.no_hits",
         }
 
 
@@ -204,6 +209,7 @@ class FinancePresenter:
             "count": len(expenses),
             "empty": not expenses,
             "empty_text": "Noch keine Ausgaben erfasst.",
+            "empty_text_key": "finance.empty",
         }
 
     def recent(self, days: int = 30) -> dict[str, Any]:

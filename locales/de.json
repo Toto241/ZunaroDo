@@ -219,5 +219,10 @@
   "action.cancel": "Abbrechen",
   "action.delete": "Loeschen",
   "action.close": "Schliessen",
-  "action.add_contract": "Vertrag anlegen"
+  "action.add_contract": "Vertrag anlegen",
+
+  "contracts.empty": "Noch keine Vertraege. Tipp auf +.",
+  "orders.empty": "Keine Auftraege. Tipp auf +.",
+  "contacts.empty": "Keine Kontakte.",
+  "finance.empty": "Noch keine Ausgaben erfasst."
 }

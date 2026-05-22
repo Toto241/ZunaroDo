@@ -317,7 +317,9 @@ class _SearchPage(MDScreen):
                     "error": "alert", "empty": "magnify"}.get(
                         result["status"], "information-outline")
             self.list.add_widget(OneLineIconListItem(
-                IconLeftWidget(icon=icon), text=result["message"]))
+                IconLeftWidget(icon=icon),
+                text=_t(result.get("message_key"), result["message"])
+                if result.get("message_key") else result["message"]))
             return
         for hit in result["hits"]:
             self.list.add_widget(OneLineIconListItem(
@@ -363,7 +365,7 @@ class _OrdersPage(MDScreen):
         if view["empty"]:
             self.list.add_widget(OneLineIconListItem(
                 IconLeftWidget(icon="information-outline"),
-                text=view["empty_text"]))
+                text=_t(view["empty_text_key"], view["empty_text"])))
             return
         for o in orders:
             done = o.get("status") == "erledigt"

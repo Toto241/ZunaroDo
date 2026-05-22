@@ -6,6 +6,14 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Geändert
 
+- **i18n-Ausbau Stufe 2: lokalisierbare Leer-/Hinweistexte (Presenter)** -
+  die Presenter liefern neben dem deutschen `empty_text` jetzt zusätzlich
+  einen i18n-Key (`empty_text_key`) bzw. die Suche einen `message_key`; die
+  Screens lösen ihn über `i18n.t(...)` auf (deutscher Text bleibt Default).
+  So sind Leerzustände (Verträge/Aufträge/Kontakte/Finanzen) und
+  Such-Hinweise lokalisierbar, ohne den Presenter-Vertrag zu brechen - die
+  headless Tests prüfen weiterhin Text **und** Key. Neue `*.empty`-Keys in
+  `de.json`/`en.json`.
 - **i18n-Ausbau der Mobile-Screens (erste Stufe)** - die Phone-Screens
   nutzten bisher gar kein i18n. Über den neuen Helfer
   [mobile/ui_text.py](mobile/ui_text.py) (`t(key, default)`, holt die

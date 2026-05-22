@@ -39,6 +39,23 @@ class TestPresenters(unittest.TestCase):
         view = self.app.contracts.list()
         self.assertTrue(view["empty"])
         self.assertIn("Vertraege", view["empty_text"])
+        # i18n-Key fuer lokalisierbare Leer-Anzeige (deutscher Default bleibt).
+        self.assertEqual(view["empty_text_key"], "contracts.empty")
+
+    def test_list_views_expose_i18n_keys(self) -> None:
+        self.assertEqual(self.app.orders.list()["empty_text_key"],
+                         "orders.empty")
+        self.assertEqual(self.app.contacts.list()["empty_text_key"],
+                         "contacts.empty")
+        self.assertEqual(self.app.finance.list()["empty_text_key"],
+                         "finance.empty")
+
+    def test_search_states_expose_message_keys(self) -> None:
+        self.assertEqual(self.app.search.search("a")["message_key"],
+                         "search.too_short")
+        self.assertEqual(
+            self.app.search.search("zzzgibtsnicht")["message_key"],
+            "search.no_hits")
 
     # ---- Aufträge ------------------------------------------------------
     def test_orders_add_priority_category_and_complete(self) -> None:

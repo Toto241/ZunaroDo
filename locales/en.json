@@ -219,5 +219,10 @@
   "action.cancel": "Cancel",
   "action.delete": "Delete",
   "action.close": "Close",
-  "action.add_contract": "Add contract"
+  "action.add_contract": "Add contract",
+
+  "contracts.empty": "No contracts yet. Tap +.",
+  "orders.empty": "No tasks. Tap +.",
+  "contacts.empty": "No contacts.",
+  "finance.empty": "No expenses recorded yet."
 }

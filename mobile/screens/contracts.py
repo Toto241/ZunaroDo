@@ -100,7 +100,7 @@ class ContractsScreen(MDScreen):
             self.container.add_widget(header)
         else:
             self.container.add_widget(MDLabel(
-                text="Noch keine Vertraege. Tipp auf +.",
+                text=_t(view["empty_text_key"], view["empty_text"]),
                 halign="center",
                 size_hint=(1, None),
                 height=dp(48)))

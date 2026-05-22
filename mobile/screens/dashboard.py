@@ -165,7 +165,8 @@ class DashboardScreen(MDScreen):
                 IconLeftWidget(icon="alert-circle",
                                  theme_icon_color="Custom",
                                  icon_color=_URGENCY_HEX["error"]),
-                text=f"Ueberfaellig ({agenda['overdue_count']})",
+                text=f"{_t('dashboard.overdue', 'Ueberfaellig')} "
+                     f"({agenda['overdue_count']})",
             ))
             for ev in agenda["overdue"]:
                 self.list.add_widget(OneLineAvatarIconListItem(
