@@ -209,30 +209,21 @@ def test_window_can_be_constructed_and_destroyed():
 
 
 # ---------------------------------------------------------------------------
-# start.bat: Build-Menue + Control-Panel-Einstieg
+# start.bat: oeffnet direkt das Control Panel (alleinige GUI, kein Menue)
 # ---------------------------------------------------------------------------
 def test_start_bat_invokes_control_panel():
     text = (REPO / "start.bat").read_text(encoding="utf-8",
                                              errors="replace")
     assert "tools.control_panel" in text, (
-        "start.bat sollte das Control Panel als Menue-Punkt anbieten.")
-
-
-def test_start_bat_offers_direct_app_builds():
-    """Die einzelnen Apps muessen direkt aus start.bat baubar sein."""
-    text = (REPO / "start.bat").read_text(encoding="utf-8",
-                                             errors="replace")
-    # Direkter Aufruf der Build-Skripte (nicht nur ueber die GUI):
-    assert "build-desktop.bat" in text, (
-        "start.bat sollte den PC/Desktop-Build direkt anbieten.")
-    assert "build-android.bat" in text, (
-        "start.bat sollte den Android-Build direkt anbieten.")
-    # Build-Status als Schnellzugriff:
-    assert "tools.build_status" in text, (
-        "start.bat sollte den Build-Status direkt anzeigen koennen.")
-    # iOS wird zumindest erwaehnt (Build nur auf macOS moeglich):
-    assert "iOS" in text or "ios" in text, (
-        "start.bat sollte den iOS-Build-Hinweis enthalten.")
+        "start.bat sollte direkt das Control Panel oeffnen.")
+    # Das Control Panel ist die alleinige grafische Oberflaeche - es darf
+    # kein interaktives Konsolen-Menue mit Auswahl-Schleife geben.
+    assert ":menu" not in text, (
+        "start.bat enthaelt eine Konsolen-Menue-Schleife (:menu); das "
+        "Control Panel soll der alleinige Einstieg sein.")
+    assert "set /p choice" not in text, (
+        "start.bat fragt im Konsolen-Menue nach einer Auswahl; das soll "
+        "im Control Panel passieren, nicht in der Konsole.")
 
 
 def test_start_bat_checks_customtkinter():
