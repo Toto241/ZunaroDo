@@ -2,9 +2,10 @@
 Zunarodo Control Panel - grafisches Steuerwerk fuer Tests, Builds,
 Play-Store-Sync und Dokumentation.
 
-Ersetzt die Menue-Variante in start.bat: ein eigenes Fenster mit
-strukturierten Sektionen, Buttons fuer jede Aktion und einem Live-Log
-unten, das die Ausgabe der jeweiligen Befehle streamt.
+Ergaenzt das Konsolen-Menue in start.bat: ein eigenes Fenster im
+Windows-11-Look (Fluent / Mica) mit strukturierten Sektionen, Buttons
+fuer jede Aktion und einem Live-Log unten, das die Ausgabe der
+jeweiligen Befehle streamt.
 
 Sektionen:
 
@@ -61,6 +62,30 @@ PROTOCOL_JSON = REPO_ROOT / "tests" / "concept" / "reports" / "protocol.json"
 INDEX_HTML = REPO_ROOT / "index.html"
 DASHBOARD_HTML = REPO_ROOT / "tests" / "concept" / "reports" / "dashboard.html"
 DOCS_DIR = REPO_ROOT / "tests" / "concept" / "reports"
+
+
+# ---------------------------------------------------------------------------
+# Windows-11-Look (Fluent / Mica)
+#
+# Farben sind als (Light, Dark)-Tupel modelliert, damit das Panel sowohl im
+# hellen als auch im dunklen System-Modus wie Windows 11 wirkt. Werte sind an
+# die Fluent-Palette angelehnt (Mica-Hintergrund, #005FB8 Akzent, weiche
+# Kanten). Schriftfamilie wird zur Laufzeit auf "Segoe UI Variable" / "Segoe
+# UI" gesetzt, mit Fallback auf eine vorhandene System-Schrift.
+# ---------------------------------------------------------------------------
+WIN11 = {
+    "window_bg":    ("#F3F3F3", "#202020"),   # Mica
+    "card_bg":      ("#FBFBFB", "#2D2D2D"),   # Layer / Card
+    "card_border":  ("#E5E5E5", "#3A3A3A"),
+    "accent":       ("#005FB8", "#0078D4"),   # Akzent-Button
+    "accent_hover": ("#1A6FC0", "#1A86D9"),
+    "subtle_hover": ("#ECECEC", "#383838"),   # Hover fuer transparente Knoepfe
+    "text":         ("#1A1A1A", "#FFFFFF"),
+    "text_muted":   ("#5A5A5A", "#9A9A9A"),
+    "log_bg":       ("#FFFFFF", "#1B1B1B"),
+}
+# Kandidaten in Reihenfolge der Bevorzugung (Windows 11 -> generisch).
+_FONT_CANDIDATES = ("Segoe UI Variable Text", "Segoe UI", "Segoe UI Emoji")
 
 
 # ---------------------------------------------------------------------------
@@ -271,9 +296,12 @@ class ControlPanel(ctk.CTk):
         super().__init__()
         ctk.set_appearance_mode("system")
         ctk.set_default_color_theme("blue")
+        self._font_family = self._pick_font_family()
         self.title("Zunarodo  -  Control Panel")
         self.geometry("1120x780")
         self.minsize(900, 640)
+        # Mica-aehnlicher Fensterhintergrund (statt CTk-Standardgrau).
+        self.configure(fg_color=WIN11["window_bg"])
 
         self._log_queue: "queue.Queue[str]" = queue.Queue()
         self._exit_queue: "queue.Queue[int]" = queue.Queue()
@@ -288,6 +316,26 @@ class ControlPanel(ctk.CTk):
         # ueber after() kontinuierlich die Queues pumpen
         self.after(100, self._drain_queues)
 
+    # ---- Look & Feel ---------------------------------------------------
+    def _pick_font_family(self) -> str:
+        """Waehlt die beste verfuegbare Windows-11-Schrift.
+
+        Faellt auf eine vorhandene System-Schrift zurueck, falls keine der
+        Segoe-Varianten installiert ist (z.B. auf Linux/macOS).
+        """
+        try:
+            import tkinter.font as tkfont
+            available = set(tkfont.families())
+        except Exception:                                 # noqa: BLE001
+            return "Segoe UI"
+        for fam in _FONT_CANDIDATES:
+            if fam in available:
+                return fam
+        return "Segoe UI"
+
+    def _font(self, size: int = 13, weight: str = "normal") -> "ctk.CTkFont":
+        return ctk.CTkFont(family=self._font_family, size=size, weight=weight)
+
     # ---- Aufbau --------------------------------------------------------
     def _build_ui(self) -> None:
         self.grid_columnconfigure(0, weight=1)
@@ -295,24 +343,24 @@ class ControlPanel(ctk.CTk):
 
         # Header
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=16, pady=(12, 4))
+        header.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 6))
         header.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(
-            header, text="Zunarodo - Control Panel",
-            font=ctk.CTkFont(size=18, weight="bold")
+            header, text="Zunarodo  ·  Control Panel",
+            text_color=WIN11["text"],
+            font=self._font(size=20, weight="bold")
         ).grid(row=0, column=0, sticky="w")
         self.status_label = ctk.CTkLabel(
-            header, text="Status: -", text_color="gray",
-            font=ctk.CTkFont(size=13))
+            header, text="Status: -", text_color=WIN11["text_muted"],
+            font=self._font(size=13))
         self.status_label.grid(row=0, column=2, sticky="e")
 
         # Sektionen
         self._build_section(
             row=1, title="Tests & Cockpit",
             actions=actions_tests(),
-            extra=[ctk.CTkButton(self, text="Cockpit oeffnen",
-                                  command=self._open_index,
-                                  width=160)])
+            extra=[self._subtle_button(self, "Cockpit oeffnen",
+                                       self._open_index)])
         self._build_section(
             row=2, title="Build  -  Android / iOS / PC",
             actions=actions_build())
@@ -324,57 +372,94 @@ class ControlPanel(ctk.CTk):
             items=links())
 
         # Live-Log
-        log_frame = ctk.CTkFrame(self)
-        log_frame.grid(row=5, column=0, sticky="nsew", padx=16, pady=(4, 4))
+        log_frame = ctk.CTkFrame(
+            self, corner_radius=8, fg_color=WIN11["card_bg"],
+            border_width=1, border_color=WIN11["card_border"])
+        log_frame.grid(row=5, column=0, sticky="nsew", padx=20, pady=6)
         log_frame.grid_columnconfigure(0, weight=1)
         log_frame.grid_rowconfigure(1, weight=1)
 
         log_head = ctk.CTkFrame(log_frame, fg_color="transparent")
-        log_head.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 4))
+        log_head.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 6))
         log_head.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(log_head, text="Live-Log",
-                      font=ctk.CTkFont(size=14, weight="bold")
+        ctk.CTkLabel(log_head, text="Live-Log", text_color=WIN11["text"],
+                      font=self._font(size=14, weight="bold")
                       ).grid(row=0, column=0, sticky="w")
         self.action_label = ctk.CTkLabel(log_head, text="bereit",
-                                           text_color="gray")
+                                           text_color=WIN11["text_muted"],
+                                           font=self._font(size=12))
         self.action_label.grid(row=0, column=1, padx=(8, 8))
-        ctk.CTkButton(log_head, text="Log loeschen", width=110,
+        ctk.CTkButton(log_head, text="Log loeschen", width=120,
+                       corner_radius=6, font=self._font(size=13),
+                       fg_color="transparent", border_width=1,
+                       border_color=WIN11["card_border"],
+                       text_color=WIN11["text"],
+                       hover_color=WIN11["subtle_hover"],
                        command=self._clear_log
-                       ).grid(row=0, column=2, padx=2)
+                       ).grid(row=0, column=2, padx=3)
         self.stop_button = ctk.CTkButton(
-            log_head, text="Stoppen", width=110, state="disabled",
+            log_head, text="Stoppen", width=120, state="disabled",
+            corner_radius=6, font=self._font(size=13),
+            fg_color="transparent", border_width=1,
+            border_color=WIN11["card_border"], text_color=WIN11["text"],
+            hover_color=WIN11["subtle_hover"],
             command=self._stop_current)
-        self.stop_button.grid(row=0, column=3, padx=2)
+        self.stop_button.grid(row=0, column=3, padx=3)
 
         self.log_text = ctk.CTkTextbox(
             log_frame, wrap="word", activate_scrollbars=True,
-            font=ctk.CTkFont(family="Consolas", size=11))
-        self.log_text.grid(row=1, column=0, sticky="nsew", padx=8, pady=(0, 8))
+            corner_radius=6, fg_color=WIN11["log_bg"],
+            text_color=WIN11["text"], border_width=0,
+            font=ctk.CTkFont(family="Cascadia Mono", size=12))
+        self.log_text.grid(row=1, column=0, sticky="nsew", padx=12,
+                            pady=(0, 12))
         self.log_text.configure(state="disabled")
 
         # Statuszeile unten
         footer = ctk.CTkLabel(
             self, text=f"Projekt: {REPO_ROOT}",
-            text_color="gray", font=ctk.CTkFont(size=11))
-        footer.grid(row=6, column=0, sticky="w", padx=16, pady=(0, 8))
+            text_color=WIN11["text_muted"], font=self._font(size=11))
+        footer.grid(row=6, column=0, sticky="w", padx=20, pady=(0, 10))
+
+    def _card(self, row: int, title: str) -> "ctk.CTkFrame":
+        """Erzeugt eine Windows-11-Card (abgerundet, Layer-Farbe, Titel)."""
+        frame = ctk.CTkFrame(
+            self, corner_radius=8, fg_color=WIN11["card_bg"],
+            border_width=1, border_color=WIN11["card_border"])
+        frame.grid(row=row, column=0, sticky="ew", padx=20, pady=6)
+        frame.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(frame, text=title, text_color=WIN11["text"],
+                      font=self._font(size=15, weight="bold")
+                      ).grid(row=0, column=0, sticky="w", padx=14,
+                             pady=(12, 4))
+        return frame
+
+    def _accent_button(self, master, text, command) -> "ctk.CTkButton":
+        return ctk.CTkButton(
+            master, text=text, command=command, width=240,
+            corner_radius=6, font=self._font(size=13),
+            fg_color=WIN11["accent"], hover_color=WIN11["accent_hover"],
+            text_color="#FFFFFF")
+
+    def _subtle_button(self, master, text, command) -> "ctk.CTkButton":
+        return ctk.CTkButton(
+            master, text=text, command=command, width=240,
+            corner_radius=6, font=self._font(size=13),
+            fg_color="transparent", border_width=1,
+            border_color=WIN11["card_border"], text_color=WIN11["text"],
+            hover_color=WIN11["subtle_hover"])
 
     def _build_section(self, row: int, title: str,
                         actions: list[Action],
                         extra: Optional[list[ctk.CTkButton]] = None) -> None:
-        frame = ctk.CTkFrame(self)
-        frame.grid(row=row, column=0, sticky="ew", padx=16, pady=4)
-        frame.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(frame, text=title,
-                      font=ctk.CTkFont(size=14, weight="bold")
-                      ).grid(row=0, column=0, sticky="w", padx=8, pady=(8, 2))
+        frame = self._card(row, title)
         btn_row = ctk.CTkFrame(frame, fg_color="transparent")
-        btn_row.grid(row=1, column=0, sticky="ew", padx=4, pady=(0, 8))
+        btn_row.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 12))
         col = 0
         for action in actions:
-            btn = ctk.CTkButton(
-                btn_row, text=action.label,
-                command=lambda a=action: self._run_action(a),
-                width=240)
+            btn = self._accent_button(
+                btn_row, action.label,
+                command=lambda a=action: self._run_action(a))
             btn.grid(row=col // 4, column=col % 4, padx=4, pady=4,
                       sticky="ew")
             self._busy_buttons.append(btn)
@@ -390,20 +475,13 @@ class ControlPanel(ctk.CTk):
 
     def _build_link_section(self, row: int, title: str,
                              items: list[LinkAction]) -> None:
-        frame = ctk.CTkFrame(self)
-        frame.grid(row=row, column=0, sticky="ew", padx=16, pady=4)
-        frame.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(frame, text=title,
-                      font=ctk.CTkFont(size=14, weight="bold")
-                      ).grid(row=0, column=0, sticky="w", padx=8, pady=(8, 2))
+        frame = self._card(row, title)
         btn_row = ctk.CTkFrame(frame, fg_color="transparent")
-        btn_row.grid(row=1, column=0, sticky="ew", padx=4, pady=(0, 8))
+        btn_row.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 12))
         for idx, link in enumerate(items):
-            btn = ctk.CTkButton(
-                btn_row, text=link.label,
-                command=lambda l=link: self._open_link(l),
-                width=240, fg_color="transparent",
-                border_width=1)
+            btn = self._subtle_button(
+                btn_row, link.label,
+                command=lambda l=link: self._open_link(l))
             btn.grid(row=idx // 4, column=idx % 4, padx=4, pady=4,
                       sticky="ew")
         for c in range(4):
@@ -453,7 +531,8 @@ class ControlPanel(ctk.CTk):
         self.stop_button.configure(state="normal" if busy else "disabled")
         self.action_label.configure(
             text=f"laeuft: {label}" if busy else "bereit",
-            text_color=("#b54708" if busy else "gray"))
+            text_color=(("#b54708", "#e08a3c") if busy
+                        else WIN11["text_muted"]))
         self._current_action_label = label
 
     # ---- Log -----------------------------------------------------------
@@ -499,7 +578,7 @@ class ControlPanel(ctk.CTk):
     # ---- Status oben rechts -------------------------------------------
     def _refresh_status(self) -> None:
         text = "Status: -"
-        color = "gray"
+        color = WIN11["text_muted"]
         if PROTOCOL_JSON.is_file():
             try:
                 data = json.loads(PROTOCOL_JSON.read_text(encoding="utf-8"))
@@ -510,10 +589,10 @@ class ControlPanel(ctk.CTk):
                 text = (f"Status: {decision}  -  "
                         f"{passed}/{count} Tests")
                 color = {
-                    "GO":    "#1b873b",
-                    "HOLD":  "#b54708",
-                    "NO-GO": "#b42318",
-                }.get(decision, "gray")
+                    "GO":    ("#1b873b", "#3fb950"),
+                    "HOLD":  ("#b54708", "#e08a3c"),
+                    "NO-GO": ("#b42318", "#f85149"),
+                }.get(decision, WIN11["text_muted"])
             except Exception:                             # noqa: BLE001
                 text = "Status: (protocol.json defekt)"
         self.status_label.configure(text=text, text_color=color)
