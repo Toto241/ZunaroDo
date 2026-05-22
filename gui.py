@@ -1,5 +1,5 @@
 """
-GUI - CustomTkinter-Oberflaeche fuer den Alltagshelfer.
+GUI - CustomTkinter-Oberflaeche fuer ZunaroDo.
 
 Die GUI ist nur ein Front-End. Sie greift NIE direkt auf Datenbank oder
 Module zu, sondern ausschliesslich ueber die Schnittstellen:
@@ -51,6 +51,20 @@ SAMPLE_MAIL = (
 
 URGENCY_COLOR = {"hoch": "#d9534f", "mittel": "#e8a33d", "normal": "#5b9bd5"}
 URGENCY_LABEL = {"hoch": "DRINGEND", "mittel": "BALD", "normal": "GEPLANT"}
+APP_DISPLAY_NAME = "ZunaroDo"
+_WIN11_APPEARANCE_MODE = "light"
+_CRITICAL_CONFIRMATION_CAPABILITIES = {
+    "inbox.bulk_delete_archived",
+    "notes.delete",
+    "templates.delete",
+}
+_CRITICAL_CONFIRMATION_PREFIXES = (
+    "calendar.purge",
+    "contracts.purge",
+    "family.purge",
+    "finance.purge",
+    "social.purge",
+)
 
 # ---------------------------------------------------------------------------
 # Windows-11-Look (Fluent / Mica) fuer die Desktop-Oberflaeche
@@ -77,7 +91,7 @@ def _apply_win11_theme() -> None:
     Windows-11-Look (abgerundete Ecken, Segoe UI, sanfte Farben).
     Muss VOR Erzeugung der Widgets aufgerufen werden.
     """
-    ctk.set_appearance_mode("system")
+    ctk.set_appearance_mode(_WIN11_APPEARANCE_MODE)
     ctk.set_default_color_theme("blue")
 
     theme = ctk.ThemeManager.theme
@@ -102,6 +116,13 @@ def _apply_win11_theme() -> None:
             font_spec = theme[widget_key]["font"]
             if isinstance(font_spec, tuple) and len(font_spec) >= 2:
                 theme[widget_key]["font"] = (_FONT_CANDIDATES[2],) + font_spec[1:]
+
+
+def _critical_confirmation_required(capability_name: str) -> bool:
+    """True fuer irreversible oder gebuendelte Aktionen."""
+    return (capability_name in _CRITICAL_CONFIRMATION_CAPABILITIES
+            or any(capability_name.startswith(prefix)
+                   for prefix in _CRITICAL_CONFIRMATION_PREFIXES))
 
 
 # Tk-Geometry-String: 'WIDTHxHEIGHT' oder 'WIDTHxHEIGHT+X+Y' (X/Y koennen
@@ -569,11 +590,11 @@ class AlltagshelferGUI(ctk.CTk):
         from services.license_ui import (action_apply_token,
                                            action_start_trial)
         dlg = ctk.CTkToplevel(self)
-        dlg.title("Willkommen bei Alltagshelfer")
+        dlg.title(f"Willkommen bei {APP_DISPLAY_NAME}")
         dlg.geometry("560x460")
         dlg.transient(self)
         dlg.grab_set()
-        ctk.CTkLabel(dlg, text="Willkommen bei Alltagshelfer",
+        ctk.CTkLabel(dlg, text=f"Willkommen bei {APP_DISPLAY_NAME}",
                       font=ctk.CTkFont(size=16, weight="bold")
                       ).pack(padx=20, pady=(20, 4), anchor="w")
         ctk.CTkLabel(
@@ -2047,12 +2068,13 @@ class AlltagshelferGUI(ctk.CTk):
         chart_w = 720
         chart_h = 180
         # Canvas-Hintergrund an Light/Dark-Mode anpassen
-        bg_hex = ctk.ThemeManager.theme["CTkFrame"]["fg_color"][
-            1 if ctk.get_appearance_mode() == "Dark" else 0]
-        text_hex = ctk.ThemeManager.theme["CTkLabel"]["text_color"][
-            1 if ctk.get_appearance_mode() == "Dark" else 0]
-        muted_hex = ctk.ThemeManager.theme["CTkLabel"]["text_color_disabled"][
-            1 if ctk.get_appearance_mode() == "Dark" else 0]
+        color_index = 1 if ctk.get_appearance_mode() == "Dark" else 0
+        bg_hex = ctk.ThemeManager.theme["CTkFrame"]["fg_color"][color_index]
+        label_theme = ctk.ThemeManager.theme["CTkLabel"]
+        text_hex = label_theme["text_color"][color_index]
+        muted_colors = label_theme.get("text_color_disabled",
+                                       label_theme["text_color"])
+        muted_hex = muted_colors[color_index]
         canvas = tk.Canvas(self.stats_box, width=chart_w, height=chart_h,
                            bg=bg_hex, highlightthickness=0)
         canvas.pack(padx=12, pady=4)
@@ -2391,15 +2413,6 @@ class AlltagshelferGUI(ctk.CTk):
         side_effect_actions = {"backup_now", "close"}
         if action in side_effect_actions and self._focus_is_text_entry(event):
             return None         # Default-Verhalten des Widgets erlauben
-        if action == "close":
-            try:
-                from tkinter import messagebox
-                if not messagebox.askyesno(
-                        self.i18n.t("shortcuts.quit_title"),
-                        self.i18n.t("shortcuts.quit_message")):
-                    return "break"
-            except Exception:
-                pass
         if tab_key:
             try:
                 self.tabs.set(self.i18n.t(tab_key))
@@ -2903,10 +2916,11 @@ class AlltagshelferGUI(ctk.CTk):
     #  Destruktiv-Bestaetigung (vom Assistant aufgerufen)
     # ================================================================
     def _confirm_destructive(self, tool_call) -> bool:
-        # Tkinter ist nicht thread-safe; der Assistent laeuft im
-        # Hintergrundthread - daher messagebox aus tkinter nutzen.
+        if not _critical_confirmation_required(tool_call.name):
+            return True
         from tkinter import messagebox
-        text = (f"Der Assistent moechte '{tool_call.name}' ausfuehren.\n\n"
+        text = (f"Der Assistent moechte die kritische Aktion "
+                f"'{tool_call.name}' ausfuehren.\n\n"
                 f"Argumente: {tool_call.args}\n\nZulassen?")
         return messagebox.askyesno("Aktion bestaetigen", text)
 

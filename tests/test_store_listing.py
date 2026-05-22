@@ -44,7 +44,7 @@ class TestValidateLocalizations(unittest.TestCase):
 class TestGenerateLocalizations(unittest.TestCase):
 
     def test_merges_curated_into_base(self) -> None:
-        base = {"de-DE": {"title": "Alltagshelfer", "short_description": "s",
+        base = {"de-DE": {"title": "ZunaroDo", "short_description": "s",
                            "full_description": "f"}}
         out = sl.generate_localizations(base)
         self.assertIn("de-DE", out)

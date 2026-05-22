@@ -1,6 +1,6 @@
 identity:
   package_name: de.alltagshelfer.alltagshelfer
-  app_name: Alltagshelfer
+  app_name: ZunaroDo
   default_language: de-DE
   version_name: 0.9.0
   version_code: 1
@@ -11,9 +11,9 @@ contact:
   privacy_policy_url: https://example.org/alltagshelfer/privacy
 localizations:
   de-DE:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Vertraege, Termine, Finanzen, Familie - alles lokal und ohne Cloud-Zwang.
-    full_description: 'Alltagshelfer ist ein datenschutzfreundlicher Assistent
+    full_description: 'ZunaroDo ist ein datenschutzfreundlicher Assistent
 
       fuer Vertraege, Termine, Finanzen und Haushaltsplanung.
 
@@ -22,41 +22,41 @@ localizations:
       keine Werbung.'
     video_url: ''
   en-US:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Privacy-friendly household helper.
     full_description: 'Manage contracts, expenses, appointments and household
 
       tasks - on-device, encrypted, no tracking, no ads.'
     video_url: ''
   fr-FR:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Contrats, rendez-vous, finances, famille - tout en local, sans cloud.
-    full_description: Alltagshelfer est un assistant respectueux de la vie privee pour les contrats, les rendez-vous, les finances et l'organisation du foyer. Toutes les donnees restent en local sur l'appareil - sans suivi, sans publicite.
+    full_description: ZunaroDo est un assistant respectueux de la vie privee pour les contrats, les rendez-vous, les finances et l'organisation du foyer. Toutes les donnees restent en local sur l'appareil - sans suivi, sans publicite.
     video_url: ''
   es-ES:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: 'Contratos, citas, finanzas, familia: todo local, sin nube obligatoria.'
-    full_description: 'Alltagshelfer es un asistente respetuoso con la privacidad para contratos, citas, finanzas y organizacion del hogar. Todos los datos permanecen localmente en el dispositivo: sin seguimiento, sin anuncios.'
+    full_description: 'ZunaroDo es un asistente respetuoso con la privacidad para contratos, citas, finanzas y organizacion del hogar. Todos los datos permanecen localmente en el dispositivo: sin seguimiento, sin anuncios.'
     video_url: ''
   it-IT:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Contratti, appuntamenti, finanze, famiglia - tutto in locale, no cloud.
-    full_description: Alltagshelfer e un assistente rispettoso della privacy per contratti, appuntamenti, finanze e gestione della casa. Tutti i dati restano in locale sul dispositivo - senza tracciamento, senza pubblicita.
+    full_description: ZunaroDo e un assistente rispettoso della privacy per contratti, appuntamenti, finanze e gestione della casa. Tutti i dati restano in locale sul dispositivo - senza tracciamento, senza pubblicita.
     video_url: ''
   nl-NL:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Contracten, afspraken, financien, gezin - lokaal, zonder cloud.
-    full_description: Alltagshelfer is een privacyvriendelijke assistent voor contracten, afspraken, financien en huishoudplanning. Alle gegevens blijven lokaal op het apparaat - geen tracking, geen advertenties.
+    full_description: ZunaroDo is een privacyvriendelijke assistent voor contracten, afspraken, financien en huishoudplanning. Alle gegevens blijven lokaal op het apparaat - geen tracking, geen advertenties.
     video_url: ''
   pl-PL:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Umowy, terminy, finanse, rodzina - wszystko lokalnie, bez chmury.
-    full_description: Alltagshelfer to przyjazny prywatnosci asystent do umow, terminow, finansow i organizacji domu. Wszystkie dane pozostaja lokalnie na urzadzeniu - bez sledzenia, bez reklam.
+    full_description: ZunaroDo to przyjazny prywatnosci asystent do umow, terminow, finansow i organizacji domu. Wszystkie dane pozostaja lokalnie na urzadzeniu - bez sledzenia, bez reklam.
     video_url: ''
   pt-PT:
-    title: Alltagshelfer
+    title: ZunaroDo
     short_description: Contratos, compromissos, financas, familia - tudo local, sem nuvem.
-    full_description: Alltagshelfer e um assistente que respeita a privacidade para contratos, compromissos, financas e organizacao da casa. Todos os dados permanecem localmente no dispositivo - sem rastreio, sem publicidade.
+    full_description: ZunaroDo e um assistente que respeita a privacidade para contratos, compromissos, financas e organizacao da casa. Todos os dados permanecem localmente no dispositivo - sem rastreio, sem publicidade.
     video_url: ''
 images:
   icon: assets/store/icon-512.png

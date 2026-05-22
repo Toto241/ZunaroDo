@@ -147,7 +147,7 @@ def actions_build() -> list[Action]:
             Action("PC bauen (PyInstaller)",
                     ["cmd", "/c", str(REPO_ROOT / "scripts" /
                                        "build-desktop.bat")],
-                    "Erzeugt dist/Alltagshelfer/Alltagshelfer.exe."),
+                    "Erzeugt dist/ZunaroDo/ZunaroDo.exe."),
             Action("Android bauen (WSL2 + Buildozer)",
                     ["cmd", "/c", str(REPO_ROOT / "scripts" /
                                        "build-android.bat")],
@@ -159,7 +159,7 @@ def actions_build() -> list[Action]:
             Action("PC bauen (PyInstaller)",
                     ["bash", str(REPO_ROOT / "scripts" /
                                   "build-desktop.sh")],
-                    "Erzeugt dist/Alltagshelfer/."),
+                    "Erzeugt dist/ZunaroDo/."),
             Action("Android bauen (Buildozer)",
                     ["bash", str(REPO_ROOT / "scripts" /
                                   "build-android.sh")],

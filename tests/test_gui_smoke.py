@@ -29,6 +29,20 @@ class TestGuiImports(unittest.TestCase):
         self.assertFalse(_is_valid_geometry("abc"))
         self.assertFalse(_is_valid_geometry("10x10"))   # zu klein
 
+    def test_win11_theme_defaults_to_light_mode(self) -> None:
+        import gui
+        self.assertEqual(gui._WIN11_APPEARANCE_MODE, "light")
+
+    def test_only_critical_destructive_actions_need_confirmation(self) -> None:
+        from gui import _critical_confirmation_required
+        self.assertFalse(_critical_confirmation_required("calendar.delete_event"))
+        self.assertFalse(_critical_confirmation_required("family.complete_task"))
+        self.assertFalse(_critical_confirmation_required("inbox.accept_proposal"))
+        self.assertTrue(_critical_confirmation_required("calendar.purge_event"))
+        self.assertTrue(_critical_confirmation_required("contracts.purge"))
+        self.assertTrue(
+            _critical_confirmation_required("inbox.bulk_delete_archived"))
+
     def test_main_app_class_exists(self) -> None:
         import gui
         # Eine zentrale GUI-Klasse muss existieren, sonst startet

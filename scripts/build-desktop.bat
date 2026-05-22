@@ -2,7 +2,7 @@
 REM ============================================================
 REM  Desktop-Build (Windows) - PyInstaller
 REM
-REM  Erzeugt ein Single-Folder-Bundle unter dist/Alltagshelfer/.
+REM  Erzeugt ein Single-Folder-Bundle unter dist/ZunaroDo/.
 REM ============================================================
 
 setlocal EnableExtensions
@@ -11,7 +11,7 @@ chcp 65001 >nul
 pushd "%~dp0\.."
 
 echo.
-echo === Alltagshelfer  -  PC-Build (PyInstaller) ===
+echo === ZunaroDo  -  PC-Build (PyInstaller) ===
 echo.
 
 REM 1) Python vorhanden?
@@ -49,18 +49,18 @@ if errorlevel 1 (
 REM 4) Ergebnis anzeigen
 echo.
 echo === Build fertig ===
-if exist "dist\Alltagshelfer\Alltagshelfer.exe" (
-    echo Bundle: dist\Alltagshelfer\
-    dir /b "dist\Alltagshelfer\Alltagshelfer.exe"
+if exist "dist\ZunaroDo\ZunaroDo.exe" (
+    echo Bundle: dist\ZunaroDo\
+    dir /b "dist\ZunaroDo\ZunaroDo.exe"
     echo.
     echo Im Datei-Manager oeffnen? ^(J/n^)
     set "openit="
     set /p openit=
     if /I not "%openit%"=="n" (
-        explorer "dist\Alltagshelfer"
+        explorer "dist\ZunaroDo"
     )
 ) else (
-    echo [WARN] Erwartete Ausgabe nicht gefunden: dist\Alltagshelfer\Alltagshelfer.exe
+    echo [WARN] Erwartete Ausgabe nicht gefunden: dist\ZunaroDo\ZunaroDo.exe
 )
 
 echo.

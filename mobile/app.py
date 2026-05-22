@@ -103,7 +103,7 @@ if HAS_KIVYMD:
         """KivyMD-App; haelt Registry + DB-Lebenszyklus."""
 
         def build(self):
-            self.title = "Alltagshelfer"
+            self.title = "ZunaroDo"
             self.theme_cls.theme_style = "Light"
             self.theme_cls.primary_palette = "Blue"
             self.theme_cls.material_style = "M3"

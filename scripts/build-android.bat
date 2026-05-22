@@ -14,7 +14,7 @@ chcp 65001 >nul
 pushd "%~dp0\.."
 
 echo.
-echo === Alltagshelfer  -  Android-Build via WSL2 ===
+echo === ZunaroDo  -  Android-Build via WSL2 ===
 echo.
 
 REM 1) WSL vorhanden?

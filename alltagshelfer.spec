@@ -1,11 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller-Spec fuer den Alltagshelfer.
+PyInstaller-Spec fuer ZunaroDo.
 
 Bau:
     pyinstaller --noconfirm alltagshelfer.spec
 
-Erzeugt ein Single-Folder-Bundle unter dist/Alltagshelfer/. Single-File
+Erzeugt ein Single-Folder-Bundle unter dist/ZunaroDo/. Single-File
 (`--onefile`) ist absichtlich aus, weil das den GUI-Start spuerbar
 verlangsamt (Self-Extract bei jedem Start).
 """
@@ -66,7 +66,7 @@ exe = EXE(                                              # noqa: F821
     a.scripts,
     [],
     exclude_binaries=True,
-    name="Alltagshelfer",
+    name="ZunaroDo",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -89,5 +89,5 @@ coll = COLLECT(                                          # noqa: F821
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="Alltagshelfer",
+    name="ZunaroDo",
 )

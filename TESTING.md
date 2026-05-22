@@ -37,6 +37,7 @@ werden.
     - [I. CI/CD-Testpipeline](#i-cicd-testpipeline)
     - [J. Go-/No-Go-Kriterien für Play-Store-Veröffentlichung](#j-go--no-go-kriterien-fur-play-store-veroffentlichung)
     - [K. Maßnahmenplan bei Fehlern oder Google-Ablehnung](#k-massnahmenplan-bei-fehlern-oder-google-ablehnung)
+17. [Manueller Desktop-Testplan ZunaroDo](#17-manueller-desktop-testplan-zunarodo)
 
 ---
 
@@ -1596,4 +1597,19 @@ verweigert der Release-Gate-Job den Upload.
 
 ---
 
-*Teil II Eigentümer: QA-Lead + DPO + Release-Lead. Letzte Review: 2026-05-20.*
+## 17. Manueller Desktop-Testplan ZunaroDo
+
+Dieser Zusatzplan deckt den Windows-Desktop-Start und das neue
+Dialogverhalten ab. Er ist vor jedem Desktop-Release manuell auf Windows 11 zu
+protokollieren.
+
+| ID | Bereich | Schritte | Erwartung |
+| --- | --- | --- | --- |
+| D-W11-01 | Start | Windows auf Dark Mode stellen, `python gui.py` starten. | Fenstertitel und Sidebar zeigen `ZunaroDo`; die App startet hell im Windows-11-Stil. |
+| D-W11-02 | CRUD ohne Dialog | Vertrag, Aufgabe, Auftrag, Termin, Kontakt und Ausgabe anlegen; einen Termin per Listenbutton loeschen; eine Aufgabe abhaken. | Aktionen laufen direkt durch, die Listen aktualisieren sich, kein Bestaetigungsdialog erscheint. |
+| D-W11-03 | Assistant Routine | Im KI-/Offline-Assistenten eine nicht-kritische Mutation ausloesen, z. B. Aufgabe abhaken oder Inbox-Vorschlag uebernehmen. | Kein Bestaetigungsdialog; Ergebnis wird normal im Verlauf sichtbar. |
+| D-W11-04 | Kritische Aktion | Aus dem Assistenten eine Purge-Aktion oder `inbox.bulk_delete_archived` ausloesen. | Vor Ausfuehrung erscheint ein Bestaetigungsdialog mit Capability-Name und Argumenten. Ablehnen fuehrt die Aktion nicht aus. |
+| D-W11-05 | Datenloeschung | In der mobilen/Mehr-Ansicht den Pfad `Alle Daten loeschen` oeffnen. | Vollstaendige Datenloeschung bleibt zweistufig geschuetzt und nutzt `delete_all_user_data`. |
+| D-W11-06 | Regression | Nach den manuellen Schritten `python -m pytest tests/test_gui_smoke.py tests/test_i18n.py tests/test_store_listing.py` ausfuehren. | Alle Tests sind gruen; keine Locale- oder Store-Listing-Regression. |
+
+*Teil II Eigentümer: QA-Lead + DPO + Release-Lead. Letzte Review: 2026-05-22.*

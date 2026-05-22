@@ -2,7 +2,7 @@
 # ============================================================
 #  iOS-Build (nur macOS) - kivy-ios + Xcode
 #
-#  Erzeugt ein Xcode-Projekt unter ../Alltagshelfer-ios/ und
+#  Erzeugt ein Xcode-Projekt unter ../ZunaroDo-ios/ und
 #  baut die Python-/Kivy-Runtime fuer ARM64. Code-Signing /
 #  IPA-Export erfolgt anschliessend ueber Xcode oder fastlane.
 # ============================================================
@@ -27,7 +27,7 @@ if ! command -v toolchain >/dev/null 2>&1; then
 fi
 
 echo
-echo "=== Alltagshelfer  -  iOS-Build (kivy-ios) ==="
+echo "=== ZunaroDo  -  iOS-Build (kivy-ios) ==="
 echo
 
 # 1) Python + Kivy + OpenSSL fuer iOS bauen (einmalig, dauert lange)
@@ -37,7 +37,7 @@ if [[ ! -d "dist/root" ]]; then
 fi
 
 # 2) Xcode-Projekt erzeugen
-APP_NAME="Alltagshelfer"
+APP_NAME="ZunaroDo"
 PROJECT_DIR="../${APP_NAME}-ios"
 if [[ ! -d "${PROJECT_DIR}" ]]; then
     echo "--- Erzeuge Xcode-Projekt ${PROJECT_DIR} ---"

@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo
-echo "=== Alltagshelfer  -  Android-Build (Buildozer) ==="
+echo "=== ZunaroDo  -  Android-Build (Buildozer) ==="
 echo
 
 if ! command -v buildozer >/dev/null 2>&1; then

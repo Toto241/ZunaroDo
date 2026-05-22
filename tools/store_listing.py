@@ -32,54 +32,54 @@ REQUIRED_FIELDS = ("title", "short_description", "full_description")
 #: in playstore.yml; diese werden beim Generieren nicht ueberschrieben.
 CURATED: dict[str, dict[str, str]] = {
     "fr-FR": {
-        "title": "Alltagshelfer",
+        "title": "ZunaroDo",
         "short_description": "Contrats, rendez-vous, finances, famille - tout en local, sans cloud.",
         "full_description": (
-            "Alltagshelfer est un assistant respectueux de la vie privee pour "
+            "ZunaroDo est un assistant respectueux de la vie privee pour "
             "les contrats, les rendez-vous, les finances et l'organisation du "
             "foyer. Toutes les donnees restent en local sur l'appareil - sans "
             "suivi, sans publicite."),
     },
     "es-ES": {
-        "title": "Alltagshelfer",
+        "title": "ZunaroDo",
         "short_description": "Contratos, citas, finanzas, familia: todo local, sin nube obligatoria.",
         "full_description": (
-            "Alltagshelfer es un asistente respetuoso con la privacidad para "
+            "ZunaroDo es un asistente respetuoso con la privacidad para "
             "contratos, citas, finanzas y organizacion del hogar. Todos los "
             "datos permanecen localmente en el dispositivo: sin seguimiento, "
             "sin anuncios."),
     },
     "it-IT": {
-        "title": "Alltagshelfer",
+        "title": "ZunaroDo",
         "short_description": "Contratti, appuntamenti, finanze, famiglia - tutto in locale, no cloud.",
         "full_description": (
-            "Alltagshelfer e un assistente rispettoso della privacy per "
+            "ZunaroDo e un assistente rispettoso della privacy per "
             "contratti, appuntamenti, finanze e gestione della casa. Tutti i "
             "dati restano in locale sul dispositivo - senza tracciamento, "
             "senza pubblicita."),
     },
     "nl-NL": {
-        "title": "Alltagshelfer",
+        "title": "ZunaroDo",
         "short_description": "Contracten, afspraken, financien, gezin - lokaal, zonder cloud.",
         "full_description": (
-            "Alltagshelfer is een privacyvriendelijke assistent voor "
+            "ZunaroDo is een privacyvriendelijke assistent voor "
             "contracten, afspraken, financien en huishoudplanning. Alle "
             "gegevens blijven lokaal op het apparaat - geen tracking, geen "
             "advertenties."),
     },
     "pl-PL": {
-        "title": "Alltagshelfer",
+        "title": "ZunaroDo",
         "short_description": "Umowy, terminy, finanse, rodzina - wszystko lokalnie, bez chmury.",
         "full_description": (
-            "Alltagshelfer to przyjazny prywatnosci asystent do umow, "
+            "ZunaroDo to przyjazny prywatnosci asystent do umow, "
             "terminow, finansow i organizacji domu. Wszystkie dane pozostaja "
             "lokalnie na urzadzeniu - bez sledzenia, bez reklam."),
     },
     "pt-PT": {
-        "title": "Alltagshelfer",
+        "title": "ZunaroDo",
         "short_description": "Contratos, compromissos, financas, familia - tudo local, sem nuvem.",
         "full_description": (
-            "Alltagshelfer e um assistente que respeita a privacidade para "
+            "ZunaroDo e um assistente que respeita a privacidade para "
             "contratos, compromissos, financas e organizacao da casa. Todos os "
             "dados permanecem localmente no dispositivo - sem rastreio, sem "
             "publicidade."),
