@@ -21,6 +21,7 @@ from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import format_currency, relative_when, urgency_color
 from mobile.presenters import DashboardPresenter
+from mobile.ui_text import t as _t
 
 
 _URGENCY_HEX = {
@@ -45,7 +46,7 @@ class DashboardScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Alltagshelfer",
+            title=_t("app.title", "Alltagshelfer"),
             right_action_items=[
                 ["calendar-week", lambda *_: self._toggle_mode()],
                 ["refresh", lambda *_: self._refresh()],

@@ -24,6 +24,7 @@ from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import format_currency, truncate
 from mobile.presenters import FinancePresenter
+from mobile.ui_text import t as _t
 
 
 class FinanceScreen(MDScreen):
@@ -41,7 +42,7 @@ class FinanceScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Finanzen",
+            title=_t("tab.finance", "Finanzen"),
             right_action_items=[["refresh", lambda *_: self._refresh()]],
         ))
 
@@ -130,21 +131,22 @@ class FinanceScreen(MDScreen):
                              spacing=dp(8),
                              adaptive_height=True,
                              padding=dp(8))
-        desc = MDTextField(hint_text="Beschreibung")
-        amount = MDTextField(hint_text="Betrag (EUR)",
+        desc = MDTextField(hint_text=_t("form.note", "Beschreibung"))
+        amount = MDTextField(hint_text=_t("form.amount", "Betrag (EUR)"),
                               input_filter="float")
-        category = MDTextField(hint_text="Kategorie (optional)")
+        category = MDTextField(hint_text=_t("form.category", "Kategorie")
+                               + " (" + _t("form.optional", "optional") + ")")
         for w in (desc, amount, category):
             body.add_widget(w)
         self._dialog = MDDialog(
-            title="Neue Ausgabe",
+            title=_t("action.add_expense", "Neue Ausgabe"),
             type="custom",
             content_cls=body,
             buttons=[
-                MDFlatButton(text="Abbrechen",
+                MDFlatButton(text=_t("action.cancel", "Abbrechen"),
                               on_release=lambda *_: self._dismiss()),
                 MDFlatButton(
-                    text="Speichern",
+                    text=_t("action.save", "Speichern"),
                     on_release=lambda *_: self._submit(
                         desc.text, amount.text, category.text)),
             ],

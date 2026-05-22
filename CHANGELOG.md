@@ -6,6 +6,16 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Geändert
 
+- **i18n-Ausbau der Mobile-Screens (erste Stufe)** - die Phone-Screens
+  nutzten bisher gar kein i18n. Über den neuen Helfer
+  [mobile/ui_text.py](mobile/ui_text.py) (`t(key, default)`, holt die
+  Übersetzung aus der laufenden App, fällt sonst auf den deutschen Default
+  zurück → kein Regressionsrisiko) sind jetzt Toolbar-Titel, Dialog-Titel
+  und die Standard-Buttons (Speichern/Abbrechen/Löschen/Schließen) sowie
+  gängige Feld-Labels über `i18n.t(...)` lokalisierbar. Datenwerte/Sentinels
+  bleiben unangetastet. Neue Keys in `de.json`/`en.json`; Tests:
+  [tests/test_ui_text.py](tests/test_ui_text.py). (Empty-States/Detailtexte
+  folgen als nächste Stufe.)
 - **i18n für die neuen Desktop-Labels** - die in dieser Session ergänzten
   Anzeige-Labels (Such-Filterzeile + Platzhalter, Auftrags-Prioritäts-/
   Kategorie-Feld, Dashboard-„Überfällig") laufen jetzt über `i18n.t(...)`

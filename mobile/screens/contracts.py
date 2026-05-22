@@ -22,6 +22,7 @@ from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import format_currency, truncate
 from mobile.presenters import ContractsPresenter
+from mobile.ui_text import t as _t
 
 
 class ContractsScreen(MDScreen):
@@ -39,7 +40,7 @@ class ContractsScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title="Vertraege",
+            title=_t("tab.contracts", "Vertraege"),
             right_action_items=[["refresh", lambda *_: self._refresh()]],
         ))
 
@@ -156,9 +157,9 @@ class ContractsScreen(MDScreen):
             title=contract.get("name", "Vertrag"),
             text=text,
             buttons=[
-                MDFlatButton(text="Loeschen",
+                MDFlatButton(text=_t("action.delete", "Loeschen"),
                               on_release=lambda *_: self._delete(cid)),
-                MDFlatButton(text="Schliessen",
+                MDFlatButton(text=_t("action.close", "Schliessen"),
                               on_release=lambda *_: self._dismiss()),
             ],
         )
@@ -179,23 +180,23 @@ class ContractsScreen(MDScreen):
                              spacing=dp(8),
                              adaptive_height=True,
                              padding=dp(8))
-        name = MDTextField(hint_text="Name")
-        category = MDTextField(hint_text="Kategorie "
-                                 "(streaming/mobilfunk/...)")
-        provider = MDTextField(hint_text="Anbieter")
-        cost = MDTextField(hint_text="Monatlich (EUR)",
+        name = MDTextField(hint_text=_t("form.name", "Name"))
+        category = MDTextField(hint_text=_t("form.category", "Kategorie")
+                               + " (streaming/mobilfunk/...)")
+        provider = MDTextField(hint_text=_t("form.provider", "Anbieter"))
+        cost = MDTextField(hint_text=_t("form.monthly_cost", "Monatlich (EUR)"),
                             input_filter="float")
         for w in (name, category, provider, cost):
             body.add_widget(w)
         self._dialog = MDDialog(
-            title="Neuer Vertrag",
+            title=_t("action.add_contract", "Neuer Vertrag"),
             type="custom",
             content_cls=body,
             buttons=[
-                MDFlatButton(text="Abbrechen",
+                MDFlatButton(text=_t("action.cancel", "Abbrechen"),
                               on_release=lambda *_: self._dismiss()),
                 MDFlatButton(
-                    text="Speichern",
+                    text=_t("action.save", "Speichern"),
                     on_release=lambda *_: self._submit_add(
                         name.text, category.text, provider.text,
                         cost.text)),

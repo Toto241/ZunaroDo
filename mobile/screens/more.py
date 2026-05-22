@@ -23,6 +23,7 @@ from kivymd.uix.toolbar import MDTopAppBar
 
 from mobile.helpers import language_menu_items, truncate
 from mobile.presenters import OrdersPresenter, SearchPresenter
+from mobile.ui_text import t as _t
 from services import config as app_config
 from services.data_deletion import delete_all_user_data, sandbox_data_dirs
 
@@ -398,11 +399,12 @@ class _OrdersPage(MDScreen):
                   self._in_priority, self._in_category):
             body.add_widget(w)
         self._dialog = MDDialog(
-            title="Neuer Auftrag", type="custom", content_cls=body,
+            title=_t("action.add_order", "Neuer Auftrag"), type="custom",
+            content_cls=body,
             buttons=[
-                MDFlatButton(text="Abbrechen",
+                MDFlatButton(text=_t("action.cancel", "Abbrechen"),
                              on_release=lambda *_: self._dismiss()),
-                MDFlatButton(text="Speichern",
+                MDFlatButton(text=_t("action.save", "Speichern"),
                              on_release=lambda *_: self._submit()),
             ])
         self._dialog.open()
@@ -437,7 +439,7 @@ class MoreScreen(MDScreen):
 
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
-        root.add_widget(MDTopAppBar(title="Mehr"))
+        root.add_widget(MDTopAppBar(title=_t("tab.more", "Mehr")))
         scroll = ScrollView()
         self.list = MDList()
         scroll.add_widget(self.list)

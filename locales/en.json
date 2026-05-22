@@ -213,5 +213,11 @@
   "search.ph_date_to": "to YYYY-MM-DD",
   "form.priority": "Priority",
   "form.optional": "optional",
-  "dashboard.overdue": "Overdue"
+  "dashboard.overdue": "Overdue",
+
+  "action.save": "Save",
+  "action.cancel": "Cancel",
+  "action.delete": "Delete",
+  "action.close": "Close",
+  "action.add_contract": "Add contract"
 }

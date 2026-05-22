@@ -213,5 +213,11 @@
   "search.ph_date_to": "bis JJJJ-MM-TT",
   "form.priority": "Prioritaet",
   "form.optional": "optional",
-  "dashboard.overdue": "Ueberfaellig"
+  "dashboard.overdue": "Ueberfaellig",
+
+  "action.save": "Speichern",
+  "action.cancel": "Abbrechen",
+  "action.delete": "Loeschen",
+  "action.close": "Schliessen",
+  "action.add_contract": "Vertrag anlegen"
 }

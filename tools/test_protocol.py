@@ -76,6 +76,7 @@ FILE_REQUIREMENTS = {
     "test_headless_app":      ["R8"],
     "test_profiles":          ["R5", "R7"],
     "test_tls_certs":         ["R5", "R7"],
+    "test_ui_text":           ["R8"],
     "test_scheduler_reminders": ["R2"],
     "test_integration":       ["R5", "R6", "R7", "R8"],
     "test_performance":       ["R4", "R8"],
