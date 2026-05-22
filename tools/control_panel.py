@@ -125,6 +125,15 @@ def actions_tests() -> list[Action]:
     ]
 
 
+# Info-Text fuer den iOS-Knopf auf Nicht-macOS-Systemen (als python -c).
+_IOS_INFO_SNIPPET = (
+    "print('iOS-Build ist nur auf macOS moeglich (Xcode + kivy-ios).');"
+    "print('Wege:  Mac -> scripts/build-ios.sh   |   "
+    "Cloud -> GitHub Actions / CI.');"
+    "print('Details: MOBILE.md')"
+)
+
+
 def actions_build() -> list[Action]:
     py = sys.executable
     is_windows = os.name == "nt"
@@ -156,6 +165,19 @@ def actions_build() -> list[Action]:
                                   "build-android.sh")],
                     "Erfordert Linux/macOS + JDK 17."),
         ])
+
+    # iOS: nur auf macOS lokal baubar. Auf anderen Plattformen ein
+    # Info-Befehl, damit alle drei Apps in der Build-Sektion sichtbar sind.
+    if sys.platform == "darwin":
+        builds.append(
+            Action("iOS bauen (kivy-ios)",
+                    ["bash", str(REPO_ROOT / "scripts" / "build-ios.sh")],
+                    "Erfordert macOS + Xcode + kivy-ios."))
+    else:
+        builds.append(
+            Action("iOS (nur macOS)",
+                    [py, "-c", _IOS_INFO_SNIPPET],
+                    "Hinweis: iOS-Build nur auf macOS (Xcode + kivy-ios)."))
     return builds
 
 
