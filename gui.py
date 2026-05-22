@@ -316,6 +316,17 @@ def _labeled_option_menu(parent, label: str, values: list[str],
     return menu
 
 
+def _parse_float(raw: str, default: float = 0.0) -> float:
+    # Akzeptiert deutsche Komma-Dezimalzahlen ("10,50"); leer -> default.
+    raw = (raw or "").strip().replace(",", ".")
+    return float(raw) if raw else default
+
+
+def _parse_int(raw: str, default: int = 0) -> int:
+    raw = (raw or "").strip()
+    return int(raw) if raw else default
+
+
 def _clear(frame) -> None:
     for w in frame.winfo_children():
         w.destroy()
@@ -1003,19 +1014,25 @@ class AlltagshelferGUI(ctk.CTk):
         v = {k: e.get().strip() for k, e in self.contract_inputs.items()}
         if not v["name"] or not v["category"]:
             return
-        payload = {
-            "name": v["name"],
-            "provider": v["provider"],
-            "category": v["category"] or "sonstiges",
-            "start_date": v["start_date"] or None,
-            "monthly_cost": float(v["monthly_cost"] or 0),
-            "minimum_term_months": int(v["minimum_term_months"] or 12),
-            "notice_period_months": int(v["notice_period_months"] or 3),
-            "auto_renew_months": int(v["auto_renew_months"] or 12),
-        }
+        try:
+            payload = {
+                "name": v["name"],
+                "provider": v["provider"],
+                "category": v["category"] or "sonstiges",
+                "start_date": v["start_date"] or None,
+                "monthly_cost": _parse_float(v["monthly_cost"], 0.0),
+                "minimum_term_months": _parse_int(v["minimum_term_months"], 12),
+                "notice_period_months": _parse_int(v["notice_period_months"], 3),
+                "auto_renew_months": _parse_int(v["auto_renew_months"], 12),
+            }
+        except ValueError:
+            self._show_dialog("Eingabe ungueltig",
+                              "Bitte in den Zahlenfeldern (Kosten, Laufzeit, "
+                              "Kuendigungsfrist) gueltige Zahlen eingeben.")
+            return
         if v["owner_name"]:
             members = self.registry.dispatch("family.members",
-                                               {})["members"]
+                                               {}).get("members", [])
             for m in members:
                 if m["name"].lower() == v["owner_name"].lower():
                     payload["owner_id"] = m["id"]
@@ -1176,9 +1193,15 @@ class AlltagshelferGUI(ctk.CTk):
         if not v["title"]:
             return
         assignees = [a.strip() for a in v["assignees"].split(",") if a.strip()]
+        try:
+            interval_days = _parse_int(v["interval_days"], 7)
+        except ValueError:
+            self._show_dialog("Eingabe ungueltig",
+                              "Das Intervall (Tage) muss eine Zahl sein.")
+            return
         self.registry.dispatch("family.add_task", {
             "title": v["title"],
-            "interval_days": int(v["interval_days"] or 7),
+            "interval_days": interval_days,
             "assignees": assignees,
             "first_due": v["first_due"] or None,
         })
@@ -1361,9 +1384,16 @@ class AlltagshelferGUI(ctk.CTk):
         v = {k: e.get().strip() for k, e in self.expense_inputs.items()}
         if not v["description"] or not v["amount"]:
             return
+        try:
+            amount = _parse_float(v["amount"], 0.0)
+        except ValueError:
+            self._show_dialog("Eingabe ungueltig",
+                              "Bitte einen gueltigen Betrag eingeben "
+                              "(z.B. 10.50).")
+            return
         payload = {
             "description": v["description"],
-            "amount": float(v["amount"]),
+            "amount": amount,
             "category": v["category"] or "sonstiges",
             "spent_on": v["spent_on"] or None,
         }
@@ -1526,7 +1556,12 @@ class AlltagshelferGUI(ctk.CTk):
         payload = {"name": v["name"], "relation": v["relation"],
                     "notes": v["notes"]}
         if v["cadence_days"]:
-            payload["cadence_days"] = int(v["cadence_days"])
+            try:
+                payload["cadence_days"] = _parse_int(v["cadence_days"], 0)
+            except ValueError:
+                self._show_dialog("Eingabe ungueltig",
+                                  "Der Rhythmus (Tage) muss eine Zahl sein.")
+                return
         self.registry.dispatch("social.add_contact", payload)
         for e in self.social_inputs.values():
             e.delete(0, "end")
