@@ -108,5 +108,27 @@ class TestOrphanOwnerId(_DbCase):
         self.assertIsNone(stored[0].owner_id)
 
 
+class TestSoftDeletedOwnerName(_DbCase):
+
+    def test_soft_deleted_owner_name_is_hidden(self) -> None:
+        fam = FamilyRepository(self.db)
+        m = fam.add_member(FamilyMember(name="Bernd"))
+        repo = ContractRepository(self.db)
+        c = repo.add(Contract(name="Strom", category="strom", owner_id=m.id))
+        # Aktives Mitglied -> Name sichtbar.
+        self.assertEqual(repo.get(c.id).owner_name, "Bernd")
+        # Soft-Delete: owner_id bleibt erhalten, Name verschwindet (das
+        # Mitglied ist auch aus der aktiven Liste raus -> konsistent).
+        fam.soft_delete_member(m.id)
+        got = repo.get(c.id)
+        self.assertEqual(got.owner_id, m.id)
+        self.assertFalse(got.owner_name,
+                         "soft-geloeschtes Mitglied darf nicht mehr als "
+                         "Owner-Name erscheinen")
+        # Wiederherstellen bringt den Namen zurueck.
+        fam.restore_member(m.id)
+        self.assertEqual(repo.get(c.id).owner_name, "Bernd")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -604,7 +604,7 @@ class ContractRepository:
     def get(self, contract_id: int) -> Optional[Contract]:
         row = self.db.conn.execute(
             "SELECT c.*, m.name AS owner_name FROM contracts c"
-            " LEFT JOIN family_members m ON m.id = c.owner_id"
+            " LEFT JOIN family_members m ON m.id = c.owner_id AND m.deleted_at IS NULL"
             " WHERE c.id=?", (contract_id,)
         ).fetchone()
         return self._row_to_contract(row) if row else None
@@ -612,7 +612,7 @@ class ContractRepository:
     def list_all(self, only_active: bool = True,
                   include_deleted: bool = False) -> list[Contract]:
         sql = ("SELECT c.*, m.name AS owner_name FROM contracts c"
-               " LEFT JOIN family_members m ON m.id = c.owner_id")
+               " LEFT JOIN family_members m ON m.id = c.owner_id AND m.deleted_at IS NULL")
         clauses = []
         if only_active:
             clauses.append("c.status='active'")
@@ -652,7 +652,7 @@ class ContractRepository:
         """Listet die im Papierkorb liegenden Vertraege."""
         rows = self.db.conn.execute(
             "SELECT c.*, m.name AS owner_name FROM contracts c"
-            " LEFT JOIN family_members m ON m.id = c.owner_id"
+            " LEFT JOIN family_members m ON m.id = c.owner_id AND m.deleted_at IS NULL"
             " WHERE c.deleted_at IS NOT NULL ORDER BY c.deleted_at DESC")
         return [self._row_to_contract(r) for r in rows]
 
@@ -707,7 +707,7 @@ class ExpenseRepository:
 
     def list_all(self, include_deleted: bool = False) -> list[Expense]:
         sql = ("SELECT e.*, m.name AS owner_name FROM expenses e"
-               " LEFT JOIN family_members m ON m.id = e.owner_id")
+               " LEFT JOIN family_members m ON m.id = e.owner_id AND m.deleted_at IS NULL")
         if not include_deleted:
             sql += " WHERE e.deleted_at IS NULL"
         sql += " ORDER BY e.spent_on DESC, e.id DESC"
@@ -736,7 +736,7 @@ class ExpenseRepository:
     def list_deleted(self) -> list[Expense]:
         rows = self.db.conn.execute(
             "SELECT e.*, m.name AS owner_name FROM expenses e"
-            " LEFT JOIN family_members m ON m.id = e.owner_id"
+            " LEFT JOIN family_members m ON m.id = e.owner_id AND m.deleted_at IS NULL"
             " WHERE e.deleted_at IS NOT NULL"
             " ORDER BY e.deleted_at DESC")
         return [self._row_to_expense(r) for r in rows]
@@ -745,7 +745,7 @@ class ExpenseRepository:
         prefix = f"{year:04d}-{month:02d}"
         rows = self.db.conn.execute(
             "SELECT e.*, m.name AS owner_name FROM expenses e"
-            " LEFT JOIN family_members m ON m.id = e.owner_id"
+            " LEFT JOIN family_members m ON m.id = e.owner_id AND m.deleted_at IS NULL"
             " WHERE e.spent_on LIKE ? ORDER BY e.spent_on DESC",
             (prefix + "%",),
         )
@@ -1044,7 +1044,7 @@ class ShoppingRepository:
 
     def list(self, include_bought: bool = True) -> list[ShoppingItem]:
         sql = ("SELECT s.*, m.name AS added_by_name FROM shopping_items s"
-               " LEFT JOIN family_members m ON m.id = s.added_by_id")
+               " LEFT JOIN family_members m ON m.id = s.added_by_id AND m.deleted_at IS NULL")
         if not include_bought:
             sql += " WHERE s.bought=0"
         sql += " ORDER BY s.bought ASC, s.id ASC"
@@ -1183,7 +1183,7 @@ class CalendarRepository:
 
     def list_all(self, include_deleted: bool = False) -> list[CalendarEvent]:
         sql = ("SELECT c.*, m.name AS person_name FROM calendar_events c"
-               " LEFT JOIN family_members m ON m.id = c.person_id")
+               " LEFT JOIN family_members m ON m.id = c.person_id AND m.deleted_at IS NULL")
         if not include_deleted:
             sql += " WHERE c.deleted_at IS NULL"
         sql += " ORDER BY c.due_date"
@@ -1243,7 +1243,7 @@ class CalendarRepository:
     def list_deleted(self) -> list[CalendarEvent]:
         rows = self.db.conn.execute(
             "SELECT c.*, m.name AS person_name FROM calendar_events c"
-            " LEFT JOIN family_members m ON m.id = c.person_id"
+            " LEFT JOIN family_members m ON m.id = c.person_id AND m.deleted_at IS NULL"
             " WHERE c.deleted_at IS NOT NULL"
             " ORDER BY c.deleted_at DESC")
         return [self._row_to_event(r) for r in rows]
