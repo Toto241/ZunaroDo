@@ -1,6 +1,5 @@
 {
   "app.title": "Alltagshelfer",
-
   "tab.dashboard": "Dashboard",
   "tab.contracts": "Vertraege",
   "tab.family": "Familie",
@@ -14,12 +13,10 @@
   "tab.modules": "Module",
   "tab.settings": "Einstellungen",
   "tab.more": "Mehr",
-
   "sidebar.module_status": "Modulstatus",
   "sidebar.assistant_mode": "Assistent-Modus",
   "sidebar.refresh_all": "Alles aktualisieren",
   "sidebar.check_now": "Jetzt nach Notifikationen suchen",
-
   "dashboard.title": "Naechste Ereignisse",
   "dashboard.none": "Keine anstehenden Ereignisse.",
   "dashboard.horizon.30": "30 Tage",
@@ -28,18 +25,15 @@
   "dashboard.urgency.high": "DRINGEND",
   "dashboard.urgency.medium": "BALD",
   "dashboard.urgency.normal": "GEPLANT",
-
   "search.title": "Volltextsuche",
   "search.placeholder": "Mindestens 2 Zeichen ...",
   "search.button": "Suchen",
   "search.no_hits": "Keine Treffer.",
   "search.too_short": "Bitte mindestens 2 Zeichen eingeben.",
   "search.results_count": "{count} Treffer:",
-
   "history.title": "Assistenten-Verlauf",
   "history.empty": "Noch keine Eintraege - frage den Assistenten etwas.",
   "history.refresh": "Aktualisieren",
-
   "common.you": "Du",
   "common.assistant": "Assistent",
   "common.save": "Speichern",
@@ -52,12 +46,10 @@
   "common.send": "Senden",
   "common.refresh": "Aktualisieren",
   "common.placeholder.question": "Frage eingeben ...",
-
   "modules.title": "Module ein-/ausschalten",
   "modules.hint": "Deaktivierte Module liefern weder Capabilities noch Dashboard-Eintraege. Die Daten bleiben in der DB erhalten.",
   "modules.active": "aktiv",
   "modules.capabilities_label": "{n} Capabilities:",
-
   "settings.title": "Einstellungen",
   "settings.intro": "Werte werden in der DB persistiert. Geheime Felder (API-Schluessel, Passwoerter) liest die App ausschliesslich aus Umgebungsvariablen, sie werden NICHT in der DB gespeichert.",
   "settings.save": "Speichern (Neustart noetig)",
@@ -67,18 +59,14 @@
   "settings.secret_unset": "nicht gesetzt",
   "settings.saved": "{count} Werte gespeichert. Neustart fuer einige Felder.",
   "settings.reset_done": "Auf Defaults zurueckgesetzt.",
-
   "family.sub.members": "Mitglieder",
   "family.sub.tasks": "Aufgaben",
   "family.sub.orders": "Auftraege",
   "family.sub.shopping": "Einkaufsliste",
-
   "sidebar.profile": "Profil",
   "sidebar.profile.default": "(Standard)",
-
   "tab.statistics": "Statistiken",
   "tab.data": "Daten",
-
   "stats.title": "Statistiken & Trends",
   "stats.expenses_per_month": "Ausgaben pro Monat (letzte 12)",
   "stats.contracts_overview": "Vertraege im Ueberblick",
@@ -89,7 +77,6 @@
   "stats.yearly_total": "{amount:.2f} EUR/Jahr",
   "stats.top_3": "Top 3 nach Preis",
   "stats.average_per_month": "Schnitt pro Monat",
-
   "data.title": "Daten verwalten",
   "data.profile_label": "Aktives Profil",
   "data.profile_default": "(Standard)",
@@ -110,30 +97,24 @@
   "data.delete_confirm_body": "Diese Aktion kann nicht rueckgaengig gemacht werden. Alle Daten werden dauerhaft von diesem Geraet entfernt.",
   "data.delete_confirm_action": "Endgueltig loeschen",
   "data.delete_done": "Alle Daten geloescht. Bitte starte die App neu.",
-
   "calendar.title": "Termine & Kalender",
-  "calendar.empty": "Noch keine Termine.",
+  "calendar.empty": "Keine Termine in den naechsten {days} Tagen.",
   "calendar.recurring_suffix": ", wiederkehrend alle {days} Tage",
-
   "social.title": "Soziale Pflege",
   "social.no_contacts": "Noch keine Kontakte erfasst.",
   "social.next_due": "naechstes Melden {when}",
   "social.due_today": "heute",
   "social.due_in": "in {days} Tagen",
   "social.due_overdue": "{days} Tage ueberfaellig",
-
   "module_admin.toggle": "aktiv",
-
   "onboarding.title": "Willkommen im Alltagshelfer",
   "onboarding.intro": "Deine Datenbank ist leer. Wie moechtest du starten?",
   "onboarding.option_demo": "Mit Beispieldaten starten (2 Vertraege, 3 Familienmitglieder, ein paar Termine)",
   "onboarding.option_empty": "Mit leerer DB beginnen",
   "onboarding.choose_demo": "Beispieldaten laden",
   "onboarding.choose_empty": "Leer starten",
-
   "shortcuts.quit_title": "Beenden bestaetigen",
   "shortcuts.quit_message": "Alltagshelfer wirklich beenden?",
-
   "inbox.analyze": "Analysieren",
   "inbox.fetch_imap": "IMAP abrufen",
   "inbox.accept": "Uebernehmen",
@@ -147,10 +128,8 @@
   "inbox.imap_querying": "IMAP wird abgefragt ...",
   "inbox.imap_not_configured": "IMAP nicht konfiguriert",
   "inbox.imap_result": "IMAP: {checked} Mails geprueft, {found} neue Vorschlaege",
-
   "chat.thinking": "denkt nach ...",
   "chat.greeting": "Hallo! Im Dashboard siehst du deine naechsten Ereignisse. Hier kannst du mich alles fragen.",
-
   "proposal_editor.title": "Vorschlag bearbeiten",
   "proposal_editor.summary": "Kurzbeschreibung",
   "proposal_editor.save_only": "Speichern",
@@ -160,7 +139,6 @@
   "proposal_editor.target_unavailable": "Die Ziel-Capability '{target}' ist nicht verfuegbar. Pruefe, ob das zustaendige Modul aktiviert ist.",
   "proposal_editor.field_required": "'{name}' ist Pflichtfeld",
   "proposal_editor.field_invalid": "'{name}' erwartet {ptype}, '{raw}' ungueltig",
-
   "form.name": "Name",
   "form.provider": "Anbieter",
   "form.category": "Kategorie",
@@ -190,7 +168,6 @@
   "form.recurrence_days": "Wiederh. (Tage)",
   "form.relation": "Beziehung",
   "form.cadence_days": "Rhythmus (Tage)",
-
   "action.bulk_complete_overdue": "Alle ueberfaelligen abhaken",
   "action.create_contract": "Vertrag anlegen",
   "action.cancellation_letter": "Kuendigungsschreiben",
@@ -205,7 +182,6 @@
   "action.done": "Erledigt",
   "action.contacted": "Kontaktiert",
   "action.draft": "Entwurf",
-
   "search.filter_label": "Filter:",
   "search.ph_category": "Kategorie",
   "search.ph_status": "Status",
@@ -214,18 +190,15 @@
   "form.priority": "Prioritaet",
   "form.optional": "optional",
   "dashboard.overdue": "Ueberfaellig",
-
   "action.save": "Speichern",
   "action.cancel": "Abbrechen",
   "action.delete": "Loeschen",
   "action.close": "Schliessen",
   "action.add_contract": "Vertrag anlegen",
-
   "contracts.empty": "Noch keine Vertraege. Tipp auf +.",
   "orders.empty": "Keine Auftraege. Tipp auf +.",
   "contacts.empty": "Keine Kontakte.",
   "finance.empty": "Noch keine Ausgaben erfasst.",
-  "calendar.empty": "Keine Termine in den naechsten {days} Tagen.",
   "finance.recent_empty": "Noch keine Ausgaben in den letzten {days} Tagen.",
   "dashboard.upcoming": "Anstehend",
   "common.no_entries": "Keine Eintraege.",
@@ -245,5 +218,9 @@
   "filter.category_hint": "Kategorie filtern (optional)",
   "filter.relation_hint": "Beziehung filtern (optional)",
   "dashboard.all_clear": "Keine offenen Punkte. Schoenes Leben!",
-  "dashboard.week_clear": "Diese Woche nichts faellig."
+  "dashboard.week_clear": "Diese Woche nichts faellig.",
+  "page.profiles": "Profile",
+  "more.profiles": "Profile (Geraet)",
+  "profiles.new_hint": "Neues Profil",
+  "action.create": "Anlegen"
 }

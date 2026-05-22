@@ -218,5 +218,9 @@
   "filter.category_hint": "Op categorie filteren (optioneel)",
   "filter.relation_hint": "Op relatie filteren (optioneel)",
   "dashboard.all_clear": "Niets openstaand. Geniet ervan!",
-  "dashboard.week_clear": "Niets te doen deze week."
+  "dashboard.week_clear": "Niets te doen deze week.",
+  "page.profiles": "Profielen",
+  "more.profiles": "Profielen (apparaat)",
+  "profiles.new_hint": "Nieuw profiel",
+  "action.create": "Aanmaken"
 }

@@ -325,8 +325,8 @@ nutzt `python-for-android` über vier GitHub-Secrets:
 | `ANDROID_KEY_ALIAS_PASSWORD` | Passwort des Alias |
 
 Die verwendete Community-Action (`ArtemSBulgakov/buildozer-action`) stellt
-SDK/NDK bereit; vor produktivem Einsatz vom Release-Owner prüfen und auf
-einen Commit-SHA pinnen.
+SDK/NDK bereit und ist auf einen Commit-SHA gepinnt (Supply-Chain); bei
+einem Versions-Update den SHA neu setzen.
 
 ## Privacy-Policy-Hosting (erreichbare URL)
 

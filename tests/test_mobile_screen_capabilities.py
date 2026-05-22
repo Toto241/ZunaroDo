@@ -34,6 +34,8 @@ _MOBILE_CAPABILITIES = {
     "family.members", "notes.list", "inbox.proposals",
     "system.search", "social.contacts",
     "family.orders", "family.add_order", "family.complete_order",
+    # more.py -> Profil-Umschalter
+    "system.profiles", "system.profile_switch", "system.profile_create",
 }
 
 

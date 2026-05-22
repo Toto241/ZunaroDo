@@ -218,5 +218,9 @@
   "filter.category_hint": "Filtrar por categoría (opcional)",
   "filter.relation_hint": "Filtrar por relación (opcional)",
   "dashboard.all_clear": "Nada pendiente. ¡Disfruta!",
-  "dashboard.week_clear": "Nada pendiente esta semana."
+  "dashboard.week_clear": "Nada pendiente esta semana.",
+  "page.profiles": "Perfiles",
+  "more.profiles": "Perfiles (dispositivo)",
+  "profiles.new_hint": "Nuevo perfil",
+  "action.create": "Crear"
 }

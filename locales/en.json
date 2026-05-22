@@ -1,6 +1,5 @@
 {
   "app.title": "Daily Helper",
-
   "tab.dashboard": "Dashboard",
   "tab.contracts": "Contracts",
   "tab.family": "Family",
@@ -14,12 +13,10 @@
   "tab.modules": "Modules",
   "tab.settings": "Settings",
   "tab.more": "More",
-
   "sidebar.module_status": "Module status",
   "sidebar.assistant_mode": "Assistant mode",
   "sidebar.refresh_all": "Refresh everything",
   "sidebar.check_now": "Check for notifications now",
-
   "dashboard.title": "Upcoming events",
   "dashboard.none": "No upcoming events.",
   "dashboard.horizon.30": "30 days",
@@ -28,18 +25,15 @@
   "dashboard.urgency.high": "URGENT",
   "dashboard.urgency.medium": "SOON",
   "dashboard.urgency.normal": "PLANNED",
-
   "search.title": "Full-text search",
   "search.placeholder": "At least 2 characters ...",
   "search.button": "Search",
   "search.no_hits": "No hits.",
   "search.too_short": "Please enter at least 2 characters.",
   "search.results_count": "{count} hits:",
-
   "history.title": "Assistant history",
   "history.empty": "No entries yet - ask the assistant something.",
   "history.refresh": "Refresh",
-
   "common.you": "You",
   "common.assistant": "Assistant",
   "common.save": "Save",
@@ -52,12 +46,10 @@
   "common.send": "Send",
   "common.refresh": "Refresh",
   "common.placeholder.question": "Type a question ...",
-
   "modules.title": "Enable/disable modules",
   "modules.hint": "Disabled modules expose neither capabilities nor dashboard events. Their data stays in the database.",
   "modules.active": "active",
   "modules.capabilities_label": "{n} capabilities:",
-
   "settings.title": "Settings",
   "settings.intro": "Values are persisted in the DB. Secret fields (API keys, passwords) are read from environment variables only - they are NOT stored in the DB.",
   "settings.save": "Save (restart required)",
@@ -67,18 +59,14 @@
   "settings.secret_unset": "not set",
   "settings.saved": "{count} values saved. Restart required for some fields.",
   "settings.reset_done": "Reset to defaults.",
-
   "family.sub.members": "Members",
   "family.sub.tasks": "Tasks",
   "family.sub.orders": "Orders",
   "family.sub.shopping": "Shopping list",
-
   "sidebar.profile": "Profile",
   "sidebar.profile.default": "(default)",
-
   "tab.statistics": "Statistics",
   "tab.data": "Data",
-
   "stats.title": "Statistics & trends",
   "stats.expenses_per_month": "Expenses per month (last 12)",
   "stats.contracts_overview": "Contracts overview",
@@ -89,7 +77,6 @@
   "stats.yearly_total": "{amount:.2f} EUR/year",
   "stats.top_3": "Top 3 by cost",
   "stats.average_per_month": "Average per month",
-
   "data.title": "Manage data",
   "data.profile_label": "Active profile",
   "data.profile_default": "(default)",
@@ -110,30 +97,24 @@
   "data.delete_confirm_body": "This action cannot be undone. All your data will be permanently removed from this device.",
   "data.delete_confirm_action": "Delete permanently",
   "data.delete_done": "All data deleted. Please restart the app.",
-
   "calendar.title": "Calendar",
-  "calendar.empty": "No events yet.",
+  "calendar.empty": "No events in the next {days} days.",
   "calendar.recurring_suffix": ", recurring every {days} days",
-
   "social.title": "Social",
   "social.no_contacts": "No contacts yet.",
   "social.next_due": "next contact {when}",
   "social.due_today": "today",
   "social.due_in": "in {days} days",
   "social.due_overdue": "{days} days overdue",
-
   "module_admin.toggle": "active",
-
   "onboarding.title": "Welcome to Daily Helper",
   "onboarding.intro": "Your database is empty. How would you like to start?",
   "onboarding.option_demo": "Start with sample data (2 contracts, 3 family members, a few events)",
   "onboarding.option_empty": "Start with an empty database",
   "onboarding.choose_demo": "Load sample data",
   "onboarding.choose_empty": "Start empty",
-
   "shortcuts.quit_title": "Confirm quit",
   "shortcuts.quit_message": "Really quit Daily Helper?",
-
   "inbox.analyze": "Analyze",
   "inbox.fetch_imap": "Fetch IMAP",
   "inbox.accept": "Accept",
@@ -147,10 +128,8 @@
   "inbox.imap_querying": "Querying IMAP ...",
   "inbox.imap_not_configured": "IMAP not configured",
   "inbox.imap_result": "IMAP: {checked} mails checked, {found} new proposals",
-
   "chat.thinking": "thinking ...",
   "chat.greeting": "Hello! The dashboard shows your upcoming events. Ask me anything here.",
-
   "proposal_editor.title": "Edit proposal",
   "proposal_editor.summary": "Short description",
   "proposal_editor.save_only": "Save",
@@ -160,7 +139,6 @@
   "proposal_editor.target_unavailable": "Target capability '{target}' is unavailable. Check that the corresponding module is enabled.",
   "proposal_editor.field_required": "'{name}' is required",
   "proposal_editor.field_invalid": "'{name}' expects {ptype}, '{raw}' is invalid",
-
   "form.name": "Name",
   "form.provider": "Provider",
   "form.category": "Category",
@@ -190,7 +168,6 @@
   "form.recurrence_days": "Repeat (days)",
   "form.relation": "Relation",
   "form.cadence_days": "Cadence (days)",
-
   "action.bulk_complete_overdue": "Complete all overdue",
   "action.create_contract": "Create contract",
   "action.cancellation_letter": "Cancellation letter",
@@ -205,7 +182,6 @@
   "action.done": "Done",
   "action.contacted": "Contacted",
   "action.draft": "Draft",
-
   "search.filter_label": "Filter:",
   "search.ph_category": "Category",
   "search.ph_status": "Status",
@@ -214,18 +190,15 @@
   "form.priority": "Priority",
   "form.optional": "optional",
   "dashboard.overdue": "Overdue",
-
   "action.save": "Save",
   "action.cancel": "Cancel",
   "action.delete": "Delete",
   "action.close": "Close",
   "action.add_contract": "Add contract",
-
   "contracts.empty": "No contracts yet. Tap +.",
   "orders.empty": "No tasks. Tap +.",
   "contacts.empty": "No contacts.",
   "finance.empty": "No expenses recorded yet.",
-  "calendar.empty": "No events in the next {days} days.",
   "finance.recent_empty": "No expenses in the last {days} days.",
   "dashboard.upcoming": "Upcoming",
   "common.no_entries": "No entries.",
@@ -245,5 +218,9 @@
   "filter.category_hint": "Filter by category (optional)",
   "filter.relation_hint": "Filter by relation (optional)",
   "dashboard.all_clear": "Nothing pending. Enjoy!",
-  "dashboard.week_clear": "Nothing due this week."
+  "dashboard.week_clear": "Nothing due this week.",
+  "page.profiles": "Profiles",
+  "more.profiles": "Profiles (device)",
+  "profiles.new_hint": "New profile",
+  "action.create": "Create"
 }

@@ -218,5 +218,9 @@
   "filter.category_hint": "Filtruj wg kategorii (opcjonalnie)",
   "filter.relation_hint": "Filtruj wg relacji (opcjonalnie)",
   "dashboard.all_clear": "Nic w toku. Miłego dnia!",
-  "dashboard.week_clear": "Nic do zrobienia w tym tygodniu."
+  "dashboard.week_clear": "Nic do zrobienia w tym tygodniu.",
+  "page.profiles": "Profile",
+  "more.profiles": "Profile (urządzenie)",
+  "profiles.new_hint": "Nowy profil",
+  "action.create": "Utwórz"
 }

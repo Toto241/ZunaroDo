@@ -29,7 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Debug-APK (buildozer)
-        uses: ArtemSBulgakov/buildozer-action@v1
+        # Auf Commit-SHA gepinnt (Supply-Chain); entspricht Tag v1.
+        uses: ArtemSBulgakov/buildozer-action@3808a27e5d64e3921ed1735dacc214aeaec38080  # v1
         with:
           command: buildozer android debug
       - name: APK als Artefakt
