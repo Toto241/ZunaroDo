@@ -223,7 +223,7 @@ def validate(config: dict) -> list[ValidationIssue]:
 SAMPLE_CONFIG: dict[str, Any] = {
     "identity": {
         "package_name": "de.alltagshelfer.alltagshelfer",
-        "app_name": "Alltagshelfer",
+        "app_name": "ZunaroDo",
         "default_language": "de-DE",
         "version_name": "0.9.0",
         "version_code": 1,
@@ -236,19 +236,19 @@ SAMPLE_CONFIG: dict[str, Any] = {
     },
     "localizations": {
         "de-DE": {
-            "title": "Alltagshelfer",
+            "title": "ZunaroDo",
             "short_description": (
                 "Vertraege, Termine, Finanzen, Familie - alles lokal "
                 "und ohne Cloud-Zwang."),
             "full_description": (
-                "Alltagshelfer ist ein datenschutzfreundlicher Assistent\n"
+                "ZunaroDo ist ein datenschutzfreundlicher Assistent\n"
                 "fuer Vertraege, Termine, Finanzen und Haushaltsplanung.\n"
                 "Alle Daten bleiben lokal auf dem Geraet - kein Tracking,\n"
                 "keine Werbung."),
             "video_url": "",
         },
         "en-US": {
-            "title": "Alltagshelfer",
+            "title": "ZunaroDo",
             "short_description": "Privacy-friendly household helper.",
             "full_description": (
                 "Manage contracts, expenses, appointments and household\n"

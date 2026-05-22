@@ -103,12 +103,12 @@ SAMPLE_PATHS_THAT_MUST_BE_IGNORED = [
     # Desktop-Build (PyInstaller)
     "build/foo.txt",
     "build/anything/at/any/depth.py",
-    "dist/Alltagshelfer/Alltagshelfer.exe",
-    "dist/Alltagshelfer/_internal/python311.dll",
-    "dist/Alltagshelfer/_internal/_tcl_data/tcl8.6/init.tcl",
-    "dist/Alltagshelfer/_internal/cryptography/hazmat/_oid.cpython-311.dll",
+    "dist/ZunaroDo/ZunaroDo.exe",
+    "dist/ZunaroDo/_internal/python311.dll",
+    "dist/ZunaroDo/_internal/_tcl_data/tcl8.6/init.tcl",
+    "dist/ZunaroDo/_internal/cryptography/hazmat/_oid.cpython-311.dll",
     "dist/something.dmg",
-    "Alltagshelfer.exe",
+    "ZunaroDo.exe",
     "release.deb",
     "release.AppImage",
     # Android-Build
@@ -119,8 +119,8 @@ SAMPLE_PATHS_THAT_MUST_BE_IGNORED = [
     "release.jks",
     # iOS-Build
     "release.ipa",
-    "Alltagshelfer-ios/xcuserdata/torst.xcuserdatad/UserInterfaceState.xcuserstate",
-    "Alltagshelfer-ios/Pods/Manifest.lock",
+    "ZunaroDo-ios/xcuserdata/torst.xcuserdatad/UserInterfaceState.xcuserstate",
+    "ZunaroDo-ios/Pods/Manifest.lock",
     "DerivedData/Build/Products/Debug.app/Foo",
     # Lokale Daten
     "alltagshelfer.db",

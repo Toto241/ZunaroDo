@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo
-echo "=== Alltagshelfer  -  PC-Build (PyInstaller) ==="
+echo "=== ZunaroDo  -  PC-Build (PyInstaller) ==="
 echo
 
 if ! command -v python3 >/dev/null 2>&1; then
@@ -26,6 +26,6 @@ python3 -m PyInstaller --noconfirm alltagshelfer.spec
 
 echo
 echo "=== Build fertig ==="
-ls -la dist/Alltagshelfer/ 2>/dev/null | head -10 || true
+ls -la dist/ZunaroDo/ 2>/dev/null | head -10 || true
 echo
-echo "Bundle in dist/Alltagshelfer/"
+echo "Bundle in dist/ZunaroDo/"

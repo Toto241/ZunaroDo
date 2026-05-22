@@ -1,4 +1,4 @@
-# Alltagshelfer
+# ZunaroDo
 
 Datenschutzfreundlicher Alltagsassistent für den deutschsprachigen Raum
 mit **acht Fachmodulen**, einem **Dashboard**, **Google Gemini** als
@@ -33,6 +33,18 @@ python __main__.py --export
 python __main__.py --import ausgaben/export-20260519-185747
 python __main__.py --sync-server --port 5151
 ```
+
+### Desktop-Start und Dialogverhalten
+
+Die Desktop-App startet dauerhaft als **ZunaroDo** im hellen Windows-11-Stil,
+unabhaengig vom System-Dark-Mode. Normale CRUD-Aktionen wie Anlegen,
+Bearbeiten, Soft-Delete, Wiederherstellen, Abhaken oder das Uebernehmen von
+Inbox-Vorschlaegen laufen ohne zusaetzlichen Bestaetigungsdialog.
+
+Geschuetzt bleiben kritische Aktionen mit dauerhaftem oder gebuendeltem
+Datenverlust: Purge-Operationen, archivierte Inbox-Vorschlaege gesammelt
+loeschen sowie endgueltiges Loeschen von Notizen oder Vorlagen. Der KI-
+Assistent fordert dafuer weiterhin eine ausdrueckliche Freigabe an.
 
 ### Optionale Erweiterungen
 
@@ -99,7 +111,7 @@ Außerdem stehen drei Standard-Export-Capabilities zur Verfügung — alle ohne 
 2. **Modul ↔ Modul** – `ModuleContext.call(...)` (lose Kopplung über die Registry, mit Re-Entry-Schutz im Sync-Hook)
 3. **Dashboard** – `ModuleRegistry.collect_events(...)` aggregiert Events aller Module chronologisch
 
-Weitere Detail-Methoden auf der Registry: `get_capability(name)` (für dynamische Formulare in der GUI), `destructive_capability_names()` (Confirm-Dialog im Assistant), `module_states()`, `set_module_enabled()`.
+Weitere Detail-Methoden auf der Registry: `get_capability(name)` (für dynamische Formulare in der GUI), `destructive_capability_names()` (Audit/Lizenz-Gate; die GUI fragt nur bei kritischen Aktionen nach), `module_states()`, `set_module_enabled()`.
 
 ## Google Gemini
 
@@ -111,7 +123,7 @@ Implementierte LLM-Features:
 - **Konversationsverlauf** wird zwischen Aufrufen erhalten (`Assistant._history`)
 - **Streaming** für Text-Teile (im Stream-Callback)
 - **Token-Verbrauch** wird gemessen (`Assistant.token_usage`)
-- **Confirm-Callback** vor destruktiven Capabilities
+- **Confirm-Callback** vor kritischen destruktiven Capabilities
 - **Robuste Fehlerbehandlung** — Netz/Rate-Limit liefert eine Nutzer-Meldung statt Crash
 - **Halluzinations-Schutz** im Inbox-Modul: LLM-Vorschläge werden gegen eine Allowlist und das Pflichtparameter-Schema validiert, bevor sie in der Ablage landen
 

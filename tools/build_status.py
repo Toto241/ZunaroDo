@@ -182,7 +182,7 @@ def _ios_status() -> BuildStatus:
         label="iOS",
         icon="🍎",
         tool="kivy-ios + Xcode",
-        command="toolchain create Alltagshelfer .. && open Alltagshelfer-ios/",
+        command="toolchain create ZunaroDo .. && open ZunaroDo-ios/",
         available=available,
         prereqs=[
             "macOS mit Xcode 15+",
@@ -201,15 +201,15 @@ def _ios_status() -> BuildStatus:
 
 def _desktop_status() -> BuildStatus:
     spec = REPO_ROOT / "alltagshelfer.spec"
-    artifact_dir = DIST_DIR / "Alltagshelfer"
+    artifact_dir = DIST_DIR / "ZunaroDo"
     artifact_path: Optional[Path] = None
     if artifact_dir.is_dir():
         artifact_path = _newest_artifact(
-            artifact_dir, ("Alltagshelfer.exe", "Alltagshelfer", "*.dmg"))
+            artifact_dir, ("ZunaroDo.exe", "ZunaroDo", "*.dmg"))
     if artifact_path is None:
         artifact_path = _newest_artifact(DIST_DIR,
-                                          ("Alltagshelfer.exe",
-                                           "Alltagshelfer", "*.dmg",
+                                          ("ZunaroDo.exe",
+                                           "ZunaroDo", "*.dmg",
                                            "*.AppImage"))
     artifact = _artifact_info(artifact_path)
     has_pyinstaller = _which("pyinstaller") or _has_module("PyInstaller")
@@ -233,7 +233,7 @@ def _desktop_status() -> BuildStatus:
             if script.is_file() else None,
         artifact=artifact,
         notes=(f"Erzeugt ein Single-Folder-Bundle in "
-               f"`dist/Alltagshelfer/`. Spec-Datei: "
+               f"`dist/ZunaroDo/`. Spec-Datei: "
                f"`alltagshelfer.spec`. Plattform-Build: "
                f"jeweils auf der Zielplattform ausfuehren "
                f"(Windows/macOS/Linux). PyInstaller verfuegbar: "

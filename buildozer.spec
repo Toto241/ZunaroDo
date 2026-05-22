@@ -1,7 +1,7 @@
 [app]
 
 # Anzeigename auf dem Geraet
-title = Alltagshelfer
+title = ZunaroDo
 package.name = alltagshelfer
 package.domain = de.alltagshelfer
 

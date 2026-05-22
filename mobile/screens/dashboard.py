@@ -46,7 +46,7 @@ class DashboardScreen(MDScreen):
     def _build(self) -> None:
         root = BoxLayout(orientation="vertical")
         root.add_widget(MDTopAppBar(
-            title=_t("app.title", "Alltagshelfer"),
+            title=_t("app.title", "ZunaroDo"),
             right_action_items=[
                 ["calendar-week", lambda *_: self._toggle_mode()],
                 ["refresh", lambda *_: self._refresh()],
