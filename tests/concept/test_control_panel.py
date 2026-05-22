@@ -209,18 +209,30 @@ def test_window_can_be_constructed_and_destroyed():
 
 
 # ---------------------------------------------------------------------------
-# start.bat ist auf einfache Variante reduziert
+# start.bat: Build-Menue + Control-Panel-Einstieg
 # ---------------------------------------------------------------------------
 def test_start_bat_invokes_control_panel():
     text = (REPO / "start.bat").read_text(encoding="utf-8",
                                              errors="replace")
     assert "tools.control_panel" in text, (
-        "start.bat ruft tools.control_panel nicht auf - die alte "
-        "Menue-Variante ist nicht entfernt.")
-    # Es darf KEIN interaktives Menue mehr drin sein (Zeichen 'Auswahl ['
-    # taucht im alten Menue auf):
-    assert "Auswahl [1/" not in text, (
-        "start.bat enthaelt noch das alte Menue mit 'Auswahl [...]'")
+        "start.bat sollte das Control Panel als Menue-Punkt anbieten.")
+
+
+def test_start_bat_offers_direct_app_builds():
+    """Die einzelnen Apps muessen direkt aus start.bat baubar sein."""
+    text = (REPO / "start.bat").read_text(encoding="utf-8",
+                                             errors="replace")
+    # Direkter Aufruf der Build-Skripte (nicht nur ueber die GUI):
+    assert "build-desktop.bat" in text, (
+        "start.bat sollte den PC/Desktop-Build direkt anbieten.")
+    assert "build-android.bat" in text, (
+        "start.bat sollte den Android-Build direkt anbieten.")
+    # Build-Status als Schnellzugriff:
+    assert "tools.build_status" in text, (
+        "start.bat sollte den Build-Status direkt anzeigen koennen.")
+    # iOS wird zumindest erwaehnt (Build nur auf macOS moeglich):
+    assert "iOS" in text or "ios" in text, (
+        "start.bat sollte den iOS-Build-Hinweis enthalten.")
 
 
 def test_start_bat_checks_customtkinter():
