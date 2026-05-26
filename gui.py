@@ -81,11 +81,14 @@ _FONT_CANDIDATES = (
 
 def _win11_font(size: int = 13, weight: str = "normal") -> ctk.CTkFont:
     """Liefert einen CTkFont im Windows-11-Stil mit Fallback."""
-    # tkinter.font.families() braucht einen laufenden Interpreter;
-    # da das GUI erst spaeter erzeugt wird, versuchen wir stur jede
-    # Familie, bis customtkinter einen passenden Fallback findet.
+    try:
+        import tkinter.font as tkfont
+        available = set(tkfont.families())
+    except Exception:                                  # noqa: BLE001
+        available = set()
     for family in _FONT_CANDIDATES:
-        return ctk.CTkFont(family=family, size=size, weight=weight)
+        if not available or family in available:
+            return ctk.CTkFont(family=family, size=size, weight=weight)
     return ctk.CTkFont(size=size, weight=weight)
 
 

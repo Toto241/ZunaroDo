@@ -23,8 +23,7 @@ from datetime import datetime
 from typing import Callable, Optional
 
 from database import SettingsRepository
-from services.licensing import (KEY_WITHDRAWAL_WAIVED, License, Tier,
-                                  activate_pro, load_license)
+from services.licensing import License, Tier
 
 log = logging.getLogger(__name__)
 
@@ -75,23 +74,7 @@ def request_activation(repo: SettingsRepository,
             success=False,
             error=f"{request.tier.value} ist kein zahlungspflichtiger Tier")
 
-    try:
-        confirmed = bool(confirm_callback(request, CONFIRMATIONS_DE))
-    except Exception as exc:                            # noqa: BLE001
-        log.exception("Confirm-Callback in request_activation hat eine "
-                      "Ausnahme ausgeloest")
-        return ActivationResult(success=False,
-                                  error=f"Confirm-Callback hat geworfen: {exc}")
-
-    if not confirmed:
-        return ActivationResult(
-            success=False,
-            error="Aktivierung abgebrochen - Widerrufsverzicht nicht erklaert")
-
-    # Widerruf wurde wirksam erklaert -> Activate
-    lic = activate_pro(repo, request.tier, request.persons, now=now)
-    # Verzicht im Setting markieren - so kann spaeter rechtlich
-    # nachgewiesen werden, wann die App den Verzicht eingeholt hat.
-    repo.set(KEY_WITHDRAWAL_WAIVED, "true")
-    lic.withdrawal_waived = True
-    return ActivationResult(success=True, license=lic)
+    return ActivationResult(
+        success=False,
+        error=("Pro-Aktivierung erfordert einen signierten Lizenz-Token. "
+               "Bitte Token ueber action_apply_token() verifizieren."))

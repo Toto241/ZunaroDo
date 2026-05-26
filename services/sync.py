@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import os
 import threading
 import time
@@ -43,6 +44,8 @@ from pathlib import Path
 from typing import Optional, Protocol
 
 from core.interface import ModuleRegistry
+
+log = logging.getLogger(__name__)
 
 
 # Weiche Obergrenze fuer Log-Zeilen, bevor automatisch kompaktiert wird.
@@ -369,7 +372,11 @@ class SyncedRegistry:
                 try:
                     self.provider.append(event)
                 except Exception:                          # pragma: no cover
-                    pass
+                    log.exception("Sync-Event konnte nicht geschrieben werden")
+                    result = dict(result)
+                    result["sync_error"] = (
+                        "Lokale Aenderung gespeichert, aber Sync-Event "
+                        "konnte nicht geschrieben werden.")
             return result
         finally:
             if is_synced:
@@ -395,7 +402,10 @@ class SyncedRegistry:
                                                     event.args)
                     if "error" not in result:
                         applied += 1
-                    self.provider.mark_seen(event.event_id)
+                        self.provider.mark_seen(event.event_id)
+                    else:
+                        log.warning("Sync-Replay fuer %s fehlgeschlagen: %s",
+                                    event.event_id, result.get("error"))
             finally:
                 self._local.replaying = False
         return applied
