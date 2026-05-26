@@ -229,10 +229,10 @@ SAMPLE_CONFIG: dict[str, Any] = {
         "version_code": 1,
     },
     "contact": {
-        "support_email": "support@example.org",
-        "support_url": "https://example.org/alltagshelfer",
-        "marketing_url": "https://example.org/alltagshelfer/marketing",
-        "privacy_policy_url": "https://example.org/alltagshelfer/privacy",
+        "support_email": "zunarodo@users.noreply.github.com",
+        "support_url": "https://github.com/zunarodo/alltagshelfer",
+        "marketing_url": "https://zunarodo.github.io/alltagshelfer/",
+        "privacy_policy_url": "https://zunarodo.github.io/alltagshelfer/privacy/",
     },
     "localizations": {
         "de-DE": {

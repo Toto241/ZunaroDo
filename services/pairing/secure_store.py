@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import base64
 import os
+import sys
 from typing import Optional, Protocol, runtime_checkable
 
 
@@ -92,6 +93,16 @@ _KEYRING_SERVICE = "alltagshelfer.pairing"
 # `_MANIFEST_KEY`), damit es exakt mit den realen Eintraegen
 # wandert (Backup, Sync-zwischen-Profilen).
 _MANIFEST_KEY = "__manifest__"
+
+
+def _has_linux_secret_service_session() -> bool:
+    """True, wenn keyring auf Linux sinnvoll ein SecretService erreichen kann."""
+    if not sys.platform.startswith("linux"):
+        return True
+    if os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+        return True
+    # Explizit gesetzte Backends duerfen weiterhin selbst entscheiden.
+    return bool(os.environ.get("PYTHON_KEYRING_BACKEND"))
 
 
 class KeyringSecureStore:
@@ -201,6 +212,9 @@ def default_secure_store() -> SecureStore:
         return InMemorySecureStore()
     if override == "keyring":
         return KeyringSecureStore()
+
+    if not _has_linux_secret_service_session():
+        return InMemorySecureStore()
 
     try:
         return KeyringSecureStore()

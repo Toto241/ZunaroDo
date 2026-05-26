@@ -105,21 +105,19 @@ jobs:
           python - <<'PY'
           import json, sys
           data = json.load(open("audit.json"))
-          high = []
+          blocking = []
           for entry in data.get("dependencies", []):
               for vuln in entry.get("vulns", []):
-                  for sev in vuln.get("aliases", []):
-                      pass
-                  # OSV liefert nicht immer CVSS; wir blocken bei jedem
-                  # Eintrag ohne fix.versions als Minimum.
-                  if vuln.get("fix_versions"):
-                      high.append((entry["name"], vuln["id"]))
-          if high:
-              print("HIGH/Fixable Vulnerabilities:")
-              for n, v in high:
+                  # OSV liefert nicht immer CVSS; als Mindest-Gate blocken
+                  # wir Eintraege ohne verfuegbare Fix-Version.
+                  if not vuln.get("fix_versions"):
+                      blocking.append((entry["name"], vuln["id"]))
+          if blocking:
+              print("Unfixed Vulnerabilities:")
+              for n, v in blocking:
                   print(f"  {n} -> {v}")
               sys.exit(1)
-          print("Keine fixablen CVEs gefunden.")
+          print("Keine ungefixten CVEs gefunden.")
           PY
 
       - name: Upload audit report

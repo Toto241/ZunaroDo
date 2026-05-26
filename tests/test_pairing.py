@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import unittest
 
 from services.pairing import (
@@ -199,6 +200,10 @@ def _keyring_works() -> bool:
     try:
         import keyring  # noqa
     except ImportError:
+        return False
+    if (sys.platform.startswith("linux")
+            and not os.environ.get("DBUS_SESSION_BUS_ADDRESS")
+            and not os.environ.get("PYTHON_KEYRING_BACKEND")):
         return False
     try:
         store = KeyringSecureStore(service="alltagshelfer.pairing.testprobe")

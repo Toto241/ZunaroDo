@@ -222,9 +222,13 @@ def serve(log_path: Path, host: str, port: int,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Alltagshelfer-Sync-Server")
+    default_log = os.environ.get("ALLTAGSHELFER_SYNC_LOG")
+    sync_dir = os.environ.get("ALLTAGSHELFER_SYNC_DIR")
+    if default_log is None and sync_dir:
+        default_log = str(Path(sync_dir) / "sync_events.jsonl")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5151)
-    parser.add_argument("--log", default="sync_events.jsonl",
+    parser.add_argument("--log", default=default_log or "sync_events.jsonl",
                          help="Pfad zur Log-Datei auf dem Server")
     parser.add_argument("--token",
                          default=os.environ.get("ALLTAGSHELFER_SYNC_TOKEN"),
