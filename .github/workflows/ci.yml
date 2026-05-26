@@ -29,11 +29,19 @@ jobs:
           # requirements-dev zieht requirements.txt + Test-Deps (pytest, PyYAML).
           pip install -r requirements-dev.txt
 
+      - name: Linux GUI test dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb tk
+
       - name: Byte-compile
         run: python -m compileall -q .
 
       - name: Smoke-Tests
         run: python -m unittest discover -s tests
+
+      - name: Konzept- und Release-Gate-Tests
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python -m pytest tests/concept -q
 
       - name: Sync-Server kann gestartet werden
         run: |
