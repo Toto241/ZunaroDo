@@ -2541,7 +2541,7 @@ class TestLicensing(unittest.TestCase):
         self.assertTrue(lic.allows_sync())
         self.assertEqual(lic.max_persons(), 4)
 
-    def test_license_round_trip(self) -> None:
+    def test_unsigned_pro_settings_downgrade_to_free(self) -> None:
         tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
         tmp.close()
         try:
@@ -2550,8 +2550,8 @@ class TestLicensing(unittest.TestCase):
             save_license(repo, License(tier=Tier.PRO_ANNUAL, persons=3,
                                         enabled_modules=FREE_MODULES_DEFAULT))
             loaded = load_license(repo)
-            self.assertEqual(loaded.tier, Tier.PRO_ANNUAL)
-            self.assertEqual(loaded.persons, 3)
+            self.assertEqual(loaded.tier, Tier.FREE)
+            self.assertEqual(loaded.persons, FREE_MAX_PERSONS)
             db.close()
         finally:
             os.unlink(tmp.name)
@@ -3160,29 +3160,21 @@ class TestLicensing(unittest.TestCase):
     # ---- Expiration + Grace -----------------------------------------
     def test_pro_downgrades_after_grace_period(self) -> None:
         from datetime import datetime, timedelta, timezone
-        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        tmp.close()
-        try:
-            db = Database(tmp.name)
-            repo = SettingsRepository(db)
-            now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-            activate_pro(repo, Tier.PRO_MONTHLY, persons=2, now=now,
-                          expires_at=now + timedelta(days=30))
-            lic = load_license(repo)
-            # waehrend Laufzeit: Pro
-            self.assertTrue(lic.is_pro(now + timedelta(days=15)))
-            # nach Ablauf aber innerhalb Grace: Pro
-            self.assertTrue(lic.is_pro(now + timedelta(days=33)))
-            self.assertTrue(lic.is_in_grace_period(now + timedelta(days=33)))
-            # nach Grace: Free
-            after = now + timedelta(days=30 + GRACE_PERIOD_DAYS + 1)
-            self.assertFalse(lic.is_pro(after))
-            self.assertEqual(lic.effective_tier(after), Tier.FREE)
-            db.close()
-        finally:
-            os.unlink(tmp.name)
+        now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        lic = License(tier=Tier.PRO_MONTHLY, persons=2,
+                      purchased_at=now,
+                      expires_at=now + timedelta(days=30))
+        # waehrend Laufzeit: Pro
+        self.assertTrue(lic.is_pro(now + timedelta(days=15)))
+        # nach Ablauf aber innerhalb Grace: Pro
+        self.assertTrue(lic.is_pro(now + timedelta(days=33)))
+        self.assertTrue(lic.is_in_grace_period(now + timedelta(days=33)))
+        # nach Grace: Free
+        after = now + timedelta(days=30 + GRACE_PERIOD_DAYS + 1)
+        self.assertFalse(lic.is_pro(after))
+        self.assertEqual(lic.effective_tier(after), Tier.FREE)
 
-    def test_activate_pro_sets_year_for_annual(self) -> None:
+    def test_activate_pro_requires_signed_token_by_default(self) -> None:
         from datetime import datetime, timedelta, timezone
         tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
         tmp.close()
@@ -3190,7 +3182,10 @@ class TestLicensing(unittest.TestCase):
             db = Database(tmp.name)
             repo = SettingsRepository(db)
             now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-            lic = activate_pro(repo, Tier.PRO_ANNUAL, persons=2, now=now)
+            with self.assertRaises(RuntimeError):
+                activate_pro(repo, Tier.PRO_ANNUAL, persons=2, now=now)
+            lic = activate_pro(repo, Tier.PRO_ANNUAL, persons=2, now=now,
+                               allow_unsigned=True)
             self.assertEqual(lic.expires_at, now + timedelta(days=365))
             db.close()
         finally:
@@ -3338,17 +3333,11 @@ class TestLicensing(unittest.TestCase):
             result = request_activation(repo, req, lambda r, t: False)
             self.assertFalse(result.success)
             self.assertEqual(load_license(repo).tier, Tier.FREE)
-            # Nutzer akzeptiert -> Aktivierung + Verzicht markiert
-            captured: list = []
-            def confirm(r, texts):
-                captured.append(texts)
-                return True
-            result = request_activation(repo, req, confirm)
-            self.assertTrue(result.success)
-            self.assertEqual(result.license.tier, Tier.PRO_ANNUAL)
-            self.assertTrue(result.license.withdrawal_waived)
-            # Alle drei Texte muessen dem Confirm-Callback uebergeben worden sein
-            self.assertEqual(captured[0], CONFIRMATIONS_DE)
+            # Auch mit Zustimmung darf kein unsigned Pro mehr entstehen.
+            result = request_activation(repo, req, lambda r, t: True)
+            self.assertFalse(result.success)
+            self.assertIn("Token", result.error)
+            self.assertEqual(load_license(repo).tier, Tier.FREE)
             self.assertEqual(len(CONFIRMATIONS_DE), 3)
             db.close()
         finally:
@@ -3563,7 +3552,8 @@ class TestLicensing(unittest.TestCase):
         sched = ProactiveScheduler(
             ModuleRegistry(),  # leer - keine Modul-Events
             notifier=notifier, warn_within_days=14,
-            extra_event_sources=[license_event_source(lambda: lic)])
+            extra_event_sources=[license_event_source(lambda: lic,
+                                                      now_provider=lambda: now)])
         triggered = sched.check_now()
         self.assertEqual(len(triggered), 1)
         self.assertTrue(any("Abo" in c[0] for c in notifier.calls))

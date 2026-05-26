@@ -102,6 +102,10 @@ class Tier(str, enum.Enum):
     PRO_FAMILY = "pro_family"
 
 
+PRO_TIERS: tuple[Tier, ...] = (
+    Tier.PRO_MONTHLY, Tier.PRO_ANNUAL, Tier.PRO_FAMILY)
+
+
 class Platform(str, enum.Enum):
     DESKTOP = "desktop"
     IOS = "ios"
@@ -280,7 +284,7 @@ class License:
             if now > self.trial_started_at + timedelta(days=TRIAL_DAYS):
                 return Tier.FREE
             return Tier.TRIAL
-        if self.tier in (Tier.PRO_MONTHLY, Tier.PRO_ANNUAL, Tier.PRO_FAMILY):
+        if self.tier in PRO_TIERS:
             if self.expires_at is None:
                 return self.tier  # noch nie aktiviert? -> behalten
             grace_end = self.expires_at + timedelta(days=GRACE_PERIOD_DAYS)
@@ -291,8 +295,7 @@ class License:
 
     def is_pro(self, now: Optional[datetime] = None) -> bool:
         eff = self.effective_tier(now)
-        return eff in (Tier.PRO_MONTHLY, Tier.PRO_ANNUAL,
-                       Tier.PRO_FAMILY, Tier.TRIAL)
+        return eff in (*PRO_TIERS, Tier.TRIAL)
 
     def is_in_grace_period(self, now: Optional[datetime] = None) -> bool:
         now = now or _utcnow()
@@ -424,10 +427,16 @@ def load_license(repo: Optional[SettingsRepository]) -> License:
         tier = Tier((repo.get(KEY_TIER) or Tier.FREE.value).lower())
     except ValueError:
         tier = Tier.FREE
+    if tier in PRO_TIERS:
+        log.warning("Unsigned Pro-Lizenzsettings ignoriert; "
+                    "signierter Token fehlt oder ist ungueltig.")
+        tier = Tier.FREE
     try:
         persons = max(1, int(repo.get(KEY_PERSONS) or "1"))
     except ValueError:
         persons = 1
+    if tier == Tier.FREE:
+        persons = min(persons, FREE_MAX_PERSONS)
     modules_raw = (repo.get(KEY_MODULES) or "").strip()
     modules = _parse_modules(modules_raw) if modules_raw else FREE_MODULES_DEFAULT
     if tier == Tier.FREE and len(modules) > FREE_MODULE_LIMIT:
@@ -485,13 +494,17 @@ def activate_pro(repo: SettingsRepository,
                   persons: int,
                   *,
                   now: Optional[datetime] = None,
-                  expires_at: Optional[datetime] = None) -> License:
+                  expires_at: Optional[datetime] = None,
+                  allow_unsigned: bool = False) -> License:
     """
     Aktiviert ein Pro-Abo. Falls 'expires_at' fehlt, wird je nach
     Tier ein passendes Ablaufdatum gesetzt (Monat oder Jahr).
     """
-    if tier not in (Tier.PRO_MONTHLY, Tier.PRO_ANNUAL, Tier.PRO_FAMILY):
+    if tier not in PRO_TIERS:
         raise ValueError(f"{tier} ist kein Pro-Tier")
+    if not allow_unsigned:
+        raise RuntimeError(
+            "Pro-Aktivierung erfordert einen signierten Lizenz-Token")
     now = now or _utcnow()
     if expires_at is None:
         if tier == Tier.PRO_ANNUAL:
