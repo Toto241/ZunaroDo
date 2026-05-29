@@ -9,6 +9,7 @@ Regressionstests fuer Persistenz-/Modul-Robustheit (Deep-Review-Funde).
 3. contracts.add / set_owner / expenses.add duerfen mit einem verwaisten
    owner_id (anderes Geraet, anderer Mitglieder-Stand) keinen
    FOREIGN-KEY-IntegrityError werfen, sondern den Owner auf NULL setzen.
+4. task_rotation darf verwaiste member_id-Eintraege nicht als NULL speichern.
 """
 from __future__ import annotations
 
@@ -19,7 +20,8 @@ from datetime import date, datetime
 
 from database import (ContractRepository, Database, ExpenseRepository,
                       FamilyRepository, ProposalRepository, CalendarRepository)
-from models import CalendarEvent, Contract, Expense, FamilyMember, Proposal
+from models import (CalendarEvent, Contract, Expense, FamilyMember,
+                    HouseholdTask, Proposal)
 
 
 class TestCalendarRecurrenceGuard(unittest.TestCase):
@@ -106,6 +108,15 @@ class TestOrphanOwnerId(_DbCase):
         stored = repo.list_all()
         self.assertEqual(len(stored), 1)
         self.assertIsNone(stored[0].owner_id)
+
+    def test_task_rotation_with_unknown_member_skips_entry(self) -> None:
+        fam = FamilyRepository(self.db)
+        member = fam.add_member(FamilyMember(name="Anna"))
+        task = fam.add_task(HouseholdTask(
+            title="Muell", rotation=[9999, member.id]))
+        stored = fam.get_task(task.id)
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored.rotation, [member.id])
 
 
 class TestSoftDeletedOwnerName(_DbCase):

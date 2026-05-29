@@ -888,11 +888,13 @@ class FamilyRepository:
         )
         task_id = cur.lastrowid
         for position, member_id in enumerate(t.rotation):
+            existing_member_id = _existing_owner_id(self.db.conn, member_id)
+            if existing_member_id is None:
+                continue
             self.db.conn.execute(
                 "INSERT INTO task_rotation (task_id, member_id, position)"
                 " VALUES (?,?,?)",
-                (task_id,
-                 _existing_owner_id(self.db.conn, member_id), position),
+                (task_id, existing_member_id, position),
             )
         self.db.conn.commit()
         t.id = task_id
