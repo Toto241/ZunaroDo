@@ -45,7 +45,8 @@ def _existing_owner_id(conn, owner_id):
     if not owner_id:
         return None
     row = conn.execute(
-        "SELECT 1 FROM family_members WHERE id=?", (owner_id,)).fetchone()
+        "SELECT 1 FROM family_members WHERE id=? AND deleted_at IS NULL",
+        (owner_id,)).fetchone()
     return owner_id if row else None
 
 from models import (AssistantLogEntry, AuditLogEntry, CalendarEvent,
@@ -890,7 +891,8 @@ class FamilyRepository:
             self.db.conn.execute(
                 "INSERT INTO task_rotation (task_id, member_id, position)"
                 " VALUES (?,?,?)",
-                (task_id, member_id, position),
+                (task_id,
+                 _existing_owner_id(self.db.conn, member_id), position),
             )
         self.db.conn.commit()
         t.id = task_id
@@ -971,7 +973,7 @@ class FamilyRepository:
             "INSERT INTO household_orders (title, assignee_id, due_date,"
             " description, status, priority, category, created_at)"
             " VALUES (?,?,?,?,?,?,?,?)",
-            (o.title, o.assignee_id,
+            (o.title, _existing_owner_id(self.db.conn, o.assignee_id),
              o.due_date.isoformat() if o.due_date else None,
              o.description, o.status, o.priority, o.category, now),
         )
@@ -1036,7 +1038,8 @@ class ShoppingRepository:
         cur = self.db.conn.execute(
             "INSERT INTO shopping_items (name, quantity, added_by_id,"
             " bought, created_at) VALUES (?,?,?,?,?)",
-            (item.name, item.quantity, item.added_by_id,
+            (item.name, item.quantity,
+             _existing_owner_id(self.db.conn, item.added_by_id),
              int(bool(item.bought)), now))
         self.db.conn.commit()
         item.id = cur.lastrowid
@@ -1143,12 +1146,11 @@ class ProposalRepository:
 
     @staticmethod
     def _row_to_proposal(row: sqlite3.Row) -> Proposal:
-        created_raw = (row["created_at"]
-                       if "created_at" in row.keys() else None)
+        # SELECT * liefert created_at immer mit - kein keys()-Guard noetig.
         created_at = None
-        if created_raw:
+        if row["created_at"]:
             try:
-                created_at = datetime.fromisoformat(created_raw)
+                created_at = datetime.fromisoformat(row["created_at"])
             except ValueError:
                 created_at = None
         return Proposal(
@@ -1176,7 +1178,8 @@ class CalendarRepository:
             " description, recurrence_days, person_id, created_at)"
             " VALUES (?,?,?,?,?,?,?)",
             (e.title, e.due_date.isoformat(), e.category, e.description,
-             e.recurrence_days, e.person_id, now))
+             e.recurrence_days,
+             _existing_owner_id(self.db.conn, e.person_id), now))
         self.db.conn.commit()
         e.id = cur.lastrowid
         return e

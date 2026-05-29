@@ -1567,7 +1567,9 @@ class AlltagshelferGUI(ctk.CTk):
                     "notes": v["notes"]}
         if v["cadence_days"]:
             try:
-                payload["cadence_days"] = _parse_int(v["cadence_days"], 0)
+                # Branch ist nur fuer nicht-leeren Input erreichbar -> int()
+                # ohne Default; nur der nicht-numerische Fall braucht Dialog.
+                payload["cadence_days"] = int(v["cadence_days"])
             except ValueError:
                 self._show_dialog("Eingabe ungueltig",
                                   "Der Rhythmus (Tage) muss eine Zahl sein.")
@@ -1950,18 +1952,18 @@ class AlltagshelferGUI(ctk.CTk):
         artiges Auftauchen.
         """
         def stream_callback(chunk: str) -> None:
-            self._post(lambda c=chunk: self._append_to_stream(c))
+            self._post(lambda: self._append_to_stream(chunk))
 
         try:
             if self.assistant.llm is not None:
                 answer = self.assistant.ask(prompt,
                                               stream_callback=stream_callback)
-                self._post(lambda a=answer: self._finalize_stream(a))
+                self._post(lambda: self._finalize_stream(answer))
             else:
                 answer = self.assistant.ask(prompt)
                 # Wort-fuer-Wort-Simulation auf dem Main-Thread laufen lassen,
                 # damit ihre after()-Timer nicht aus diesem Worker stammen.
-                self._post(lambda a=answer: self._simulate_word_stream(a))
+                self._post(lambda: self._simulate_word_stream(answer))
         finally:
             # Streaming-Lock immer freigeben, damit naechster Send geht.
             self._post(self._end_stream)
@@ -2555,7 +2557,9 @@ class AlltagshelferGUI(ctk.CTk):
                     pass
         except queue.Empty:
             pass
-        self._safe_after(20, self._drain_ui_queue)
+        # 50 ms ist fuer Streaming-Chunks/IMAP-Antwort schnell genug und
+        # halbiert die Leerlauf-Wakeups der Tk-Hauptschleife gegenueber 20 ms.
+        self._safe_after(50, self._drain_ui_queue)
 
     def _cancel_pending_after(self) -> None:
         for aid in list(self._after_ids):
