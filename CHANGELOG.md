@@ -4,6 +4,13 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-29
+
+Erstes stabiles Release. Buendelt die seit 0.10.0 unter "Unreleased"
+gefuehrten Aenderungen (Mobile-Profil-Umschalter, i18n-Vollausbau der
+Phone-Texte, Supply-Chain-Haertung der CI) und vereinheitlicht die
+Versionsangabe ueber pyproject.toml, buildozer.spec und Changelog.
+
 ### Neu
 
 - **Profil-Umschalter im Mobile-UI** - der „Mehr"-Screen hat jetzt einen
