@@ -653,6 +653,20 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "pl": PL,
 }
 
+# Maschinell erstellte Erstfassungen fuer die uebrigen EU-Sprachen
+# (siehe tools/_cap_translations_extra.py, dort die Provenienz-Notiz).
+# Werden hier hinzugemischt; fehlende Sprachen bleiben ueber den
+# i18n-Fallback auf Englisch/Deutsch abgedeckt.
+try:
+    from tools import _cap_translations_extra as _extra
+    for _code in dir(_extra):
+        if _code.isupper() and len(_code) == 2:
+            _table = getattr(_extra, _code)
+            if isinstance(_table, dict):
+                TRANSLATIONS[_code.lower()] = _table
+except ImportError:                                       # pragma: no cover
+    pass
+
 # Hilfs-Liste der Capability-Namen (Single Source of Truth fuer die
 # Vollstaendigkeits-Pruefung der Uebersetzungstabellen in den Tests).
 CAP_NAMES: tuple[str, ...] = tuple(sorted(EN))
