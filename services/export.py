@@ -117,7 +117,8 @@ def export_all_json(target_dir: Path, contracts: ContractRepository,
                     family: FamilyRepository,
                     *,
                     include_settings: bool = False,
-                    settings_rows: list[tuple[str, str]] | None = None
+                    settings_rows: (dict[str, str]
+                                     | list[tuple[str, str]] | None) = None
                     ) -> Path:
     """
     Ein JSON-Bundle mit allen Hauptentitaeten (DSGVO-Datenexport).
@@ -134,8 +135,10 @@ def export_all_json(target_dir: Path, contracts: ContractRepository,
         "family": [m.to_dict() for m in family.list_members()],
     }
     if include_settings and settings_rows is not None:
+        rows = (settings_rows.items()
+                if isinstance(settings_rows, dict) else settings_rows)
         payload["settings"] = [
-            {"key": k, "value": v} for k, v in settings_rows
+            {"key": k, "value": v} for k, v in rows
             if not k.startswith(("gemini_", "imap_", "smtp_", "license.token"))
         ]
     out = target_dir / "export.json"

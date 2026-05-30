@@ -3010,14 +3010,14 @@ class AlltagshelferGUI(ctk.CTk):
             pass
 
     def _save_settings(self) -> None:
-        from services.sync_runtime import sync_allowed
+        from services.licensing import load_license
 
         saved = 0
         sync_blocked = False
         for key, entry in self.setting_inputs.items():
             value = entry.get().strip()
             if key == "sync.enabled" and value.lower() in ("true", "1", "yes"):
-                if not sync_allowed(self.config, self.settings_repo):
+                if not load_license(self.settings_repo).allows_sync():
                     value = "false"
                     entry.delete(0, "end")
                     entry.insert(0, "false")
