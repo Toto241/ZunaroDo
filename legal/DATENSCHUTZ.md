@@ -12,7 +12,7 @@ Verantwortlicher fuer die Datenverarbeitung im Sinne der DSGVO ist:
 
 **ZunaroDo**
 Open-Source-Projekt: <https://github.com/zunarodo/alltagshelfer>
-E-Mail: zunarodo@users.noreply.github.com
+E-Mail: alltagshelfer@zunarodo.github.io
 
 ## 2. Grundsatz - Lokale Datenhaltung
 

@@ -577,6 +577,13 @@ class MoreScreen(MDScreen):
         contacts_item.bind(on_release=lambda *_: self._open_contacts())
         self.list.add_widget(contacts_item)
 
+        license_item = OneLineIconListItem(
+            IconLeftWidget(icon="certificate"),
+            text=_t("more.license", "Lizenz / Pro"),
+        )
+        license_item.bind(on_release=lambda *_: self._open_license_page())
+        self.list.add_widget(license_item)
+
         # Profil-Umschalter (mehrere getrennte Datenbestaende auf dem Geraet)
         profiles_item = OneLineIconListItem(
             IconLeftWidget(icon="account-switch"),
@@ -608,8 +615,12 @@ class MoreScreen(MDScreen):
         # Footer mit App-Info
         self.list.add_widget(OneLineIconListItem(
             IconLeftWidget(icon="information"),
-            text="Version 0.9 (Android)",
+            text="Version 1.0.0 (Android)",
         ))
+
+    def _open_license_page(self) -> None:
+        from mobile.screens.license import LicenseScreen
+        self.add_widget(LicenseScreen(registry=self.registry))
 
     def _open_profiles_page(self) -> None:
         self.add_widget(_ProfilesPage(registry=self.registry))

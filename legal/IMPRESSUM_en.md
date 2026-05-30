@@ -1,32 +1,30 @@
-# Imprint
+# Legal Notice (Impressum)
 
-This file is a template. Square brackets mark fields to be filled out. Before publication, have it reviewed by a lawyer.
+Information pursuant to §5 TMG / §18 (2) MStV (Germany):
 
-## Provider
+**ZunaroDo** (open-source software project)
 
-[PROVIDER_NAME]  
-[STREET_NR]  
-[ZIP_CITY]  
-[COUNTRY]
+**Represented by:** ZunaroDo open-source project
 
-## Contact
+**Contact:**
+Email: alltagshelfer@zunarodo.github.io  
+Web: https://zunarodo.github.io/alltagshelfer/  
+GitHub: https://github.com/zunarodo/alltagshelfer
 
-Email: [EMAIL]  
-Phone: [PHONE]
+**Register entry:** Not registered in the commercial register (open-source project).
 
-## Legal representative
+**VAT ID:** Not applicable at this time.
 
-[LEGAL_REPRESENTATIVE]
+**Responsible for content pursuant to §18 (2) MStV:**
+ZunaroDo open-source project (contact see above)
 
-## Register information
+---
 
-[REGISTER_COURT]  
-[REGISTER_NUMBER]
+## Dispute resolution
 
-## VAT ID
+The European Commission provides a platform for online dispute resolution (ODR):
+<https://ec.europa.eu/consumers/odr/>.  
+Our email address can be found above.
 
-[VAT_ID]
-
-## Responsible for content
-
-[CONTENT_RESPONSIBLE]
+We are not willing or obliged to participate in dispute resolution proceedings
+before a consumer arbitration board.

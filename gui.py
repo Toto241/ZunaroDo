@@ -34,8 +34,8 @@ from core.interface import ModuleRegistry
 from database import (AssistantLogRepository, AuditLogRepository, Database,
                       ModuleStateRepository, SettingsRepository)
 from main import (apply_persisted_module_states, build_registry,
-                    make_auto_backup_worker, make_smtp_config,
-                    make_sync_provider)
+                    make_auto_backup_worker, make_smtp_config)
+from services.sync_runtime import resolve_sync_provider
 from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
                               load_config, save_value)
 from services.gemini import GeminiClient
@@ -281,8 +281,7 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
         max_output_tokens=config.gemini_max_tokens,
     )
 
-    provider = make_sync_provider(state_dir(profile)) \
-        if config.sync_enabled != "false" else None
+    provider = resolve_sync_provider(config, settings, state_dir(profile))
     synced = None
     if provider is not None:
         synced = install_sync_hook(registry, provider)
@@ -3007,13 +3006,26 @@ class AlltagshelferGUI(ctk.CTk):
             pass
 
     def _save_settings(self) -> None:
+        from services.sync_runtime import sync_allowed
+
         saved = 0
+        sync_blocked = False
         for key, entry in self.setting_inputs.items():
             value = entry.get().strip()
+            if key == "sync.enabled" and value.lower() in ("true", "1", "yes"):
+                if not sync_allowed(self.config, self.settings_repo):
+                    value = "false"
+                    entry.delete(0, "end")
+                    entry.insert(0, "false")
+                    sync_blocked = True
             save_value(self.settings_repo, key, value)
             saved += 1
-        self.settings_status.configure(
-            text=self.i18n.t("settings.saved").format(count=saved))
+        msg = self.i18n.t("settings.saved").format(count=saved)
+        if sync_blocked:
+            msg += " " + self.i18n.t(
+                "settings.sync_pro_required",
+                "Mehrgeraete-Sync erfordert eine Pro-Lizenz.")
+        self.settings_status.configure(text=msg)
 
     def _reset_settings(self) -> None:
         for key, entry in self.setting_inputs.items():

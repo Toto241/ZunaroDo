@@ -3732,13 +3732,13 @@ class TestLicensing(unittest.TestCase):
 
     def test_token_without_configured_pubkey_rejected(self) -> None:
         from services.license_token import (CRYPTO_AVAILABLE,
-                                              DEFAULT_PUBLIC_KEY_HEX,
-                                              TokenError, verify_token)
+                                              TokenError, verify_token,
+                                              _PLACEHOLDER_PUBLIC_KEY_HEX)
         if not CRYPTO_AVAILABLE:
             self.skipTest("cryptography nicht verfuegbar")
-        # Default-Pubkey ist all-zero - jede Validierung muss fehlschlagen
+        # Platzhalter-Pubkey (all-zero) - jede Validierung muss fehlschlagen
         with self.assertRaises(TokenError):
-            verify_token("a.b", DEFAULT_PUBLIC_KEY_HEX)
+            verify_token("a.b", _PLACEHOLDER_PUBLIC_KEY_HEX)
 
     # ---- CHF-Konvertierung ------------------------------------------
     def test_chf_conversion_applies_swiss_vat(self) -> None:
