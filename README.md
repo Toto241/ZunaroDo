@@ -395,9 +395,11 @@ Bemerkenswerte Features:
 └── requirements.txt
 ```
 
-## Status & bewusst offen geblieben
+## Status
 
-- **DST/Timezone-Audit** — Sync-Timestamps sind bereits UTC; weitere Date-Felder sind lokale Zeit (für Single-User unkritisch)
-- **Multi-User-Profile auf einem Gerät** — keine getrennten Profile vorgesehen
-- **i18n-Vollausbau** — Formularfeld-Labels in den einzelnen Modul-Tabs und Capability-Descriptions sind weiterhin hartcodiert deutsch
-- **Eigenes TLS für eingebetteten Server** — Zertifikate via `--cert/--key` werden unterstützt; Erstellung übernimmt der Nutzer (z. B. via `openssl req`)
+Die zum 1.0.0-Release verbliebenen Punkte sind abgearbeitet:
+
+- **DST/Timezone** — auditiert und dokumentiert in [docs/TIMEZONE_AUDIT.md](docs/TIMEZONE_AUDIT.md). Alle persistierten Zeitstempel (`created_at`/`updated_at`/Sync) sind UTC; kalendarische Datumsfelder (Fälligkeiten, Geburtstage) sind bewusst zeitzonenlose Kalendertage. Für den Single-User-Alltag ist das korrekt; der Audit beschreibt, was bei einem Multi-Timezone-Szenario zu tun wäre.
+- **Multi-User-Profile auf einem Gerät** — umgesetzt über `system.profiles` / `system.profile_create` / `system.profile_switch` ([modules/profiles.py](modules/profiles.py)); im Mobile-UI über den „Mehr"-Screen erreichbar.
+- **i18n der Capability-Descriptions** — die Capability-Beschreibungen sind nun über i18n-Keys (`cap.<name>.desc`) lokalisierbar und in allen 24 EU-Amtssprachen hinterlegt ([locales/](locales/), [services/i18n.py](services/i18n.py)). Die `Capability.localized_description(i18n)` löst sie auf, mit Fallback auf den deutschen Originaltext.
+- **TLS für den eingebetteten Server** — neben `--cert/--key` erzeugt der Server mit `--self-signed` bei Bedarf selbst ein Zertifikat (Default-Pfade `./sync-cert.pem` / `./sync-key.pem`) und nutzt es ([services/tls_certs.py](services/tls_certs.py), verdrahtet in [services/sync_server.py](services/sync_server.py)).
