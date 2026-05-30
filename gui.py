@@ -111,9 +111,13 @@ def _apply_win11_theme() -> None:
     theme["CTkEntry"]["corner_radius"] = 6
     theme["CTkOptionMenu"]["corner_radius"] = 6
     theme["CTkComboBox"]["corner_radius"] = 6
-    # Tabs
-    theme["CTkTabview"]["corner_radius"] = 8
-    theme["CTkTabview"]["segmented_button"]["corner_radius"] = 6
+    # Tabs (aeltere customtkinter-Versionen haben kein CTkTabview-Theme)
+    tabview = theme.get("CTkTabview")
+    if isinstance(tabview, dict):
+        tabview["corner_radius"] = 8
+        seg = tabview.get("segmented_button")
+        if isinstance(seg, dict):
+            seg["corner_radius"] = 6
     # Texte
     theme["CTkTextbox"]["corner_radius"] = 6
     theme["CTkScrollableFrame"]["corner_radius"] = 8

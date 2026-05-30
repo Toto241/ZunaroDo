@@ -335,11 +335,17 @@ def main() -> None:
     trenner("Mail-Analyse und zentrale Vorschlags-Ablage")
     analyse = registry.dispatch("inbox.analyze_mail",
                                   {"mail_text": SAMPLE_MAIL})
-    print(f"  -> {analyse['found']} Vorschlag/Vorschlaege")
+    if analyse.get("tier_locked"):
+        print(f"  -> uebersprungen ({analyse.get('error', 'Pro/KI noetig')})")
+    else:
+        print(f"  -> {analyse.get('found', 0)} Vorschlag/Vorschlaege")
     offen = registry.dispatch("inbox.proposals", {})
-    if offen["proposals"]:
+    proposals = offen.get("proposals") or []
+    if proposals:
         registry.dispatch("inbox.accept_proposal",
-                            {"proposal_id": offen["proposals"][0]["id"]})
+                            {"proposal_id": proposals[0]["id"]})
+    elif offen.get("tier_locked"):
+        print("  -> Vorschlaege: Pro-Modul Posteingang nicht verfuegbar")
 
     # --- Dashboard ----------------------------------------------------
     trenner("Dashboard - registry.collect_events()")

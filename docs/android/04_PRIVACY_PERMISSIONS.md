@@ -181,7 +181,7 @@ Implementierungs-Status:
 | -------- | ------ | --- |
 | Soft-Delete pro Entität | ja | `database.py` |
 | Hard-Delete (Purge) | ja | `database.py` |
-| Komplett-Export aller Daten | **TODO** für Mobile | `services/output.py` hat CSV/PDF pro Modul; Komplett-JSON-Export ergänzen |
+| Komplett-Export aller Daten | ja (Mobile) | `services/export.py` (`export_all` + `export_all_json`); UI: „Mehr → Daten exportieren“ |
 | Komplett-Löschung (Account-Reset) | ja | `services/data_deletion.py` + `Database.wipe_all_data()`; Mobile-UI: "Mehr" → "Alle Daten löschen" ([mobile/screens/more.py](../../mobile/screens/more.py)). Leert alle DB-Tabellen (inkl. VACUUM) + Sandbox-Verzeichnisse (ausgaben/backups/logs/attachments/cache) |
 | Lizenz-Widerruf -> Pro-Daten unverändert lokal | ja | DB lokal, Lizenz-Token gibt nur Funktion frei |
 

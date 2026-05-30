@@ -10,8 +10,11 @@ beim Import in Komma.
 from __future__ import annotations
 
 import csv
+import json
+from dataclasses import asdict, is_dataclass
+from datetime import date, datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 from database import (CalendarRepository, ContractRepository,
                       ExpenseRepository, FamilyRepository,
@@ -97,6 +100,50 @@ EXPORTERS: dict[str, str] = {
     "social": "Kontakte",
     "family": "Haushaltsmitglieder",
 }
+
+
+def _json_default(obj: Any) -> Any:
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if is_dataclass(obj):
+        return asdict(obj)
+    raise TypeError(f"Nicht serialisierbar: {type(obj)!r}")
+
+
+def export_all_json(target_dir: Path, contracts: ContractRepository,
+                    expenses: ExpenseRepository,
+                    calendar: CalendarRepository,
+                    social: SocialRepository,
+                    family: FamilyRepository,
+                    *,
+                    include_settings: bool = False,
+                    settings_rows: list[tuple[str, str]] | None = None
+                    ) -> Path:
+    """
+    Ein JSON-Bundle mit allen Hauptentitaeten (DSGVO-Datenexport).
+
+    Liefert den Pfad zur geschriebenen Datei.
+    """
+    target_dir.mkdir(parents=True, exist_ok=True)
+    payload: dict[str, Any] = {
+        "format": "zunarodo-export-v1",
+        "contracts": [c.to_dict() for c in contracts.list_all(only_active=False)],
+        "expenses": [e.to_dict() for e in expenses.list_all()],
+        "calendar": [e.to_dict() for e in calendar.list_all()],
+        "social": [c.to_dict() for c in social.list_all()],
+        "family": [m.to_dict() for m in family.list_members()],
+    }
+    if include_settings and settings_rows is not None:
+        payload["settings"] = [
+            {"key": k, "value": v} for k, v in settings_rows
+            if not k.startswith(("gemini_", "imap_", "smtp_", "license.token"))
+        ]
+    out = target_dir / "export.json"
+    out.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, default=_json_default),
+        encoding="utf-8",
+    )
+    return out
 
 
 def export_all(target_dir: Path, contracts: ContractRepository,

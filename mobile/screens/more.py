@@ -62,7 +62,18 @@ class _SimpleListPage(MDScreen):
             result = self.registry.dispatch(self.capability, {})
         except Exception as exc:
             result = {self.result_key: [], "_err": str(exc)}
+        self._show_dispatch_result(result)
+
+    def _show_dispatch_result(self, result: dict) -> None:
+        from app_core.helpers import dispatch_error_message
+        err = dispatch_error_message(result) or result.get("_err")
         self.list.clear_widgets()
+        if err:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="lock"),
+                text=truncate(err, 60),
+            ))
+            return
         items = result.get(self.result_key, [])
         if not items:
             self.list.add_widget(OneLineIconListItem(
@@ -333,7 +344,18 @@ class _FilteredListPage(MDScreen):
             result = self.registry.dispatch(self.capability, args)
         except Exception as exc:
             result = {self.result_key: [], "_err": str(exc)}
+        self._show_dispatch_result(result)
+
+    def _show_dispatch_result(self, result: dict) -> None:
+        from app_core.helpers import dispatch_error_message
+        err = dispatch_error_message(result) or result.get("_err")
         self.list.clear_widgets()
+        if err:
+            self.list.add_widget(OneLineIconListItem(
+                IconLeftWidget(icon="lock"),
+                text=truncate(err, 60),
+            ))
+            return
         items = result.get(self.result_key, [])
         if not items:
             self.list.add_widget(OneLineIconListItem(
@@ -584,6 +606,13 @@ class MoreScreen(MDScreen):
         license_item.bind(on_release=lambda *_: self._open_license_page())
         self.list.add_widget(license_item)
 
+        export_item = OneLineIconListItem(
+            IconLeftWidget(icon="export"),
+            text=_t("more.export", "Daten exportieren"),
+        )
+        export_item.bind(on_release=lambda *_: self._open_export_page())
+        self.list.add_widget(export_item)
+
         # Profil-Umschalter (mehrere getrennte Datenbestaende auf dem Geraet)
         profiles_item = OneLineIconListItem(
             IconLeftWidget(icon="account-switch"),
@@ -621,6 +650,10 @@ class MoreScreen(MDScreen):
     def _open_license_page(self) -> None:
         from mobile.screens.license import LicenseScreen
         self.add_widget(LicenseScreen(registry=self.registry))
+
+    def _open_export_page(self) -> None:
+        from mobile.screens.export_data import ExportDataScreen
+        self.add_widget(ExportDataScreen())
 
     def _open_profiles_page(self) -> None:
         self.add_widget(_ProfilesPage(registry=self.registry))
