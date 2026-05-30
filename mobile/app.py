@@ -125,6 +125,26 @@ if HAS_KIVYMD:
                 raise RuntimeError(
                     "build_registry konnte nicht importiert werden")
             self._registry = build_registry(self._db, self._output)
+            from services.license_gate import install_gate
+            from services.licensing import (apply_grandfathering_if_needed,
+                                               load_license)
+            install_gate(self._registry,
+                         lambda: load_license(self.settings))
+
+            def _has_any_data() -> bool:
+                try:
+                    if self._registry.dispatch(
+                            "contracts.list", {}).get("count", 0):
+                        return True
+                    if self._registry.dispatch(
+                            "family.members", {}).get("count", 0):
+                        return True
+                except Exception:
+                    pass
+                return False
+
+            apply_grandfathering_if_needed(self.settings, _has_any_data)
+            self._license = load_license(self.settings)
             return _RootShell(self._registry, self.i18n)
 
         def on_stop(self):

@@ -1,14 +1,14 @@
 # Allgemeine Geschaeftsbedingungen (AGB)
 
-**Diese Datei ist eine Vorlage.** Eckige Klammern markieren auszufuellende
-Felder. Vor Veroeffentlichung anwaltlich pruefen lassen.
+Vor Veroeffentlichung anwaltlich pruefen lassen. Anbieter-Stammdaten:
+`legal/provider.yml`.
 
 ---
 
 ## §1 Geltungsbereich
 
-(1) Diese AGB gelten fuer alle Vertraege zwischen [ANBIETER_NAME]
-(nachfolgend "Anbieter") und Nutzern der Software "Alltagshelfer"
+(1) Diese AGB gelten fuer alle Vertraege zwischen ZunaroDo
+(nachfolgend "Anbieter") und Nutzern der Software "ZunaroDo" / "Alltagshelfer"
 (nachfolgend "App"), die ueber den App-Store, Play-Store oder direkt
 beim Anbieter abgeschlossen werden.
 
@@ -19,7 +19,7 @@ sei denn, der Anbieter stimmt ihrer Geltung schriftlich zu.
 
 (1) Der Anbieter stellt dem Nutzer die App in der jeweils aktuellen
 Version zur Verfuegung. Der Funktionsumfang ergibt sich aus der
-Beschreibung im Store-Eintrag bzw. unter [URL_PRODUKTSEITE].
+Beschreibung im Store-Eintrag bzw. unter https://zunarodo.github.io/alltagshelfer/.
 
 (2) Es bestehen drei Nutzungsmodelle (siehe README):
 
@@ -44,7 +44,7 @@ Datenschutzerklaerung zustande.
 (1) Die zum Zeitpunkt der Bestellung angezeigten Preise gelten. Alle
 Preise verstehen sich inklusive der gesetzlichen Umsatzsteuer.
 
-(2) Die Abrechnung erfolgt ueber [PADDLE / LEMON SQUEEZY / STRIPE].
+(2) Die Abrechnung erfolgt ueber Paddle oder Lemon Squeezy (Merchant of Record).
 Es gelten deren AGB ergaenzend.
 
 ## §5 Laufzeit und Kuendigung
@@ -57,7 +57,7 @@ um zwoelf Monate, kuendbar mit einer Frist von einem Monat zum
 Vertragsende.
 
 (3) Die Kuendigung kann ueber den Bezahldienstleister oder per Mail an
-[EMAIL] erfolgen.
+alltagshelfer@zunarodo.github.io erfolgen.
 
 (4) **Grace-Period:** Nach Ablauf eines Pro-Abos behaelt der Nutzer fuer
 7 Kalendertage Zugriff auf alle Pro-Funktionen ("Karenzzeit"), damit
@@ -118,4 +118,4 @@ hat, entzogen wird.
 (2) Sollte eine Bestimmung dieser AGB unwirksam sein, beruehrt dies
 die Wirksamkeit der uebrigen Bestimmungen nicht.
 
-Stand: [DATUM]
+Stand: 2026-05-30

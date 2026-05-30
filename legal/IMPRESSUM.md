@@ -1,34 +1,22 @@
 # Impressum
 
-**Diese Datei ist eine Vorlage.** Eckige Klammern markieren auszufuellende
-Felder. Vor Veroeffentlichung anwaltlich pruefen lassen.
-
----
-
 Angaben gemaess §5 TMG / §18 Abs. 2 MStV:
 
-**[ANBIETER_NAME]**
-[STRASSE_NR]
-[PLZ_ORT]
-[LAND]
+**ZunaroDo** (Open-Source-Softwareprojekt)
 
-**Vertreten durch:** [GESETZLICHER_VERTRETER]
+**Vertreten durch:** ZunaroDo Open-Source-Projekt
 
 **Kontakt:**
-Telefon: [TELEFON]
-E-Mail: [EMAIL]
+E-Mail: alltagshelfer@zunarodo.github.io
+Web: https://zunarodo.github.io/alltagshelfer/
+GitHub: https://github.com/zunarodo/alltagshelfer
 
-**Registereintrag (falls vorhanden):**
-Eintragung im [HANDELSREGISTER / VEREINSREGISTER]
-Registergericht: [REGISTERGERICHT]
-Registernummer: [REGISTERNUMMER]
+**Registereintrag:** Kein Handelsregister-Eintrag (Open-Source-Projekt ohne eingetragenen Kaufmann).
 
-**Umsatzsteuer-ID (falls vorhanden):**
-Umsatzsteuer-Identifikationsnummer gemaess §27a UStG: [USTID]
+**Umsatzsteuer-ID:** Nicht vorhanden (derzeit keine umsatzsteuerpflichtigen Verkaeufe ueber dieses Impressum).
 
 **Verantwortlich fuer den Inhalt gemaess §18 Abs. 2 MStV:**
-[VERANTWORTLICHE_PERSON]
-[ADRESSE_FALLS_ABWEICHEND]
+ZunaroDo Open-Source-Projekt (Kontakt siehe oben)
 
 ---
 
@@ -38,7 +26,7 @@ Die Europaeische Kommission stellt eine Plattform zur Online-Streit-
 beilegung (OS) bereit: <https://ec.europa.eu/consumers/odr/>.
 Unsere E-Mail-Adresse finden Sie oben im Impressum.
 
-Wir sind [BEREIT / NICHT BEREIT], an einem Streitbeilegungsverfahren
+Wir sind nicht bereit, an einem Streitbeilegungsverfahren
 vor einer Verbraucherschlichtungsstelle teilzunehmen.
 
 ## Haftung fuer Inhalte
@@ -51,11 +39,6 @@ nach den allgemeinen Gesetzen verantwortlich.
 
 ## Haftung fuer Links
 
-Unser Angebot enthaelt Links zu externen Websites Dritter, auf deren
-Inhalte wir keinen Einfluss haben. Deshalb koennen wir fuer diese
-fremden Inhalte auch keine Gewaehr uebernehmen.
-
-## Urheberrecht
-
-Die durch die Seitenbetreiber erstellten Inhalte und Werke auf
-dieser App unterliegen dem deutschen Urheberrecht.
+Verlinkte externe Seiten unterliegen der Verantwortung der jeweiligen
+Betreiber. Bei Bekanntwerden von Rechtsverletzungen entfernen wir
+derartige Links umgehend.

@@ -135,11 +135,10 @@ def apply_persisted_module_states(registry: ModuleRegistry,
 
 
 def make_sync_provider(local_state_dir: Path):
-    """Waehlt HTTP- vor FileSync, beide optional."""
-    http = HttpSyncProvider.from_env(local_state_dir)
-    if http is not None:
-        return http
-    return FileSyncProvider.from_env(local_state_dir)
+    """Waehlt HTTP- vor FileSync, beide optional (ohne Lizenz-Check)."""
+    from services.sync_runtime import make_sync_provider as _make
+
+    return _make(local_state_dir)
 
 
 def main() -> None:
@@ -222,8 +221,9 @@ def main() -> None:
 
     # Mehrgeraete-Sync - State-Verzeichnis profilabhaengig
     state_path = state_dir(profile)
-    provider = make_sync_provider(state_path) \
-        if config.sync_enabled != "false" else None
+    from services.sync_runtime import resolve_sync_provider
+
+    provider = resolve_sync_provider(config, settings, state_path)
     synced = None
     if provider is not None:
         synced = install_sync_hook(registry, provider)
