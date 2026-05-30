@@ -54,6 +54,22 @@ class Capability:
         return [n for n, spec in self.parameters.items()
                 if isinstance(spec, dict) and spec.get("_required")]
 
+    def localized_description(self, i18n: Optional[Any] = None) -> str:
+        """
+        Liefert die Beschreibung in der aktuellen Sprache.
+
+        Lokalisierte Texte liegen unter dem Key ``cap.<name>.desc`` in den
+        Locale-Dateien. Ohne ``i18n`` (oder wenn der Key fehlt) faellt die
+        Methode auf den im Code hinterlegten deutschen Originaltext zurueck
+        - so bleibt die Beschreibung immer befuellt und nichts crasht.
+
+        ``i18n`` ist absichtlich duck-typed (alles mit ``.t(key, default)``),
+        damit ``core`` nicht von ``services.i18n`` abhaengt.
+        """
+        if i18n is None:
+            return self.description
+        return i18n.t(f"cap.{self.name}.desc", self.description)
+
     def _properties(self) -> dict:
         properties: dict = {}
         for n, spec in self.parameters.items():
@@ -64,11 +80,11 @@ class Capability:
             properties[n] = entry
         return properties
 
-    def to_tool_schema(self) -> dict:
+    def to_tool_schema(self, i18n: Optional[Any] = None) -> dict:
         """OpenAPI-Stil-Schema (von Gemini direkt nutzbar)."""
         return {
             "name": self.name,
-            "description": self.description,
+            "description": self.localized_description(i18n),
             "parameters": {
                 "type": "object",
                 "properties": self._properties(),
@@ -302,9 +318,9 @@ class ModuleRegistry:
     def modules(self) -> list[ModuleInterface]:
         return list(self._modules.values())
 
-    def tool_schemas(self) -> list[dict]:
+    def tool_schemas(self, i18n: Optional[Any] = None) -> list[dict]:
         """Tool-Schemata fuer Gemini - 'internal' wird ausgeblendet."""
-        return [c.to_tool_schema() for c in self.all_capabilities()
+        return [c.to_tool_schema(i18n) for c in self.all_capabilities()
                 if not c.internal]
 
     def destructive_capability_names(self) -> set[str]:
