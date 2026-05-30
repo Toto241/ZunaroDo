@@ -8,7 +8,7 @@ from unittest import mock
 
 from database import Database, SettingsRepository
 from services.config import AppConfig
-from services.licensing import Tier
+from services.licensing import load_license
 from services.sync_runtime import resolve_sync_provider, sync_allowed
 
 
@@ -33,6 +33,15 @@ class TestSyncRuntime(unittest.TestCase):
             self.assertIsNone(
                 resolve_sync_provider(config, self.settings, Path("/tmp/state")))
             m.assert_not_called()
+
+    def test_ui_enable_sync_uses_license_not_stale_config(self) -> None:
+        """GUI darf Sync aktivieren, auch wenn self.config noch sync.enabled=false hat."""
+        from services.licensing import start_trial
+
+        config = AppConfig(sync_enabled="false")
+        start_trial(self.settings)
+        self.assertFalse(sync_allowed(config, self.settings))
+        self.assertTrue(load_license(self.settings).allows_sync())
 
     def test_pro_license_allows_sync_when_configured(self) -> None:
         from services.licensing import start_trial

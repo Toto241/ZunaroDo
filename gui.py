@@ -111,9 +111,13 @@ def _apply_win11_theme() -> None:
     theme["CTkEntry"]["corner_radius"] = 6
     theme["CTkOptionMenu"]["corner_radius"] = 6
     theme["CTkComboBox"]["corner_radius"] = 6
-    # Tabs
-    theme["CTkTabview"]["corner_radius"] = 8
-    theme["CTkTabview"]["segmented_button"]["corner_radius"] = 6
+    # Tabs (aeltere customtkinter-Versionen haben kein CTkTabview-Theme)
+    tabview = theme.get("CTkTabview")
+    if isinstance(tabview, dict):
+        tabview["corner_radius"] = 8
+        seg = tabview.get("segmented_button")
+        if isinstance(seg, dict):
+            seg["corner_radius"] = 6
     # Texte
     theme["CTkTextbox"]["corner_radius"] = 6
     theme["CTkScrollableFrame"]["corner_radius"] = 8
@@ -3006,14 +3010,14 @@ class AlltagshelferGUI(ctk.CTk):
             pass
 
     def _save_settings(self) -> None:
-        from services.sync_runtime import sync_allowed
+        from services.licensing import load_license
 
         saved = 0
         sync_blocked = False
         for key, entry in self.setting_inputs.items():
             value = entry.get().strip()
             if key == "sync.enabled" and value.lower() in ("true", "1", "yes"):
-                if not sync_allowed(self.config, self.settings_repo):
+                if not load_license(self.settings_repo).allows_sync():
                     value = "false"
                     entry.delete(0, "end")
                     entry.insert(0, "false")

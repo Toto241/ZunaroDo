@@ -28,7 +28,7 @@ python3 -m compileall . -q
 
 ```bash
 python3 __main__.py --diagnose   # status report
-python3 main.py                  # console demo (has a pre-existing crash in the mail-analysis section)
+python3 main.py                  # console demo
 ```
 
 ### Running the GUI
@@ -41,12 +41,11 @@ Xvfb :99 -screen 0 1280x720x24 &>/dev/null &
 python3 gui.py
 ```
 
-Note: The GUI may crash on startup with a `KeyError: 'CTkTabview'` due to a theme compatibility issue with the installed customtkinter version. This is a pre-existing issue.
+Older CustomTkinter builds without a `CTkTabview` theme entry are handled in `gui.py` via a guarded theme patch.
 
 ### Known pre-existing test failures
 
-- `test_smoke.TestLicensing.test_scheduler_picks_up_extra_event_sources` — consistently fails (assertion on "Abo" string in notifier calls).
-- `test_gui_free_tier_boot` — requires a working X display connection on `:1`; use `DISPLAY=:99` with Xvfb on `:99` if needed.
+- None on the default unittest suite (`python -m unittest discover tests`). GUI boot tests live under `tests/concept/` and need Xvfb (`DISPLAY=:99`).
 
 ### Environment notes
 

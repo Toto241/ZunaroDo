@@ -150,14 +150,15 @@ class LicenseScreen(MDScreen):
     def _show_message(self, message: str) -> None:
         if not message:
             return
-        MDDialog(
+        dialog = MDDialog(
             title=self._t("license.title", "Lizenz"),
             text=message,
             buttons=[MDFlatButton(
                 text=self._t("common.close", "Schliessen"),
-                on_release=lambda dlg: dlg.dismiss(),
+                on_release=lambda *_: dialog.dismiss(),
             )],
-        ).open()
+        )
+        dialog.open()
 
     def _go_back(self) -> None:
         parent = self.parent
