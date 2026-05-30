@@ -22,6 +22,13 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 - **main.py Demo** — Mail-Analyse crasht nicht mehr bei Free-Tier (`tier_locked`).
 - **CustomTkinter-Theme** — `CTkTabview`-Patch nur wenn Theme-Key existiert.
+- **Sync-Gate zentral** — `save_value()` / `gate_sync_enabled_value()` (GUI + alle Persist-Pfade).
+- **PR-Review** — Pro-Sync in GUI ohne stale Config; Lizenz-Dialog Kivy-Callback; JSON-Export mit Settings-Dict.
+
+### Release-Docs
+
+- `release/play-android-1.0.0.md`, `release/payment-production-checklist.md`
+- `legal/README.md` aktualisiert; Marketing-Site auf Toto241/ZunaroDo-URLs
 
 ## [1.0.0] - 2026-05-29
 

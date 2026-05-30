@@ -181,13 +181,29 @@ def load_config(repo: Optional[SettingsRepository]) -> AppConfig:
     return config
 
 
-def save_value(repo: SettingsRepository, key: str, value: str) -> None:
-    """Speichert einen Wert in der DB (Geheime werden nicht persistiert)."""
+def save_value(repo: SettingsRepository, key: str, value: str) -> bool:
+    """
+    Speichert einen Wert in der DB (Geheime werden nicht persistiert).
+
+    Returns:
+        True wenn sync.enabled wegen fehlender Pro-Lizenz auf false gesetzt wurde.
+    """
+    if key == "sync.enabled":
+        from services.sync_runtime import gate_sync_enabled_value
+
+        value, blocked = gate_sync_enabled_value(repo, value)
+        if blocked:
+            if value == DEFAULTS.get(key, ""):
+                repo.set(key, None)
+            else:
+                repo.set(key, value)
+            return True
     if key in SECRET_KEYS:
         # Geheime Felder werden bewusst nicht persistiert - sie kommen
         # ausschliesslich aus Env-Var oder OS-Keyring.
-        return
+        return False
     if value == DEFAULTS.get(key, ""):
         repo.set(key, None)
-        return
+        return False
     repo.set(key, value)
+    return False
