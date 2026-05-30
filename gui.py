@@ -1781,7 +1781,7 @@ class AlltagshelferGUI(ctk.CTk):
         ctk.CTkLabel(dlg, text=f"Bearbeiten: {target}",
                      font=ctk.CTkFont(size=14, weight="bold")
                      ).pack(padx=20, pady=(20, 6), anchor="w")
-        ctk.CTkLabel(dlg, text=cap.description,
+        ctk.CTkLabel(dlg, text=cap.localized_description(self.i18n),
                      text_color="gray", wraplength=560, justify="left"
                      ).pack(padx=20, pady=(0, 10), anchor="w")
 
