@@ -397,6 +397,10 @@ Bemerkenswerte Features:
 
 ## Status
 
+Der Go-Live-Stand (Repo erledigt vs. operativ offen) ist in
+[docs/RELEASE_STATUS.md](docs/RELEASE_STATUS.md) gegen die
+[Release-Checkliste](docs/android/09_RELEASE_CHECKLIST.md) dokumentiert.
+
 Die zum 1.0.0-Release verbliebenen Punkte sind abgearbeitet:
 
 - **DST/Timezone** — auditiert und dokumentiert in [docs/TIMEZONE_AUDIT.md](docs/TIMEZONE_AUDIT.md). Alle persistierten Zeitstempel (`created_at`/`updated_at`/Sync) sind UTC; kalendarische Datumsfelder (Fälligkeiten, Geburtstage) sind bewusst zeitzonenlose Kalendertage. Für den Single-User-Alltag ist das korrekt; der Audit beschreibt, was bei einem Multi-Timezone-Szenario zu tun wäre.

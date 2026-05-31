@@ -9,6 +9,8 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 - **Mobile-Lizenz-Gate** — `install_gate`, Grandfathering, Screen „Lizenz / Pro“ (Trial + Token).
 - **Mobile-Datenexport** — CSV + JSON unter „Mehr → Daten exportieren“ (`export_all_json`).
 - **Pro-Sync-Durchsetzung** — `services/sync_runtime.py`; Free-Tier kann Sync nicht aktivieren.
+- **Release-Notes pro Locale** — kanonische Ablage `legal/release_notes/1.0.0/` (8 Vollsprachen, je ≤ 500 Zeichen); `playstore.yml` `production` von 2 auf 8 Locales erweitert (Checklisten-Punkt D).
+- **Go-Live-Status-Report** — `docs/RELEASE_STATUS.md` bildet die Release-Checkliste auf den aktuellen Stand ab (im Repo erledigt vs. operativ offen).
 
 ### Geändert
 
