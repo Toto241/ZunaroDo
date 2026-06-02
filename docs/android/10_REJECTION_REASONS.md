@@ -50,7 +50,7 @@ für aktuellen Funktionsumfang.
 | Reject | Maßnahme | Status |
 | ------ | -------- | ------ |
 | "Fehlende Privacy Policy URL." | URL in Play Console hinterlegt, Inhalt aus [legal/DATENSCHUTZ.md](../../legal/DATENSCHUTZ.md). | ✅ (Doku da; URL beim Listing setzen) |
-| "Privacy Policy nicht erreichbar." | Im Release-Checker HEAD-Request gegen die hinterlegte URL. | ⚠️ Checker erweitern |
+| "Privacy Policy nicht erreichbar." | CI-Job `privacy-policy-reachable` (HEAD) in [android-compliance.yml](../../.github/workflows/android-compliance.yml); GitHub-Variable `PRIVACY_POLICY_URL` setzen. | ✅ (URL-Variable vor Release setzen) |
 | "Data Safety Form passt nicht zum tatsächlichen Datenfluss." | Form-Vorlage in [04_PRIVACY_PERMISSIONS.md](04_PRIVACY_PERMISSIONS.md#4-data-safety-form-play-console---antworten). | ⚠️ vor jedem Release abgleichen |
 | "App sammelt Daten ohne Disclosure (z.B. Advertising ID)." | Wir erheben keine. | ✅ |
 | "Kinder unter 13 ohne COPPA/Families-Konformität anvisiert." | Zielgruppe >= 13, im Listing gesetzt. | ✅ |

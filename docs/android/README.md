@@ -65,9 +65,9 @@ auf - jeder PR muss grün sein.
 
 ## Reihenfolge der Adoption
 
-1. **Sofort (Sprint 0):** API-Level auf 35 anheben (Play Store
-   Mindestanforderung ab August 2025), `tools/playstore_check.py` in CI
-   verdrahten, Datenschutz- und SDK-Inventar mit dem Ist-Stand befüllen.
+1. **Sofort (Sprint 0):** ~~API-Level auf 35~~ erledigt (`buildozer.spec`);
+   `tools/playstore_check.py` in CI verdrahtet; Datenschutz- und
+   SDK-Inventar befüllt — vor Production: Console-Formulare + signiertes AAB.
 2. **Kurz (1-2 Wochen):** R8/ProGuard-Equivalent (`p4a --release` mit
    Stripping) konfigurieren, signierten Release-Build, Data-Safety-Form
    vorbereitet.

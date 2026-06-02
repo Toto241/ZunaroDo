@@ -1,11 +1,12 @@
 # Legal-Templates
 
-**Hinweis:** Diese Vorlagen sind **kein Ersatz fuer Rechtsberatung.**
-Sie sind generische Geruestdokumente mit eckigen Platzhaltern
-`[ANBIETER]`, `[ADRESSE]` usw., die vor der ersten Veroeffentlichung
-zwingend von einer Anwaltskanzlei mit Schwerpunkt IT-/E-Commerce-Recht
-geprueft und an den konkreten Vertrieb (Direkt, Stripe/Paddle, App-Store)
-angepasst werden muessen.
+**Hinweis:** Diese Texte sind **kein Ersatz fuer Rechtsberatung.**
+
+Die Stammdaten stehen zentral in [`provider.yml`](provider.yml) (Impressum,
+AGB, Widerruf, Datenschutz). Vor der ersten Veroeffentlichung sollten die
+vier Dokumente dennoch von einer Anwaltskanzlei mit Schwerpunkt
+IT-/E-Commerce-Recht geprueft und an den konkreten Vertrieb (Direkt,
+Paddle/Lemon Squeezy, App-Store) angepasst werden.
 
 ## Welches Dokument wofuer
 

@@ -13,5 +13,5 @@ Daten mit echten Play-Console-Werten abgleichen.
   - Mobile-Lizenz-Gate und Pro-Sync-Durchsetzung umgesetzt
   - Legal/Privacy-Seite finalisiert
   - playstore.yml auf 1.0.0 angehoben
-- **Play-Console-Beleg:** `release/assets/closed-test-2026-05-30.png` (nach Upload ergaenzen)
+- **Play-Console-Beleg:** `release/assets/closed-test-2026-05-30.png` (nach Upload ergaenzen; siehe [assets/README.md](assets/README.md))
 - **Freigabe durch Release-Owner:** ZunaroDo, `2026-05-30`
