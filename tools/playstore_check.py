@@ -635,6 +635,39 @@ def check_sdk_inventory(report: Report) -> None:
                    message="Alle deklarierten Libraries dokumentiert.")
 
 
+def check_store_assets(report: Report) -> None:
+    """Prueft, ob in playstore.yml referenzierte Store-Bilder existieren."""
+    name = "store_assets"
+    cfg = _load_playstore_yml()
+    images = cfg.get("images") or {}
+    required: list[tuple[str, str]] = []
+    icon = images.get("icon")
+    if icon:
+        required.append(("icon", icon))
+    fg = images.get("feature_graphic")
+    if fg:
+        required.append(("feature_graphic", fg))
+    for i, shot in enumerate(images.get("phone_screenshots") or [], start=1):
+        if shot:
+            required.append((f"phone_screenshot_{i}", shot))
+    if not required:
+        report.add(check=name, level=Level.WARN,
+                   message="Keine Store-Assets in playstore.yml konfiguriert.")
+        return
+    missing: list[str] = []
+    for label, rel in required:
+        path = REPO_ROOT / str(rel).replace("\\", "/")
+        if not path.is_file() or path.stat().st_size < 64:
+            missing.append(f"{label}: {rel}")
+    if missing:
+        for item in missing:
+            report.add(check=name, level=Level.FAIL,
+                       message=f"Store-Asset fehlt oder zu klein: {item}")
+        return
+    report.add(check=name, level=Level.PASS,
+               message=f"Alle {len(required)} Store-Assets vorhanden.")
+
+
 def check_listing_strings(report: Report, files: Sequence[Path]) -> None:
     """Sucht in Quellen nach Lorem-ipsum/TODO-Platzhaltern, die im UI erscheinen koennten."""
     name = "listing_strings"
@@ -708,6 +741,7 @@ CHECKS: dict[str, Callable[..., None]] = {
     "i18n":            lambda rep, ctx: check_i18n(rep),
     "sdk_inventory":   lambda rep, ctx: check_sdk_inventory(rep),
     "listing_strings": lambda rep, ctx: check_listing_strings(rep, ctx["files"]),
+    "store_assets":    lambda rep, ctx: check_store_assets(rep),
     "manifest":        lambda rep, ctx: check_manifest_if_present(rep),
 }
 

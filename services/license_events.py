@@ -96,7 +96,7 @@ def compute_renewal_events(license: License,
     return events
 
 
-def license_event_source(license_provider):
+def license_event_source(license_provider, now: Optional[datetime] = None):
     """
     Erzeugt eine Closure, die der Scheduler aufrufen kann.
 
@@ -108,5 +108,5 @@ def license_event_source(license_provider):
             lic = license_provider()
         except Exception:
             return []
-        return compute_renewal_events(lic, warn_within_days)
+        return compute_renewal_events(lic, warn_within_days, now=now)
     return _source

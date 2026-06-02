@@ -3556,14 +3556,16 @@ class TestLicensing(unittest.TestCase):
             def notify(self, title, message=""):       # noqa: A003
                 self.calls.append((title, message))
 
-        now = datetime(2026, 5, 20, tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
         lic = License(tier=Tier.PRO_ANNUAL, persons=2,
                        expires_at=now + timedelta(days=5))
         notifier = _CountingNotifier()
         sched = ProactiveScheduler(
             ModuleRegistry(),  # leer - keine Modul-Events
             notifier=notifier, warn_within_days=14,
-            extra_event_sources=[license_event_source(lambda: lic)])
+            extra_event_sources=[
+                license_event_source(lambda: lic, now=now),
+            ])
         triggered = sched.check_now()
         self.assertEqual(len(triggered), 1)
         self.assertTrue(any("Abo" in c[0] for c in notifier.calls))
