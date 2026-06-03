@@ -190,7 +190,8 @@ def test_main_runs_against_real_protocol(tmp_path: Path):
     if not DEFAULT_JSON.is_file():
         pytest.skip("Noch kein protocol.json - 'tools.test_protocol' zuerst laufen lassen.")
     out = tmp_path / "dash.html"
-    rc = main(["--json", str(DEFAULT_JSON), "--out", str(out)])
+    rc = main(["--json", str(DEFAULT_JSON), "--out", str(out),
+               "--no-index"])
     assert rc == 0
     assert out.is_file()
     assert out.stat().st_size > 5000

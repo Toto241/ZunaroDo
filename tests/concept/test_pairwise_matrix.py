@@ -112,7 +112,7 @@ def test_sampled_cases_persist_in_real_repo(pairwise_cases, idx):
 
         # 2) Eine HouseholdTask, die so viele Aspekte wie moeglich abbildet
         interval = interval_for(case["recurrence"]) or 9999
-        today = date(2026, 5, 20)
+        today = date.today()
         due_offset = {
             "NONE": 30,
             "FUTURE": 7,
