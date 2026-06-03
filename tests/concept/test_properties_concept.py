@@ -67,12 +67,14 @@ def test_P1_rotation_advances_one_step():
                 FamilyMember(name=f"M{i}", role="erwachsen"))
                 for i in range(size)]
             ids = [m.id for m in members]
-            today = date(2026, 5, 20)
-            # Wichtig: next_due muss bereits in der Zukunft liegen,
-            # damit complete_task GENAU einen Zyklus weiterspringt.
+            interval = 7
+            # complete_task() vergleicht mit date.today() fuer Catch-up.
+            # next_due mindestens ein Intervall in der Zukunft -> genau ein
+            # Zyklus (new_due = next_due + interval liegt dann > heute).
+            today = date.today()
             task = repos.family.add_task(HouseholdTask(
-                title="rot", interval_days=7,
-                next_due=today + timedelta(days=7),
+                title="rot", interval_days=interval,
+                next_due=today + timedelta(days=interval),
                 rotation=ids, current_index=0))
             assert task.id is not None
             before = repos.family.get_task(task.id)
