@@ -100,3 +100,6 @@ desktop.ini
 
 # Temporaere Snapshot-Exports (regenerierbar via tools.playstore_sync)
 release/playstore-snapshot-*.md
+
+# Lokale Publisher-Daten fuer setup-github-pages.ps1 (nicht committen)
+config/legal-publisher.json
