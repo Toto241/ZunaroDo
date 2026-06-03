@@ -13,7 +13,7 @@ source.include_patterns = locales/*.json,ARCHITECTURE.md,legal/*.md
 source.exclude_dirs = tests,htmlcov,backups,logs,dist,build,.venv,venv,.git,docs,.buildozer
 source.exclude_exts = spec,db,sqlite,log,pyc
 
-version = 0.9.0
+version = 1.0.0
 
 # Pflicht-Requirements
 # - python3, kivy, kivymd: das Frontend selbst

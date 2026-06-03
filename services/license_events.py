@@ -20,7 +20,7 @@ Keine Events fuer FREE / unbefristete Lizenzen.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Callable, Optional
 
 from models import Event
 from services.licensing import (GRACE_PERIOD_DAYS, License, Tier,
@@ -96,17 +96,20 @@ def compute_renewal_events(license: License,
     return events
 
 
-def license_event_source(license_provider, now: Optional[datetime] = None):
+def license_event_source(license_provider,
+                         now_provider: Optional[Callable[[], datetime]] = None):
     """
     Erzeugt eine Closure, die der Scheduler aufrufen kann.
 
     `license_provider` muss eine 0-arg-Funktion sein, die die aktuelle
     Lizenz liefert (typischerweise lambda: load_license(settings_repo)).
+    `now_provider` ist nur fuer Tests/Determinismus gedacht.
     """
     def _source(warn_within_days: int) -> list[Event]:
         try:
             lic = license_provider()
         except Exception:
             return []
+        now = now_provider() if now_provider is not None else None
         return compute_renewal_events(lic, warn_within_days, now=now)
     return _source

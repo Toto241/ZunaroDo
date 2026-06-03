@@ -185,6 +185,22 @@ def week_agenda(registry_dispatch, horizon_days: int = 7) -> dict[str, Any]:
     }
 
 
+def dispatch_error_message(result: dict | None,
+                           *,
+                           pro_hint: str = "Pro-Lizenz erforderlich.") -> str | None:
+    """
+    Nutzerlesbare Fehlermeldung aus einem Registry-dispatch-Ergebnis.
+    None, wenn kein Fehler.
+    """
+    if not result:
+        return None
+    if result.get("tier_locked"):
+        return str(result.get("error") or pro_hint)
+    if "error" in result:
+        return str(result["error"])
+    return None
+
+
 def truncate(text: str, max_len: int = 40) -> str:
     """Phone-Listen brauchen kurze Strings."""
     if not text:

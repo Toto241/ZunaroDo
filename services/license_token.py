@@ -62,7 +62,10 @@ _PLACEHOLDER_PUBLIC_KEY_HEX: str = (
 # Oeffentlicher Schluessel des Anbieters (Hex). MUSS im Release durch
 # den echten Schluessel ersetzt werden, der per 'tools/gen_license.py'
 # beim Erstellen des Private-Keys mit ausgegeben wird.
-DEFAULT_PUBLIC_KEY_HEX: str = _PLACEHOLDER_PUBLIC_KEY_HEX
+# Release-Key (Ed25519). Erneuern mit: python tools/gen_license.py keygen
+DEFAULT_PUBLIC_KEY_HEX: str = (
+    "1634f0c2ef45e15eb388191d256926ce038a4257572cf4b3021c9299bfe0ffa3"
+)
 
 
 # Revocation-Liste: token_ids, die als kompromittiert gelten und vom

@@ -8,7 +8,7 @@ Verwendet von:
   - gui.py:_build_license_section (Settings-Tab)
   - gui.py:_build_upgrade_panel (Stand-In fuer gesperrte Tabs)
   - gui.py:_build_sidebar (kompakter Tier-Indikator)
-  - mobile/ ... (spaeter, sobald die Mobile-UI Pro-Aktivierung anbietet)
+  - mobile/screens/license.py (Trial + Pro-Token)
 """
 from __future__ import annotations
 
@@ -304,5 +304,8 @@ def action_apply_token(repo: SettingsRepository,
         message=(f"Pro-Lizenz aktiviert: {_tier_label(token.tier)}, "
                  f"{token.persons} Person(en), aktiv bis "
                  f"{token.expires_at.date().isoformat()}."),
-        license=load_license(repo),
+        license=License(tier=token.tier, persons=token.persons,
+                        purchased_at=token.purchased_at,
+                        expires_at=token.expires_at,
+                        platform=token.platform),
     )

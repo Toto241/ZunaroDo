@@ -37,4 +37,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
         sys.exit(0 if urllib.request.urlopen('http://localhost:5151/health',timeout=3).status==200 else 1)" \
         || exit 1
 
-CMD ["python", "-m", "services.sync_server", "--host", "0.0.0.0", "--port", "5151"]
+CMD ["python", "-m", "services.sync_server", "--host", "0.0.0.0", "--port", "5151", "--log", "/data/sync_events.jsonl"]

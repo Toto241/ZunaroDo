@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import os
 import threading
 import time
@@ -43,6 +44,8 @@ from pathlib import Path
 from typing import Optional, Protocol
 
 from core.interface import ModuleRegistry
+
+log = logging.getLogger(__name__)
 
 
 # Weiche Obergrenze fuer Log-Zeilen, bevor automatisch kompaktiert wird.
@@ -229,8 +232,13 @@ class FileSyncProvider:
     def unseen_events(self) -> list[SyncEvent]:
         # Last-Write-Wins: chronologisch sortieren, damit die spaeteste
         # Anwendung bei nicht-idempotenten Operationen am Ende kommt.
+        # _seen wird unter Lock von append()/mark_seen() mutiert - hier
+        # einen Snapshot ziehen, damit ein gerade markiertes Event nicht
+        # uebersehen oder doppelt angewendet wird.
+        with self._lock:
+            seen = set(self._seen)
         events = [e for e in self.read_all()
-                   if e.event_id not in self._seen
+                   if e.event_id not in seen
                    and e.device_id != self.device_id]
         events.sort(key=lambda ev: ev.order_key())
         return events
@@ -248,14 +256,18 @@ class FileSyncProvider:
         """
         if not self.log_path.exists():
             return 0
-        lines = self.log_path.read_text(encoding="utf-8").splitlines()
-        if len(lines) <= max_lines:
-            return 0
-        keep = lines[-max_lines:]
-        tmp = self.log_path.with_suffix(".jsonl.tmp")
-        tmp.write_text("\n".join(keep) + "\n", encoding="utf-8")
-        tmp.replace(self.log_path)
-        return len(lines) - len(keep)
+        # Unter Lock, damit ein gleichzeitiges append() nicht in einen
+        # gerade per replace() ausgetauschten Log schreibt (auf Windows
+        # schlaegt replace() ueber einem offenen Handle sonst fehl).
+        with self._lock:
+            lines = self.log_path.read_text(encoding="utf-8").splitlines()
+            if len(lines) <= max_lines:
+                return 0
+            keep = lines[-max_lines:]
+            tmp = self.log_path.with_suffix(".jsonl.tmp")
+            tmp.write_text("\n".join(keep) + "\n", encoding="utf-8")
+            tmp.replace(self.log_path)
+            return len(lines) - len(keep)
 
     # ---- Lokales Logbuch ----------------------------------------------
     def _load_seen(self) -> set[str]:
@@ -294,10 +306,12 @@ class SyncedRegistry:
         self.registry = registry
         self.provider = provider
         self.synced = synced or DEFAULT_SYNCED_CAPABILITIES
-        self._replaying = False
         # Thread-Local-Marker: True, wenn der aktuelle Thread bereits
-        # mitten in einem synced dispatch() steckt. So werden Modul-zu-
-        # Modul-Aufrufe nicht doppelt geloggt.
+        # mitten in einem synced dispatch() steckt ('in_synced') bzw. einen
+        # Replay anwendet ('replaying'). BEIDE muessen thread-lokal sein:
+        # liefe 'replaying' als gemeinsames Flag, wuerde ein paralleler
+        # GUI-Dispatch waehrend eines Worker-Replays sein Event NICHT
+        # loggen und damit still nicht synchronisieren (N5-Race).
         self._local = threading.local()
         # ueberbruecken den Hook, indem wir den ORIGINAL-dispatch merken
         self._inner_dispatch = inner_dispatch or registry.dispatch
@@ -341,7 +355,7 @@ class SyncedRegistry:
             result = self._inner_dispatch(capability, args)
             if (is_synced
                     and not in_synced_outer
-                    and not self._replaying
+                    and not getattr(self._local, "replaying", False)
                     and "error" not in result):
                 # Tief kopierte Args: das Event darf nicht auf das
                 # urspruengliche dict referenzieren, sonst kann ein
@@ -358,7 +372,11 @@ class SyncedRegistry:
                 try:
                     self.provider.append(event)
                 except Exception:                          # pragma: no cover
-                    pass
+                    log.exception("Sync-Event konnte nicht geschrieben werden")
+                    result = dict(result)
+                    result["sync_error"] = (
+                        "Lokale Aenderung gespeichert, aber Sync-Event "
+                        "konnte nicht geschrieben werden.")
             return result
         finally:
             if is_synced:
@@ -374,7 +392,7 @@ class SyncedRegistry:
         """
         applied = 0
         with self._replay_lock:
-            self._replaying = True
+            self._local.replaying = True
             try:
                 for event in self.provider.unseen_events():
                     # Lamport: lokalen Counter auf >= empfangenen Wert
@@ -384,9 +402,12 @@ class SyncedRegistry:
                                                     event.args)
                     if "error" not in result:
                         applied += 1
-                    self.provider.mark_seen(event.event_id)
+                        self.provider.mark_seen(event.event_id)
+                    else:
+                        log.warning("Sync-Replay fuer %s fehlgeschlagen: %s",
+                                    event.event_id, result.get("error"))
             finally:
-                self._replaying = False
+                self._local.replaying = False
         return applied
 
     # ---- Pass-through: registry-aehnliche API -------------------------

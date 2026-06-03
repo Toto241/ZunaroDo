@@ -48,17 +48,25 @@ class TestAgendaOverview(unittest.TestCase):
             sum(d["count"] for d in result["days"]) + result["overdue_count"])
 
     def test_day_view_groups_due_items(self) -> None:
-        # Offset 2 und 4 tragen keine Basis-Ereignisse -> saubere Counts.
+        # Dynamisch erzeugte Basis-Ereignisse (Monatsabschluss-Erinnerung,
+        # gesetzliche Steuerfristen) sind datumsabhaengig und koennen je nach
+        # heutigem Datum auf Offset 2/4 fallen. Daher wird das Delta gegen
+        # einen Vorher-Snapshot geprueft statt absoluter Counts.
+        before = self.registry.dispatch("system.agenda", {})
+        base2 = before["days"][2]["count"]
+        base4 = before["days"][4]["count"]
         self._add_event("Zahnarzt", 2)
         self._add_event("Steuerberater", 2)
         self._add_event("Paket abholen", 4)
         result = self.registry.dispatch("system.agenda", {})
         day2 = result["days"][2]
-        self.assertEqual(day2["count"], 2)
+        self.assertEqual(day2["count"], base2 + 2)
         titles = {e["title"] for e in day2["events"]}
         # Das Kalendermodul stellt das Kategorie-Label voran ("Termin: ...").
-        self.assertEqual(titles, {"Termin: Zahnarzt", "Termin: Steuerberater"})
-        self.assertEqual(result["days"][4]["count"], 1)
+        # Die selbst hinzugefuegten Termine muessen in der Tagesgruppe stehen.
+        self.assertTrue(
+            {"Termin: Zahnarzt", "Termin: Steuerberater"} <= titles)
+        self.assertEqual(result["days"][4]["count"], base4 + 1)
 
     def test_events_outside_horizon_excluded_then_included(self) -> None:
         week_before = self.registry.dispatch("system.agenda", {})["total"]

@@ -1,10 +1,8 @@
 # Widerrufsbelehrung
 
-**Diese Datei ist eine Vorlage.** Eckige Klammern markieren auszufuellende
-Felder. Vor Veroeffentlichung anwaltlich pruefen lassen.
-
 Der nachstehende Text orientiert sich am Mustertext der Anlage 1 zu
-Art. 246a §1 Abs. 2 Satz 1 Nr. 1 und 2 EGBGB.
+Art. 246a §1 Abs. 2 Satz 1 Nr. 1 und 2 EGBGB. Vor Veroeffentlichung
+anwaltlich pruefen lassen.
 
 ---
 
@@ -18,10 +16,9 @@ schlusses.
 
 Um Ihr Widerrufsrecht auszuueben, muessen Sie uns
 
-**[ANBIETER_NAME]**
-[STRASSE_NR], [PLZ_ORT]
-E-Mail: [EMAIL]
-Telefon: [TELEFON]
+**ZunaroDo**
+Kontakt ausschliesslich digital, Deutschland
+E-Mail: alltagshelfer@zunarodo.github.io
 
 mittels einer eindeutigen Erklaerung (z.B. ein mit der Post versandter
 Brief oder E-Mail) ueber Ihren Entschluss, diesen Vertrag zu widerrufen,
@@ -72,11 +69,12 @@ Pro-Abo aktiviert wird** (siehe Dialog beim ersten Pro-Kauf).
 (Wenn Sie den Vertrag widerrufen wollen, dann fuellen Sie bitte dieses
 Formular aus und senden Sie es zurueck.)
 
-> An [ANBIETER_NAME], [ADRESSE], E-Mail: [EMAIL]
+> An ZunaroDo, Kontakt ausschliesslich digital, Deutschland,
+> E-Mail: alltagshelfer@zunarodo.github.io
 >
 > Hiermit widerrufe(n) ich/wir den von mir/uns abgeschlossenen Vertrag
 > ueber die Bereitstellung der folgenden digitalen Inhalte: Pro-Lizenz
-> Alltagshelfer
+> ZunaroDo / Alltagshelfer
 >
 > Bestellt am: ________________________
 >

@@ -1,9 +1,8 @@
 # Datenschutzerklaerung
 
-**Diese Datei ist eine Vorlage.** Eckige Klammern markieren auszufuellende
-Felder. Vor Veroeffentlichung anwaltlich pruefen lassen - insbesondere
-die Abschnitte zu KI-Verarbeitung, Sync-Server und Bezahldienstleister
-sind stark vom konkreten Setup abhaengig.
+Diese Erklaerung beschreibt die Datenverarbeitung der lokal-first App
+ZunaroDo. Vor Veroeffentlichung im Store sollte die Fassung anwaltlich
+gegen das konkrete Anbieter- und Payment-Setup geprueft werden.
 
 ---
 
@@ -11,9 +10,9 @@ sind stark vom konkreten Setup abhaengig.
 
 Verantwortlicher fuer die Datenverarbeitung im Sinne der DSGVO ist:
 
-**[ANBIETER_NAME]**
-[STRASSE_NR], [PLZ_ORT]
-E-Mail: [EMAIL]
+**ZunaroDo**
+Open-Source-Projekt: <https://github.com/zunarodo/alltagshelfer>
+E-Mail: alltagshelfer@zunarodo.github.io
 
 ## 2. Grundsatz - Lokale Datenhaltung
 
@@ -56,9 +55,11 @@ angegebenen Server abgerufen und lokal in Vorschlaege umgewandelt.
 Anmeldedaten verbleiben auf dem Endgeraet.
 
 ### 4.4 Bezahldienstleister (Lizenz-Aktivierung)
-Fuer den Erwerb einer Pro-Lizenz nutzen wir [PADDLE / LEMON SQUEEZY /
-STRIPE]. Dort gilt deren jeweilige Datenschutzerklaerung:
-- [LINK_DATENSCHUTZ_PADDLE]
+Fuer den Erwerb einer Pro-Lizenz kann der Anbieter Paddle oder Lemon
+Squeezy als Merchant of Record nutzen. Dort gilt deren jeweilige
+Datenschutzerklaerung:
+- Paddle: <https://www.paddle.com/legal/privacy>
+- Lemon Squeezy: <https://www.lemonsqueezy.com/privacy>
 
 Wir erhalten vom Bezahldienstleister: Kunden-ID, Abo-Status, Ablaufdatum.
 
@@ -112,4 +113,4 @@ an geaenderte Rechtslagen oder neue Funktionen anzupassen. Die
 jeweils aktuelle Version finden Sie in der App unter
 Einstellungen -> Datenschutz.
 
-Stand: [DATUM]
+Stand: 2026-05-26

@@ -23,6 +23,15 @@ from database import CalendarRepository
 from models import CalendarEvent, Event
 
 
+def _birthday_in_year(bday: date, year: int) -> date:
+    # 29. Februar faellt in Nicht-Schaltjahren auf den 28. Februar zurueck,
+    # statt ein ValueError zu werfen und die ganze Kalenderansicht zu kippen.
+    try:
+        return bday.replace(year=year)
+    except ValueError:
+        return bday.replace(year=year, day=28)
+
+
 # Wiederkehrende deutsche Standard-Steuerfristen (Monat, Tag, Titel)
 _STEUERFRISTEN: list[tuple[int, int, str]] = [
     (5, 31, "Einkommensteuererklaerung (ohne Steuerberater)"),
@@ -320,9 +329,9 @@ class CalendarModule(ModuleInterface):
                 bday = date.fromisoformat(iso)
             except ValueError:
                 continue
-            this_year = bday.replace(year=today.year)
+            this_year = _birthday_in_year(bday, today.year)
             if this_year < today:
-                this_year = bday.replace(year=today.year + 1)
+                this_year = _birthday_in_year(bday, today.year + 1)
             days = (this_year - today).days
             if days > horizon_days:
                 continue

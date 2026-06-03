@@ -135,11 +135,10 @@ def apply_persisted_module_states(registry: ModuleRegistry,
 
 
 def make_sync_provider(local_state_dir: Path):
-    """Waehlt HTTP- vor FileSync, beide optional."""
-    http = HttpSyncProvider.from_env(local_state_dir)
-    if http is not None:
-        return http
-    return FileSyncProvider.from_env(local_state_dir)
+    """Waehlt HTTP- vor FileSync, beide optional (ohne Lizenz-Check)."""
+    from services.sync_runtime import make_sync_provider as _make
+
+    return _make(local_state_dir)
 
 
 def main() -> None:
@@ -222,8 +221,9 @@ def main() -> None:
 
     # Mehrgeraete-Sync - State-Verzeichnis profilabhaengig
     state_path = state_dir(profile)
-    provider = make_sync_provider(state_path) \
-        if config.sync_enabled != "false" else None
+    from services.sync_runtime import resolve_sync_provider
+
+    provider = resolve_sync_provider(config, settings, state_path)
     synced = None
     if provider is not None:
         synced = install_sync_hook(registry, provider)
@@ -335,11 +335,17 @@ def main() -> None:
     trenner("Mail-Analyse und zentrale Vorschlags-Ablage")
     analyse = registry.dispatch("inbox.analyze_mail",
                                   {"mail_text": SAMPLE_MAIL})
-    print(f"  -> {analyse['found']} Vorschlag/Vorschlaege")
+    if analyse.get("tier_locked"):
+        print(f"  -> uebersprungen ({analyse.get('error', 'Pro/KI noetig')})")
+    else:
+        print(f"  -> {analyse.get('found', 0)} Vorschlag/Vorschlaege")
     offen = registry.dispatch("inbox.proposals", {})
-    if offen["proposals"]:
+    proposals = offen.get("proposals") or []
+    if proposals:
         registry.dispatch("inbox.accept_proposal",
-                            {"proposal_id": offen["proposals"][0]["id"]})
+                            {"proposal_id": proposals[0]["id"]})
+    elif offen.get("tier_locked"):
+        print("  -> Vorschlaege: Pro-Modul Posteingang nicht verfuegbar")
 
     # --- Dashboard ----------------------------------------------------
     trenner("Dashboard - registry.collect_events()")

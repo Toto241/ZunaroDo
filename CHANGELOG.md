@@ -6,6 +6,32 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Mobile-Lizenz-Gate** — `install_gate`, Grandfathering, Screen „Lizenz / Pro“ (Trial + Token).
+- **Mobile-Datenexport** — CSV + JSON unter „Mehr → Daten exportieren“ (`export_all_json`).
+- **Pro-Sync-Durchsetzung** — `services/sync_runtime.py`; Free-Tier kann Sync nicht aktivieren.
+
+### Geändert
+
+- **Legal finalisiert** — Impressum/AGB/Widerruf/Datenschutz ohne Platzhalter; `legal/provider.yml`.
+- **Payment-Vorbereitung** — Ed25519-Public-Key im Release; `release/deploy-payment-server.md`.
+- **playstore.yml** — Version 1.0.0 (code 2), Closed-Test-Nachweis, Production-Draft.
+- **Marketing-Site** — FAQ, Screenshots, Support-Kontakt.
+- **i18n** — Lizenz-/Export-Keys in allen Vollsprachen (de/en/fr/es/it/nl/pl/pt).
+
+### Behoben
+
+- **main.py Demo** — Mail-Analyse crasht nicht mehr bei Free-Tier (`tier_locked`).
+- **CustomTkinter-Theme** — `CTkTabview`-Patch nur wenn Theme-Key existiert.
+
+## [1.0.0] - 2026-05-29
+
+Erstes stabiles Release. Buendelt die seit 0.10.0 unter "Unreleased"
+gefuehrten Aenderungen (Mobile-Profil-Umschalter, i18n-Vollausbau der
+Phone-Texte, Supply-Chain-Haertung der CI) und vereinheitlicht die
+Versionsangabe ueber pyproject.toml, buildozer.spec und Changelog.
+
+### Neu
+
 - **Profil-Umschalter im Mobile-UI** - der „Mehr"-Screen hat jetzt einen
   Eintrag „Profile (Gerät)", der die Geräte-Profile auflistet, das aktive
   markiert und Wechseln/Anlegen erlaubt (über die getesteten
