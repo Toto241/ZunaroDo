@@ -15,8 +15,10 @@ from pathlib import Path
 
 import pytest
 
+import tools.test_protocol as tp
 from tools.test_protocol import (_classify, _format_protocol_md, _go_no_go,
-                                  _parse_junit, _stats_by_marker)
+                                  _parse_junit, _stats_by_marker,
+                                  _write_failure_protocol)
 
 
 SYNTH_XML = """<?xml version="1.0"?>
@@ -87,6 +89,30 @@ def test_protocol_formats_markdown(tmp_path: Path):
 
 @pytest.mark.concept
 @pytest.mark.release_gate
+def test_failure_protocol_is_no_go_not_stale_go(tmp_path: Path, monkeypatch):
+    """Regression: erzeugt pytest kein frisches JUnit-XML (z.B. Abbruch unter
+    ``pythonw.exe`` ohne Konsole), darf NIE auf alten Daten ein GO entstehen,
+    sondern ein ehrliches NO-GO mit Begruendung."""
+    md = tmp_path / "protocol.md"
+    js = tmp_path / "protocol.json"
+    monkeypatch.setattr(tp, "PROTOCOL_MD", md)
+    monkeypatch.setattr(tp, "PROTOCOL_JSON", js)
+
+    reason = _write_failure_protocol(rc=1, elapsed=1.03, target="tests",
+                                     marker=None)
+
+    md_text = md.read_text(encoding="utf-8")
+    assert "**Entscheidung:** NO-GO" in md_text
+    assert "GO" not in md_text.replace("NO-GO", "")  # kein nacktes GO
+    data = json.loads(js.read_text(encoding="utf-8"))
+    assert data["decision"] == "NO-GO"
+    assert data["totals"]["count"] == 0
+    assert data["exit_code"] == 1
+    assert reason in data["reasons"]
+
+
+@pytest.mark.concept
+@pytest.mark.release_gate
 def test_protocol_artifacts_present_after_run():
     """Nach einem Lauf von tools.test_protocol muss das Markdown- und
     JSON-Artefakt vorhanden und konsistent sein."""
@@ -100,4 +126,11 @@ def test_protocol_artifacts_present_after_run():
     data = json.loads(js.read_text(encoding="utf-8"))
     assert "decision" in data
     assert "totals" in data
-    assert data["totals"]["count"] >= 100
+    # Ein erfolgreicher Lauf hat viele Tests. Ein ehrliches Fehl-Protokoll
+    # (pytest lieferte kein frisches JUnit-XML) hat count=0 und MUSS dann
+    # NO-GO mit Begruendung sein - niemals ein GO auf Altdaten.
+    if data["totals"]["count"] == 0:
+        assert data["decision"] == "NO-GO"
+        assert data.get("reasons")
+    else:
+        assert data["totals"]["count"] >= 100

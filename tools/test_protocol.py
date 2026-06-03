@@ -210,17 +210,64 @@ MARKER_SECTIONS = [
 ]
 
 
+def _console_python() -> str:
+    """Liefert einen Konsolen-Interpreter (``python.exe``) fuer den pytest-Lauf.
+
+    Das Control-Panel startet die App – und damit diesen Generator – mit
+    ``pythonw.exe`` (kein Konsolenfenster). Unter ``pythonw.exe`` gibt es keine
+    gueltigen Stdio-Handles: pytest bricht dann sofort ab bzw. einzelne Tests,
+    die Subprozesse starten oder auf die Konsole schreiben, schlagen fehl.
+    ``python.exe`` liegt bei CPython-Windows-Installationen stets neben
+    ``pythonw.exe`` – wir nutzen es, damit der Lauf identisch zur Konsole ist.
+    """
+    exe = Path(sys.executable)
+    if exe.name.lower() == "pythonw.exe":
+        console = exe.with_name("python.exe")
+        if console.is_file():
+            return str(console)
+    return sys.executable
+
+
 def _run_pytest(target: str, marker: str | None) -> tuple[int, float]:
-    """Fuehrt pytest aus, schreibt JUnit-XML, liefert (rc, sekunden)."""
+    """Fuehrt pytest aus, schreibt JUnit-XML, liefert (rc, sekunden).
+
+    pytest laeuft bewusst unter einem Konsolen-Interpreter (siehe
+    :func:`_console_python`) und seine Ausgabe wird ueber eine Pipe
+    eingesammelt und – sofern ein echtes Stdout existiert – durchgereicht.
+    Wuerde pytest stattdessen unter ``pythonw.exe`` die Eltern-Handles erben,
+    braeche es sofort mit rc=1 ab, ohne JUnit-XML zu schreiben; ein veraltetes
+    gruenes XML wuerde dann als frisches Ergebnis fehlinterpretiert und
+    faelschlich ein GO abgeleitet.
+
+    Zusaetzlich wird ein evtl. vorhandenes altes JUnit-XML vorab geloescht,
+    damit ein fehlgeschlagener Lauf niemals auf Altdaten ein GO ableiten kann.
+    """
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    args = [sys.executable, "-m", "pytest", target,
+    try:
+        JUNIT_XML.unlink()
+    except FileNotFoundError:
+        pass
+    args = [_console_python(), "-m", "pytest", target,
             "-q", "--tb=short", "-p", "no:cacheprovider",
             f"--junit-xml={JUNIT_XML}"]
     if marker:
         args += ["-m", marker]
     t0 = time.monotonic()
     print("Running:", " ".join(args))
-    rc = subprocess.call(args, cwd=REPO_ROOT)
+    proc = subprocess.Popen(args, cwd=REPO_ROOT,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            text=True, bufsize=1)
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        # Live durchreichen, falls ein Stdout vorhanden ist (unter pythonw None)
+        if sys.stdout is not None:
+            try:
+                sys.stdout.write(line)
+                sys.stdout.flush()
+            except (ValueError, OSError):
+                pass
+    rc = proc.wait()
     dt = time.monotonic() - t0
     return rc, dt
 
@@ -506,6 +553,50 @@ def _format_protocol_md(records: list[dict], classified: dict,
     return "\n".join(lines)
 
 
+def _write_failure_protocol(rc: int, elapsed: float, target: str,
+                            marker: str | None) -> str:
+    """Schreibt ein ehrliches NO-GO-Protokoll, wenn pytest kein frisches
+    JUnit-XML erzeugt hat (z.B. Abbruch vor dem ersten Test, etwa weil unter
+    ``pythonw.exe`` kein Konsolen-Stdout vorhanden ist). So kann das Dashboard
+    niemals auf Altdaten ein GO anzeigen. Liefert den NO-GO-Grund zurueck."""
+    now = datetime.now(timezone.utc)
+    reason = (f"pytest lieferte kein frisches JUnit-XML (Exit-Code {rc}, "
+              f"{elapsed:.2f}s) - Lauf vermutlich vor dem ersten Test "
+              f"abgebrochen.")
+    lines = [
+        "# Test-Protokoll",
+        "",
+        f"- Datum: {now.strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        f"- Host: {platform.node()} ({platform.platform()})",
+        f"- Python: {sys.version.split()[0]}",
+        f"- Target: `{target}`"
+        f"{(' / Marker: `' + marker + '`') if marker else ''}",
+        f"- Laufzeit pytest: {elapsed:.2f} s",
+        "",
+        "**Entscheidung:** NO-GO",
+        "",
+        "Gruende fuer NO-GO:",
+        f"  - {reason}",
+        "",
+    ]
+    PROTOCOL_MD.write_text("\n".join(lines), encoding="utf-8")
+    PROTOCOL_JSON.write_text(json.dumps({
+        "records": [],
+        "totals": {"passed": 0, "failed": 0, "error": 0, "skipped": 0,
+                   "duration_s": 0.0, "count": 0},
+        "by_file": {},
+        "by_marker": {},
+        "requirements": REQUIREMENTS,
+        "by_requirement": {},
+        "decision": "NO-GO",
+        "reasons": [reason],
+        "elapsed_s": elapsed,
+        "exit_code": rc,
+        "generated_at": now.isoformat(),
+    }, indent=2), encoding="utf-8")
+    return reason
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                       formatter_class=
@@ -523,7 +614,12 @@ def main(argv: list[str] | None = None) -> int:
 
     records = _parse_junit(JUNIT_XML)
     if not records:
-        print("WARN: JUnit-XML enthielt keine Testfaelle.")
+        print("WARN: pytest erzeugte kein frisches JUnit-XML - schreibe "
+              "NO-GO-Protokoll statt veralteter Daten.")
+        reason = _write_failure_protocol(rc, elapsed, target, args.marker)
+        print(f"Protokoll geschrieben: {PROTOCOL_MD}")
+        print("Entscheidung:         NO-GO")
+        print(f"  - {reason}")
         return rc or 1
     _enrich_records(records)
     classified = _classify(records)
