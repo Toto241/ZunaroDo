@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alltagshelfer"
+version = "1.0.0"
+description = "Datenschutzfreundlicher Alltagsassistent fuer den deutschsprachigen Raum"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+    { name = "ZunaroDo" }
+]
+keywords = ["personal-assistant", "household", "german", "gemini",
+              "self-hosted", "privacy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Natural Language :: German",
+    "Topic :: Office/Business",
+    "Topic :: Communications",
+]
+
+# Versions-Pins: Untergrenze (was sicher kompatibel ist) + Obergrenze
+# (auf naechste Major-Version), damit das Projekt nicht stillschweigend
+# durch ein Bibliotheks-Update kaputtgeht.
+dependencies = [
+    "customtkinter>=5.2.0,<6.0",
+    "fpdf2>=2.7.0,<3.0",
+    "APScheduler>=3.10.0,<4.0",
+    "cryptography>=42.0.0,<50.0",
+    "keyring>=24.0.0,<26.0",
+    "spake2>=0.8,<1.0",
+]
+
+[project.optional-dependencies]
+notifications = ["plyer>=2.1.0,<3.0"]
+gemini = ["google-generativeai>=0.7.0,<1.0"]
+ocr = ["pytesseract>=0.3.10,<1.0", "Pillow>=10.0.0,<12.0"]
+ocr-pure = ["easyocr>=1.7.0,<2.0"]
+encryption = ["sqlcipher3-binary>=0.5.0,<1.0"]
+dev = ["pytest>=7.0,<9.0", "mypy>=1.5,<2.0"]
+all = [
+    "plyer>=2.1.0,<3.0",
+    "google-generativeai>=0.7.0,<1.0",
+    "pytesseract>=0.3.10,<1.0",
+    "Pillow>=10.0.0,<12.0",
+    "sqlcipher3-binary>=0.5.0,<1.0",
+]
+
+[project.scripts]
+alltagshelfer = "main:main"
+alltagshelfer-gui = "gui:main"
+alltagshelfer-sync-server = "services.sync_server:main"
+
+[project.urls]
+Repository = "https://github.com/zunarodo/alltagshelfer"
+
+[tool.setuptools]
+py-modules = ["models", "database", "assistant", "main", "gui"]
+
+[tool.setuptools.packages.find]
+include = ["core*", "modules*", "services*"]
+exclude = ["tests*", "ausgaben*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false

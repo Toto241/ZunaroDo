@@ -1,0 +1,170 @@
+identity:
+  package_name: de.alltagshelfer.alltagshelfer
+  app_name: ZunaroDo
+  default_language: de-DE
+  version_name: 1.0.0
+  version_code: 2
+contact:
+  support_email: 125914298+Toto241@users.noreply.github.com
+  support_url: https://github.com/Toto241/ZunaroDo/issues
+  marketing_url: https://github.com/Toto241/ZunaroDo
+  privacy_policy_url: https://toto241.github.io/ZunaroDo/privacy/
+localizations:
+  de-DE:
+    title: ZunaroDo
+    short_description: Vertraege, Termine, Finanzen, Familie - alles lokal und ohne Cloud-Zwang.
+    full_description: 'ZunaroDo ist ein datenschutzfreundlicher Assistent
+
+      fuer Vertraege, Termine, Finanzen und Haushaltsplanung.
+
+      Alle Daten bleiben lokal auf dem Geraet - kein Tracking,
+
+      keine Werbung.'
+    video_url: ''
+  en-US:
+    title: ZunaroDo
+    short_description: Privacy-friendly household helper.
+    full_description: 'Manage contracts, expenses, appointments and household
+
+      tasks - on-device, encrypted, no tracking, no ads.'
+    video_url: ''
+  fr-FR:
+    title: ZunaroDo
+    short_description: Contrats, rendez-vous, finances, famille - tout en local, sans cloud.
+    full_description: ZunaroDo est un assistant respectueux de la vie privee pour les contrats, les rendez-vous, les finances et l'organisation du foyer. Toutes les donnees restent en local sur l'appareil - sans suivi, sans publicite.
+    video_url: ''
+  es-ES:
+    title: ZunaroDo
+    short_description: 'Contratos, citas, finanzas, familia: todo local, sin nube obligatoria.'
+    full_description: 'ZunaroDo es un asistente respetuoso con la privacidad para contratos, citas, finanzas y organizacion del hogar. Todos los datos permanecen localmente en el dispositivo: sin seguimiento, sin anuncios.'
+    video_url: ''
+  it-IT:
+    title: ZunaroDo
+    short_description: Contratti, appuntamenti, finanze, famiglia - tutto in locale, no cloud.
+    full_description: ZunaroDo e un assistente rispettoso della privacy per contratti, appuntamenti, finanze e gestione della casa. Tutti i dati restano in locale sul dispositivo - senza tracciamento, senza pubblicita.
+    video_url: ''
+  nl-NL:
+    title: ZunaroDo
+    short_description: Contracten, afspraken, financien, gezin - lokaal, zonder cloud.
+    full_description: ZunaroDo is een privacyvriendelijke assistent voor contracten, afspraken, financien en huishoudplanning. Alle gegevens blijven lokaal op het apparaat - geen tracking, geen advertenties.
+    video_url: ''
+  pl-PL:
+    title: ZunaroDo
+    short_description: Umowy, terminy, finanse, rodzina - wszystko lokalnie, bez chmury.
+    full_description: ZunaroDo to przyjazny prywatnosci asystent do umow, terminow, finansow i organizacji domu. Wszystkie dane pozostaja lokalnie na urzadzeniu - bez sledzenia, bez reklam.
+    video_url: ''
+  pt-PT:
+    title: ZunaroDo
+    short_description: Contratos, compromissos, financas, familia - tudo local, sem nuvem.
+    full_description: ZunaroDo e um assistente que respeita a privacidade para contratos, compromissos, financas e organizacao da casa. Todos os dados permanecem localmente no dispositivo - sem rastreio, sem publicidade.
+    video_url: ''
+images:
+  icon: assets/store/icon-512.png
+  feature_graphic: assets/store/feature.png
+  phone_screenshots:
+  - assets/store/phone-1.png
+  - assets/store/phone-2.png
+  - assets/store/phone-3.png
+  tablet_screenshots: []
+  promo_video: ''
+store_listing:
+  category: PRODUCTIVITY
+  tags:
+  - household
+  - privacy
+  - german
+  content_rating: USK 0
+  target_age_group: all
+  ads_present: false
+  in_app_purchases: false
+data_safety:
+  # WICHTIG: Diese Angaben werden aus den App-Fakten abgeleitet und per
+  # `python -m tools.data_safety --check` gegen den Code geprueft. Die App
+  # nutzt KEIN Firebase/Analytics/Tracking - daher wird nichts geteilt.
+  # Alle erfassten Daten dienen der App-Funktionalitaet und bleiben lokal
+  # (Off-Device nur, wenn der Nutzer IMAP/SMTP oder Sync selbst aktiviert).
+  data_collected: true
+  data_shared: false
+  encrypted_in_transit: true
+  users_can_request_deletion: true
+  types:
+    email:
+      collected: true
+      shared: false
+      purpose: APP_FUNCTIONALITY
+      optional: true
+    name:
+      collected: true
+      shared: false
+      purpose: APP_FUNCTIONALITY
+      optional: false
+    user_content:
+      collected: true
+      shared: false
+      purpose: APP_FUNCTIONALITY
+      optional: false
+  sdk_inventory: []
+  privacy_policy_file: legal/DATENSCHUTZ.md
+permissions:
+  declared:
+  - android.permission.INTERNET
+  - android.permission.POST_NOTIFICATIONS
+  blocked:
+  - android.permission.MANAGE_EXTERNAL_STORAGE
+  - android.permission.READ_PHONE_STATE
+  - android.permission.ACCESS_BACKGROUND_LOCATION
+  - android.permission.RECEIVE_BOOT_COMPLETED
+  - android.permission.SYSTEM_ALERT_WINDOW
+tracks:
+  internal:
+    tester_groups:
+    - internal-team@example.org
+    releases:
+    - version_code: 2
+      version_name: 1.0.0
+      status: completed
+      user_fraction: 1.0
+      release_notes:
+        de-DE: Release 1.0.0 - Mobile-Lizenz, Pro-Sync-Gate, Legal finalisiert.
+  closed:
+    tester_groups:
+    - zunarodo-closed-testers@googlegroups.com
+    min_testers: 12
+    min_days: 14
+    releases:
+    - version_code: 2
+      version_name: 1.0.0
+      status: completed
+      release_notes:
+        de-DE: Closed Test 1.0.0 - Lizenz-Gate, Sync-Pro-Check, Legal/Privacy.
+  production:
+    release_notes_default_locale: de-DE
+    releases:
+    - version_code: 2
+      version_name: 1.0.0
+      status: draft
+      user_fraction: 0.0
+      release_notes:
+        de-DE: |
+          ZunaroDo 1.0.0: Vertraege, Termine, Finanzen und Familie -
+          alles lokal auf dem Geraet. Kein Tracking, keine Werbung.
+        en-US: |
+          ZunaroDo 1.0.0: contracts, appointments, finances and household -
+          on-device, private, no ads.
+testers:
+  google_groups:
+  - zunarodo-closed-testers@googlegroups.com
+  individual_emails: []
+monitoring:
+  crash_free_users_threshold: 99.5
+  anr_rate_threshold: 0.47
+  min_engagement_days_per_tester: 10
+policy:
+  content_guidelines_accepted: true
+  us_export_compliance: false
+  ads_complies_with_families_policy: false
+  target_audience_includes_children: false
+metadata:
+  schema_version: 1
+  generated_by: playstore_sync pull (mock)
+  generated_at: '2026-05-20T16:47:21+00:00'
