@@ -2788,6 +2788,21 @@ class AlltagshelferGUI(ctk.CTk):
                              font=ctk.CTkFont(size=10)
                              ).pack(side="left", fill="x", expand=True)
 
+        # Datenverzeichnis: kein DB-Setting, sondern der OS-Zeiger aus
+        # services.datadir. Anzeige des aktuellen Pfads + Aendern-Knopf.
+        from services import datadir as _datadir
+        dd_row = ctk.CTkFrame(body, fg_color="transparent")
+        dd_row.pack(fill="x", pady=(16, 4))
+        ctk.CTkLabel(dd_row, text="Datenverzeichnis", width=200, anchor="w"
+                     ).pack(side="left")
+        current_dd = str(_datadir.configured_data_dir() or Path.cwd())
+        self._data_dir_label = ctk.CTkLabel(
+            dd_row, text=current_dd, text_color="gray", anchor="w",
+            wraplength=320, justify="left")
+        self._data_dir_label.pack(side="left", padx=(0, 8))
+        ctk.CTkButton(dd_row, text="Aendern...", width=110,
+                      command=self._change_data_dir).pack(side="left")
+
         # Sekundaere Geheim-Felder: Hinweis, aber kein Input
         secrets_info = ctk.CTkFrame(body, fg_color="transparent")
         secrets_info.pack(fill="x", pady=(20, 4))
@@ -2819,6 +2834,34 @@ class AlltagshelferGUI(ctk.CTk):
                       ).pack(side="left")
         self.settings_status = ctk.CTkLabel(actions, text="", text_color="gray")
         self.settings_status.pack(side="right")
+
+    def _change_data_dir(self) -> None:
+        """Waehlt ein neues Datenverzeichnis, kopiert die aktuellen Daten
+        hinein und merkt es. Greift nach einem Neustart (die offene DB bleibt
+        bis dahin am alten Ort)."""
+        from tkinter import filedialog, messagebox
+        from services import datadir
+        current = datadir.configured_data_dir() or Path.cwd()
+        picked = filedialog.askdirectory(
+            title="Neues Datenverzeichnis waehlen",
+            initialdir=str(current), mustexist=False)
+        if not picked:
+            return
+        try:
+            resolved, copied = datadir.prepare_data_dir(
+                Path(picked), migrate_from=Path.cwd())
+            datadir.remember_data_dir(resolved)
+        except OSError as exc:
+            messagebox.showerror(
+                "Datenverzeichnis",
+                f"Konnte das Verzeichnis nicht einrichten:\n{exc}")
+            return
+        self._data_dir_label.configure(text=str(resolved))
+        messagebox.showinfo(
+            "Datenverzeichnis geaendert",
+            f"Neues Verzeichnis:\n{resolved}\n\n"
+            f"{len(copied)} Eintrag(e) kopiert. Bitte den Alltagshelfer neu "
+            f"starten, damit die Aenderung wirksam wird.")
 
     # ----------------------------------------------------------------
     #  Lizenz-Sektion (Settings-Tab)
@@ -3061,7 +3104,52 @@ class AlltagshelferGUI(ctk.CTk):
         self._show_dialog("Notifikationen", msg)
 
 
+def _ask_data_directory(title: str, initialdir: str) -> Optional[str]:
+    """Zeigt vor dem Start der Haupt-GUI einen Verzeichnis-Dialog.
+
+    Nutzt eine eigene, sofort wieder zerstoerte Tk-Wurzel, damit der Dialog
+    unabhaengig von der spaeteren customtkinter-App laeuft.
+    """
+    import tkinter as tk
+    from tkinter import filedialog
+    root = tk.Tk()
+    root.withdraw()
+    try:
+        path = filedialog.askdirectory(
+            title=title, initialdir=initialdir, mustexist=False)
+    finally:
+        root.destroy()
+    return path or None
+
+
+def _ensure_data_dir() -> None:
+    """Loest das Datenverzeichnis auf und wechselt hinein.
+
+    Erststart (keine gemerkte Wahl, keine ALLTAGSHELFER_DATA_DIR): per Dialog
+    erfragt (Default vorbelegt); die Wahl wird gemerkt und vorhandene Daten
+    aus dem bisherigen Arbeitsverzeichnis hineinkopiert. Danach - und bei
+    jedem weiteren Start - wird ins Verzeichnis gewechselt, sodass DB,
+    Exporte, Backups und Sync-State dort liegen. Ressourcen (locales/,
+    assets/) werden ueber __file__ geladen und bleiben unberuehrt.
+    """
+    from services import datadir
+    chosen = datadir.configured_data_dir()
+    if chosen is None:
+        default = datadir.default_data_dir()
+        picked = _ask_data_directory(
+            title="Datenverzeichnis fuer den Alltagshelfer waehlen",
+            initialdir=str(default.parent))
+        old_cwd = Path.cwd()
+        resolved, _copied = datadir.prepare_data_dir(
+            Path(picked) if picked else default, migrate_from=old_cwd)
+        datadir.remember_data_dir(resolved)
+    else:
+        resolved, _copied = datadir.prepare_data_dir(chosen)
+    datadir.activate(resolved)
+
+
 def main() -> None:
+    _ensure_data_dir()
     _apply_win11_theme()
     (db, registry, assistant, config, settings, module_states,
      synced, profile, auto_backup) = bootstrap()
