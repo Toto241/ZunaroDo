@@ -32,6 +32,7 @@ wird.
 | 09   | [Release-Checkliste](09_RELEASE_CHECKLIST.md) | Pre-Flight-Liste vor jedem Play-Store-Upload |
 | 10   | [Typische Ablehnungsgründe & Gegenmaßnahmen](10_REJECTION_REASONS.md) | Realer Katalog inkl. Maßnahmen |
 | 11   | [Play-Console-Einreichung](11_PLAY_SUBMISSION.md) | Hand-Schritte (Data-Safety, Content-Rating, Assets, Identität) mit generierten Antworten |
+| 12   | [Play Billing Integration](12_PLAY_BILLING_INTEGRATION.md) | Roadmap Google Play Billing (Kivy/Buildozer) |
 
 ## Automatisierte Prüfmechanismen
 
