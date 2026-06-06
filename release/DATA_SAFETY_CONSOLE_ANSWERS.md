@@ -1,4 +1,4 @@
-﻿# Play Console - Data Safety (Antwortbogen)
+# Play Console - Data Safety (Antwortbogen)
 
 - Daten gesammelt: **True**
 - Daten an Dritte weitergegeben: **False**

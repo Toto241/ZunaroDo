@@ -59,20 +59,23 @@ class ExternalTokenProvider(PaymentProvider):
 
 
 class PlayBillingProvider(PaymentProvider):
-    """Stub bis Java/pyjnius-Bruecke implementiert ist."""
+    """Google Play Billing — Phase 1 ueber play_billing_android.py."""
 
     def provider_id(self) -> str:
         return "google_play_billing"
 
     def is_available(self) -> bool:
-        return False
+        from services.play_billing_android import is_available
+
+        return is_available()
 
     def activate_from_user_input(self, token: str, repo=None) -> PurchaseResult:
-        return PurchaseResult(
-            False,
-            "Google Play Billing ist noch nicht integriert. "
-            "Siehe docs/android/12_PLAY_BILLING_INTEGRATION.md.",
-        )
+        from services.play_billing_android import purchase, status_message
+
+        if not self.is_available():
+            return PurchaseResult(False, status_message())
+        ok, msg = purchase(token or "")
+        return PurchaseResult(ok, msg)
 
 
 def default_provider() -> PaymentProvider:
