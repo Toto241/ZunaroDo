@@ -1,8 +1,8 @@
 # Sichere Geraetekopplung - Konzept
 
 Dieses Dokument beschreibt das Konzept zur sicheren Kopplung zwischen
-einer Windows-Desktop-App, der Android-App und der iOS-App des
-Alltagshelfers. Es ist die Grundlage fuer die Ablouml;sung des heute
+einer Windows-Desktop-App, der Android-App und der iOS-App von
+ZunaroDo. Es ist die Grundlage fuer die Ablouml;sung des heute
 verwendeten gemeinsamen `--token` in `services/sync_server.py` durch ein
 echtes, geraetegebundenes Schluesselmaterial.
 

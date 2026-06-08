@@ -4,7 +4,7 @@ This file is a template. Angle brackets mark placeholders such as <PROVIDER_NAME
 
 ## §1 Scope
 
-(1) These terms apply to all contracts between <PROVIDER_NAME> ("Provider") and users of the "Alltagshelfer" software ("App") concluded through the App Store, Play Store or directly with the Provider.
+(1) These terms apply to all contracts between <PROVIDER_NAME> ("Provider") and users of the "ZunaroDo" software ("App") concluded through the App Store, Play Store or directly with the Provider.
 
 (2) Deviating conditions of the user will not be recognized unless the Provider agrees to their validity in writing.
 

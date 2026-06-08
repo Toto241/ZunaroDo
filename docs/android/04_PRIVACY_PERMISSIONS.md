@@ -56,7 +56,7 @@ Rationale-Texte**:
 
 ```text
 notifications:
-  "Damit dich Alltagshelfer an Termine und Fristen erinnern kann."
+  "Damit dich ZunaroDo an Termine und Fristen erinnern kann."
 network_state:
   "Damit wir vor einem Sync prüfen können, ob du gerade online bist."
 ```

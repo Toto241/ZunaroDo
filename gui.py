@@ -38,7 +38,7 @@ from main import (apply_persisted_module_states, build_registry,
 from services.sync_runtime import resolve_sync_provider
 from services.config import (DEFAULTS, ENV_MAP, SECRET_KEYS, AppConfig,
                               load_config, save_value)
-from services.gemini import GeminiClient
+from services.llm_factory import build_gemini_client
 from services.i18n import I18n
 from services.output import OutputService
 from services.profile import db_path, resolve_profile, state_dir
@@ -240,8 +240,8 @@ def bootstrap() -> tuple[Database, ModuleRegistry, Assistant, AppConfig,
     from services.license_gate import install_gate
     license_at_boot = load_license(settings)
     if license_at_boot.allows_ai():
-        llm = GeminiClient(model=config.gemini_model,
-                           api_key=config.gemini_api_key or None)
+        llm = build_gemini_client(model=config.gemini_model,
+                                  api_key=config.gemini_api_key or None)
         active_llm = llm if llm.is_available else None
     else:
         active_llm = None

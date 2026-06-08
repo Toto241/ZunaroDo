@@ -2,7 +2,7 @@
 
 ## 1. Anspruch
 
-Alltagshelfer ist eine **familienorientierte Produktivitäts-App**. Die
+ZunaroDo ist eine **familienorientierte Produktivitäts-App**. Die
 Zielgruppe schließt explizit ältere Nutzer und Menschen mit
 eingeschränkter Sehkraft ein. Accessibility ist deshalb **funktional**,
 nicht kosmetisch.

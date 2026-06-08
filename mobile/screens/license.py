@@ -3,6 +3,9 @@ Lizenz- und Pro-Aktivierung fuer die Mobile-App (Paritaet zu gui.py Settings).
 """
 from __future__ import annotations
 
+import threading
+
+from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
@@ -81,6 +84,16 @@ class LicenseScreen(MDScreen):
         ))
         body.add_widget(btn_row)
 
+        # "Pro ueber Play Store" - nur, wenn Play Billing verfuegbar ist
+        # (also im echten Play-Build auf dem Geraet, nicht auf Desktop).
+        if self._play_available():
+            self.play_btn = MDRaisedButton(
+                text=self._t("license.buy_play", "Pro ueber Play Store"),
+                size_hint_y=None, height=dp(48),
+                on_release=lambda *_: self._on_play_buy(),
+            )
+            body.add_widget(self.play_btn)
+
         scroll.add_widget(body)
         root.add_widget(scroll)
         self.add_widget(root)
@@ -110,6 +123,43 @@ class LicenseScreen(MDScreen):
         result = action_start_trial(repo)
         self._show_message(result.message)
         self._refresh_status()
+
+    def _play_available(self) -> bool:
+        try:
+            from services.play_billing_android import is_available
+
+            return is_available()
+        except Exception:
+            return False
+
+    def _on_play_buy(self) -> None:
+        """Startet den Play-Kauf in einem Worker-Thread (purchase blockiert)."""
+        repo = self._settings_repo()
+        if repo is None:
+            return
+        if hasattr(self, "play_btn"):
+            self.play_btn.disabled = True
+        self._show_message(self._t(
+            "license.play_running", "Kauf wird gestartet ..."))
+
+        def worker():
+            from services.payment_provider import PlayBillingProvider
+
+            try:
+                result = PlayBillingProvider().activate_from_user_input(
+                    "", repo=repo)
+                message = result.message
+            except Exception as exc:                      # noqa: BLE001
+                message = f"Fehler: {exc}"
+
+            def finish(_dt):
+                if hasattr(self, "play_btn"):
+                    self.play_btn.disabled = False
+                self._show_message(message)
+                self._refresh_status()
+            Clock.schedule_once(finish, 0)
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _open_token_dialog(self) -> None:
         field = MDTextField(

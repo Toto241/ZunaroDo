@@ -8,6 +8,15 @@ def test_not_available_on_desktop():
 
 
 def test_purchase_fails_when_unavailable():
-    ok, msg = pba.purchase("zunarodo_pro_monthly")
-    assert ok is False
-    assert msg
+    outcome = pba.purchase("zunarodo_pro_monthly")
+    assert outcome.ok is False
+    assert outcome.message
+    assert outcome.purchase_token == ""
+
+
+def test_list_skus_empty_on_desktop():
+    assert pba.list_skus() == []
+
+
+def test_start_connection_false_on_desktop():
+    assert pba.start_connection(timeout=0.1) is False

@@ -1,4 +1,4 @@
-# Android-Port des Alltagshelfers
+# Android-Port von ZunaroDo
 
 Diese Datei beschreibt, wie die Mobile-Version gebaut und entwickelt wird.
 

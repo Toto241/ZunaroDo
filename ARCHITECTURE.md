@@ -1,4 +1,4 @@
-# Architektur - Alltagshelfer
+# Architektur - ZunaroDo
 
 Diese Datei beschreibt die Architektur in Schichten, nicht nach Modulen.
 Ein neuer Beitragender soll nach 15 Minuten Lesen wissen, wo welche Art

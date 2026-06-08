@@ -123,7 +123,7 @@ optionalen `expected_pin`-Parameter (TODO bei Native-Bedarf einbauen).
   - Resource-Shrinking (`isShrinkResources = true`)
 - `proguard-rules.pro` hält Keep-Regeln für Reflection-Pfade
   (Kotlin Coroutines, Retrofit, Room).
-- **DexGuard** / **iXGuard** sind optional - für Alltagshelfer nicht
+- **DexGuard** / **iXGuard** sind optional - für ZunaroDo nicht
   zwingend, da kein hochwertiger IP-Schutz nötig.
 
 ### Python (Kivy)

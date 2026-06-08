@@ -28,8 +28,8 @@ from typing import Callable, Optional
 
 from core.interface import ModuleRegistry
 from database import AssistantLogRepository
-from services.gemini import GeminiClient
 from services.llm import ConfirmCallback, LLMAnswer, LLMClient, TokenUsage
+from services.llm_factory import build_gemini_client
 
 
 SYSTEM_PROMPT_STATIC = (
@@ -65,7 +65,7 @@ class Assistant:
         if llm is not None:
             self.llm: Optional[LLMClient] = llm
         else:
-            candidate = GeminiClient()
+            candidate = build_gemini_client()
             self.llm = candidate if candidate.is_available else None
 
         # Konversationsverlauf pro Session (Liste von genai.Content-Objekten

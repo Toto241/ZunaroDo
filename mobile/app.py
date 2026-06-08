@@ -109,7 +109,11 @@ if HAS_KIVYMD:
             self.theme_cls.material_style = "M3"
 
             db_path = _default_db_path()
-            self._db = Database(str(db_path))
+            # DB-Schluessel plattformabhaengig ableiten (Android Keystore /
+            # Env). Liefert None, solange keine SQLCipher-Engine im Build
+            # ist - dann laeuft die DB wie bisher unverschluesselt weiter.
+            from services.db_key import resolve_db_key
+            self._db = Database(str(db_path), encryption_key=resolve_db_key())
             # Settings-Repo oeffentlich halten - der Sprachumschalter im
             # "Mehr"-Screen persistiert hierueber.
             self.settings = SettingsRepository(self._db)

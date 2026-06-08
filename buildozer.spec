@@ -18,9 +18,19 @@ version = 1.0.0
 # Pflicht-Requirements
 # - python3, kivy, kivymd: das Frontend selbst
 # - sqlite3: built-in im python-for-android-Recipe
-# - certifi, requests: TLS-Validierung (z.B. fuer den Sync-Server)
-# - google-generativeai: optional, wenn die App Online-Assistent nutzen darf
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,certifi,requests
+# - certifi, requests: TLS-Validierung + Gemini-REST-Client
+#   (services/gemini_rest.py spricht Gemini ueber requests an, damit der
+#   KI-Assistent OHNE das nicht-baubare 'google-generativeai'-SDK laeuft).
+# - pyjnius: Java-Bruecken (Play Billing, DB-Keystore, ML-Kit-OCR).
+requirements = python3,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius
+#
+# OPTIONAL: DB-Verschluesselung (SQLCipher).
+#   Die Python-Seite ist fertig (database.py + services/db_key.py). Zum
+#   Aktivieren 'sqlcipher3' anhaengen - dann greift die lokale Recipe
+#   unter ./recipes (siehe p4a.local_recipes weiter unten):
+#       requirements = ...,pyjnius,sqlcipher3
+#   ACHTUNG: Die Recipe (recipes/sqlcipher3/) ist noch NICHT auf einem
+#   echten WSL2/Linux-Build verifiziert. Vor Release dort testen.
 
 # Welcher Screen-Orientierungs-Default
 orientation = portrait
@@ -46,6 +56,28 @@ android.api = 35
 android.minapi = 24
 android.ndk_api = 24
 android.archs = arm64-v8a, armeabi-v7a
+
+# ---------------------------------------------------------------------
+# Native-Integrationen (Java-Bruecken + Gradle-Abhaengigkeiten)
+# ---------------------------------------------------------------------
+# Java-Quellwurzel mit korrekter Paketstruktur:
+#   de/alltagshelfer/billing/PlayBillingBridge.java   (Play Billing)
+#   de/alltagshelfer/dbkey/DbKeyProvider.java         (SQLCipher-Key)
+#   de/alltagshelfer/ocr/MlKitOcrBridge.java          (On-Device-OCR)
+android.add_src = src/android/java
+
+# AndroidX wird von security-crypto und ML Kit benoetigt.
+android.enable_androidx = True
+
+# Gradle-Abhaengigkeiten der Bruecken:
+#   - billing:        In-App-Abos (Play Billing Library)
+#   - security-crypto: Keystore-gestuetzte EncryptedSharedPreferences
+#   - text-recognition: lokale OCR (kein Cloud-Call)
+android.gradle_dependencies = com.android.billingclient:billing:6.2.1, androidx.security:security-crypto:1.1.0-alpha06, com.google.mlkit:text-recognition:16.0.1
+
+# Lokale p4a-Recipes (aktuell: sqlcipher3). Wird nur gebaut, wenn das
+# Paket auch in 'requirements' steht.
+p4a.local_recipes = ./recipes
 
 # Release-Artefakt: Google Play verlangt ein App Bundle (.aab), kein APK.
 # 'buildozer android release' erzeugt damit bin/*.aab. Die Signierung

@@ -27,7 +27,11 @@ jobs:
           cache: pip
 
       - name: Run compliance checker (strict)
-        run: python -m tools.playstore_check --strict
+        run: |
+          # PyYAML wird gebraucht, damit der Checker playstore.yml lesen
+          # kann (sonst WARN bei store_assets -> --strict schlaegt fehl).
+          python -m pip install --quiet pyyaml
+          python -m tools.playstore_check --strict
 
       - name: i18n-Locale-Parität (Keys + CORE_KEYS)
         run: python -m tools.i18n_sync --check

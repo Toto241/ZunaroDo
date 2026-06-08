@@ -2,6 +2,7 @@
 OCR-Dienst fuer Kassenbons (Modul B).
 
 Versuche in dieser Reihenfolge - alle LOKAL, keine Cloud:
+  0. ML Kit (nur Android)             - On-Device-OCR ueber pyjnius-Bruecke
   1. pytesseract (+ Tesseract-Engine) - sehr robust fuer Quittungen
   2. easyocr                          - alternative reine Python-Bibliothek
   3. ohne OCR                         - klarer Hinweis statt Crash
@@ -25,6 +26,24 @@ _SUM_HINTS = ("summe", "gesamt", "total", "zu zahlen", "betrag", "endbetrag")
 # -----------------------------------------------------------------
 #  Engine-Auswahl
 # -----------------------------------------------------------------
+def _try_mlkit():
+    """ML-Kit-OCR (Android). Auf Desktop nicht verfuegbar -> None."""
+    try:
+        from services import ocr_android
+
+        if not ocr_android.is_available():
+            return None
+
+        def run(path: Path) -> str:
+            text = ocr_android.recognize(str(path))
+            if text is None:
+                raise RuntimeError("ML Kit lieferte keinen Text")
+            return text
+        return run
+    except Exception:
+        return None
+
+
 def _try_tesseract():
     try:
         import pytesseract                                   # type: ignore[import-not-found]
@@ -51,6 +70,9 @@ def _try_easyocr():
 
 def _select_engine() -> Optional[tuple[str, object]]:
     """Liefert (Name, Aufruf) der ersten verfuegbaren OCR-Engine."""
+    engine = _try_mlkit()
+    if engine is not None:
+        return "mlkit", engine
     engine = _try_tesseract()
     if engine is not None:
         return "tesseract", engine
@@ -112,6 +134,8 @@ def scan_receipt(image_path: str) -> dict:
 def available_engines() -> list[str]:
     """Liefert eine Liste der hier verfuegbaren OCR-Engines (zur Diagnose)."""
     out: list[str] = []
+    if _try_mlkit() is not None:
+        out.append("mlkit")
     if _try_tesseract() is not None:
         out.append("tesseract")
     if _try_easyocr() is not None:
