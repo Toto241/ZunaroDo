@@ -147,6 +147,13 @@ def purchase(product_id: str, *, poll_timeout: float = 180.0) -> PurchaseOutcome
     bridge = _bridge()
     if bridge is None:
         return PurchaseOutcome(False, status_message())
+
+    # ProductDetails MUSS vor launchBillingFlow im Java-Cache liegen -
+    # sonst findet die Bruecke kein Angebot und der Dialog oeffnet nie.
+    if not list_skus((product_id,)):
+        return PurchaseOutcome(
+            False, "Produktdetails konnten nicht geladen werden.")
+
     try:
         bridge.clearLastPurchase()
         bridge.launchPurchase(product_id)
@@ -165,9 +172,15 @@ def purchase(product_id: str, *, poll_timeout: float = 180.0) -> PurchaseOutcome
             return PurchaseOutcome(True, "Kauf erfolgreich",
                                    purchase_token=token,
                                    product_id=bought_product)
-        # 1 == USER_CANCELED in der Billing Library.
+        # Billing-Response-Codes: 0 == OK (Token folgt gleich), -1 == noch
+        # keine Antwort. 1 == USER_CANCELED, alles andere = echter Fehler
+        # (z.B. ITEM_ALREADY_OWNED, SERVICE_UNAVAILABLE). Dann nicht bis
+        # zum Timeout warten, sondern sofort abbrechen.
         if code == 1:
             return PurchaseOutcome(False, "Kauf vom Nutzer abgebrochen.")
+        if code not in (-1, 0):
+            return PurchaseOutcome(
+                False, f"Kauf fehlgeschlagen (Billing-Code {code}).")
         time.sleep(0.5)
     return PurchaseOutcome(False, "Zeitueberschreitung beim Kauf.")
 

@@ -49,7 +49,8 @@ class Sqlcipher3Recipe(CompiledComponentsPythonRecipe):
         env = super().get_recipe_env(arch, **kwargs)
 
         openssl_recipe = self.get_recipe("openssl", self.ctx)
-        env["CFLAGS"] += openssl_recipe.include_flags(arch)
+        # CFLAGS/LDFLAGS sind im Env nicht garantiert vorhanden -> .get().
+        env["CFLAGS"] = env.get("CFLAGS", "") + openssl_recipe.include_flags(arch)
         env["CFLAGS"] += (
             " -DSQLITE_HAS_CODEC"
             " -DSQLITE_TEMP_STORE=2"
@@ -57,7 +58,7 @@ class Sqlcipher3Recipe(CompiledComponentsPythonRecipe):
         )
 
         # libcrypto aus der openssl-Recipe linken.
-        env["LDFLAGS"] += openssl_recipe.link_dirs_flags(arch)
+        env["LDFLAGS"] = env.get("LDFLAGS", "") + openssl_recipe.link_dirs_flags(arch)
         env["LIBS"] = env.get("LIBS", "") + " -lcrypto"
         return env
 

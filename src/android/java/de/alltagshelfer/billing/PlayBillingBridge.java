@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Google Play Billing (Billing Library 6.x) als pyjnius-Bruecke.
@@ -177,27 +179,34 @@ public final class PlayBillingBridge {
         });
     }
 
-    private String queryProducts(String[] productIds) {
-        List<QueryProductDetailsParams.Product> products = new ArrayList<>();
-        for (String id : productIds) {
-            products.add(QueryProductDetailsParams.Product.newBuilder()
-                    .setProductId(id)
-                    .setProductType(BillingClient.ProductType.SUBS)
-                    .build());
-        }
-        QueryProductDetailsParams params =
-                QueryProductDetailsParams.newBuilder()
-                        .setProductList(products)
-                        .build();
+    private volatile boolean queryInFlight = false;
 
-        billingClient.queryProductDetailsAsync(params, (result, list) -> {
-            productCache.clear();
-            if (list != null) {
-                for (ProductDetails pd : list) {
-                    productCache.put(pd.getProductId(), pd);
-                }
+    private String queryProducts(String[] productIds) {
+        // Nur EINE Abfrage starten - Python pollt diese Methode mehrfach,
+        // ohne erneut zu starten waeren das sonst viele API-Calls.
+        if (productCache.isEmpty() && !queryInFlight) {
+            queryInFlight = true;
+            List<QueryProductDetailsParams.Product> products = new ArrayList<>();
+            for (String id : productIds) {
+                products.add(QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(id)
+                        .setProductType(BillingClient.ProductType.SUBS)
+                        .build());
             }
-        });
+            QueryProductDetailsParams params =
+                    QueryProductDetailsParams.newBuilder()
+                            .setProductList(products)
+                            .build();
+
+            billingClient.queryProductDetailsAsync(params, (result, list) -> {
+                if (list != null) {
+                    for (ProductDetails pd : list) {
+                        productCache.put(pd.getProductId(), pd);
+                    }
+                }
+                queryInFlight = false;
+            });
+        }
 
         // Snapshot dessen, was bereits im Cache liegt (Python pollt erneut,
         // falls beim ersten Aufruf noch leer).
@@ -261,9 +270,20 @@ public final class PlayBillingBridge {
                         .setPurchaseToken(purchaseToken)
                         .build();
         final boolean[] ok = {false};
-        billingClient.acknowledgePurchase(params, result ->
-                ok[0] = result.getResponseCode()
-                        == BillingClient.BillingResponseCode.OK);
+        // acknowledgePurchase ist asynchron. Da der Aufruf aus einem
+        // Python-Worker-Thread kommt, blockierend auf den Callback warten,
+        // sonst gibt ack() immer false zurueck.
+        final CountDownLatch latch = new CountDownLatch(1);
+        billingClient.acknowledgePurchase(params, result -> {
+            ok[0] = result.getResponseCode()
+                    == BillingClient.BillingResponseCode.OK;
+            latch.countDown();
+        });
+        try {
+            latch.await(8, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         return ok[0];
     }
 }

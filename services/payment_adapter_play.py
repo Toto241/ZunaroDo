@@ -65,6 +65,11 @@ class PlayVerification:
     acknowledged: bool = False
     # Optionale, von Play obfuskierte Konto-Referenz (kein Klartext-Mail).
     external_account_id: str = ""
+    # Die tatsaechlich von Play zum Token gemeldete Produkt-ID. Wird in
+    # parse_play_purchase gegen die vom Client behauptete SKU geprueft -
+    # sonst koennte ein gueltiger Lower-Tier-Token als Family ausgegeben
+    # werden (Tier-Escalation).
+    product_id: str = ""
     raw: dict = field(default_factory=dict)
 
 
@@ -102,6 +107,13 @@ def parse_play_purchase(
 
     verification = verifier(package_name, product_id, purchase_token)
     if not verification.valid:
+        return None
+
+    # Tier-Escalation verhindern: wenn Play eine konkrete Produkt-ID zum
+    # Token meldet, MUSS sie der vom Client behaupteten SKU entsprechen.
+    # Sonst koennte ein gueltiger Monthly-Token als Family eingereicht
+    # werden. Bei Abweichung kein Token ausstellen.
+    if verification.product_id and verification.product_id != product_id:
         return None
 
     expires_at = verification.expiry_at or _default_expiry(tier)
@@ -172,6 +184,7 @@ def verify_with_play_api(
     }
     line_items = resp.get("lineItems") or []
     expiry_at: Optional[datetime] = None
+    verified_product = ""
     if line_items:
         expiry_iso = line_items[0].get("expiryTime")
         if expiry_iso:
@@ -180,6 +193,9 @@ def verify_with_play_api(
                     expiry_iso.replace("Z", "+00:00"))
             except (ValueError, TypeError):
                 expiry_at = None
+        # Die von Play tatsaechlich gemeldete Produkt-ID - wird gegen die
+        # Client-SKU geprueft (Anti-Tier-Escalation).
+        verified_product = line_items[0].get("productId", "")
 
     return PlayVerification(
         valid=state in valid_states,
@@ -189,5 +205,6 @@ def verify_with_play_api(
         == "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED",
         external_account_id=(resp.get("externalAccountIdentifiers") or {}).get(
             "obfuscatedExternalAccountId", ""),
+        product_id=verified_product,
         raw=resp,
     )

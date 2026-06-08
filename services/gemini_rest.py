@@ -22,12 +22,13 @@ Objekte des SDK - direkt serialisierbar.
 from __future__ import annotations
 
 import os
-from typing import Any, Callable, Optional
-
-import requests
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from services.llm import (ConfirmCallback, Dispatcher, LLMAnswer, ToolCall,
                           TokenUsage)
+
+if TYPE_CHECKING:           # nur fuer Typpruefung - kein Laufzeit-Import
+    import requests
 
 # Basis-Endpunkt der Gemini-REST-API. Der Key wird als ?key=... angehaengt
 # (so dokumentiert Google die generativelanguage-API); niemals in Logs.
@@ -52,11 +53,15 @@ class GeminiRestClient:
 
     def __init__(self, model: str = "gemini-2.5-flash",
                  api_key: Optional[str] = None,
-                 session: Optional[requests.Session] = None):
+                 session: Optional["requests.Session"] = None):
         self.model = model
         self._api_key = api_key or _resolve_api_key() or ""
         self._enabled = bool(self._api_key)
-        self._session = session or requests.Session()
+        # Session LAZY: 'requests' wird erst beim ersten echten Call
+        # importiert. So laeuft die App (z.B. im FREE-Tier ohne Key) auch
+        # in Umgebungen ohne 'requests' - der Import schlaegt sonst schon
+        # beim Konstruieren fehl (Desktop-CI installiert requests nicht).
+        self._session = session
 
     @property
     def is_available(self) -> bool:
@@ -66,11 +71,29 @@ class GeminiRestClient:
     def _endpoint(self, method: str) -> str:
         return f"{_API_BASE}/models/{self.model}:{method}?key={self._api_key}"
 
+    def _ensure_session(self):
+        if self._session is None:
+            try:
+                import requests
+            except ImportError:
+                raise RuntimeError(
+                    "'requests' ist fuer den Gemini-REST-Client noetig, "
+                    "aber nicht installiert.") from None
+            self._session = requests.Session()
+        return self._session
+
     def _post(self, method: str, payload: dict) -> dict:
-        resp = self._session.post(self._endpoint(method), json=payload,
-                                  timeout=_TIMEOUT)
+        session = self._ensure_session()
+        try:
+            resp = session.post(self._endpoint(method), json=payload,
+                                timeout=_TIMEOUT)
+        except Exception:
+            # WICHTIG: Der API-Key steckt in der URL (?key=...). Den
+            # Original-Traceback/-Fehlertext NICHT durchreichen, sonst
+            # landet der Key in Logs. 'from None' kappt die Kette.
+            raise RuntimeError("Gemini-REST-Verbindungsfehler") from None
         if resp.status_code >= 400:
-            # Fehlertext OHNE den Key (steckt nur in der URL) weiterreichen.
+            # status/text enthalten den Key nicht (nur die URL tut das).
             raise RuntimeError(
                 f"Gemini-REST-Fehler {resp.status_code}: {resp.text[:500]}")
         return resp.json()

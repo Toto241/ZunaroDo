@@ -17,6 +17,12 @@ from services.licensing import License
 
 log = logging.getLogger(__name__)
 
+# Verifikations-Endpoint des eigenen Servers (/verify/play). MUSS vor dem
+# Play-Release mit der echten URL belegt werden - Play-Store-Nutzer koennen
+# keine Prozess-Umgebungsvariable setzen, deshalb wird die URL ins Release
+# gebacken. Reihenfolge: Konstruktor-Arg > Env (Tests/Dev) > diese Konstante.
+DEFAULT_PLAY_VERIFY_URL = ""
+
 
 @dataclass(frozen=True)
 class PurchaseResult:
@@ -77,8 +83,9 @@ class PlayBillingProvider(PaymentProvider):
 
     def __init__(self, verify_url: str = "",
                  default_sku: str = "zunarodo_pro_monthly"):
-        self._verify_url = verify_url or os.environ.get(
-            "ZUNARODO_PLAY_VERIFY_URL", "")
+        self._verify_url = (verify_url
+                            or os.environ.get("ZUNARODO_PLAY_VERIFY_URL", "")
+                            or DEFAULT_PLAY_VERIFY_URL)
         self._default_sku = default_sku
 
     def provider_id(self) -> str:
@@ -106,17 +113,26 @@ class PlayBillingProvider(PaymentProvider):
         license_token = self._verify_on_server(
             outcome.product_id, outcome.purchase_token)
         if not license_token:
+            # NICHT acknowledgen -> Play storniert nach 3 Tagen automatisch,
+            # der Nutzer wird also nicht dauerhaft belastet ohne Lizenz.
             return PurchaseResult(
                 False, "Kauf ok, aber Server-Verifikation fehlgeschlagen. "
-                       "Bitte spaeter erneut versuchen.")
-
-        # Kauf gegenueber Play bestaetigen (sonst Auto-Refund nach 3 Tagen).
-        acknowledge(outcome.purchase_token)
+                       "Die Belastung wird automatisch storniert, falls die "
+                       "Aktivierung nicht klappt. Bitte spaeter erneut "
+                       "versuchen.")
 
         if repo is None:
+            # Ohne Repo koennen wir lokal nichts anwenden -> erst nach
+            # erfolgreicher Aktivierung acknowledgen.
+            acknowledge(outcome.purchase_token)
             return PurchaseResult(True, "Lizenz erhalten.", None)
+
         from services.license_ui import action_apply_token
         result = action_apply_token(repo, license_token)
+        if result.success:
+            # Kauf ERST nach erfolgreicher lokaler Aktivierung bestaetigen
+            # (sonst Auto-Refund nach 3 Tagen - korrekt, falls DB-Fehler).
+            acknowledge(outcome.purchase_token)
         return PurchaseResult(result.success, result.message, result.license)
 
     def _verify_on_server(self, product_id: str,
