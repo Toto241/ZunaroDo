@@ -16,7 +16,7 @@ E-Mail: alltagshelfer@zunarodo.github.io
 
 ## 2. Grundsatz - Lokale Datenhaltung
 
-Alltagshelfer ist eine **lokal laufende Anwendung**. Alle Nutzdaten
+ZunaroDo ist eine **lokal laufende Anwendung**. Alle Nutzdaten
 (Vertraege, Termine, Familie, Finanzen, Notizen) werden ausschliesslich
 auf dem Geraet des Nutzers in einer SQLite-Datenbank gespeichert -
 optional verschluesselt mit SQLCipher (siehe README).

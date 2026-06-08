@@ -1,4 +1,4 @@
-# Entwickeln am Alltagshelfer
+# Entwickeln an ZunaroDo
 
 Kurzleitfaden fuer alle, die hier mitarbeiten. Wer nur installieren
 moechte: bitte die README lesen.

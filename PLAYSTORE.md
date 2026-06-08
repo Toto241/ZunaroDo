@@ -5,7 +5,7 @@ groesseren Differenzen zur offiziellen Doku gilt diese. Diese Datei
 beschreibt **konkret** den Weg vom lokalen Build zum oeffentlichen
 Release im Google Play Store.
 
-Die App "Alltagshelfer" baut mit Buildozer/python-for-android auf
+Die App "ZunaroDo" baut mit Buildozer/python-for-android auf
 einem KivyMD-Stack ([MOBILE.md](MOBILE.md)). Die Beispiele unten
 beziehen sich auf dieses Setup; wer mit Android Studio / Gradle
 arbeitet, findet die Aequivalente in Abschnitt C.
@@ -89,7 +89,7 @@ Identitaetspruefung in einen halb-blockierten Zustand kommt.
 
 | Feld | Beispiel | Hinweis |
 | --- | --- | --- |
-| App-Titel (Store-Listing) | Alltagshelfer | bis 30 Zeichen, **nach Release nicht aenderbar** |
+| App-Titel (Store-Listing) | ZunaroDo | bis 30 Zeichen, **nach Release nicht aenderbar** |
 | Paketname / Application ID | `de.zunarodo.alltagshelfer` | **nie wieder aenderbar nach erstem Upload** - sehr sorgfaeltig waehlen! |
 | Reverse-Domain | `<tld>.<organisation>.<app>` | eigene Domain als Praefix nutzen |
 
@@ -322,7 +322,7 @@ Pruefe jeden Drittanbieter:
 | Paddle / Lemon Squeezy | Zahlungsdaten | USA/UK | ja |
 | KivyMD / python-for-android | nichts (lokal) | nein | nein |
 
-**Alltagshelfer aktuell:** nutzt nur python-for-android,
+**ZunaroDo aktuell:** nutzt nur python-for-android,
 Gemini (optional, vom Nutzer aktivierbar) und SMTP/IMAP gegen
 Nutzer-eigene Server. **Keine** Drittanbieter-Telemetrie.
 
@@ -340,7 +340,7 @@ In der Play Console: App-Inhalte -> Datensicherheit. Pflichtangaben:
 - Kann der Nutzer die Loeschung seiner Daten anfordern?
 - Hat die App ein etabliertes Sicherheits-Audit?
 
-**Fuer Alltagshelfer:** Sehr stark "lokal verarbeitet, nicht
+**Fuer ZunaroDo:** Sehr stark "lokal verarbeitet, nicht
 gesammelt" - das ist eines unserer Verkaufsargumente. Sauber so
 deklarieren, Privacy-Story passt 1:1.
 
@@ -355,14 +355,14 @@ deklarieren, Privacy-Story passt 1:1.
 ### 3.5 Altersfreigabe / Inhaltsbewertung (IARC)
 
 Play Console -> App-Inhalte -> Inhaltsbewertung. Fragenkatalog
-durchklicken (Gewalt, Sex, Drogen, ...). Fuer Alltagshelfer:
+durchklicken (Gewalt, Sex, Drogen, ...). Fuer ZunaroDo:
 typisch USK 0 / PEGI 3 / ESRB Everyone.
 
 ### 3.6 Werbung, In-App-Kaeufe, Abos
 
-- **Werbung enthalten?** Bei Alltagshelfer: nein -> "Diese App enthaelt
+- **Werbung enthalten?** Bei ZunaroDo: nein -> "Diese App enthaelt
   keine Werbung".
-- **In-App-Kaeufe?** Bei Alltagshelfer aktuell: nein (Lizenz wird ueber
+- **In-App-Kaeufe?** Bei ZunaroDo aktuell: nein (Lizenz wird ueber
   externes Paddle/Lemon Squeezy ausgestellt - das ist KEIN IAP im
   Play-Sinn). Pruefe aber Google's externe-Zahlung-Politik (DMA-bedingt
   in EU jetzt erlaubt, sonst eingeschraenkt).
@@ -373,7 +373,7 @@ typisch USK 0 / PEGI 3 / ESRB Everyone.
 
 - Wenn Zielgruppe Kinder unter 13: Compliance mit "Designed for
   Families"-Programm (zusaetzliche Pruefung, COPPA-konform).
-- Alltagshelfer: Zielgruppe Erwachsene -> entsprechend deklarieren.
+- ZunaroDo: Zielgruppe Erwachsene -> entsprechend deklarieren.
 
 ---
 
@@ -383,7 +383,7 @@ typisch USK 0 / PEGI 3 / ESRB Everyone.
 
 | Feld | Limit | Best Practice |
 | --- | --- | --- |
-| App-Titel | 30 Zeichen | "Alltagshelfer - Familien-Organizer" |
+| App-Titel | 30 Zeichen | "ZunaroDo - Familien-Organizer" |
 | Kurzbeschreibung | 80 Zeichen | "Vertraege, Termine, Familie - lokal, privat, ohne Werbung." |
 | Vollstaendige Beschreibung | 4000 Zeichen | Fliesstext, kein Keyword-Spam |
 | App-Icon | 512x512 PNG, kein Alpha | mit dem In-App-Icon konsistent |
@@ -395,7 +395,7 @@ typisch USK 0 / PEGI 3 / ESRB Everyone.
 ### 4.2 Beispiel-Beschreibung (Auszug)
 
 ```text
-Alltagshelfer haelt Vertraege, Termine, Familie und Finanzen sortiert -
+ZunaroDo haelt Vertraege, Termine, Familie und Finanzen sortiert -
 komplett lokal auf deinem Geraet, ohne Werbung, ohne Tracking.
 
 Was du erledigst:
@@ -423,7 +423,7 @@ Fragen? support@deine-domain.de
 ### 4.3 ASO (App Store Optimization)
 
 - **Keyword im Titel:** ein primaeres Keyword neben dem App-Namen
-  ("Alltagshelfer - Familien-Organizer" - "Familien-Organizer" ist
+  ("ZunaroDo - Familien-Organizer" - "Familien-Organizer" ist
   ein gesuchter Begriff).
 - **Kurzbeschreibung:** muss Wert versprechen, weil das Conversion-
   treiber ist.
@@ -458,7 +458,7 @@ gefragt - alle **nicht aenderbar** ausser den Beschreibungstexten:
 
 Mehrere Pflicht-Pflicht-Pflicht-Felder, bevor Production-Release moeglich ist:
 
-| Erklaerung | Antwort fuer Alltagshelfer |
+| Erklaerung | Antwort fuer ZunaroDo |
 | --- | --- |
 | App-Zugriff | "Komplett zugaenglich - kein Login noetig" (alternativ Testkonto angeben, falls Login Pflicht ist) |
 | Anzeigen | "Nein, meine App enthaelt keine Werbung" |
@@ -779,12 +779,12 @@ Empfohlen: **5 % -> 20 % -> 50 % -> 100 %** ueber 3-7 Tage.
 
 # C. Technische Release-Checkliste (Buildozer / Android Studio)
 
-## Buildozer (Alltagshelfer)
+## Buildozer (ZunaroDo)
 
 ```ini
 # buildozer.spec - Schluessel-Felder fuer Release
 [app]
-title = Alltagshelfer
+title = ZunaroDo
 package.name = alltagshelfer
 package.domain = de.zunarodo
 source.dir = mobile
@@ -1003,18 +1003,18 @@ Anpassen je nach tatsaechlicher App.
 
 - [ ] Fragenkatalog ausgefuellt
 - [ ] Resultat plausibel (USK 0 / PEGI 3 / ESRB Everyone fuer
-      Alltagshelfer)
+      ZunaroDo)
 
 ## Zielgruppe und Inhalte
 
-- [ ] Alterskategorie korrekt (18+ fuer Alltagshelfer mit
+- [ ] Alterskategorie korrekt (18+ fuer ZunaroDo mit
       Finanz-Inhalten)
 - [ ] Apellation an Kinder: nein
 - [ ] Kein "Designed for Families"-Anspruch
 
 ## Werbung
 
-- [ ] Werbung enthalten: nein (Alltagshelfer)
+- [ ] Werbung enthalten: nein (ZunaroDo)
 - [ ] Bei "ja": Werbe-Netzwerk benannt, AdMob-ID konfiguriert
 
 ## In-App-Kaeufe / Abos

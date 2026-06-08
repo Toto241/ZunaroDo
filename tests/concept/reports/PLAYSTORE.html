@@ -378,7 +378,7 @@ details.test-item[open] > summary { background: var(--surface-muted); }
     <article class="doc">
       <h1 id="play-store-veroeffentlichung---vollstaendige-anleitung"><a href="#play-store-veroeffentlichung---vollstaendige-anleitung" style="color:inherit;text-decoration:none">Play-Store-Veroeffentlichung - vollstaendige Anleitung</a></h1>
 <p>Stand: 2026-05. Die Google-Play-Console aendert sich regelmaessig - bei groesseren Differenzen zur offiziellen Doku gilt diese. Diese Datei beschreibt <strong>konkret</strong> den Weg vom lokalen Build zum oeffentlichen Release im Google Play Store.</p>
-<p>Die App "Alltagshelfer" baut mit Buildozer/python-for-android auf einem KivyMD-Stack (<a href="MOBILE.md">MOBILE.md</a>). Die Beispiele unten beziehen sich auf dieses Setup; wer mit Android Studio / Gradle arbeitet, findet die Aequivalente in Abschnitt C.</p>
+<p>Die App "ZunaroDo" baut mit Buildozer/python-for-android auf einem KivyMD-Stack (<a href="MOBILE.md">MOBILE.md</a>). Die Beispiele unten beziehen sich auf dieses Setup; wer mit Android Studio / Gradle arbeitet, findet die Aequivalente in Abschnitt C.</p>
 <hr />
 <h2 id="inhalt"><a href="#inhalt" style="color:inherit;text-decoration:none">Inhalt</a></h2>
 <ol><li><a href="#1-voraussetzungen">Voraussetzungen</a></li><li><a href="#2-technische-vorbereitung">Technische Vorbereitung</a></li><li><a href="#3-recht-und-datenschutz">Recht und Datenschutz</a></li><li><a href="#4-store-listing">Store-Listing</a></li><li><a href="#5-play-console-einrichten">Play Console einrichten</a></li><li><a href="#6-testphase">Testphase</a></li><li><a href="#7-produktionsfreigabe">Produktionsfreigabe</a></li><li><a href="#8-nach-der-veroeffentlichung">Nach der Veroeffentlichung</a></li></ol>
@@ -405,7 +405,7 @@ details.test-item[open] > summary { background: var(--surface-muted); }
 <p>Auch fuer eine <strong>kostenlose</strong> App noetig, weil das Konto sonst nach Identitaetspruefung in einen halb-blockierten Zustand kommt.</p>
 <ul><li>Adressdaten (muessen mit Identitaet uebereinstimmen)</li><li>Mehrwertsteuer-Identifikationsnummer (USt.-IdNr.) wenn Unternehmer</li><li>IBAN/BIC fuer Auszahlungen (bei kostenpflichtigen Apps)</li></ul>
 <h3 id="15-app-name-und-paketname"><a href="#15-app-name-und-paketname" style="color:inherit;text-decoration:none">1.5 App-Name und Paketname</a></h3>
-<table><thead><tr><th>Feld</th><th>Beispiel</th><th>Hinweis</th></tr></thead><tbody><tr><td>App-Titel (Store-Listing)</td><td>Alltagshelfer</td><td>bis 30 Zeichen, <strong>nach Release nicht aenderbar</strong></td></tr><tr><td>Paketname / Application ID</td><td><code>de.zunarodo.alltagshelfer</code></td><td><strong>nie wieder aenderbar nach erstem Upload</strong> - sehr sorgfaeltig waehlen!</td></tr><tr><td>Reverse-Domain</td><td><code>&lt;tld&gt;.&lt;organisation&gt;.&lt;app&gt;</code></td><td>eigene Domain als Praefix nutzen</td></tr></tbody></table>
+<table><thead><tr><th>Feld</th><th>Beispiel</th><th>Hinweis</th></tr></thead><tbody><tr><td>App-Titel (Store-Listing)</td><td>ZunaroDo</td><td>bis 30 Zeichen, <strong>nach Release nicht aenderbar</strong></td></tr><tr><td>Paketname / Application ID</td><td><code>de.zunarodo.alltagshelfer</code></td><td><strong>nie wieder aenderbar nach erstem Upload</strong> - sehr sorgfaeltig waehlen!</td></tr><tr><td>Reverse-Domain</td><td><code>&lt;tld&gt;.&lt;organisation&gt;.&lt;app&gt;</code></td><td>eigene Domain als Praefix nutzen</td></tr></tbody></table>
 <p><strong>Falle:</strong> Wer <code>com.example.alltagshelfer</code> hochlaedt und es spaeter auf seine echte Domain umstellen will, muss eine komplett neue App anlegen und verliert alle Bewertungen/Downloads.</p>
 <h3 id="16-datenschutzerklaerung"><a href="#16-datenschutzerklaerung" style="color:inherit;text-decoration:none">1.6 Datenschutzerklaerung</a></h3>
 <ul><li><strong>Pflicht</strong> seit 2022 fuer <strong>alle</strong> Apps, auch wenn die App keine</li></ul>
@@ -513,37 +513,37 @@ unzip -p .buildozer/.../app.apk AndroidManifest.xml | aapt2 dump xmltree --file 
 <h3 id="32-drittanbieter-sdks-auditieren"><a href="#32-drittanbieter-sdks-auditieren" style="color:inherit;text-decoration:none">3.2 Drittanbieter-SDKs auditieren</a></h3>
 <p>Pruefe jeden Drittanbieter:</p>
 <table><thead><tr><th>SDK</th><th>Was sammelt es</th><th>Datentransfer</th><th>Privacy-Erklaerung</th></tr></thead><tbody><tr><td>Firebase Analytics</td><td>Geraete-IDs, Events</td><td>USA (Google)</td><td>ja</td></tr><tr><td>Firebase Crashlytics</td><td>Stack-Traces, Geraete-Info</td><td>USA</td><td>ja</td></tr><tr><td>Google AdMob</td><td>Werbe-IDs, IP, Geraete-Info</td><td>USA</td><td>ja</td></tr><tr><td>Stripe SDK</td><td>Zahlungsdaten</td><td>USA (Stripe)</td><td>ja</td></tr><tr><td>Paddle / Lemon Squeezy</td><td>Zahlungsdaten</td><td>USA/UK</td><td>ja</td></tr><tr><td>KivyMD / python-for-android</td><td>nichts (lokal)</td><td>nein</td><td>nein</td></tr></tbody></table>
-<p><strong>Alltagshelfer aktuell:</strong> nutzt nur python-for-android, Gemini (optional, vom Nutzer aktivierbar) und SMTP/IMAP gegen Nutzer-eigene Server. <strong>Keine</strong> Drittanbieter-Telemetrie.</p>
+<p><strong>ZunaroDo aktuell:</strong> nutzt nur python-for-android, Gemini (optional, vom Nutzer aktivierbar) und SMTP/IMAP gegen Nutzer-eigene Server. <strong>Keine</strong> Drittanbieter-Telemetrie.</p>
 <h3 id="33-data-safety-formular"><a href="#33-data-safety-formular" style="color:inherit;text-decoration:none">3.3 Data-Safety-Formular</a></h3>
 <p>In der Play Console: App-Inhalte -&gt; Datensicherheit. Pflichtangaben:</p>
 <ul><li>Welche Datentypen werden gesammelt? (Standort, persoenliche Infos,</li></ul>
 <p>Finanzdaten, App-Aktivitaet, ...)</p>
 <ul><li>Werden Daten <strong>gesammelt</strong> oder nur <strong>lokal verarbeitet</strong>?</li><li>"gesammelt" = an externe Server uebertragen</li><li>"verarbeitet" = nur auf dem Geraet</li><li>Werden Daten an Dritte weitergegeben?</li><li>Sind Daten verschluesselt waehrend Uebertragung?</li><li>Kann der Nutzer die Loeschung seiner Daten anfordern?</li><li>Hat die App ein etabliertes Sicherheits-Audit?</li></ul>
-<p><strong>Fuer Alltagshelfer:</strong> Sehr stark "lokal verarbeitet, nicht gesammelt" - das ist eines unserer Verkaufsargumente. Sauber so deklarieren, Privacy-Story passt 1:1.</p>
+<p><strong>Fuer ZunaroDo:</strong> Sehr stark "lokal verarbeitet, nicht gesammelt" - das ist eines unserer Verkaufsargumente. Sauber so deklarieren, Privacy-Story passt 1:1.</p>
 <h3 id="34-verschluesselung-loeschung-nutzerrechte"><a href="#34-verschluesselung-loeschung-nutzerrechte" style="color:inherit;text-decoration:none">3.4 Verschluesselung, Loeschung, Nutzerrechte</a></h3>
 <ul><li><strong>At rest:</strong> SQLCipher optional ueber <code>ALLTAGSHELFER_DB_KEY</code></li></ul>
 <p>(siehe README).</p>
 <ul><li><strong>In transit:</strong> falls Sync verwendet wird, TLS verpflichtend.</li><li><strong>Loeschung:</strong> App-Deinstallation loescht alle lokalen Daten;</li></ul>
 <p>CSV-Export ueber <code>__main__.py --export</code> als Daten-Portabilitaet.</p>
 <h3 id="35-altersfreigabe-inhaltsbewertung-iarc"><a href="#35-altersfreigabe-inhaltsbewertung-iarc" style="color:inherit;text-decoration:none">3.5 Altersfreigabe / Inhaltsbewertung (IARC)</a></h3>
-<p>Play Console -&gt; App-Inhalte -&gt; Inhaltsbewertung. Fragenkatalog durchklicken (Gewalt, Sex, Drogen, ...). Fuer Alltagshelfer: typisch USK 0 / PEGI 3 / ESRB Everyone.</p>
+<p>Play Console -&gt; App-Inhalte -&gt; Inhaltsbewertung. Fragenkatalog durchklicken (Gewalt, Sex, Drogen, ...). Fuer ZunaroDo: typisch USK 0 / PEGI 3 / ESRB Everyone.</p>
 <h3 id="36-werbung-in-app-kaeufe-abos"><a href="#36-werbung-in-app-kaeufe-abos" style="color:inherit;text-decoration:none">3.6 Werbung, In-App-Kaeufe, Abos</a></h3>
-<ul><li><strong>Werbung enthalten?</strong> Bei Alltagshelfer: nein -&gt; "Diese App enthaelt</li></ul>
+<ul><li><strong>Werbung enthalten?</strong> Bei ZunaroDo: nein -&gt; "Diese App enthaelt</li></ul>
 <p>keine Werbung".</p>
-<ul><li><strong>In-App-Kaeufe?</strong> Bei Alltagshelfer aktuell: nein (Lizenz wird ueber</li></ul>
+<ul><li><strong>In-App-Kaeufe?</strong> Bei ZunaroDo aktuell: nein (Lizenz wird ueber</li></ul>
 <p>externes Paddle/Lemon Squeezy ausgestellt - das ist KEIN IAP im   Play-Sinn). Pruefe aber Google's externe-Zahlung-Politik (DMA-bedingt   in EU jetzt erlaubt, sonst eingeschraenkt).</p>
 <ul><li><strong>Abos:</strong> wenn echte Play-Abos genutzt werden, muessen sie ueber</li></ul>
 <p>Google Play Billing laufen (sonst Reject ausserhalb DMA-Raum).</p>
 <h3 id="37-familien-kindgerichtete-inhalte"><a href="#37-familien-kindgerichtete-inhalte" style="color:inherit;text-decoration:none">3.7 Familien-/Kindgerichtete Inhalte</a></h3>
 <ul><li>Wenn Zielgruppe Kinder unter 13: Compliance mit "Designed for</li></ul>
 <p>Families"-Programm (zusaetzliche Pruefung, COPPA-konform).</p>
-<ul><li>Alltagshelfer: Zielgruppe Erwachsene -&gt; entsprechend deklarieren.</li></ul>
+<ul><li>ZunaroDo: Zielgruppe Erwachsene -&gt; entsprechend deklarieren.</li></ul>
 <hr />
 <h2 id="4-store-listing"><a href="#4-store-listing" style="color:inherit;text-decoration:none">4. Store-Listing</a></h2>
 <h3 id="41-pflicht-felder"><a href="#41-pflicht-felder" style="color:inherit;text-decoration:none">4.1 Pflicht-Felder</a></h3>
-<table><thead><tr><th>Feld</th><th>Limit</th><th>Best Practice</th></tr></thead><tbody><tr><td>App-Titel</td><td>30 Zeichen</td><td>"Alltagshelfer - Familien-Organizer"</td></tr><tr><td>Kurzbeschreibung</td><td>80 Zeichen</td><td>"Vertraege, Termine, Familie - lokal, privat, ohne Werbung."</td></tr><tr><td>Vollstaendige Beschreibung</td><td>4000 Zeichen</td><td>Fliesstext, kein Keyword-Spam</td></tr><tr><td>App-Icon</td><td>512x512 PNG, kein Alpha</td><td>mit dem In-App-Icon konsistent</td></tr><tr><td>Feature Graphic</td><td>1024x500 JPG/PNG</td><td>das erste, was Nutzer im Store sehen</td></tr><tr><td>Screenshots Telefon</td><td>2-8, min 320 px Kante</td><td>echte App-Screens, keine Mockups</td></tr><tr><td>Screenshots Tablet</td><td>optional, empfohlen</td><td>7'' und 10''</td></tr><tr><td>Promo-Video</td><td>optional, YouTube-Link</td><td>30 Sek max</td></tr></tbody></table>
+<table><thead><tr><th>Feld</th><th>Limit</th><th>Best Practice</th></tr></thead><tbody><tr><td>App-Titel</td><td>30 Zeichen</td><td>"ZunaroDo - Familien-Organizer"</td></tr><tr><td>Kurzbeschreibung</td><td>80 Zeichen</td><td>"Vertraege, Termine, Familie - lokal, privat, ohne Werbung."</td></tr><tr><td>Vollstaendige Beschreibung</td><td>4000 Zeichen</td><td>Fliesstext, kein Keyword-Spam</td></tr><tr><td>App-Icon</td><td>512x512 PNG, kein Alpha</td><td>mit dem In-App-Icon konsistent</td></tr><tr><td>Feature Graphic</td><td>1024x500 JPG/PNG</td><td>das erste, was Nutzer im Store sehen</td></tr><tr><td>Screenshots Telefon</td><td>2-8, min 320 px Kante</td><td>echte App-Screens, keine Mockups</td></tr><tr><td>Screenshots Tablet</td><td>optional, empfohlen</td><td>7'' und 10''</td></tr><tr><td>Promo-Video</td><td>optional, YouTube-Link</td><td>30 Sek max</td></tr></tbody></table>
 <h3 id="42-beispiel-beschreibung-auszug"><a href="#42-beispiel-beschreibung-auszug" style="color:inherit;text-decoration:none">4.2 Beispiel-Beschreibung (Auszug)</a></h3>
-<pre><code class="lang-text">Alltagshelfer haelt Vertraege, Termine, Familie und Finanzen sortiert -
+<pre><code class="lang-text">ZunaroDo haelt Vertraege, Termine, Familie und Finanzen sortiert -
 komplett lokal auf deinem Geraet, ohne Werbung, ohne Tracking.
 
 Was du erledigst:
@@ -568,7 +568,7 @@ Preise:
 Fragen? support@deine-domain.de</code></pre>
 <h3 id="43-aso-app-store-optimization"><a href="#43-aso-app-store-optimization" style="color:inherit;text-decoration:none">4.3 ASO (App Store Optimization)</a></h3>
 <ul><li><strong>Keyword im Titel:</strong> ein primaeres Keyword neben dem App-Namen</li></ul>
-<p>("Alltagshelfer - Familien-Organizer" - "Familien-Organizer" ist   ein gesuchter Begriff).</p>
+<p>("ZunaroDo - Familien-Organizer" - "Familien-Organizer" ist   ein gesuchter Begriff).</p>
 <ul><li><strong>Kurzbeschreibung:</strong> muss Wert versprechen, weil das Conversion-</li></ul>
 <p>treiber ist.</p>
 <ul><li><strong>Vollstaendige Beschreibung:</strong> Keywords NATUERLICH einbauen</li></ul>
@@ -584,7 +584,7 @@ Fragen? support@deine-domain.de</code></pre>
 <p>extern verkauft, App-Download ist gratis)</p>
 <h3 id="52-erklaerungen-deklarationen"><a href="#52-erklaerungen-deklarationen" style="color:inherit;text-decoration:none">5.2 Erklaerungen ("Deklarationen")</a></h3>
 <p>Mehrere Pflicht-Pflicht-Pflicht-Felder, bevor Production-Release moeglich ist:</p>
-<table><thead><tr><th>Erklaerung</th><th>Antwort fuer Alltagshelfer</th></tr></thead><tbody><tr><td>App-Zugriff</td><td>"Komplett zugaenglich - kein Login noetig" (alternativ Testkonto angeben, falls Login Pflicht ist)</td></tr><tr><td>Anzeigen</td><td>"Nein, meine App enthaelt keine Werbung"</td></tr><tr><td>Inhaltsbewertung</td><td>IARC-Fragebogen ausfuellen -&gt; USK 0</td></tr><tr><td>Zielgruppe und Inhalte</td><td>Alterskategorie: 18+ (Erwachsene); kindgerichtet: nein</td></tr><tr><td>Datensicherheit</td><td>siehe Abschnitt 3.3</td></tr><tr><td>Datenverkauf an Dritte</td><td>nein</td></tr><tr><td>Staatliche App?</td><td>nein</td></tr><tr><td>Finanz-/Banken-/Krypto-App?</td><td>nein - nur Verwaltungs-App</td></tr><tr><td>COVID-19?</td><td>nein</td></tr><tr><td>News?</td><td>nein</td></tr></tbody></table>
+<table><thead><tr><th>Erklaerung</th><th>Antwort fuer ZunaroDo</th></tr></thead><tbody><tr><td>App-Zugriff</td><td>"Komplett zugaenglich - kein Login noetig" (alternativ Testkonto angeben, falls Login Pflicht ist)</td></tr><tr><td>Anzeigen</td><td>"Nein, meine App enthaelt keine Werbung"</td></tr><tr><td>Inhaltsbewertung</td><td>IARC-Fragebogen ausfuellen -&gt; USK 0</td></tr><tr><td>Zielgruppe und Inhalte</td><td>Alterskategorie: 18+ (Erwachsene); kindgerichtet: nein</td></tr><tr><td>Datensicherheit</td><td>siehe Abschnitt 3.3</td></tr><tr><td>Datenverkauf an Dritte</td><td>nein</td></tr><tr><td>Staatliche App?</td><td>nein</td></tr><tr><td>Finanz-/Banken-/Krypto-App?</td><td>nein - nur Verwaltungs-App</td></tr><tr><td>COVID-19?</td><td>nein</td></tr><tr><td>News?</td><td>nein</td></tr></tbody></table>
 <h3 id="53-hauptseite-app-inhalte"><a href="#53-hauptseite-app-inhalte" style="color:inherit;text-decoration:none">5.3 Hauptseite "App-Inhalte"</a></h3>
 <p>Klicke jede Sektion an, bis sie <strong>gruen</strong> ist. Erst dann darfst du in Produktion releasen.</p>
 <h3 id="54-laender-regionen"><a href="#54-laender-regionen" style="color:inherit;text-decoration:none">5.4 Laender / Regionen</a></h3>
@@ -694,10 +694,10 @@ Production / Testing -&gt; &quot;Neuer Release&quot; -&gt; Bundle waehlen</code>
 <ul><li>Woechentlich: Bewertungen + ANR/Crash-Statistiken</li><li>Monatlich: Pre-Launch-Report fuer neue Builds, Vitals-Check</li><li>Quartalsweise: Richtlinien-Update von Google reviewen</li><li>Halbjaehrlich: mindestens ein Update releasen</li></ul>
 <hr />
 <h1 id="c-technische-release-checkliste-buildozer-android-studio"><a href="#c-technische-release-checkliste-buildozer-android-studio" style="color:inherit;text-decoration:none">C. Technische Release-Checkliste (Buildozer / Android Studio)</a></h1>
-<h2 id="buildozer-alltagshelfer"><a href="#buildozer-alltagshelfer" style="color:inherit;text-decoration:none">Buildozer (Alltagshelfer)</a></h2>
+<h2 id="buildozer-zunarodo"><a href="#buildozer-zunarodo" style="color:inherit;text-decoration:none">Buildozer (ZunaroDo)</a></h2>
 <pre><code class="lang-ini"># buildozer.spec - Schluessel-Felder fuer Release
 [app]
-title = Alltagshelfer
+title = ZunaroDo
 package.name = alltagshelfer
 package.domain = de.zunarodo
 source.dir = mobile
@@ -816,13 +816,13 @@ android {
 <p>Mail-Anfrage fuer Lizenz-Daten</p>
 <h2 id="inhaltsbewertung-iarc"><a href="#inhaltsbewertung-iarc" style="color:inherit;text-decoration:none">Inhaltsbewertung (IARC)</a></h2>
 <ul><li>[ ] Fragenkatalog ausgefuellt</li><li>[ ] Resultat plausibel (USK 0 / PEGI 3 / ESRB Everyone fuer</li></ul>
-<p>Alltagshelfer)</p>
+<p>ZunaroDo)</p>
 <h2 id="zielgruppe-und-inhalte"><a href="#zielgruppe-und-inhalte" style="color:inherit;text-decoration:none">Zielgruppe und Inhalte</a></h2>
-<ul><li>[ ] Alterskategorie korrekt (18+ fuer Alltagshelfer mit</li></ul>
+<ul><li>[ ] Alterskategorie korrekt (18+ fuer ZunaroDo mit</li></ul>
 <p>Finanz-Inhalten)</p>
 <ul><li>[ ] Apellation an Kinder: nein</li><li>[ ] Kein "Designed for Families"-Anspruch</li></ul>
 <h2 id="werbung"><a href="#werbung" style="color:inherit;text-decoration:none">Werbung</a></h2>
-<ul><li>[ ] Werbung enthalten: nein (Alltagshelfer)</li><li>[ ] Bei "ja": Werbe-Netzwerk benannt, AdMob-ID konfiguriert</li></ul>
+<ul><li>[ ] Werbung enthalten: nein (ZunaroDo)</li><li>[ ] Bei "ja": Werbe-Netzwerk benannt, AdMob-ID konfiguriert</li></ul>
 <h2 id="in-app-kaeufe-abos"><a href="#in-app-kaeufe-abos" style="color:inherit;text-decoration:none">In-App-Kaeufe / Abos</a></h2>
 <ul><li>[ ] Vorhanden: nein (Lizenz extern ueber Paddle/Lemon)</li><li>[ ] <strong>Wichtig:</strong> wenn extern, dann <strong>kein Play-Billing-Wording</strong> in</li></ul>
 <p>der App ("In-App-Kauf", "Subscription"), sonst Konflikt mit       Play-Policies</p>

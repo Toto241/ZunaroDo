@@ -106,7 +106,7 @@ für aktuellen Funktionsumfang.
 ## 11. Sonderfälle / Bonusfehler
 
 - **"Misleading impersonation"** - App heißt wie eine bestehende
-  bekannte App. Maßnahme: Name "Alltagshelfer" + Markencheck vor
+  bekannte App. Maßnahme: Name "ZunaroDo" + Markencheck vor
   Release.
 - **"Missing target audience selection"** - Pflicht-Feld in der Play
   Console, oft vergessen. Checker erinnert via Release-Liste Punkt K.

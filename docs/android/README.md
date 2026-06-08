@@ -1,7 +1,7 @@
 # Android-/Google-Play-Compliance-Suite
 
 Diese Suite ist die **Single Source of Truth** für alle technischen, sicherheits-,
-qualitäts- und richtlinienbezogenen Anforderungen, die Alltagshelfer/ZunaroDo
+qualitäts- und richtlinienbezogenen Anforderungen, die ZunaroDo
 auf Android und im Google Play Store erfüllen muss.
 
 Sie ist doppelspurig angelegt:

@@ -4,6 +4,8 @@ HTTP-Webhook-Server fuer Paddle und Lemon Squeezy.
 Endpoints:
   POST /webhook/paddle           Paddle-Billing
   POST /webhook/lemon_squeezy   Lemon Squeezy
+  POST /verify/play              Google Play Billing (App schickt Token,
+                                  Server verifiziert + gibt Lizenz zurueck)
   GET  /health                    Liveness-Probe (200 'ok')
 
 Sicherheit:
@@ -35,6 +37,8 @@ from typing import Optional
 
 from services.payment import (PriceMapping, SignatureError, UnknownPriceError,
                                 WebhookContext, WebhookError)
+from services.payment_adapter_play import (PlaySkuMapping, PlayVerifier,
+                                           parse_play_purchase)
 from services.payment_issuer import IssuerConfig, handle_event
 
 log = logging.getLogger(__name__)
@@ -50,10 +54,23 @@ class WebhookServerConfig:
 
 
 @dataclass
+class PlayVerifyConfig:
+    """Konfiguration des /verify/play-Endpoints (Google Play Billing)."""
+
+    package_name: str
+    sku_mapping: PlaySkuMapping
+    verifier: PlayVerifier
+    # Eigener Issuer (typischerweise mit send_mail=None) - die Lizenz
+    # geht als HTTP-Antwort an die App zurueck, nicht per Mail.
+    issuer: IssuerConfig
+
+
+@dataclass
 class _State:
     paddle: Optional[WebhookServerConfig]
     lemon: Optional[WebhookServerConfig]
     issuer: IssuerConfig
+    play: Optional[PlayVerifyConfig] = None
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -81,6 +98,8 @@ class _Handler(BaseHTTPRequestHandler):
         return self._send_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:                           # noqa: N802
+        if self.path == "/verify/play":
+            return self._handle_play()
         if self.path == "/webhook/paddle":
             cfg = self.state.paddle
         elif self.path == "/webhook/lemon_squeezy":
@@ -124,6 +143,45 @@ class _Handler(BaseHTTPRequestHandler):
                                   "message": result.message,
                                   "mail_status": result.mail_status})
 
+    def _handle_play(self) -> None:
+        """Verifiziert einen Play-Purchase-Token und gibt die Lizenz zurueck.
+
+        Im Gegensatz zu den Webhooks wird das signierte Token NICHT
+        gemailt, sondern direkt im HTTP-Body an die App zurueckgegeben -
+        die App wendet es dann lokal an (apply_token_to_repo).
+        """
+        cfg = self.state.play
+        if cfg is None:
+            return self._send_json(404, {"error": "play not configured"})
+        try:
+            payload = json.loads(self._read_body().decode("utf-8") or "{}")
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            return self._send_json(400, {"error": f"bad json: {exc}"})
+
+        try:
+            event = parse_play_purchase(
+                payload,
+                package_name=cfg.package_name,
+                sku_mapping=cfg.sku_mapping,
+                verifier=cfg.verifier,
+            )
+        except UnknownPriceError as exc:
+            return self._send_json(400, {"error": str(exc)})
+        except WebhookError as exc:
+            return self._send_json(400, {"error": str(exc)})
+        except Exception as exc:                          # noqa: BLE001
+            log.exception("/verify/play unhandled error")
+            return self._send_json(500, {"error": "internal", "detail": str(exc)})
+
+        if event is None:
+            # Token ungueltig/abgelaufen - kein false-positive ausstellen.
+            return self._send_json(402, {"error": "purchase not valid"})
+
+        result = handle_event(event, cfg.issuer)
+        if not result.success:
+            return self._send_json(500, {"error": result.message})
+        return self._send_json(201, {"status": "ok", "token": result.token_str})
+
     # Default-Logger ist sehr gespraechig; auf Python-Logger umlenken
     def log_message(self, format, *args):                # noqa: A002, ANN001
         log.info("payment-server %s - %s",
@@ -137,12 +195,14 @@ def serve(host: str,
           paddle: Optional[WebhookServerConfig],
           lemon: Optional[WebhookServerConfig],
           issuer: IssuerConfig,
+          play: Optional[PlayVerifyConfig] = None,
           certfile: Optional[str] = None,
           keyfile: Optional[str] = None) -> ThreadingHTTPServer:
     """Startet den Webhook-Server (Aufrufer muss serve_forever() rufen)."""
-    if paddle is None and lemon is None:
+    if paddle is None and lemon is None and play is None:
         raise ValueError("Mindestens ein Provider muss konfiguriert sein")
-    _Handler.state = _State(paddle=paddle, lemon=lemon, issuer=issuer)
+    _Handler.state = _State(paddle=paddle, lemon=lemon, issuer=issuer,
+                            play=play)
     server = ThreadingHTTPServer((host, port), _Handler)
     if certfile and keyfile:
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)

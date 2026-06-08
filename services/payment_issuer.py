@@ -50,8 +50,8 @@ class IssuerConfig:
     # SMTP-Versender: Funktion(to_addr, subject, body) -> dict
     # Erlaubt Test ohne echten SMTP-Server.
     send_mail: Optional[callable] = None
-    mail_subject_template: str = "Ihre Pro-Lizenz fuer Alltagshelfer"
-    app_name: str = "Alltagshelfer"
+    mail_subject_template: str = "Ihre Pro-Lizenz fuer ZunaroDo"
+    app_name: str = "ZunaroDo"
 
 
 def handle_event(event: PaymentEvent,

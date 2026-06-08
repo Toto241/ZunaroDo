@@ -36,7 +36,7 @@ Bei Anhebung auf API 35 zwingend testen:
 | Check | Erläuterung | Modus |
 | ----- | ----------- | ----- |
 | Kein `android:debuggable="true"` im Release | Wird durch `buildozer android release` deaktiviert - im automatischen Check verifizieren | A |
-| Kein `android:allowBackup="true"` für sensible Apps; statt dessen explizite `BackupAgent` oder `false` | Alltagshelfer hält PII -> `allowBackup="false"` empfohlen | A |
+| Kein `android:allowBackup="true"` für sensible Apps; statt dessen explizite `BackupAgent` oder `false` | ZunaroDo hält PII -> `allowBackup="false"` empfohlen | A |
 | `android:exported` an JEDER Activity/Service/Receiver mit Intent-Filter **explizit** gesetzt | Pflicht ab API 31 | A |
 | `usesCleartextTraffic` = `false` oder fehlt | siehe [03_SECURITY](03_SECURITY.md) | A |
 | `android:networkSecurityConfig` referenziert | optional, aber empfohlen | A |
@@ -73,7 +73,7 @@ Play-Store-Vorgaben (verschärft ab Android 14):
 
 - Jeder `Service` mit `foregroundServiceType` muss zur Laufzeit den
   korrekten Typ als zweiten Parameter an `startForeground()` übergeben.
-- **Erlaubt für Alltagshelfer (falls genutzt):** `dataSync`
+- **Erlaubt für ZunaroDo (falls genutzt):** `dataSync`
   (Sync-Worker), `mediaPlayback` (nicht relevant), `health` (nicht
   relevant).
 - **Nicht erlaubt:** `specialUse` ohne Sondergenehmigung.
@@ -179,7 +179,7 @@ Für die Play-Console-Veröffentlichung **immer** AAB bauen:
 
 | Feld | Quelle |
 | ---- | ------ |
-| App-Name | `Alltagshelfer` |
+| App-Name | `ZunaroDo` |
 | Kurzbeschreibung (<=80 Z.) | Marketing-Snippet, Pflicht in DE+EN |
 | Lange Beschreibung (<=4000 Z.) | DE+EN |
 | Screenshots | Phone + 7"-Tablet + 10"-Tablet, je 2-8 Stück |
