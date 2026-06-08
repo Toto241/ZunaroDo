@@ -20,6 +20,21 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+def gate_sync_enabled_value(
+    settings: "SettingsRepository", value: str,
+) -> tuple[str, bool]:
+    """
+    Erzwingt Pro-Lizenz beim Aktivieren von sync.enabled.
+
+    Returns:
+        (effektiver_wert, wurde_blockiert)
+    """
+    if value.strip().lower() in ("true", "1", "yes"):
+        if not load_license(settings).allows_sync():
+            return "false", True
+    return value, False
+
+
 def sync_allowed(config: "AppConfig", settings: "SettingsRepository") -> bool:
     """True, wenn Sync laut Config erlaubt ist und die Lizenz Pro-Sync hat."""
     if config.sync_enabled == "false":

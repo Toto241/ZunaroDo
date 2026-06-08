@@ -279,11 +279,12 @@ python tools/gen_license.py sign --private-key <hex> \
 Aktivierung die drei Bestätigungen ein, die nach BGB §356 Abs. 5 für das
 vorzeitige Erlöschen des 14-Tage-Widerrufsrechts nötig sind.
 
-### Legal-Templates
+### Legal & Datenschutz
 
-[legal/](legal/) enthält Vorlagen für Impressum, Datenschutz, AGB und
-Widerrufsbelehrung mit `[PLATZHALTER]`. **Vor Veröffentlichung anwaltlich
-prüfen lassen.**
+[legal/](legal/) enthält Impressum, Datenschutz, AGB und Widerruf;
+Stammdaten in [legal/provider.yml](legal/provider.yml). Prüfung mit
+`python -m tools.privacy_policy --check`. Vor kommerziellem Go-live
+weiterhin anwaltlich gegenprüfen lassen.
 
 ```python
 from services.licensing import Tier, calculate_price, format_quote_de
