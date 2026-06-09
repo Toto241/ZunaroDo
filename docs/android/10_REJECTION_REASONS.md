@@ -10,7 +10,7 @@ für aktuellen Funktionsumfang.
 
 | Reject | Maßnahme | Status |
 | ------ | -------- | ------ |
-| "App nutzt eine veraltete Version der Android-API." | `android.api = 35` setzen, jährlich auf das vom Play Store geforderte Min-Target nachziehen. | ⚠️ aktuell 33 → in [buildozer.spec](../../buildozer.spec) anheben |
+| "App nutzt eine veraltete Version der Android-API." | `android.api = 35` setzen, jährlich auf das vom Play Store geforderte Min-Target nachziehen. | ✅ (buildozer.spec) |
 | "Update der App, das das Target-API-Level senkt, ist nicht erlaubt." | CI verifiziert `versionCode` und `targetSdk` monoton. | ✅ (Checker-Regel) |
 | Min-SDK zu niedrig, Kompatibilität nicht prüfbar | `android.minapi = 24`, CI-Build auf API-24-Emulator als Smoke. | ⚠️ Smoke ergänzen |
 
@@ -54,7 +54,7 @@ für aktuellen Funktionsumfang.
 | "Data Safety Form passt nicht zum tatsächlichen Datenfluss." | Form-Vorlage in [04_PRIVACY_PERMISSIONS.md](04_PRIVACY_PERMISSIONS.md#4-data-safety-form-play-console---antworten). | ⚠️ vor jedem Release abgleichen |
 | "App sammelt Daten ohne Disclosure (z.B. Advertising ID)." | Wir erheben keine. | ✅ |
 | "Kinder unter 13 ohne COPPA/Families-Konformität anvisiert." | Zielgruppe >= 13, im Listing gesetzt. | ✅ |
-| "App löscht keine Nutzerdaten auf Anfrage." | Löschfunktion **muss** vor Release implementiert sein. | ⚠️ in Settings ergänzen |
+| "App löscht keine Nutzerdaten auf Anfrage." | Löschfunktion **muss** vor Release implementiert sein. | ✅ (Mehr → Alle Daten löschen) |
 
 ## 6. Inhalt & UX
 

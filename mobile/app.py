@@ -149,7 +149,10 @@ if HAS_KIVYMD:
 
             apply_grandfathering_if_needed(self.settings, _has_any_data)
             self._license = load_license(self.settings)
-            return _RootShell(self._registry, self.i18n)
+            shell = _RootShell(self._registry, self.i18n)
+            from mobile.privacy_onboarding import maybe_show_privacy_onboarding
+            maybe_show_privacy_onboarding(self)
+            return shell
 
         def on_stop(self):
             try:

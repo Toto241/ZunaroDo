@@ -1,16 +1,23 @@
 # Zentrale Anbieter-Stammdaten (Impressum, AGB, Widerruf, Play Store).
 # Vor Veroeffentlichung anwaltlich pruefen lassen.
+#
+# Kanonische Identitaet — alle URLs/E-Mails hier und in playstore.yml
+# muessen uebereinstimmen. Support-E-Mail muss erreichbar sein (Play Store).
 provider_name: ZunaroDo
 legal_form: Open-Source-Softwareprojekt
 representative: ZunaroDo Open-Source-Projekt
+package_name: de.alltagshelfer.alltagshelfer
+github_repo: Toto241/ZunaroDo
 street: Kontakt ausschliesslich digital
 zip_city: Deutschland
 country: Deutschland
-email: alltagshelfer@zunarodo.github.io
+email: zunarodo.support@toto241.github.io
+support_email: zunarodo.support@toto241.github.io
 phone: ""
-support_url: https://github.com/zunarodo/alltagshelfer/issues
-product_url: https://zunarodo.github.io/alltagshelfer/
-privacy_url: https://zunarodo.github.io/alltagshelfer/privacy/
+support_url: https://github.com/Toto241/ZunaroDo/issues
+product_url: https://github.com/Toto241/ZunaroDo
+marketing_url: https://github.com/Toto241/ZunaroDo
+privacy_url: https://toto241.github.io/ZunaroDo/privacy/
 register_note: Kein Handelsregister-Eintrag (Open-Source-Projekt ohne eingetragenen Kaufmann).
 vat_id: ""
 content_responsible: ZunaroDo Open-Source-Projekt

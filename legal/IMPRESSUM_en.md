@@ -7,9 +7,9 @@ Information pursuant to §5 TMG / §18 (2) MStV (Germany):
 **Represented by:** ZunaroDo open-source project
 
 **Contact:**
-Email: alltagshelfer@zunarodo.github.io  
-Web: https://zunarodo.github.io/alltagshelfer/  
-GitHub: https://github.com/zunarodo/alltagshelfer
+Email: zunarodo.support@toto241.github.io  
+Web: https://github.com/Toto241/ZunaroDo  
+GitHub: https://github.com/Toto241/ZunaroDo
 
 **Register entry:** Not registered in the commercial register (open-source project).
 

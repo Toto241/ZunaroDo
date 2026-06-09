@@ -323,6 +323,42 @@ def check_versioning(report: Report, spec: dict[str, str]) -> None:
     else:
         report.add(check=name, level=Level.PASS, message=f"version={ver}")
 
+    numeric = spec.get("android.numeric_version")
+    if not numeric:
+        report.add(check=name, level=Level.FAIL,
+                   message="android.numeric_version fehlt in buildozer.spec "
+                           "(Play-Store versionCode).")
+        return
+    try:
+        code = int(numeric)
+    except ValueError:
+        report.add(check=name, level=Level.FAIL,
+                   message=f"android.numeric_version ist kein Integer: {numeric!r}")
+        return
+    if code <= 0:
+        report.add(check=name, level=Level.FAIL,
+                   message=f"android.numeric_version={code} muss > 0 sein.")
+    else:
+        report.add(check=name, level=Level.PASS,
+                   message=f"android.numeric_version={code}")
+
+    cfg = _load_playstore_yml()
+    ps_code = ((cfg.get("identity") or {}).get("version_code"))
+    if ps_code is not None:
+        try:
+            expected = int(ps_code)
+        except (TypeError, ValueError):
+            report.add(check=name, level=Level.WARN,
+                       message=f"playstore.yml version_code ungueltig: {ps_code!r}")
+        else:
+            if code != expected:
+                report.add(check=name, level=Level.FAIL,
+                           message=f"versionCode-Mismatch: buildozer={code}, "
+                                   f"playstore.yml={expected}")
+            else:
+                report.add(check=name, level=Level.PASS,
+                           message=f"versionCode synchron mit playstore.yml ({code}).")
+
 
 def check_secrets(report: Report, files: Sequence[Path]) -> None:
     name = "secrets"
@@ -724,6 +760,37 @@ def check_manifest_if_present(report: Report) -> None:
                        file=str(mf.relative_to(REPO_ROOT)))
 
 
+def check_apk_branding(report: Report, spec: dict[str, str]) -> None:
+    """Prueft, dass Icon/Presplash in buildozer.spec gesetzt und vorhanden sind."""
+    name = "apk_branding"
+    icon = spec.get("icon.filename")
+    if not icon:
+        report.add(check=name, level=Level.FAIL,
+                   message="icon.filename fehlt in buildozer.spec "
+                           "(Kivy-Default-Icon vermeiden).")
+    else:
+        path = REPO_ROOT / icon
+        if not path.is_file() or path.stat().st_size < 256:
+            report.add(check=name, level=Level.FAIL,
+                       message=f"App-Icon fehlt oder zu klein: {icon}")
+        else:
+            report.add(check=name, level=Level.PASS,
+                       message=f"App-Icon vorhanden: {icon}")
+
+    splash = spec.get("presplash.filename")
+    if not splash:
+        report.add(check=name, level=Level.WARN,
+                   message="presplash.filename nicht gesetzt (optional, empfohlen).")
+    else:
+        path = REPO_ROOT / splash
+        if not path.is_file() or path.stat().st_size < 256:
+            report.add(check=name, level=Level.FAIL,
+                       message=f"Splash fehlt oder zu klein: {splash}")
+        else:
+            report.add(check=name, level=Level.PASS,
+                       message=f"Splash vorhanden: {splash}")
+
+
 # ---------------------------------------------------------------------------
 # Orchestrierung
 # ---------------------------------------------------------------------------
@@ -742,6 +809,7 @@ CHECKS: dict[str, Callable[..., None]] = {
     "sdk_inventory":   lambda rep, ctx: check_sdk_inventory(rep),
     "listing_strings": lambda rep, ctx: check_listing_strings(rep, ctx["files"]),
     "store_assets":    lambda rep, ctx: check_store_assets(rep),
+    "apk_branding":    lambda rep, ctx: check_apk_branding(rep, ctx["spec"]),
     "manifest":        lambda rep, ctx: check_manifest_if_present(rep),
 }
 
