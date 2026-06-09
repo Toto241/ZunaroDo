@@ -46,9 +46,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            git zip unzip autoconf automake libtool libtool-bin pkg-config \
-            cmake build-essential libffi-dev libssl-dev zlib1g-dev \
-            libncurses-dev ccache
+            git zip unzip autoconf automake libtool libtool-bin libltdl-dev \
+            pkg-config cmake build-essential libffi-dev libssl-dev \
+            zlib1g-dev libncurses-dev ccache
       - name: Buildozer installieren
         run: python -m pip install "buildozer==1.5.0" "cython==3.0.11"
       - name: SDK/NDK-Cache
