@@ -118,7 +118,7 @@ permissions:
 tracks:
   internal:
     tester_groups:
-    - internal-team@example.org
+    - zunarodo-closed-testers@googlegroups.com
     releases:
     - version_code: 2
       version_name: 1.0.0

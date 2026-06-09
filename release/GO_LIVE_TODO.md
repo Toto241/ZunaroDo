@@ -26,6 +26,15 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
       Platzhalter + falsche Maße) in den Release-Workflow eingebaut
       (`.github/workflows/android-release.yml`) - blockiert Go-Live mit
       Platzhalter-Screenshots, ohne die main-CI rot zu machen.
+- [x] versionCode gepinnt: `android.numeric_version = 2` in `buildozer.spec`.
+      Der `versioning`-Check in `tools/playstore_check.py` erzwingt jetzt
+      Konsistenz mit `playstore.yml` (`identity.version_code`/`version_name`) -
+      vorher haette buildozer einen abweichenden versionCode abgeleitet.
+- [x] Platzhalter-Testergruppe `internal-team@example.org` (Internal Track)
+      durch die echte Google-Group ersetzt (`playstore.yml` +
+      Mock-Vorlage in `tools/playstore_sync.py`).
+- [x] `release/assets/` fuer Play-Console-Belege angelegt (dort erwartet
+      `closed-test-2026-05-30.md` den echten Konsolen-Screenshot).
 
 ---
 
@@ -33,10 +42,13 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 
 ### 1.1 Android-Build auf WSL2/Linux erzeugen (Basis fuer alles Weitere)
 > Buildozer laeuft NICHT nativ unter Windows. Ubuntu 22.04 in WSL2 verwenden.
+> Alternative OHNE WSL2: Actions-Workflow `Android Robo/Monkey (Emulator)`
+> (workflow_dispatch) baut das Debug-APK auf einem Linux-Runner und prueft
+> damit auch, ob die SQLCipher-Recipe baut - keine Secrets noetig.
 
 - [ ] WSL2 + Abhaengigkeiten einrichten (siehe `buildozer.spec` Kommentar Pkt. 2
-      und `docs/android/07_CICD.md`).
-- [ ] Debug-Build: `buildozer android debug`
+      und `docs/android/07_CICD.md`) - entfaellt beim CI-Weg.
+- [ ] Debug-Build: `buildozer android debug` (oder Robo-Workflow dispatchen)
 - [ ] **SQLCipher verifizieren** (jetzt aktiv): Baut `recipes/sqlcipher3/`?
       Ggf. `version`/`url`/OpenSSL-Pfad anpassen. Auf Geraet pruefen, dass
       `Database.encryption_mode == "sqlcipher"`. Falls der Build daran
@@ -64,8 +76,10 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
       (NICHT mehr aenderbar nach Release).
 - [ ] Data-Safety-Formular gemaess `release/DATA_SAFETY_CONSOLE_ANSWERS.md`
       und `playstore.yml` ausfuellen.
-- [ ] Datenschutz-URL eintragen (siehe `playstore.yml` privacy_policy_url) -
-      sicherstellen, dass die GitHub-Pages-Seite live ist.
+- [ ] Datenschutz-URL eintragen (siehe `playstore.yml` privacy_policy_url).
+      Pages-Deploy lief bereits erfolgreich (Actions-Workflow
+      "Privacy-Policy Pages", zuletzt 2026-06-03) - nur noch kurz im
+      Browser gegenpruefen, dass die URL HTTP 200 liefert.
 - [ ] IARC-Fragebogen (Content Rating) ausfuellen.
 
 ### 1.4 Play Billing scharf schalten (nur wenn Pro/Abos zum Launch verkauft werden)
@@ -130,7 +144,9 @@ python -m tools.privacy_policy --list-placeholders
 python -m unittest discover -s tests        # bzw. das Projekt-Testkommando
 ```
 
-- [ ] versionCode in `buildozer.spec` und `playstore.yml` fuer jedes Update
-      erhoehen (aktuell 2 / 1.0.0).
+- [ ] versionCode fuer jedes Update gemeinsam erhoehen:
+      `android.numeric_version` in `buildozer.spec` UND
+      `identity.version_code` in `playstore.yml` (aktuell 2 / 1.0.0).
+      Ein Auseinanderlaufen macht `tools/playstore_check.py` zum FAIL.
 - [ ] Gestaffelter Rollout (5% -> 20% -> 50% -> 100%) + Monitoring der
       Crash-/ANR-Schwellen aus `playstore.yml` (monitoring).
