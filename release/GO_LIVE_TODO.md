@@ -22,6 +22,10 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
       (`sqlcipher3`) in `requirements` aktiviert.
 - [x] Keystore-Helfer `release/create_upload_keystore.ps1` + `.gitignore`
       um Keystore-/Service-Account-Geheimnisse erweitert.
+- [x] Asset-Gate `python -m tools.gen_assets --check` (erkennt einfarbige
+      Platzhalter + falsche Maße) in den Release-Workflow eingebaut
+      (`.github/workflows/android-release.yml`) - blockiert Go-Live mit
+      Platzhalter-Screenshots, ohne die main-CI rot zu machen.
 
 ---
 
@@ -46,7 +50,10 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 ### 1.2 Upload-Keystore erstellen & sichern
 - [ ] `pwsh ./release/create_upload_keystore.ps1` ausfuehren.
 - [ ] Passwoerter im Passwort-Manager sichern (Verlust = App-Linie verloren).
-- [ ] `P4A_RELEASE_*`-Env-Vars (lokal) bzw. GitHub-Secrets (CI) setzen.
+- [ ] Lokaler Build: `P4A_RELEASE_*`-Env-Vars setzen (das Skript zeigt sie an).
+- [ ] CI-Build (`.github/workflows/android-release.yml`): vier Repo-Secrets
+      setzen - `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+      `ANDROID_KEY_ALIAS`, `ANDROID_KEY_ALIAS_PASSWORD`.
 - [ ] Sicherstellen: `.jks` ist NICHT im Git (ist bereits gitignored).
 
 ### 1.3 Play Console - App anlegen
@@ -89,6 +96,8 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
       echten Module (Vertraege, Finanzen, Kalender, Familie ...) aufnehmen.
 - [ ] Nach `assets/store/` legen; falls mehr als 3, `playstore.yml`
       (`phone_screenshots`) erweitern.
+- [ ] `python -m tools.gen_assets --check` muss danach gruen sein - der
+      Release-Workflow bricht sonst beim Asset-Gate ab.
 
 ### 1.6 Closed Testing (Pflicht-Gate fuer neue Personenkonten)
 - [ ] Internal Testing: AAB hochladen, Pre-Launch-Report auf Crashes pruefen.
@@ -105,10 +114,10 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 - [ ] Tablet-Screenshots fuer bessere Auffindbarkeit
       (`playstore.yml` tablet_screenshots).
 - [ ] Promo-Video.
-- [ ] `tools/playstore_check.py` haerten: aktuell prueft `check_store_assets`
-      nur Existenz/Groesse (>=64 B), nicht Maße/Einfarbigkeit - dadurch sind
-      Platzhalter durchgerutscht. Optional: PNG-Dimensionen + Farbvielfalt
-      validieren, damit so etwas auffaellt.
+- [x] Asset-Platzhalter-Erkennung: erledigt via `tools/gen_assets.py --check`
+      (Release-Gate). `tools/playstore_check.py check_store_assets` prueft
+      weiterhin nur Existenz/Groesse - bewusst, damit die routinemaeßige
+      main-CI nicht an den noch fehlenden echten Screenshots scheitert.
 
 ---
 
