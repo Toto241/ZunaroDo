@@ -70,5 +70,11 @@ Write-Host '       $env:P4A_RELEASE_KEYSTORE        = "' -NoNewline; Write-Host 
 Write-Host '       $env:P4A_RELEASE_KEYSTORE_PASSWD = "<keystore-passwort>"'
 Write-Host "       `$env:P4A_RELEASE_KEYALIAS        = `"$Alias`""
 Write-Host '       $env:P4A_RELEASE_KEYALIAS_PASSWD = "<key-passwort>"'
-Write-Host "  3. Fuer CI: Base64 der .jks + Passwoerter als GitHub-Secrets (docs/android/07_CICD.md)."
+Write-Host "  3. Fuer den GitHub-Release-Workflow (.github/workflows/android-release.yml)"
+Write-Host "     diese vier Repo-Secrets setzen (Settings -> Secrets and variables -> Actions):"
+Write-Host "       ANDROID_KEYSTORE_BASE64     = Base64 der .jks   (PowerShell:"
+Write-Host "                                     [Convert]::ToBase64String([IO.File]::ReadAllBytes('$KeystorePath')) )"
+Write-Host "       ANDROID_KEYSTORE_PASSWORD   = <keystore-passwort>"
+Write-Host "       ANDROID_KEY_ALIAS           = $Alias"
+Write-Host "       ANDROID_KEY_ALIAS_PASSWORD  = <key-passwort>"
 Write-Host "  4. .jks NIEMALS committen."

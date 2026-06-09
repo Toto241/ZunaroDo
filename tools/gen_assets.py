@@ -18,10 +18,18 @@ jederzeit durch ein professionelles Logo ersetzt werden - dann diese
 Dateien einfach ueberschreiben.
 
 Aufruf:
-    python -m tools.gen_assets
+    python -m tools.gen_assets            # Assets (neu) erzeugen
+    python -m tools.gen_assets --check    # Assets pruefen (Platzhalter/Maße)
+
+Der --check-Modus erkennt einfarbige Platzhalter und falsche Bildmaße. Er
+wird im (manuellen) Release-Workflow als Gate genutzt, damit kein Go-Live mit
+Platzhalter-Screenshots passiert - die routinemaeßige main-CI bleibt davon
+unberuehrt.
 """
 from __future__ import annotations
 
+import argparse
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -174,7 +182,7 @@ def gen_feature_graphic(w: int = 1024, h: int = 500) -> Image.Image:
     return img.convert("RGB")
 
 
-def main() -> None:
+def generate() -> None:
     ICONS_DIR.mkdir(parents=True, exist_ok=True)
     STORE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -190,6 +198,110 @@ def main() -> None:
         img.save(path, "PNG")
         print(f"  geschrieben: {path.relative_to(REPO_ROOT)}  {img.size} {img.mode}")
     print("Fertig. Adaptive-Icon- und Store-Assets aktualisiert.")
+
+
+# --- Verifikation (--check) --------------------------------------------
+# Mindestmaße je Asset-Typ (Google-Play-Vorgaben).
+_MIN_SIZE = {
+    "icon": (512, 512),
+    "feature_graphic": (1024, 500),
+    "phone_screenshot": (320, 320),
+}
+# Minimale Anzahl unterschiedlicher Farben - darunter gilt ein Bild als
+# einfarbiger Platzhalter. Ein echtes Icon/Foto hat hunderte+.
+_MIN_DISTINCT_COLORS = 16
+
+
+def _distinct_colors(img: Image.Image, cap: int = 4096) -> int:
+    small = img.convert("RGB")
+    if max(small.size) > 256:
+        small.thumbnail((256, 256))
+    colors = small.getcolors(maxcolors=cap)
+    # getcolors() liefert None, wenn mehr als 'cap' Farben -> klar kein Platzhalter.
+    return cap if colors is None else len(colors)
+
+
+def _load_yaml(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    text = path.read_text(encoding="utf-8")
+    try:
+        import yaml
+        return yaml.safe_load(text) or {}
+    except ImportError:
+        import json
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {}
+
+
+def _check_one(rel: str, kind: str) -> list[str]:
+    problems: list[str] = []
+    path = REPO_ROOT / str(rel).replace("\\", "/")
+    if not path.is_file():
+        return [f"{rel}: Datei fehlt"]
+    try:
+        with Image.open(path) as img:
+            w, h = img.size
+            colors = _distinct_colors(img)
+    except OSError as exc:
+        return [f"{rel}: nicht lesbar ({exc})"]
+    min_w, min_h = _MIN_SIZE.get(kind, (1, 1))
+    if w < min_w or h < min_h:
+        problems.append(f"{rel}: zu klein {w}x{h} (min {min_w}x{min_h})")
+    if colors < _MIN_DISTINCT_COLORS:
+        problems.append(
+            f"{rel}: einfarbiger Platzhalter ({colors} Farben) - echtes "
+            f"Bild noetig")
+    return problems
+
+
+def verify() -> int:
+    """Prueft Store- und Launcher-Assets. Exit 0 = ok, 1 = Probleme."""
+    cfg = _load_yaml(REPO_ROOT / "playstore.yml")
+    images = cfg.get("images") or {}
+    targets: list[tuple[str, str]] = []
+    if images.get("icon"):
+        targets.append((images["icon"], "icon"))
+    if images.get("feature_graphic"):
+        targets.append((images["feature_graphic"], "feature_graphic"))
+    for shot in images.get("phone_screenshots") or []:
+        if shot:
+            targets.append((shot, "phone_screenshot"))
+    # Launcher-/Adaptive-Assets, die buildozer.spec referenziert.
+    for rel in ("assets/icons/icon-512.png",
+                "assets/icons/adaptive-foreground.png",
+                "assets/icons/adaptive-background.png"):
+        targets.append((rel, "icon"))
+
+    all_problems: list[str] = []
+    for rel, kind in targets:
+        probs = _check_one(rel, kind)
+        status = "OK  " if not probs else "FAIL"
+        print(f"  [{status}] {rel}")
+        all_problems.extend(probs)
+
+    if all_problems:
+        print("\nProbleme:")
+        for p in all_problems:
+            print(f"  - {p}")
+        print("\nTipp: 'python -m tools.gen_assets' erzeugt gebrandete Icons/"
+              "Feature-Graphic. Echte In-App-Screenshots muessen vom Geraet "
+              "kommen (siehe release/GO_LIVE_TODO.md 1.5).")
+        return 1
+    print("\nAlle Assets ok (Maße + keine Platzhalter).")
+    return 0
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="ZunaroDo Asset-Generator/-Checker")
+    parser.add_argument("--check", action="store_true",
+                        help="Assets nur pruefen (Platzhalter/Maße), nicht erzeugen.")
+    args = parser.parse_args()
+    if args.check:
+        sys.exit(verify())
+    generate()
 
 
 if __name__ == "__main__":
