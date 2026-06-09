@@ -60,6 +60,9 @@ android.api = 35
 android.minapi = 24
 android.ndk_api = 24
 android.archs = arm64-v8a, armeabi-v7a
+# Noetig fuer nicht-interaktive Builds (CI/WSL2-Skripte): sdkmanager wuerde
+# sonst beim ersten Lauf auf die Lizenz-Bestaetigung warten.
+android.accept_sdk_license = True
 
 # ---------------------------------------------------------------------
 # Native-Integrationen (Java-Bruecken + Gradle-Abhaengigkeiten)

@@ -25,14 +25,41 @@ permissions:
 jobs:
   build-apk:
     name: Debug-APK bauen
-    runs-on: ubuntu-latest
+    # Gepinnter Runner + nativer buildozer-Aufruf (offizieller Kivy-Weg).
+    # Die frueher genutzte Community-Action 'ArtemSBulgakov/buildozer-action'
+    # ist defekt: ihr Docker-Build fusst auf dem beweglichen Image
+    # ghcr.io/kivy/buildozer:latest und installiert JDK ueber das
+    # openjdk-r-PPA, das fuer dessen neues Ubuntu kein Release hat (404) -
+    # der Build scheiterte damit deterministisch vor dem ersten
+    # buildozer-Befehl. Nativ entfaellt zudem das Drittanbieter-Image.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Debug-APK (buildozer)
-        # Auf Commit-SHA gepinnt (Supply-Chain); entspricht Tag v1.
-        uses: ArtemSBulgakov/buildozer-action@3808a27e5d64e3921ed1735dacc214aeaec38080  # v1
+      - uses: actions/setup-java@v4
         with:
-          command: buildozer android debug
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: System-Abhaengigkeiten (python-for-android)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git zip unzip autoconf automake libtool libtool-bin pkg-config \
+            cmake build-essential libffi-dev libssl-dev zlib1g-dev \
+            libncurses-dev ccache
+      - name: Buildozer installieren
+        run: python -m pip install "buildozer==1.5.0" "cython==3.0.11"
+      - name: SDK/NDK-Cache
+        # ~/.buildozer haelt Android-SDK/NDK (~2-3 GB Download beim 1. Lauf).
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-global-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-global-${{ runner.os }}-
+      - name: Debug-APK (buildozer)
+        run: buildozer android debug
       - name: APK als Artefakt
         uses: actions/upload-artifact@v4
         with:

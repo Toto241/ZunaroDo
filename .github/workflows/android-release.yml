@@ -14,9 +14,11 @@ name: Android Release (AAB)
 #   ANDROID_KEY_ALIAS             Alias des Upload-Keys
 #   ANDROID_KEY_ALIAS_PASSWORD    Passwort des Alias
 #
-# Hinweis: 'ArtemSBulgakov/buildozer-action' ist eine Community-Action, die
-# das Android-SDK/NDK bereitstellt. Sie ist unten auf einen Commit-SHA
-# gepinnt (Supply-Chain); bei einem Versions-Update den SHA neu setzen.
+# Hinweis: buildozer laeuft nativ auf dem Runner (offizieller Kivy-Weg).
+# Die frueher genutzte Community-Action 'ArtemSBulgakov/buildozer-action'
+# ist defekt (Docker-Basis ghcr.io/kivy/buildozer:latest + openjdk-r-PPA
+# ohne Release fuer dessen Ubuntu -> apt 404) und entfaellt damit auch
+# als Drittanbieter-Abhaengigkeit.
 
 on:
   workflow_dispatch:
@@ -32,7 +34,7 @@ permissions:
 jobs:
   build-aab:
     name: AAB bauen & signieren
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,10 +66,10 @@ jobs:
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
           test -s "$RUNNER_TEMP/upload.keystore"
 
-      - name: Setup Python (fuer Gates vor dem Build)
+      - name: Setup Python (Gates + buildozer-Host)
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
           cache: pip
 
       - name: Gate-Abhaengigkeiten
@@ -82,11 +84,32 @@ jobs:
         # Bewusst NUR hier, nicht in der routinemaeßigen main-CI.
         run: python -m tools.gen_assets --check
 
-      - name: AAB bauen (buildozer android release)
-        # Auf Commit-SHA gepinnt (Supply-Chain); entspricht Tag v1.
-        uses: ArtemSBulgakov/buildozer-action@3808a27e5d64e3921ed1735dacc214aeaec38080  # v1
+      - uses: actions/setup-java@v4
         with:
-          command: buildozer android release
+          distribution: temurin
+          java-version: "17"
+
+      - name: System-Abhaengigkeiten (python-for-android)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git zip unzip autoconf automake libtool libtool-bin pkg-config \
+            cmake build-essential libffi-dev libssl-dev zlib1g-dev \
+            libncurses-dev ccache
+
+      - name: Buildozer installieren
+        run: python -m pip install "buildozer==1.5.0" "cython==3.0.11"
+
+      - name: SDK/NDK-Cache
+        # ~/.buildozer haelt Android-SDK/NDK (~2-3 GB Download beim 1. Lauf).
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-global-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-global-${{ runner.os }}-
+
+      - name: AAB bauen (buildozer android release)
+        run: buildozer android release
         env:
           P4A_RELEASE_KEYSTORE: ${{ runner.temp }}/upload.keystore
           P4A_RELEASE_KEYSTORE_PASSWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
