@@ -310,7 +310,7 @@ SAMPLE_CONFIG: dict[str, Any] = {
     },
     "tracks": {
         "internal": {
-            "tester_groups": ["internal-team@example.org"],
+            "tester_groups": ["zunarodo-closed-testers@googlegroups.com"],
             "releases": [
                 {"version_code": 1, "version_name": "0.9.0",
                  "status": "completed", "user_fraction": 1.0,

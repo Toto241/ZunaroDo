@@ -114,6 +114,46 @@ class TestCheckVersioning(unittest.TestCase):
         pc.check_versioning(rep, {})
         self.assertTrue(rep.by_level(pc.Level.FAIL))
 
+    def test_numeric_version_consistent_passes(self) -> None:
+        rep = pc.Report()
+        pc.check_versioning(
+            rep,
+            {"version": "1.0.0", "android.numeric_version": "2"},
+            {"identity": {"version_name": "1.0.0", "version_code": 2}})
+        self.assertEqual(rep.by_level(pc.Level.FAIL), [])
+
+    def test_numeric_version_missing_fails(self) -> None:
+        # Ohne android.numeric_version leitet buildozer den versionCode aus
+        # 'version' ab und weicht vom Store-Listing ab -> muss FAIL sein.
+        rep = pc.Report()
+        pc.check_versioning(
+            rep,
+            {"version": "1.0.0"},
+            {"identity": {"version_name": "1.0.0", "version_code": 2}})
+        fails = [f.message for f in rep.by_level(pc.Level.FAIL)]
+        self.assertTrue(any("numeric_version" in m for m in fails))
+
+    def test_numeric_version_mismatch_fails(self) -> None:
+        rep = pc.Report()
+        pc.check_versioning(
+            rep,
+            {"version": "1.0.0", "android.numeric_version": "3"},
+            {"identity": {"version_name": "1.0.0", "version_code": 2}})
+        self.assertTrue(rep.by_level(pc.Level.FAIL))
+
+    def test_version_name_mismatch_fails(self) -> None:
+        rep = pc.Report()
+        pc.check_versioning(
+            rep,
+            {"version": "1.0.1", "android.numeric_version": "2"},
+            {"identity": {"version_name": "1.0.0", "version_code": 2}})
+        self.assertTrue(rep.by_level(pc.Level.FAIL))
+
+    def test_without_playstore_cfg_skips_comparison(self) -> None:
+        rep = pc.Report()
+        pc.check_versioning(rep, {"version": "1.0.0"}, {})
+        self.assertEqual(rep.by_level(pc.Level.FAIL), [])
+
 
 class TestCheckSecrets(unittest.TestCase):
 

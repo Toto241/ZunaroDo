@@ -14,6 +14,11 @@ source.exclude_dirs = tests,htmlcov,backups,logs,dist,build,.venv,venv,.git,docs
 source.exclude_exts = spec,db,sqlite,log,pyc
 
 version = 1.0.0
+# Play-versionCode des Bundles. MUSS zu playstore.yml identity.version_code
+# passen und mit jedem Store-Upload steigen (Gate: tools/playstore_check.py,
+# Check "versioning"). Ohne Pinning wuerde buildozer einen versionCode aus
+# 'version' ableiten, der vom Store-Listing abweicht.
+android.numeric_version = 2
 
 # Pflicht-Requirements
 # - python3, kivy, kivymd: das Frontend selbst

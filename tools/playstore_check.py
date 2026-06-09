@@ -310,7 +310,8 @@ def check_permissions(report: Report, spec: dict[str, str]) -> None:
                    message=f"Whitelisted: {p}")
 
 
-def check_versioning(report: Report, spec: dict[str, str]) -> None:
+def check_versioning(report: Report, spec: dict[str, str],
+                     cfg: dict | None = None) -> None:
     name = "versioning"
     ver = spec.get("version")
     if not ver:
@@ -322,6 +323,31 @@ def check_versioning(report: Report, spec: dict[str, str]) -> None:
                    message=f"version {ver!r} ist kein striktes SemVer (MAJOR.MINOR.PATCH).")
     else:
         report.add(check=name, level=Level.PASS, message=f"version={ver}")
+
+    # Abgleich mit playstore.yml: das Listing (identity.version_name/_code)
+    # muss zum Bundle passen, sonst weicht der Store-Eintrag vom AAB ab.
+    identity = (cfg or {}).get("identity") or {}
+    if not identity:
+        return
+    listed_name = str(identity.get("version_name") or "")
+    if listed_name and listed_name != ver:
+        report.add(check=name, level=Level.FAIL,
+                   message=f"version={ver} (buildozer.spec) != "
+                           f"version_name={listed_name} (playstore.yml).")
+    numeric = (spec.get("android.numeric_version") or "").strip()
+    listed_code = identity.get("version_code")
+    if not numeric:
+        report.add(check=name, level=Level.FAIL,
+                   message="android.numeric_version fehlt in buildozer.spec - "
+                           "buildozer wuerde den versionCode aus 'version' ableiten "
+                           f"und von version_code={listed_code} (playstore.yml) abweichen.")
+    elif listed_code is not None and str(listed_code) != numeric:
+        report.add(check=name, level=Level.FAIL,
+                   message=f"android.numeric_version={numeric} (buildozer.spec) != "
+                           f"version_code={listed_code} (playstore.yml).")
+    else:
+        report.add(check=name, level=Level.PASS,
+                   message=f"versionCode={numeric} konsistent mit playstore.yml.")
 
 
 def check_secrets(report: Report, files: Sequence[Path]) -> None:
@@ -731,7 +757,8 @@ def check_manifest_if_present(report: Report) -> None:
 CHECKS: dict[str, Callable[..., None]] = {
     "sdk":             lambda rep, ctx: check_sdk_levels(rep, ctx["spec"]),
     "permissions":     lambda rep, ctx: check_permissions(rep, ctx["spec"]),
-    "versioning":      lambda rep, ctx: check_versioning(rep, ctx["spec"]),
+    "versioning":      lambda rep, ctx: check_versioning(rep, ctx["spec"],
+                                                         _load_playstore_yml()),
     "secrets":         lambda rep, ctx: check_secrets(rep, ctx["files"]),
     "code_smells":     lambda rep, ctx: check_smells(rep, ctx["files"]),
     "demo_data":       lambda rep, ctx: check_demo_data_excluded(rep, ctx["spec"]),
