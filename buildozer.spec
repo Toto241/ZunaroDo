@@ -22,15 +22,14 @@ version = 1.0.0
 #   (services/gemini_rest.py spricht Gemini ueber requests an, damit der
 #   KI-Assistent OHNE das nicht-baubare 'google-generativeai'-SDK laeuft).
 # - pyjnius: Java-Bruecken (Play Billing, DB-Keystore, ML-Kit-OCR).
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius
-#
-# OPTIONAL: DB-Verschluesselung (SQLCipher).
-#   Die Python-Seite ist fertig (database.py + services/db_key.py). Zum
-#   Aktivieren 'sqlcipher3' anhaengen - dann greift die lokale Recipe
-#   unter ./recipes (siehe p4a.local_recipes weiter unten):
-#       requirements = ...,pyjnius,sqlcipher3
+# DB-Verschluesselung (SQLCipher) ist AKTIV: 'sqlcipher3' greift ueber die
+# lokale Recipe unter ./recipes (siehe p4a.local_recipes weiter unten).
+# Python-Seite: database.py + services/db_key.py.
 #   ACHTUNG: Die Recipe (recipes/sqlcipher3/) ist noch NICHT auf einem
-#   echten WSL2/Linux-Build verifiziert. Vor Release dort testen.
+#   echten WSL2/Linux-Build verifiziert - siehe release/GO_LIVE_TODO.md.
+#   Falls der erste Build daran scheitert, 'sqlcipher3' temporaer entfernen
+#   (App laeuft dann mit unverschluesseltem SQLite) und Recipe nachziehen.
+requirements = python3,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius,sqlcipher3
 
 # Welcher Screen-Orientierungs-Default
 orientation = portrait
@@ -95,9 +94,14 @@ android.allow_backup = False
 # Entry-Point (Modul, das die Kivy-App-Klasse haelt)
 entrypoint = mobile/app.py
 
-# Icon und Splashscreen koennen unter assets/ liegen
-# icon.filename = assets/app_icon.png
-# presplash.filename = assets/splash.png
+# App-Icon, Adaptive-Icon (Android 8+) und Splashscreen.
+# Diese Assets werden reproduzierbar erzeugt mit:  python -m tools.gen_assets
+# (gebrandetes "Z"-Lettermark; ersetzbar durch ein finales Logo).
+icon.filename = assets/icons/icon-512.png
+icon.adaptive_foreground.filename = assets/icons/adaptive-foreground.png
+icon.adaptive_background.filename = assets/icons/adaptive-background.png
+presplash.filename = assets/icons/presplash.png
+android.presplash_color = #245858
 
 # Logleveldetails fuer Buildozer
 log_level = 2
@@ -139,9 +143,10 @@ bin_dir = dist
 #       P4A_RELEASE_KEYALIAS_PASSWD      - Alias-Passwort
 #    Diese Werte NIEMALS ins Repo commiten; im CI als GitHub-Secrets.
 #
-# 6) Falls SQLCipher gewuenscht: requirements um sqlcipher3 ergaenzen
-#    und im python-for-android ein passendes Recipe einbinden. Dann auch
-#    docs/android/03_SECURITY.md updaten.
+# 6) SQLCipher ist aktiviert (sqlcipher3 in requirements + recipes/sqlcipher3).
+#    Beim ERSTEN WSL2-Build verifizieren, dass die Recipe baut und die DB
+#    auf dem Geraet wirklich verschluesselt ist (Database.encryption_mode
+#    == "sqlcipher"). Details: release/GO_LIVE_TODO.md, docs/android/03_SECURITY.md.
 #
 # 7) Fuer den Play Store sollte ein AAB statt fat-APK erzeugt werden.
 #    Buildozer >=1.5: 'buildozer -v android release --aab'.

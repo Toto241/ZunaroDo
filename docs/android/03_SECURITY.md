@@ -88,12 +88,14 @@ optionalen `expected_pin`-Parameter (TODO bei Native-Bedarf einbauen).
 ### Datenbank
 
 - SQLite in App-Sandbox (`MDApp.user_data_dir`) - bereits umgesetzt.
-- **Optional:** SQLCipher-Wrapper für DB-Verschlüsselung.
+- **SQLCipher-DB-Verschlüsselung: AKTIVIERT.** `sqlcipher3` steht in
+  `buildozer.spec` `requirements`, lokale Recipe unter `recipes/sqlcipher3/`.
   - Passphrase aus Android Keystore ableiten (Native:
-    `EncryptedSharedPreferences`; Kivy: `pyjnius` -> Keystore).
-  - Buildozer-Recipe `sqlcipher3` einbinden (siehe `MOBILE.md`-Hinweis).
-- **Pflicht** bei Sensitivitätserhöhung (z.B. neue Gesundheits- oder
-  Finanzdaten): SQLCipher aktivieren.
+    `EncryptedSharedPreferences`; Kivy: `pyjnius` -> Keystore,
+    `DbKeyProvider.java` + `services/db_key.py`).
+  - **Noch offen:** Recipe-Build auf WSL2 verifizieren und auf Gerät prüfen,
+    dass `Database.encryption_mode == "sqlcipher"` ist
+    (siehe `release/GO_LIVE_TODO.md` Pkt. 1.1).
 
 ### Settings
 

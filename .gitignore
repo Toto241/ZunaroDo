@@ -77,6 +77,11 @@ bin/
 *.aab
 *.keystore
 *.jks
+release/keystore/
+*.b64
+# Play-Billing-Server: Service-Account-Schluessel - NIE committen.
+**/service-account*.json
+play-service-account.json
 local.properties
 
 # =====================================================================
