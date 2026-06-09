@@ -19,7 +19,7 @@ sei denn, der Anbieter stimmt ihrer Geltung schriftlich zu.
 
 (1) Der Anbieter stellt dem Nutzer die App in der jeweils aktuellen
 Version zur Verfuegung. Der Funktionsumfang ergibt sich aus der
-Beschreibung im Store-Eintrag bzw. unter https://zunarodo.github.io/alltagshelfer/.
+Beschreibung im Store-Eintrag bzw. unter https://github.com/Toto241/ZunaroDo.
 
 (2) Es bestehen drei Nutzungsmodelle (siehe README):
 
@@ -57,7 +57,7 @@ um zwoelf Monate, kuendbar mit einer Frist von einem Monat zum
 Vertragsende.
 
 (3) Die Kuendigung kann ueber den Bezahldienstleister oder per Mail an
-alltagshelfer@zunarodo.github.io erfolgen.
+zunarodo.support@toto241.github.io erfolgen.
 
 (4) **Grace-Period:** Nach Ablauf eines Pro-Abos behaelt der Nutzer fuer
 7 Kalendertage Zugriff auf alle Pro-Funktionen ("Karenzzeit"), damit

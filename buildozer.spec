@@ -14,6 +14,7 @@ source.exclude_dirs = tests,htmlcov,backups,logs,dist,build,.venv,venv,.git,docs
 source.exclude_exts = spec,db,sqlite,log,pyc
 
 version = 1.0.0
+android.numeric_version = 2
 
 # Pflicht-Requirements
 # - python3, kivy, kivymd: das Frontend selbst
@@ -95,9 +96,8 @@ android.allow_backup = False
 # Entry-Point (Modul, das die Kivy-App-Klasse haelt)
 entrypoint = mobile/app.py
 
-# Icon und Splashscreen koennen unter assets/ liegen
-# icon.filename = assets/app_icon.png
-# presplash.filename = assets/splash.png
+icon.filename = assets/app_icon.png
+presplash.filename = assets/splash.png
 
 # Logleveldetails fuer Buildozer
 log_level = 2

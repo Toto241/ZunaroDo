@@ -101,8 +101,14 @@ class TestCheckVersioning(unittest.TestCase):
 
     def test_semver_passes(self) -> None:
         rep = pc.Report()
-        pc.check_versioning(rep, {"version": "1.2.3"})
+        pc.check_versioning(rep, {"version": "1.2.3", "android.numeric_version": "2"})
         self.assertEqual(rep.by_level(pc.Level.FAIL), [])
+
+    def test_missing_numeric_version_fails(self) -> None:
+        rep = pc.Report()
+        pc.check_versioning(rep, {"version": "1.2.3"})
+        fails = rep.by_level(pc.Level.FAIL)
+        self.assertTrue(any("numeric_version" in f.message for f in fails))
 
     def test_invalid_warns(self) -> None:
         rep = pc.Report()

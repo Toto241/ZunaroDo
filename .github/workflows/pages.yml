@@ -1,10 +1,18 @@
 name: Privacy-Policy Pages
 
-# Bewusst nur manuell: so faerbt der Deploy nichts rot auf Repos, in
-# denen GitHub Pages (noch) nicht aktiviert ist. Vor dem ersten Lauf
-# unter Settings -> Pages -> Source: GitHub Actions aktivieren.
+# Erster Deploy: Settings -> Pages -> Source: GitHub Actions aktivieren.
+# Danach: automatisch bei Aenderungen an site/ oder legal/DATENSCHUTZ.md,
+# zusaetzlich manuell per workflow_dispatch.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'legal/DATENSCHUTZ.md'
+      - 'legal/provider.yml'
+      - 'tools/privacy_policy.py'
+      - '.github/workflows/pages.yml'
 
 permissions:
   contents: read

@@ -90,7 +90,7 @@ Identitaetspruefung in einen halb-blockierten Zustand kommt.
 | Feld | Beispiel | Hinweis |
 | --- | --- | --- |
 | App-Titel (Store-Listing) | ZunaroDo | bis 30 Zeichen, **nach Release nicht aenderbar** |
-| Paketname / Application ID | `de.zunarodo.alltagshelfer` | **nie wieder aenderbar nach erstem Upload** - sehr sorgfaeltig waehlen! |
+| Paketname / Application ID | `de.alltagshelfer.alltagshelfer` | **nie wieder aenderbar nach erstem Upload** - sehr sorgfaeltig waehlen! |
 | Reverse-Domain | `<tld>.<organisation>.<app>` | eigene Domain als Praefix nutzen |
 
 **Falle:** Wer `com.example.alltagshelfer` hochlaedt und es spaeter auf
@@ -786,7 +786,7 @@ Empfohlen: **5 % -> 20 % -> 50 % -> 100 %** ueber 3-7 Tage.
 [app]
 title = ZunaroDo
 package.name = alltagshelfer
-package.domain = de.zunarodo
+package.domain = de.alltagshelfer
 source.dir = mobile
 source.include_exts = py,png,jpg,kv,atlas,json,ttf
 version = 0.10.0
@@ -848,11 +848,11 @@ jarsigner -verify -verbose -certs bin/*.aab
 ```gradle
 // app/build.gradle (Kotlin DSL: app/build.gradle.kts entsprechend)
 android {
-    namespace 'de.zunarodo.alltagshelfer'
+    namespace 'de.alltagshelfer.alltagshelfer'
     compileSdk 35
 
     defaultConfig {
-        applicationId "de.zunarodo.alltagshelfer"
+        applicationId "de.alltagshelfer.alltagshelfer"
         minSdk 24
         targetSdk 35
         versionCode 11000

@@ -41,9 +41,27 @@ class Notifier:
 
     def __init__(self) -> None:
         self._send = _try_plyer() or _try_winsound()
+        self._permission_asked = False
 
     def notify(self, title: str, message: str) -> None:
+        if not self._ensure_notification_permission():
+            return
         try:
             self._send(title, message)
         except Exception:                              # pragma: no cover
             print(f"[NOTIFICATION] {title}: {message}")
+
+    def _ensure_notification_permission(self) -> bool:
+        """Android 13+: POST_NOTIFICATIONS einmalig anfragen."""
+        try:
+            from services.android_permissions import (has_post_notifications,
+                                                      request_post_notifications)
+        except ImportError:
+            return True
+        if has_post_notifications():
+            return True
+        if self._permission_asked:
+            return False
+        self._permission_asked = True
+        request_post_notifications()
+        return has_post_notifications()

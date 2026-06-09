@@ -7,9 +7,9 @@ Angaben gemaess §5 TMG / §18 Abs. 2 MStV:
 **Vertreten durch:** ZunaroDo Open-Source-Projekt
 
 **Kontakt:**
-E-Mail: alltagshelfer@zunarodo.github.io
-Web: https://zunarodo.github.io/alltagshelfer/
-GitHub: https://github.com/zunarodo/alltagshelfer
+E-Mail: zunarodo.support@toto241.github.io
+Web: https://github.com/Toto241/ZunaroDo
+GitHub: https://github.com/Toto241/ZunaroDo
 
 **Registereintrag:** Kein Handelsregister-Eintrag (Open-Source-Projekt ohne eingetragenen Kaufmann).
 

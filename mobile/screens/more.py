@@ -631,6 +631,18 @@ class MoreScreen(MDScreen):
         lang_item.bind(on_release=lambda *_: self._open_language_page())
         self.list.add_widget(lang_item)
 
+        # Rechtstexte (Play Store: In-App-Zugang zu Datenschutz/Impressum/AGB)
+        from mobile.screens.legal_doc import legal_menu_entries
+        for icon, key, doc in legal_menu_entries():
+            label = (app.i18n.t(key) if app is not None else key)
+            item = OneLineIconListItem(
+                IconLeftWidget(icon=icon),
+                text=label,
+            )
+            item.bind(on_release=lambda *_,
+                      d=doc, lbl=label: self._open_legal_page(d, lbl))
+            self.list.add_widget(item)
+
         # Daten loeschen (DSGVO Art. 17 / Play Data-Deletion)
         del_label = (app.i18n.t("data.delete_button")
                      if app is not None else "Alle Daten loeschen")
@@ -660,6 +672,10 @@ class MoreScreen(MDScreen):
 
     def _open_language_page(self) -> None:
         self.add_widget(_LanguagePage())
+
+    def _open_legal_page(self, doc: str, title: str) -> None:
+        from mobile.screens.legal_doc import LegalDocScreen
+        self.add_widget(LegalDocScreen(doc=doc, title=title))
 
     def _open_data_deletion_page(self) -> None:
         self.add_widget(_DataDeletionPage())
