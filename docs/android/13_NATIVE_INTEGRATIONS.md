@@ -73,7 +73,7 @@ Aufruf nach.
 ## Zusammengefasste Build-Konfiguration (buildozer.spec)
 
 ```ini
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius
+requirements = python3,kivy==2.3.1,kivymd==1.2.0,certifi,requests,pyjnius,sqlcipher3
 android.add_src = src/android/java
 android.enable_androidx = True
 android.gradle_dependencies = com.android.billingclient:billing:6.2.1, androidx.security:security-crypto:1.1.0-alpha06, com.google.mlkit:text-recognition:16.0.1
