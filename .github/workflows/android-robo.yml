@@ -91,13 +91,9 @@ jobs:
           api-level: 30
           arch: x86_64
           profile: pixel_5
+          # Achtung: die Action fuehrt JEDE Zeile als eigenes Kommando aus -
+          # keine Variablen/Zeilenfortsetzungen ueber Zeilengrenzen hinweg.
           script: |
             adb install -r bin/*.apk
-            PKG=de.alltagshelfer.alltagshelfer
-            adb shell monkey -p "$PKG" --throttle 200 \
-              --pct-syskeys 0 -v ${{ github.event.inputs.monkey_events || '500' }}
-            # Auf Crashes/ANRs im Logcat pruefen
-            if adb logcat -d | grep -E "FATAL EXCEPTION|ANR in $PKG"; then
-              echo "::error::Crash/ANR im Monkey-Lauf gefunden"
-              exit 1
-            fi
+            adb shell monkey -p de.alltagshelfer.alltagshelfer --throttle 200 --pct-syskeys 0 -v ${{ github.event.inputs.monkey_events || '500' }}
+            if adb logcat -d | grep -E "FATAL EXCEPTION|ANR in de.alltagshelfer.alltagshelfer"; then echo "::error::Crash/ANR im Monkey-Lauf gefunden"; exit 1; fi
