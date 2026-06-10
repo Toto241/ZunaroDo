@@ -16,7 +16,11 @@ Funktionsweise (wichtig, weil die sdist KEINE Amalgamation mitbringt):
      'tcl') und legt sqlite3.c/sqlite3.h in den Recipe-Build-Ordner.
   3. setup.py wird so gepatcht, dass 'build_ext' auf den
      Amalgamation-Builder zeigt - dadurch nutzen auch die impliziten
-     build-Schritte von 'setup.py install' den statischen Pfad.
+     build-Schritte von 'setup.py install' den statischen Pfad. Aus
+     setup.cfg fliegen die Host-Pfade (include_dirs=/usr/include,
+     library_dirs=/usr/lib) raus: beim NDK-Cross-Compile wuerde clang
+     sonst die glibc-Header des Build-Hosts ziehen
+     ('bits/libc-header-start.h' not found).
   4. Der Amalgamation-Builder setzt selbst -DSQLITE_HAS_CODEC usw. und
      linkt -lcrypto; die OpenSSL-Pfade kommen aus der p4a-openssl-Recipe.
 
@@ -103,6 +107,20 @@ class Sqlcipher3Recipe(CompiledComponentsPythonRecipe):
         if patched != text:
             with open(setup_py, "w", encoding="utf-8") as fh:
                 fh.write(patched)
+
+        # setup.cfg injiziert Host-Pfade in jeden build_ext-Lauf - Gift
+        # fuer den Cross-Compile, nutzlos fuer den statischen Build.
+        setup_cfg = join(build_dir, "setup.cfg")
+        if exists(setup_cfg):
+            with open(setup_cfg, encoding="utf-8") as fh:
+                lines = fh.readlines()
+            kept = [
+                line for line in lines
+                if not line.strip().startswith(("include_dirs", "library_dirs"))
+            ]
+            if kept != lines:
+                with open(setup_cfg, "w", encoding="utf-8") as fh:
+                    fh.writelines(kept)
 
     def get_recipe_env(self, arch, **kwargs):
         env = super().get_recipe_env(arch, **kwargs)
