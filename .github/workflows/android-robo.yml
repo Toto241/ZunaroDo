@@ -58,8 +58,8 @@ jobs:
           path: ~/.buildozer
           key: buildozer-global-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-global-${{ runner.os }}-
-      - name: Debug-APK (buildozer)
-        run: buildozer android debug
+      - name: Debug-APK (buildozer, Profil robo = x86_64 fuer den Emulator)
+        run: buildozer --profile robo android debug
       - name: APK als Artefakt
         uses: actions/upload-artifact@v4
         with:
