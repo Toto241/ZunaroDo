@@ -30,11 +30,12 @@ android.numeric_version = 2
 # DB-Verschluesselung (SQLCipher) ist AKTIV: 'sqlcipher3' greift ueber die
 # lokale Recipe unter ./recipes (siehe p4a.local_recipes weiter unten).
 # Python-Seite: database.py + services/db_key.py.
-#   ACHTUNG: Die Recipe (recipes/sqlcipher3/) ist noch NICHT auf einem
-#   echten WSL2/Linux-Build verifiziert - siehe release/GO_LIVE_TODO.md.
-#   Falls der erste Build daran scheitert, 'sqlcipher3' temporaer entfernen
-#   (App laeuft dann mit unverschluesseltem SQLite) und Recipe nachziehen.
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius,sqlcipher3
+# python3/hostpython3 sind auf 3.12 gepinnt: p4a@master nimmt sonst das
+# neueste CPython (aktuell 3.14), gegen das Kivy 2.3.0 nicht kompiliert
+# (Cython-Constraint <3.1 erzeugt Code mit entfernten CPython-Interna,
+# z.B. _PyUnicode_FastCopyCharacters). Kivy 2.3.0 unterstuetzt offiziell
+# bis Python 3.12. Beide Pins MUESSEN dieselbe Version tragen.
+requirements = python3==3.12.11,hostpython3==3.12.11,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius,sqlcipher3
 
 # Welcher Screen-Orientierungs-Default
 orientation = portrait
