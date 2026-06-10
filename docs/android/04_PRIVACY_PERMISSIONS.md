@@ -114,7 +114,7 @@ gegen diese Tabelle und schlägt bei Drift Alarm.
 
 | SDK / Library | Version | Zweck | Erhobene Daten | Datenfluss | Alternative mit weniger Tracking |
 | ------------- | ------- | ----- | --------------- | ---------- | -------------------------------- |
-| `kivy` | 2.3.0 | UI-Framework | keine | lokal | n/a (Framework) |
+| `kivy` | 2.3.1 | UI-Framework | keine | lokal | n/a (Framework) |
 | `kivymd` | 1.2.0 | Material-Widgets | keine | lokal | nativ Compose |
 | `certifi` | latest | TLS-CA-Bundle | keine | lokal | OS-Trust-Store |
 | `requests` | latest | HTTP-Client | URLs an Zielserver | nur an konfigurierte Hosts | `httpx` |

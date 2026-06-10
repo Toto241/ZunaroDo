@@ -30,12 +30,12 @@ android.numeric_version = 2
 # DB-Verschluesselung (SQLCipher) ist AKTIV: 'sqlcipher3' greift ueber die
 # lokale Recipe unter ./recipes (siehe p4a.local_recipes weiter unten).
 # Python-Seite: database.py + services/db_key.py.
-# python3/hostpython3 sind auf 3.12 gepinnt: p4a@master nimmt sonst das
-# neueste CPython (aktuell 3.14), gegen das Kivy 2.3.0 nicht kompiliert
-# (Cython-Constraint <3.1 erzeugt Code mit entfernten CPython-Interna,
-# z.B. _PyUnicode_FastCopyCharacters). Kivy 2.3.0 unterstuetzt offiziell
-# bis Python 3.12. Beide Pins MUESSEN dieselbe Version tragen.
-requirements = python3==3.12.11,hostpython3==3.12.11,kivy==2.3.0,kivymd==1.2.0,certifi,requests,pyjnius,sqlcipher3
+# kivy==2.3.1 ist exakt die Version, die die gepinnte p4a-Release selbst
+# patcht (use_cython/no-ast-str) und gegen ihr Default-Python (3.14)
+# testet. KEINE eigenen python3-Pins setzen: CPython <=3.12 baut p4a
+# nicht mehr (offizieller Android-Support erst ab 3.13/PEP 738), und
+# Kivy <2.3.1 kompiliert nicht gegen 3.14 (Cython<3.1-Codegen).
+requirements = python3,kivy==2.3.1,kivymd==1.2.0,certifi,requests,pyjnius,sqlcipher3
 
 # Welcher Screen-Orientierungs-Default
 orientation = portrait
@@ -86,6 +86,12 @@ android.gradle_dependencies = com.android.billingclient:billing:6.2.1, androidx.
 # Lokale p4a-Recipes (aktuell: sqlcipher3). Wird nur gebaut, wenn das
 # Paket auch in 'requirements' steht.
 p4a.local_recipes = ./recipes
+# Toolchain deterministisch: p4a auf Release v2026.05.09 gepinnt -
+# buildozer zieht sonst den beweglichen master, wodurch sich Ziel-Python/
+# NDK/Recipes zwischen zwei Laeufen aendern koennen (genau so kam der
+# Kivy-2.3.0-vs-Python-3.14-Bruch zustande). Bei p4a-Updates: Tag-SHA
+# neu setzen und kivy-Pin oben gegen den Recipe-Default abgleichen.
+p4a.commit = 8aba7685beea080d0e34375e6c0e2067a2dcad0a
 
 # Release-Artefakt: Google Play verlangt ein App Bundle (.aab), kein APK.
 # 'buildozer android release' erzeugt damit bin/*.aab. Die Signierung
