@@ -120,6 +120,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: alltagshelfer-release-aab
-          path: bin/*.aab
+          # buildozer.spec setzt bin_dir = dist
+          path: dist/*.aab
           if-no-files-found: error
           retention-days: 14
