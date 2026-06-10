@@ -123,6 +123,15 @@ log_level = 2
 warn_on_root = 1
 
 
+# ---------------------------------------------------------------------
+# Profil fuer den CI-Emulator-Stresstest (.github/workflows/android-robo.yml):
+# GitHub-Runner-Emulatoren sind x86_64 - ein ARM-only-APK crasht dort beim
+# Start (UnsatisfiedLinkError in den SDL-Natives trotz ARM-Translation).
+# Das Produktions-APK/-AAB behaelt die ARM-Archs aus [app].
+# Aufruf: buildozer --profile robo android debug
+[app@robo]
+android.archs = x86_64
+
 [buildozer]
 
 # Wo Builds landen
