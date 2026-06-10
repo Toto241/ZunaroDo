@@ -647,7 +647,11 @@ def check_sdk_inventory(report: Report) -> None:
         if pkg:
             declared.add(pkg)
 
-    undocumented = {p for p in declared if p and p.lower() not in {s.lower() for s in DOCUMENTED_SDKS} and p != "python3"}
+    # python3/hostpython3 sind Toolchain (Build-Host bzw. Ziel-Interpreter),
+    # keine SDKs - sie tauchen nur wegen der Versions-Pins in requirements auf.
+    undocumented = {p for p in declared
+                    if p and p.lower() not in {s.lower() for s in DOCUMENTED_SDKS}
+                    and p not in ("python3", "hostpython3")}
     # Wir lassen Standard-Python-Pakete (sqlite3, hashlib) durch.
     stdlib_allowlist = {"sqlite3", "hashlib", "json"}
     undocumented -= stdlib_allowlist

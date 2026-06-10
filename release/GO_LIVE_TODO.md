@@ -49,11 +49,15 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 - [ ] WSL2 + Abhaengigkeiten einrichten (siehe `buildozer.spec` Kommentar Pkt. 2
       und `docs/android/07_CICD.md`) - entfaellt beim CI-Weg.
 - [ ] Debug-Build: `buildozer android debug` (oder Robo-Workflow dispatchen)
-- [ ] **SQLCipher verifizieren** (jetzt aktiv): Baut `recipes/sqlcipher3/`?
-      Ggf. `version`/`url`/OpenSSL-Pfad anpassen. Auf Geraet pruefen, dass
-      `Database.encryption_mode == "sqlcipher"`. Falls der Build daran
-      scheitert: `sqlcipher3` temporaer aus `requirements` nehmen (App laeuft
-      dann mit Klartext-SQLite) und Recipe nachziehen.
+- [ ] **SQLCipher verifizieren** (jetzt aktiv): Die Recipe
+      (`recipes/sqlcipher3/`) generiert die SQLCipher-Amalgamation beim
+      Build selbst (braucht `tcl` auf dem Build-Host; in den CI-Workflows
+      enthalten) und baut sie statisch in die Extension - auf dem Host
+      bereits validiert (cipher_version 4.6.1, falscher Key abgewiesen).
+      Auf Geraet pruefen, dass `Database.encryption_mode == "sqlcipher"`.
+      Falls der Build daran scheitert: `sqlcipher3` temporaer aus
+      `requirements` nehmen (App laeuft dann mit Klartext-SQLite) und
+      Recipe nachziehen.
 - [ ] **ML-Kit-OCR verifizieren**: Beleg scannen -> `scan_receipt()` liefert
       `engine == "mlkit"` (Modell laedt beim 1. Aufruf nach).
 - [ ] **Icon/Adaptive-Icon** auf echtem Launcher pruefen (kein weisser Default).
