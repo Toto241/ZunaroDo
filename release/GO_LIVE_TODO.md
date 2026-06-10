@@ -40,28 +40,28 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 
 ## 1. BLOCKER - vor Produktion zwingend
 
-### 1.1 Android-Build auf WSL2/Linux erzeugen (Basis fuer alles Weitere)
-> Buildozer laeuft NICHT nativ unter Windows. Ubuntu 22.04 in WSL2 verwenden.
-> Alternative OHNE WSL2: Actions-Workflow `Android Robo/Monkey (Emulator)`
-> (workflow_dispatch) baut das Debug-APK auf einem Linux-Runner und prueft
-> damit auch, ob die SQLCipher-Recipe baut - keine Secrets noetig.
+### 1.1 Android-Build erzeugen (Basis fuer alles Weitere)
+> ERLEDIGT via CI (kein WSL2 noetig): Actions-Workflow `Android
+> Robo/Monkey (Emulator)` baut das Debug-APK auf einem Linux-Runner.
+> Lauf #10 (2026-06-10) war komplett gruen: Build -> APK-Artefakt ->
+> Emulator-Installation -> Monkey-Stresstest (500 Events) ohne
+> Crash/ANR. Lokales WSL2 bleibt als optionaler zweiter Weg.
 
-- [ ] WSL2 + Abhaengigkeiten einrichten (siehe `buildozer.spec` Kommentar Pkt. 2
-      und `docs/android/07_CICD.md`) - entfaellt beim CI-Weg.
-- [ ] Debug-Build: `buildozer android debug` (oder Robo-Workflow dispatchen)
-- [ ] **SQLCipher verifizieren** (jetzt aktiv): Die Recipe
-      (`recipes/sqlcipher3/`) generiert die SQLCipher-Amalgamation beim
-      Build selbst (braucht `tcl` auf dem Build-Host; in den CI-Workflows
-      enthalten) und baut sie statisch in die Extension - auf dem Host
-      bereits validiert (cipher_version 4.6.1, falscher Key abgewiesen).
-      Auf Geraet pruefen, dass `Database.encryption_mode == "sqlcipher"`.
-      Falls der Build daran scheitert: `sqlcipher3` temporaer aus
-      `requirements` nehmen (App laeuft dann mit Klartext-SQLite) und
-      Recipe nachziehen.
+- [x] Debug-Build: Robo-Workflow dispatchen (gruen, APK als Artefakt
+      `debug-apk`; Workflow-Profil baut x86_64 fuer den Emulator,
+      Produktions-Archs bleiben ARM).
+- [x] **SQLCipher-Recipe baut** (beide ARM-Archs + x86_64): Die Recipe
+      (`recipes/sqlcipher3/`) generiert die Amalgamation beim Build
+      selbst (braucht `tcl`, in den CI-Workflows enthalten) und baut sie
+      statisch; auf dem Host validiert (cipher_version 4.6.1, falscher
+      Key abgewiesen, Datei-Header verschluesselt).
+- [ ] **SQLCipher auf Geraet verifizieren**: APK-Artefakt installieren,
+      pruefen dass `Database.encryption_mode == "sqlcipher"`.
 - [ ] **ML-Kit-OCR verifizieren**: Beleg scannen -> `scan_receipt()` liefert
       `engine == "mlkit"` (Modell laedt beim 1. Aufruf nach).
 - [ ] **Icon/Adaptive-Icon** auf echtem Launcher pruefen (kein weisser Default).
-- [ ] Release-Bundle: `buildozer android release` -> `dist/*.aab`.
+- [ ] Release-Bundle: Workflow `Android Release (AAB)` dispatchen ->
+      Artefakt `dist/*.aab` (braucht die vier Keystore-Secrets aus 1.2).
 
 ### 1.2 Upload-Keystore erstellen & sichern
 - [ ] `pwsh ./release/create_upload_keystore.ps1` ausfuehren.
