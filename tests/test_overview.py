@@ -69,15 +69,23 @@ class TestAgendaOverview(unittest.TestCase):
         self.assertEqual(result["days"][4]["count"], base4 + 1)
 
     def test_events_outside_horizon_excluded_then_included(self) -> None:
+        # Wie in test_day_view_groups_due_items: dynamische Basis-Ereignisse
+        # (z.B. Monatsabschluss-Erinnerung) koennen je nach heutigem Datum
+        # auf denselben Kalendertag wie der Test-Termin fallen (etwa wenn
+        # heute+20 auf ein Monatsende trifft). Daher Delta gegen einen
+        # Vorher-Snapshot statt absoluter Counts.
         week_before = self.registry.dispatch("system.agenda", {})["total"]
+        month_before = self.registry.dispatch(
+            "system.agenda", {"horizon_days": 30})
+        base20 = month_before["days"][20]["count"]
         self._add_event("Fern-Termin", 20)
         week_after = self.registry.dispatch("system.agenda", {})["total"]
         self.assertEqual(week_after, week_before)     # +20 liegt ausserhalb 7d
         month = self.registry.dispatch("system.agenda", {"horizon_days": 30})
         self.assertEqual(len(month["days"]), 30)
-        self.assertEqual(month["days"][20]["count"], 1)
-        self.assertEqual(month["days"][20]["events"][0]["title"],
-                         "Termin: Fern-Termin")
+        self.assertEqual(month["days"][20]["count"], base20 + 1)
+        titles = {e["title"] for e in month["days"][20]["events"]}
+        self.assertIn("Termin: Fern-Termin", titles)
 
     def test_weekday_label_matches_date(self) -> None:
         result = self.registry.dispatch("system.agenda", {})
