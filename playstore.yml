@@ -144,13 +144,48 @@ tracks:
       version_name: 1.0.0
       status: draft
       user_fraction: 0.0
+      # Quelle: legal/release_notes/1.0.0/<locale>.txt (je <= 500 Zeichen).
       release_notes:
         de-DE: |
-          ZunaroDo 1.0.0: Vertraege, Termine, Finanzen und Familie -
-          alles lokal auf dem Geraet. Kein Tracking, keine Werbung.
+          ZunaroDo 1.0.0 - Ihr Alltagsassistent. Vertraege & Fristen,
+          Termine, Finanzen, Familie & Haushalt und Kontakte - alles lokal
+          auf dem Geraet. Kein Tracking, keine Werbung. Optional:
+          Mehrgeraete-Sync (Pro) und KI-Unterstuetzung. Erstes stabiles Release.
         en-US: |
-          ZunaroDo 1.0.0: contracts, appointments, finances and household -
-          on-device, private, no ads.
+          ZunaroDo 1.0.0 - your everyday assistant. Contracts & deadlines,
+          appointments, finances, family & household and contacts - all
+          on-device. No tracking, no ads. Optional: multi-device sync (Pro)
+          and AI assistance. First stable release.
+        fr-FR: |
+          ZunaroDo 1.0.0 - votre assistant du quotidien. Contrats et
+          echeances, rendez-vous, finances, famille et foyer, contacts -
+          tout en local. Aucun suivi, aucune publicite. En option:
+          synchronisation multi-appareils (Pro) et assistance IA.
+        es-ES: |
+          ZunaroDo 1.0.0 - tu asistente para el dia a dia. Contratos y
+          plazos, citas, finanzas, familia y hogar y contactos - todo local.
+          Sin rastreo, sin anuncios. Opcional: sincronizacion entre
+          dispositivos (Pro) y asistencia con IA. Primera version estable.
+        it-IT: |
+          ZunaroDo 1.0.0 - il tuo assistente quotidiano. Contratti e
+          scadenze, appuntamenti, finanze, famiglia e casa e contatti -
+          tutto in locale. Nessun tracciamento, nessuna pubblicita.
+          Opzionale: sincronizzazione multi-dispositivo (Pro) e assistenza IA.
+        nl-NL: |
+          ZunaroDo 1.0.0 - je dagelijkse assistent. Contracten en termijnen,
+          afspraken, financien, gezin en huishouden en contacten - allemaal
+          lokaal. Geen tracking, geen advertenties. Optioneel: synchronisatie
+          tussen apparaten (Pro) en AI-ondersteuning. Eerste stabiele release.
+        pl-PL: |
+          ZunaroDo 1.0.0 - Twoj asystent na co dzien. Umowy i terminy,
+          wydarzenia, finanse, rodzina i dom oraz kontakty - wszystko
+          lokalnie. Bez sledzenia, bez reklam. Opcjonalnie: synchronizacja
+          miedzy urzadzeniami (Pro) i wsparcie AI. Pierwsze stabilne wydanie.
+        pt-PT: |
+          ZunaroDo 1.0.0 - o seu assistente do dia a dia. Contratos e prazos,
+          compromissos, financas, familia e casa e contactos - tudo local.
+          Sem rastreio, sem anuncios. Opcional: sincronizacao entre
+          dispositivos (Pro) e assistencia com IA. Primeira versao estavel.
 testers:
   google_groups:
   - zunarodo-closed-testers@googlegroups.com

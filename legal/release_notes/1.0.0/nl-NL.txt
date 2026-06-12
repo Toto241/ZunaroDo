@@ -1,0 +1,1 @@
+ZunaroDo 1.0.0 – je dagelijkse assistent. Contracten en termijnen, afspraken, financiën, gezin en huishouden en contacten – allemaal lokaal op het apparaat. Geen tracking, geen advertenties. Optioneel: synchronisatie tussen apparaten (Pro) en AI-ondersteuning. Eerste stabiele release.

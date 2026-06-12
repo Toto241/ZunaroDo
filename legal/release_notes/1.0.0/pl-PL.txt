@@ -1,0 +1,1 @@
+ZunaroDo 1.0.0 – Twój asystent na co dzień. Umowy i terminy, wydarzenia, finanse, rodzina i dom oraz kontakty – wszystko lokalnie na urządzeniu. Bez śledzenia, bez reklam. Opcjonalnie: synchronizacja między urządzeniami (Pro) i wsparcie AI. Pierwsze stabilne wydanie.
