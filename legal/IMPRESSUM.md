@@ -1,6 +1,6 @@
 # Impressum
 
-Angaben gemaess §5 TMG / §18 Abs. 2 MStV:
+Angaben gemaess §5 DDG / §18 Abs. 2 MStV:
 
 **ZunaroDo** (Open-Source-Softwareprojekt)
 
@@ -34,7 +34,7 @@ vor einer Verbraucherschlichtungsstelle teilzunehmen.
 Die Inhalte der App wurden mit groesstmoeglicher Sorgfalt erstellt.
 Fuer die Richtigkeit, Vollstaendigkeit und Aktualitaet der Inhalte
 koennen wir jedoch keine Gewaehr uebernehmen. Als Diensteanbieter
-sind wir gemaess §7 Abs. 1 TMG fuer eigene Inhalte auf diesen Seiten
+sind wir gemaess §7 Abs. 1 DDG fuer eigene Inhalte auf diesen Seiten
 nach den allgemeinen Gesetzen verantwortlich.
 
 ## Haftung fuer Links

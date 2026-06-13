@@ -11,7 +11,7 @@ angepasst werden muessen.
 
 | Datei | Pflicht? | Wofuer |
 | --- | --- | --- |
-| `IMPRESSUM.md` | ja (DE: TMG §5) | Wer betreibt die App |
+| `IMPRESSUM.md` | ja (DE: DDG §5) | Wer betreibt die App |
 | `DATENSCHUTZ.md` | ja (DSGVO Art. 13) | Was wird mit Nutzerdaten gemacht |
 | `AGB.md` | empfohlen | Vertragsbedingungen, Haftung, Kuendigung |
 | `WIDERRUF.md` | ja bei Verkauf an Verbraucher | 14-tägiges Widerrufsrecht (BGB §312g) |
