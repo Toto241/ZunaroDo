@@ -51,9 +51,9 @@
     "ZUNARODO_PLAY_VERIFY_URL"
   ],
   "score": {
-    "value": 60,
-    "level": "yellow",
-    "label": "teilweise bereit"
+    "value": 100,
+    "level": "green",
+    "label": "bereit für AI Studio"
   },
   "deployment": {
     "starterTierSuitable": false,
@@ -167,6 +167,6 @@
     ]
   },
   "secretFindings": [],
-  "totalFiles": 368,
+  "totalFiles": 382,
   "truncated": false
 }
