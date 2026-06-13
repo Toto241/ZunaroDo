@@ -10,6 +10,7 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 - **Mobile-Lizenz-Gate** — `install_gate`, Grandfathering, Screen „Lizenz / Pro“ (Trial + Token).
 - **Mobile-Datenexport** — CSV + JSON unter „Mehr → Daten exportieren“ (`export_all_json`).
 - **Pro-Sync-Durchsetzung** — `services/sync_runtime.py`; Free-Tier kann Sync nicht aktivieren.
+- **AI-Studio-Contracts** — `tools/gen_ai_studio_contracts.py` erzeugt aus der Registry und dem DB-Schema maschinenlesbare Contracts unter `docs/ai-studio/contracts/` (OpenAPI 3.1, Capability-Liste, `schema.sql`, `schema.prisma`); Drift-Test `tests/test_ai_studio_contracts.py`. AI-Studio-Handoff verdrahtet diese plus `UI_CONCEPT.md`/Screenshots und benennt Google Gemini als KI-Backend.
 
 ### Geändert
 
