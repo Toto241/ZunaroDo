@@ -6,6 +6,7 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Neu
 
+- **Anforderungsspezifikation** — `ANFORDERUNGEN.md`: konsolidiertes Lasten-/Pflichtenheft mit allen funktionalen und nicht-funktionalen Anforderungen, durchgaengigem ID-Schema (FR/NFR/PA/DA/SY/EN/KI/LI/CO/MO/IF/CFG/QA) und Traceability auf R1–R10.
 - **Datenverzeichnis beim Start** — Beim Erststart waehlt der Nutzer ein Verzeichnis, in dem alle Laufzeitdateien liegen (DB, `ausgaben/`, `backups/`, Sync-State). Die Wahl wird gemerkt (`ALLTAGSHELFER_DATA_DIR` bzw. Zeiger-Datei im Konfig-Ordner) und vorhandene Daten werden hineinkopiert; spaeter aenderbar unter „Einstellungen → Datenverzeichnis“ (`services/datadir.py`).
 - **Mobile-Lizenz-Gate** — `install_gate`, Grandfathering, Screen „Lizenz / Pro“ (Trial + Token).
 - **Mobile-Datenexport** — CSV + JSON unter „Mehr → Daten exportieren“ (`export_all_json`).

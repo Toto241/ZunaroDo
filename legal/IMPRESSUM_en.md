@@ -1,6 +1,6 @@
 # Legal Notice (Impressum)
 
-Information pursuant to §5 TMG / §18 (2) MStV (Germany):
+Information pursuant to §5 DDG / §18 (2) MStV (Germany):
 
 **ZunaroDo** (open-source software project)
 

@@ -1,7 +1,7 @@
 # ZunaroDo
 
 Datenschutzfreundlicher Alltagsassistent für den deutschsprachigen Raum
-mit **acht Fachmodulen**, einem **Dashboard**, **Google Gemini** als
+mit **neun Fachmodulen** (plus vier modulübergreifenden), einem **Dashboard**, **Google Gemini** als
 optionalem KI-Backend, **Mehrgeräte-Synchronisation** (Datei oder HTTP,
 optional HTTPS), **optionaler SQLCipher-Verschlüsselung**,
 **Volltextsuche**, **CSV-Export**, **Online-Backup**, einem **CLI** und
@@ -81,13 +81,13 @@ pip install pytesseract Pillow
 pip install easyocr
 ```
 
-Tests: `python -m unittest discover tests` — 80+ Tests grün.
+Tests: `python -m unittest discover tests` — über 500 Tests grün (Smoke-Suite: 147).
 
 > 📋 **Vollständige Anforderungsspezifikation** (konsolidiertes Lasten- &
 > Pflichtenheft mit allen funktionalen und nicht-funktionalen Anforderungen,
 > ID-Schema und Traceability R1–R10): [ANFORDERUNGEN.md](ANFORDERUNGEN.md).
 
-## Module (acht aktiv)
+## Module (neun Fachmodule)
 
 | Modul | Name | Aufgabe |
 | --- | --- | --- |
@@ -100,6 +100,8 @@ Tests: `python -m unittest discover tests` — 80+ Tests grün.
 | – | Posteingang | Mail-Analyse regelbasiert + LLM-basiert, `.eml`-Import, IMAP, zentrale Vorschlags-Ablage, **Inline-Editor** für Vorschläge |
 | – | Volltextsuche | `system.search` quer durch Verträge/Ausgaben/Termine/Familie/Aufträge/Kontakte/Vorschläge |
 | – | Statistiken & Trends | `stats.expenses_per_month`, `stats.expenses_per_category`, `stats.contracts_overview`, `stats.yearly_summary`, **`stats.export_yearly_pdf`** |
+
+Hinzu kommen vier modulübergreifende Module — **Notizen**, **Vorlagen**, **Tages-/Wochenübersicht** (`system.agenda`) und **Geräte-Profile** — also **13 registrierte Module** insgesamt.
 
 GUI hat dafür einen eigenen **Statistiken-Tab** mit Canvas-Bar-Chart über die letzten 12 Monate, Vertragsübersicht und Jahressumme.
 
@@ -336,7 +338,7 @@ Aktuell übersetzt: Tab-Labels, Sidebar, Dashboard, Suche, Verlauf, Chat-Bubbles
 
 [services/scheduler.py](services/scheduler.py) prüft im Hintergrund (APScheduler oder Thread-Fallback) regelmäßig `registry.collect_events()` und schickt Desktop-Notifikationen (plyer mit Fallback) für anstehende Ereignisse innerhalb `notify.warn_within_days`.
 
-## GUI-Tabs (zwölf)
+## GUI-Tabs (vierzehn)
 
 ```text
 Dashboard – Vertraege – Familie – Finanzen – Kalender – Sozial
@@ -391,11 +393,11 @@ Bemerkenswerte Features:
 │   └── i18n.py                 Lokalisierung
 ├── locales/                    de.json, en.json (~100 Keys)
 ├── assistant.py                LLM-agnostisch
-├── gui.py                      CustomTkinter-GUI mit zwölf Tabs
+├── gui.py                      CustomTkinter-GUI mit vierzehn Tabs
 ├── main.py                     Konsolen-Demo
 ├── __main__.py                 CLI-Subcommands
 ├── diagnose.py                 Status-Bericht
-├── tests/test_smoke.py         80+ Tests
+├── tests/test_smoke.py         147 Tests (Gesamtsuite über 500)
 └── requirements.txt
 ```
 
