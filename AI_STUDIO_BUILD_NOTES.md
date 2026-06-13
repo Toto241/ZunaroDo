@@ -16,7 +16,15 @@ Diese Datei passt den Handoff an die realen Fähigkeiten und Grenzen von Google 
 
 ## Zusätzlich anzuhängende Kontext-Artefakte
 
+- docs/ai-studio/contracts/openapi.json — API-Contract (Endpunkte 1:1 abbilden)
+- docs/ai-studio/contracts/capabilities.json — Capabilities inkl. destructive/internal-Flags
+- docs/ai-studio/contracts/schema.sql — DDL des echten Schemas
+- docs/ai-studio/contracts/schema.prisma — Prisma-Modell (Cloud-SQL-/Postgres-Abbildung)
+- ANFORDERUNGEN.md — Anforderungen/Akzeptanzkriterien (R1–R10)
 - docker-compose.yml — Container-Setup (Laufzeit-/Service-Kontext)
+
+Regenerieren mit `python -m tools.gen_ai_studio_contracts` (Drift-Gate:
+`--check`).
 
 ## Empfohlene AI Chips
 
@@ -24,7 +32,8 @@ Diese Datei passt den Handoff an die realen Fähigkeiten und Grenzen von Google 
 
 ## Design-Referenzen (Sketch-Upload / Annotation Mode)
 
-- keine erkannt
+- UI_CONCEPT.md — vollständiges UI-/UX-Konzept (als Re-Build-Vorlage)
+- assets/store/phone-1.png, phone-2.png, phone-3.png — Screen-Referenzen
 
 ## Verhaltens-Spezifikationen (aus Tests – beim Re-Build erhalten)
 

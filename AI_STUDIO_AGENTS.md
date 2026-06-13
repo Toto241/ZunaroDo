@@ -29,6 +29,9 @@ Python, Docker, Source structure, Automated tests
 ## Wichtige Dateien
 
 - README.md
+- ANFORDERUNGEN.md — vollständige Anforderungen/Akzeptanzkriterien (R1–R10)
+- docs/ai-studio/contracts/ — openapi.json, capabilities.json, schema.sql, schema.prisma (aus dem Code generiert)
+- UI_CONCEPT.md + assets/store/phone-*.png — UI-/UX-Referenz
 - requirements.txt
 - pyproject.toml
 - Dockerfile

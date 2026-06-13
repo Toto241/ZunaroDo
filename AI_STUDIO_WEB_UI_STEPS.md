@@ -6,7 +6,7 @@
 | --- | --- |
 | Build Prompt / Chat Input | Inhalt von AI_STUDIO_PROMPT.md einfügen |
 | Advanced Settings > System Instructions | Inhalt von AI_STUDIO_SYSTEM_INSTRUCTIONS.md einfügen, falls dieses Feld vorhanden ist – im reinen Build Mode sind die Kernregeln zusätzlich im Prompt-Kopf enthalten |
-| Attachments / Datei-Upload | AI_STUDIO_CONTEXT.md, AI_STUDIO_BUILD_NOTES.md, AI_STUDIO_AGENTS.md, REPO_SUMMARY.md, ARCHITECTURE.md, TESTING.md, SECURITY.md, PRIVACY.md, .env.example, optional repo-analysis.json sowie die in AI_STUDIO_BUILD_NOTES.md gelisteten Kontext-Artefakte (z. B. Prisma-/OpenAPI-Schema) und Design-Referenzen (Screenshots/Mockups) hochladen |
+| Attachments / Datei-Upload | AI_STUDIO_CONTEXT.md, AI_STUDIO_BUILD_NOTES.md, AI_STUDIO_AGENTS.md, REPO_SUMMARY.md, ARCHITECTURE.md, **ANFORDERUNGEN.md**, TESTING.md, SECURITY.md, PRIVACY.md, .env.example, optional repo-analysis.json **sowie die Contracts `docs/ai-studio/contracts/openapi.json`, `capabilities.json`, `schema.sql`, `schema.prisma`** und die **UI-Referenzen `UI_CONCEPT.md` + `assets/store/phone-1.png`/`phone-2.png`/`phone-3.png`** (Design-Referenzen/Mockups) hochladen |
 | Settings > Secrets | Secret-Namen aus .env.example anlegen und echte Werte nur dort eintragen |
 | Code Tab | Generierten Code prüfen und Build-/Runtime-Fehler beheben lassen |
 | GitHub Export | Erst nach erfolgreicher Preview in ein neues GitHub-Repository exportieren |

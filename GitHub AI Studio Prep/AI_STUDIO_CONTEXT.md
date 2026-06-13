@@ -150,12 +150,27 @@ ALLTAGSHELFER_IMAP_HOST=imap.example.com \
 - Backend: Python
 - Persistenz: relational (auf Cloud SQL abbilden)
 
-Schlüssel-Abhängigkeiten (im Prompt pinnen):
-- customtkinter: 5.2.0
-- cryptography: 42.0.0
+Schlüssel-Abhängigkeiten (Referenz des Desktop-Originals, nicht Pflicht für die Web-Neufassung):
+- customtkinter: >= 5.2.0
+- cryptography: >= 42.0.0
 
 Details und Grenzen siehe AI_STUDIO_BUILD_NOTES.md.
 
-## Warnungen
+## Maschinenlesbare Contracts
 
-- Mögliche Secret- oder Credential-Dateien gefunden: .mypy_cache/3.10/keyring/credentials.data.json, .mypy_cache/3.10/keyring/credentials.meta.json
+Aus dem echten Code generiert (via `python -m tools.gen_ai_studio_contracts`),
+als Attachments mitliefern:
+
+- `docs/ai-studio/contracts/openapi.json` — Capability-API (Endpunkte 1:1)
+- `docs/ai-studio/contracts/capabilities.json` — Capabilities inkl. Flags
+- `docs/ai-studio/contracts/schema.sql` / `schema.prisma` — Persistenz
+- `ANFORDERUNGEN.md` — Anforderungen/Akzeptanzkriterien (R1–R10)
+- `UI_CONCEPT.md` + `assets/store/phone-*.png` — UI-/UX-Referenz
+
+## Hinweis zu Secrets
+
+Es liegen **keine** Secrets im Repository. Secret-Namen stehen leer in
+`.env.example`; echte Werte ausschließlich unter Settings > Secrets. Ein
+früherer automatischer Scan meldete `.mypy_cache/**/keyring/*` – das ist ein
+lokaler, via `.gitignore` ausgeschlossener mypy-Cache, **nicht** im Git und
+kein App-Secret.
