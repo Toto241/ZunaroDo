@@ -83,6 +83,10 @@ pip install easyocr
 
 Tests: `python -m unittest discover tests` — 80+ Tests grün.
 
+> 📋 **Vollständige Anforderungsspezifikation** (konsolidiertes Lasten- &
+> Pflichtenheft mit allen funktionalen und nicht-funktionalen Anforderungen,
+> ID-Schema und Traceability R1–R10): [ANFORDERUNGEN.md](ANFORDERUNGEN.md).
+
 ## Module (acht aktiv)
 
 | Modul | Name | Aufgabe |
