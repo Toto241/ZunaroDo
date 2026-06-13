@@ -418,7 +418,7 @@ Pro-Feature). Pro Profil eigene DB-Datei + eigenes State-Verzeichnis.
 | CO-02 | **Recht auf Löschung & Portabilität**: In-App-Vollöschung (`delete_all_user_data` / `Database.wipe_all_data`), aus dem Mobile-„Mehr"-Screen erreichbar; Komplett-Export (`export_all` / `export_all_json`); in [legal/DATENSCHUTZ.md](legal/DATENSCHUTZ.md) dokumentiert. **Vor erstem Release zwingend.** | M | R7 |
 | CO-03 | **Data-Safety-Form** (Play Console) = „keine Daten erhoben" (solange kein Crash-/Analytics-SDK), `encrypted_in_transit: true`, `user_can_request_deletion: true`; konsistent zum SDK-Inventar in [docs/android/04_PRIVACY_PERMISSIONS.md](docs/android/04_PRIVACY_PERMISSIONS.md); maschinell geprüft (`tools/data_safety.py`). Inkonsistenz Form↔Policy ist häufiger Ablehnungsgrund. | M | R7, R9 |
 | CO-04 | **Permission-Whitelist** (siehe Tabelle unten): nur `INTERNET`, `POST_NOTIFICATIONS`, optional `ACCESS_NETWORK_STATE`; keine sensiblen/verbotenen Permissions; Laufzeit-`POST_NOTIFICATIONS` (Android 13+), App bleibt bei Verweigerung nutzbar (degradiert). | M | R7, R9 |
-| CO-05 | **Pflicht-Rechtstexte** vorhanden: Impressum (§5 TMG/§18 MStV), Datenschutzerklärung (Art. 13 DSGVO, URL öffentlich/HTTP 200), AGB, Widerrufsbelehrung (DE+EN), mit `[PLATZHALTER]`; In-App in ≤2 Taps erreichbar; vor Veröffentlichung anwaltlich prüfen. | M | R9 |
+| CO-05 | **Pflicht-Rechtstexte** vorhanden: Impressum (**§5 DDG**, löst seit Mai 2024 §5 TMG ab / §18 Abs. 2 MStV), Datenschutzerklärung (Art. 13 DSGVO, URL öffentlich/HTTP 200), AGB, Widerrufsbelehrung (DE+EN), mit `[PLATZHALTER]`; In-App in ≤2 Taps erreichbar; vor Veröffentlichung anwaltlich prüfen. **Hinweis:** Die Vorlagen unter [legal/](legal/) verweisen noch auf §5 TMG und sind auf DDG nachzuziehen. | M | R9 |
 | CO-06 | **Keine Klartext-Kommunikation**: `usesCleartextTraffic` false (HTTP nur localhost), keine `http://`-URLs in Release-Pfaden; keine hardcodierten Secrets im Repo (Gitleaks/Secret-Scan); exportierte Komponenten nur mit `permission`-Attribut/`exported`-Pflicht. | M | R7 |
 | CO-07 | **Automatisierter Compliance-Check** `tools/playstore_check.py --strict` MUSS 0 FAIL liefern (SDK-Level, Manifest, verbotene APIs, Versionscode-Konsistenz, SDK-Inventar-Sync); CI-Gate `android-compliance.yml`, jeder PR grün. | M | R9 |
 | CO-08 | **Content-Rating/Zielgruppe**: IARC USK 0/PEGI 3, „Mixed audiences" ab 13 J., keine Werbung, keine In-App-Käufe in der App (Lizenz extern via Browser-Redirect). | M | R9 |
@@ -475,7 +475,7 @@ Pro-Feature). Pro Profil eigene DB-Datei + eigenes State-Verzeichnis.
 | IF-03 | **Dashboard**: `ModuleRegistry.collect_events(...)` aggregiert Events aller Module chronologisch. | M | R1 |
 | IF-04 | Registry-Hilfen: `get_capability`, `destructive_capability_names`, `tool_schemas`, `module_states`, `set_module_enabled`. | M | R8 |
 | IF-05 | OCR-Engine-Priorität (alle lokal, keine Cloud): ML Kit (Android) → pytesseract (`deu`) → easyocr (`de`, gpu=False) → klarer Hinweis statt Crash. | M | R7 |
-| IF-06 | Mail: SMTP-Versand (Kündigungen) und IMAP-Abruf im Worker-Thread (kein GUI-Einfrieren); SMTP wird in der DB konfiguriert (keine Env-Vars). | M | R7 |
+| IF-06 | Mail: SMTP-Versand (Kündigungen) und IMAP-Abruf im Worker-Thread (kein GUI-Einfrieren); SMTP-**Verbindungsdaten** (Host/Port/User/Sender/StartTLS) werden in der App (DB) konfiguriert — bewusst ohne eigene Env-Vars. Das **Passwort** (`smtp.pass`) ist ein `SECRET_KEY` und wird **nicht** in der DB persistiert (Keyring/Env-Var; siehe CFG-02). | M | R7 |
 | IF-07 | Desktop-Notifikationen mit Fallback-Kette plyer → winsound+print → print (Timeout 10 s). | S | R2 |
 
 ## 14. Konfigurations-Anforderungen (CFG)
@@ -510,7 +510,10 @@ nicht in DB:
 | `ALLTAGSHELFER_PLATFORM` | Plattform-Override (Mobile-Markup) | — |
 | `ZUNARODO_PLAY_VERIFY_URL` | Play-Verify-Server-URL | ins Release gebacken |
 
-> SMTP wird bewusst **nicht** über Env-Vars, sondern in der App (DB) konfiguriert.
+> SMTP-**Verbindungsdaten** werden in der App (DB) konfiguriert (keine eigenen
+> Env-Vars). Das **Passwort** `smtp.pass` ist `SECRET_KEY` (CFG-02) und landet
+> nie in der DB — es kommt aus OS-Keyring oder Umgebung. Kein Widerspruch: nur
+> nicht-geheime SMTP-Felder werden persistiert.
 
 ## 15. Nicht-funktionale Anforderungen (NFR)
 
@@ -556,7 +559,7 @@ nicht in DB:
 
 | ID | Anforderung |
 | --- | --- |
-| NFR-I18N-01 | 24 EU-Amtssprachen unterstützt; Default/Fallback DE. |
+| NFR-I18N-01 | **Benutzeroberfläche** vollständig gepflegt in **Deutsch (Standard) und Englisch** (`de.json`/`en.json`, ~100 Strings). `locales/` enthält darüber hinaus **24 EU-Amtssprach-Dateien**, die mindestens die Capability-Beschreibungen abdecken (NFR-I18N-02); Default/Fallback DE. |
 | NFR-I18N-02 | Capability-Beschreibungen lokalisierbar (`cap.<name>.desc`) mit Fallback auf deutschen Originaltext. |
 | NFR-I18N-03 | Sprach-Normalisierung (`de_DE.UTF-8` → `de`); unbekannte Sprache → DE; fehlender Key → DE → Key selbst. |
 
