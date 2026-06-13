@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -61,9 +62,10 @@ def _build_registry():
     fd, db_path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     db = Database(db_path)
-    output = OutputService(tempfile.mkdtemp(prefix="ah_contracts_"))
+    output_dir = tempfile.mkdtemp(prefix="ah_contracts_")
+    output = OutputService(output_dir)
     registry = build_registry(db, output)
-    return registry, db, db_path
+    return registry, db, db_path, output_dir
 
 
 def build_capabilities(registry) -> list[dict[str, Any]]:
@@ -202,7 +204,7 @@ def _pascal(name: str) -> str:
 
 
 def generate() -> dict[str, str]:
-    registry, db, db_path = _build_registry()
+    registry, db, db_path, output_dir = _build_registry()
     try:
         capabilities = build_capabilities(registry)
         openapi = build_openapi(capabilities)
@@ -218,6 +220,7 @@ def generate() -> dict[str, str]:
                 os.unlink(db_path)
             except OSError:
                 pass
+        shutil.rmtree(output_dir, ignore_errors=True)
 
     return {
         "capabilities.json": json.dumps(
