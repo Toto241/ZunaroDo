@@ -1,0 +1,4653 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ZunaroDo Capability API",
+    "version": "1.0.0",
+    "description": "Aus core.interface.ModuleRegistry generierter Capability-Contract. Jede Capability ist ein einzelner Dispatch-Aufruf (ModuleRegistry.dispatch) und wird hier als POST-Endpunkt abgebildet. Quelle der Wahrheit ist der Code; diese Datei via tools/gen_ai_studio_contracts.py erzeugen."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "App-Backend"
+    }
+  ],
+  "paths": {
+    "/api/calendar.add_event": {
+      "post": {
+        "operationId": "calendar_add_event",
+        "summary": "Legt einen Termin an (einmalig oder wiederkehrend).",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Bezeichnung des Termins"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "Datum ISO (YYYY-MM-DD)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "termin, garantie, tuev, steuer, geburtstag, sonstiges"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Details"
+                  },
+                  "recurrence_days": {
+                    "type": "integer",
+                    "description": "Wiederholung in Tagen (z.B. 365 = jaehrlich)"
+                  },
+                  "person_id": {
+                    "type": "integer",
+                    "description": "Optional: betroffene Person (siehe family.members)"
+                  }
+                },
+                "required": [
+                  "title",
+                  "due_date"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.delete_event": {
+      "post": {
+        "operationId": "calendar_delete_event",
+        "summary": "Verschiebt einen Termin in den Papierkorb. Restore via calendar.restore_event; endgueltig erst via calendar.purge_event.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event_id": {
+                    "type": "integer",
+                    "description": "ID des Termins"
+                  }
+                },
+                "required": [
+                  "event_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.export_ical": {
+      "post": {
+        "operationId": "calendar_export_ical",
+        "summary": "Exportiert alle Termine als iCalendar-Datei (.ics), die in jeden gaengigen Kalender importiert werden kann.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Zielpfad (sollte auf .ics enden)"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.import_ical": {
+      "post": {
+        "operationId": "calendar_import_ical",
+        "summary": "Liest eine iCalendar-Datei (.ics) und legt die enthaltenen Termine an. Bestehende Termine werden NICHT veraendert - es entstehen neue Eintraege.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": true,
+        "x-internal": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Pfad zur .ics-Datei"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.list_deleted": {
+      "post": {
+        "operationId": "calendar_list_deleted",
+        "summary": "Listet Termine im Papierkorb.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.list_events": {
+      "post": {
+        "operationId": "calendar_list_events",
+        "summary": "Listet alle erfassten Termine auf.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.purge_event": {
+      "post": {
+        "operationId": "calendar_purge_event",
+        "summary": "Loescht einen Termin endgueltig.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event_id": {
+                    "type": "integer",
+                    "description": "ID des Termins"
+                  }
+                },
+                "required": [
+                  "event_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.restore_event": {
+      "post": {
+        "operationId": "calendar_restore_event",
+        "summary": "Stellt einen geloeschten Termin wieder her.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event_id": {
+                    "type": "integer",
+                    "description": "ID des Termins"
+                  }
+                },
+                "required": [
+                  "event_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/calendar.upcoming": {
+      "post": {
+        "operationId": "calendar_upcoming",
+        "summary": "Liefert anstehende Termine innerhalb eines Horizonts.",
+        "tags": [
+          "calendar"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "horizon_days": {
+                    "type": "integer",
+                    "description": "Bis wie viele Tage in der Zukunft (Standard: 90)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.add": {
+      "post": {
+        "operationId": "contracts_add",
+        "summary": "Legt einen neuen Vertrag an.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name des Vertrags"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "versicherung, mobilfunk, streaming, strom oder sonstiges"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "description": "Anbieter"
+                  },
+                  "customer_number": {
+                    "type": "string",
+                    "description": "Kunden- oder Vertragsnummer"
+                  },
+                  "start_date": {
+                    "type": "string",
+                    "description": "Startdatum ISO (YYYY-MM-DD)"
+                  },
+                  "minimum_term_months": {
+                    "type": "integer",
+                    "description": "Mindestlaufzeit in Monaten"
+                  },
+                  "notice_period_months": {
+                    "type": "integer",
+                    "description": "Kuendigungsfrist in Monaten"
+                  },
+                  "auto_renew_months": {
+                    "type": "integer",
+                    "description": "Verlaengerung in Monaten, falls nicht gekuendigt wird (z.B. 1 = monatlich kuendbar)"
+                  },
+                  "monthly_cost": {
+                    "type": "number",
+                    "description": "Monatliche Kosten in EUR"
+                  },
+                  "owner_id": {
+                    "type": "integer",
+                    "description": "Optional: ID des Haushaltsmitglieds, dem der Vertrag gehoert (siehe family.members)"
+                  }
+                },
+                "required": [
+                  "name",
+                  "category"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.delete": {
+      "post": {
+        "operationId": "contracts_delete",
+        "summary": "Verschiebt einen Vertrag in den Papierkorb (Soft-Delete). Mit 'contracts.restore' wiederherstellbar; endgueltig erst durch 'contracts.purge'.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "integer",
+                    "description": "ID des Vertrags"
+                  }
+                },
+                "required": [
+                  "contract_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.generate_cancellation": {
+      "post": {
+        "operationId": "contracts_generate_cancellation",
+        "summary": "Erstellt ein fristgerechtes Kuendigungsschreiben fuer einen Vertrag - als druckbares PDF und/oder Mail-Entwurf.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "integer",
+                    "description": "ID des zu kuendigenden Vertrags"
+                  },
+                  "sender_name": {
+                    "type": "string",
+                    "description": "Name des Absenders"
+                  },
+                  "sender_address": {
+                    "type": "string",
+                    "description": "Anschrift des Absenders"
+                  },
+                  "sender_city": {
+                    "type": "string",
+                    "description": "Ort fuer die Datumszeile"
+                  },
+                  "recipient_email": {
+                    "type": "string",
+                    "description": "Mailadresse des Anbieters (fuer den Mail-Entwurf)"
+                  },
+                  "channel": {
+                    "type": "string",
+                    "description": "pdf, email oder both (Standard: both)"
+                  }
+                },
+                "required": [
+                  "contract_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.list": {
+      "post": {
+        "operationId": "contracts_list",
+        "summary": "Listet alle aktiven Vertraege mit Kosten auf. Optional nach Kategorie filterbar.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Nur Vertraege dieser Kategorie"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.list_deleted": {
+      "post": {
+        "operationId": "contracts_list_deleted",
+        "summary": "Listet die im Papierkorb liegenden Vertraege.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.purge": {
+      "post": {
+        "operationId": "contracts_purge",
+        "summary": "Endgueltige Loeschung eines Vertrags (kein Restore mehr moeglich).",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "integer",
+                    "description": "ID des Vertrags"
+                  }
+                },
+                "required": [
+                  "contract_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.report_price_change": {
+      "post": {
+        "operationId": "contracts_report_price_change",
+        "summary": "Vermerkt eine Preisaenderung fuer einen Vertrag und speichert sie in der Preis-Historie.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "integer",
+                    "description": "ID des Vertrags"
+                  },
+                  "new_cost": {
+                    "type": "number",
+                    "description": "Neuer Monatspreis in EUR"
+                  }
+                },
+                "required": [
+                  "contract_id",
+                  "new_cost"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.restore": {
+      "post": {
+        "operationId": "contracts_restore",
+        "summary": "Stellt einen geloeschten Vertrag wieder her.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "integer",
+                    "description": "ID des Vertrags"
+                  }
+                },
+                "required": [
+                  "contract_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.set_owner": {
+      "post": {
+        "operationId": "contracts_set_owner",
+        "summary": "Ordnet einen Vertrag einer Person zu (oder loest die Zuordnung mit owner_id=0).",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contract_id": {
+                    "type": "integer",
+                    "description": "ID des Vertrags"
+                  },
+                  "owner_id": {
+                    "type": "integer",
+                    "description": "ID der Person (0 = keine)"
+                  }
+                },
+                "required": [
+                  "contract_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/contracts.upcoming_deadlines": {
+      "post": {
+        "operationId": "contracts_upcoming_deadlines",
+        "summary": "Liefert anstehende Kuendigungsfristen, optional begrenzt auf die naechsten N Tage.",
+        "tags": [
+          "contracts"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "within_days": {
+                    "type": "integer",
+                    "description": "Nur Fristen innerhalb so vieler Tage (Standard: alle)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/day.log_energy": {
+      "post": {
+        "operationId": "day_log_energy",
+        "summary": "Bewertet den heutigen Tag (1=ausgelaugt ... 5=top) und legt einen Eintrag an oder ersetzt den heutigen.",
+        "tags": [
+          "daystructure"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "integer",
+                    "description": "Skala 1-5"
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "Kurzer Hinweis"
+                  }
+                },
+                "required": [
+                  "level"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/day.recent_entries": {
+      "post": {
+        "operationId": "day_recent_entries",
+        "summary": "Listet die letzten Tageseintraege auf.",
+        "tags": [
+          "daystructure"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "description": "Maximal so viele (Standard: 30)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/day.recommendation": {
+      "post": {
+        "operationId": "day_recommendation",
+        "summary": "Liefert eine einfache Empfehlung auf Basis der letzten Eintraege.",
+        "tags": [
+          "daystructure"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.add_member": {
+      "post": {
+        "operationId": "family_add_member",
+        "summary": "Fuegt ein Haushaltsmitglied hinzu, optional mit Geburtstag (Termin landet automatisch im Kalender-Modul).",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name der Person"
+                  },
+                  "role": {
+                    "type": "string",
+                    "description": "erwachsen, kind oder sonstiges"
+                  },
+                  "birthday": {
+                    "type": "string",
+                    "description": "Geburtstag ISO (YYYY-MM-DD), optional"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.add_order": {
+      "post": {
+        "operationId": "family_add_order",
+        "summary": "Legt einen einmaligen Auftrag an, gezielt einer Person zugewiesen (mit Termin).",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Was ist zu erledigen"
+                  },
+                  "assignee": {
+                    "type": "string",
+                    "description": "Name der zustaendigen Person"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "description": "Faelligkeit ISO (YYYY-MM-DD)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Zusatzinfo zum Auftrag"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "Prioritaet: hoch | mittel | normal (Standard: normal)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Kategorie zum Filtern"
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.add_task": {
+      "post": {
+        "operationId": "family_add_task",
+        "summary": "Legt eine wiederkehrende Haushaltsaufgabe mit Rotation zwischen Mitgliedern an.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Bezeichnung der Aufgabe"
+                  },
+                  "interval_days": {
+                    "type": "integer",
+                    "description": "Wiederholung in Tagen (z.B. 7 = woechentlich)"
+                  },
+                  "assignees": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Namen der Mitglieder in Rotationsreihenfolge"
+                  },
+                  "first_due": {
+                    "type": "string",
+                    "description": "Erste Faelligkeit ISO (YYYY-MM-DD), Standard: heute"
+                  }
+                },
+                "required": [
+                  "title",
+                  "assignees"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.bulk_complete_overdue": {
+      "post": {
+        "operationId": "family_bulk_complete_overdue",
+        "summary": "Hakt alle Aufgaben ab, die heute oder davor faellig sind/waren. Die Rotation rueckt fuer jede Aufgabe um eine Person weiter.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.complete_order": {
+      "post": {
+        "operationId": "family_complete_order",
+        "summary": "Markiert einen Auftrag als erledigt.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_id": {
+                    "type": "integer",
+                    "description": "ID des Auftrags"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.complete_task": {
+      "post": {
+        "operationId": "family_complete_task",
+        "summary": "Hakt eine Aufgabe ab: die Rotation rueckt zur naechsten Person, die Aufgabe wird neu terminiert.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "task_id": {
+                    "type": "integer",
+                    "description": "ID der Aufgabe"
+                  }
+                },
+                "required": [
+                  "task_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.delete_member": {
+      "post": {
+        "operationId": "family_delete_member",
+        "summary": "Verschiebt ein Haushaltsmitglied in den Papierkorb (Soft-Delete). Restore via family.restore_member, endgueltig erst via family.purge_member.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "integer",
+                    "description": "ID des Mitglieds"
+                  }
+                },
+                "required": [
+                  "member_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.list_deleted_members": {
+      "post": {
+        "operationId": "family_list_deleted_members",
+        "summary": "Listet Mitglieder im Papierkorb.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.members": {
+      "post": {
+        "operationId": "family_members",
+        "summary": "Listet die Haushaltsmitglieder auf. Auch von anderen Modulen nutzbar, um Eintraege einer Person zuzuordnen.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.orders": {
+      "post": {
+        "operationId": "family_orders",
+        "summary": "Listet die einmaligen Auftraege mit Zustaendigkeit und Status auf, sortiert nach Prioritaet. Optional nach Kategorie filterbar.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Nur Auftraege dieser Kategorie"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.purge_member": {
+      "post": {
+        "operationId": "family_purge_member",
+        "summary": "Loescht ein Mitglied endgueltig. Referenzen werden ueber ON DELETE SET NULL entkoppelt.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "integer",
+                    "description": "ID des Mitglieds"
+                  }
+                },
+                "required": [
+                  "member_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.restore_member": {
+      "post": {
+        "operationId": "family_restore_member",
+        "summary": "Stellt ein geloeschtes Mitglied wieder her.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "integer",
+                    "description": "ID des Mitglieds"
+                  }
+                },
+                "required": [
+                  "member_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.shopping_add": {
+      "post": {
+        "operationId": "family_shopping_add",
+        "summary": "Setzt einen Eintrag auf die gemeinsame Einkaufsliste.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Was soll gekauft werden"
+                  },
+                  "quantity": {
+                    "type": "string",
+                    "description": "Menge / Einheit"
+                  },
+                  "added_by": {
+                    "type": "string",
+                    "description": "Name der Person, die den Eintrag setzt"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.shopping_list": {
+      "post": {
+        "operationId": "family_shopping_list",
+        "summary": "Listet die Eintraege der Einkaufsliste.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "include_bought": {
+                    "type": "boolean",
+                    "description": "Bereits gekaufte Eintraege einbeziehen"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.shopping_mark": {
+      "post": {
+        "operationId": "family_shopping_mark",
+        "summary": "Hakt einen Eintrag auf der Einkaufsliste ab (oder setzt ihn zurueck).",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item_id": {
+                    "type": "integer",
+                    "description": "ID des Eintrags"
+                  },
+                  "bought": {
+                    "type": "boolean",
+                    "description": "True = gekauft (Standard), False = wieder offen"
+                  }
+                },
+                "required": [
+                  "item_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/family.tasks": {
+      "post": {
+        "operationId": "family_tasks",
+        "summary": "Listet die Haushaltsaufgaben mit aktueller Zustaendigkeit und naechster Faelligkeit auf.",
+        "tags": [
+          "family"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.add_expense": {
+      "post": {
+        "operationId": "finance_add_expense",
+        "summary": "Erfasst eine einmalige Ausgabe.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "Wofuer wurde Geld ausgegeben"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Betrag in EUR"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "lebensmittel, freizeit, mobilitaet, sonstiges ..."
+                  },
+                  "spent_on": {
+                    "type": "string",
+                    "description": "Datum ISO (YYYY-MM-DD), Standard: heute"
+                  },
+                  "owner_id": {
+                    "type": "integer",
+                    "description": "Optional: Person, der die Ausgabe zugeordnet wird (siehe family.members)"
+                  }
+                },
+                "required": [
+                  "description",
+                  "amount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.delete_expense": {
+      "post": {
+        "operationId": "finance_delete_expense",
+        "summary": "Verschiebt eine Ausgabe in den Papierkorb. Restore via 'finance.restore_expense'; endgueltig erst via 'finance.purge_expense'.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expense_id": {
+                    "type": "integer",
+                    "description": "ID der Ausgabe"
+                  }
+                },
+                "required": [
+                  "expense_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.expenses_by_category": {
+      "post": {
+        "operationId": "finance_expenses_by_category",
+        "summary": "Aggregiert die Ausgaben pro Kategorie.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "month": {
+                    "type": "string",
+                    "description": "Optional: 'YYYY-MM', sonst alle"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.expenses_by_person": {
+      "post": {
+        "operationId": "finance_expenses_by_person",
+        "summary": "Aggregiert die Ausgaben pro Haushaltsmitglied (loest die owner_id ueber family.members auf).",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "month": {
+                    "type": "string",
+                    "description": "Optional: 'YYYY-MM', sonst alle"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.list_deleted": {
+      "post": {
+        "operationId": "finance_list_deleted",
+        "summary": "Listet Ausgaben im Papierkorb.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.list_expenses": {
+      "post": {
+        "operationId": "finance_list_expenses",
+        "summary": "Listet alle erfassten Ausgaben mit Summe auf.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.monthly_overview": {
+      "post": {
+        "operationId": "finance_monthly_overview",
+        "summary": "Berechnet die monatliche Belastung: einmalige Ausgaben dieses Monats kombiniert mit den wiederkehrenden Vertragskosten aus Modul A.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.price_memory": {
+      "post": {
+        "operationId": "finance_price_memory",
+        "summary": "Listet die gespeicherten Preise wiederkehrender Produkte auf.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.purge_expense": {
+      "post": {
+        "operationId": "finance_purge_expense",
+        "summary": "Loescht eine Ausgabe endgueltig.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expense_id": {
+                    "type": "integer",
+                    "description": "ID der Ausgabe"
+                  }
+                },
+                "required": [
+                  "expense_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.remember_price": {
+      "post": {
+        "operationId": "finance_remember_price",
+        "summary": "Merkt sich den aktuellen Preis eines Produkts (Preis-Gedaechtnis fuer wiederkehrende Einkaeufe).",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "product": {
+                    "type": "string",
+                    "description": "Bezeichnung des Produkts"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Aktueller Preis in EUR"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Kategorie, z.B. 'lebensmittel'"
+                  }
+                },
+                "required": [
+                  "product",
+                  "price"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.restore_expense": {
+      "post": {
+        "operationId": "finance_restore_expense",
+        "summary": "Stellt eine geloeschte Ausgabe wieder her.",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expense_id": {
+                    "type": "integer",
+                    "description": "ID der Ausgabe"
+                  }
+                },
+                "required": [
+                  "expense_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/finance.scan_receipt": {
+      "post": {
+        "operationId": "finance_scan_receipt",
+        "summary": "Liest einen Kassenbon per OCR ein und extrahiert Posten und Summe (erfordert pytesseract + Tesseract; ohne Installation gibt es einen klaren Hinweis).",
+        "tags": [
+          "finance"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image_path": {
+                    "type": "string",
+                    "description": "Pfad zur Bilddatei (jpg / png)"
+                  }
+                },
+                "required": [
+                  "image_path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.accept_proposal": {
+      "post": {
+        "operationId": "inbox_accept_proposal",
+        "summary": "Uebernimmt einen Vorschlag: ruft die Ziel-Capability auf, das zustaendige Modul traegt die Daten ein.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "proposal_id": {
+                    "type": "integer",
+                    "description": "ID des Vorschlags"
+                  }
+                },
+                "required": [
+                  "proposal_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.analyze_mail": {
+      "post": {
+        "operationId": "inbox_analyze_mail",
+        "summary": "Analysiert den Text einer eingegangenen Mail und legt passende Vorschlaege in der Ablage an.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mail_text": {
+                    "type": "string",
+                    "description": "Der vollstaendige Mail-Text"
+                  }
+                },
+                "required": [
+                  "mail_text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.bulk_delete_archived": {
+      "post": {
+        "operationId": "inbox_bulk_delete_archived",
+        "summary": "Loescht alle Vorschlaege, die bereits uebernommen oder abgelehnt wurden, endgueltig aus der Ablage.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.bulk_reject_open": {
+      "post": {
+        "operationId": "inbox_bulk_reject_open",
+        "summary": "Lehnt alle offenen Vorschlaege auf einen Schlag ab. Liefert die Anzahl der abgelehnten Vorschlaege.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.fetch_imap": {
+      "post": {
+        "operationId": "inbox_fetch_imap",
+        "summary": "Holt ungelesene Mails per IMAP und analysiert sie. Braucht ALLTAGSHELFER_IMAP_HOST/USER/PASS in der Umgebung; ohne diese wird uebersprungen.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "folder": {
+                    "type": "string",
+                    "description": "IMAP-Ordner (Standard: INBOX)"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "description": "Max. Anzahl Mails"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.import_eml": {
+      "post": {
+        "operationId": "inbox_import_eml",
+        "summary": "Liest eine .eml-Datei ein und analysiert sie.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Pfad zur .eml-Datei"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.proposals": {
+      "post": {
+        "operationId": "inbox_proposals",
+        "summary": "Listet die offenen Vorschlaege in der Ablage auf.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.reject_proposal": {
+      "post": {
+        "operationId": "inbox_reject_proposal",
+        "summary": "Lehnt einen Vorschlag ab (wird nicht uebernommen).",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "proposal_id": {
+                    "type": "integer",
+                    "description": "ID des Vorschlags"
+                  }
+                },
+                "required": [
+                  "proposal_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/inbox.update_proposal": {
+      "post": {
+        "operationId": "inbox_update_proposal",
+        "summary": "Bearbeitet einen offenen Vorschlag, bevor er uebernommen wird. Beruehrt nur Vorschlaege im Status 'offen'.",
+        "tags": [
+          "inbox"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "proposal_id": {
+                    "type": "integer",
+                    "description": "ID des Vorschlags"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "Neue Kurzbeschreibung (optional)"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "description": "Vollstaendige neue Nutzlast fuer die Ziel-Capability"
+                  }
+                },
+                "required": [
+                  "proposal_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.add": {
+      "post": {
+        "operationId": "notes_add",
+        "summary": "Legt eine neue Notiz an. Optional an eine Entitaet angeheftet (entity_type, entity_id).",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Titel der Notiz"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Notiz-Text"
+                  },
+                  "entity_type": {
+                    "type": "string",
+                    "description": "Optional: contracts, expenses, calendar, social, family, orders"
+                  },
+                  "entity_id": {
+                    "type": "integer",
+                    "description": "Optional: ID innerhalb der Entitaet"
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.add_attachment": {
+      "post": {
+        "operationId": "notes_add_attachment",
+        "summary": "Heftet eine Notiz zusaetzlich an eine weitere Entitaet (n:m). Die primaere Verknuepfung via notes.attach bleibt davon unberuehrt.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note_id": {
+                    "type": "integer",
+                    "description": "ID der Notiz"
+                  },
+                  "entity_type": {
+                    "type": "string",
+                    "description": "Entitaets-Typ"
+                  },
+                  "entity_id": {
+                    "type": "integer",
+                    "description": "ID der Entitaet"
+                  }
+                },
+                "required": [
+                  "note_id",
+                  "entity_type",
+                  "entity_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.attach": {
+      "post": {
+        "operationId": "notes_attach",
+        "summary": "Heftet eine Notiz an eine Entitaet (oder loest sie mit entity_type=null).",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note_id": {
+                    "type": "integer",
+                    "description": "ID der Notiz"
+                  },
+                  "entity_type": {
+                    "type": "string",
+                    "description": "Entitaets-Typ (leer = nichts anheften)"
+                  },
+                  "entity_id": {
+                    "type": "integer",
+                    "description": "ID der Entitaet"
+                  }
+                },
+                "required": [
+                  "note_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.cleanup_for_entity": {
+      "post": {
+        "operationId": "notes_cleanup_for_entity",
+        "summary": "Loescht alle Notizen, die an die angegebene Entitaet geheftet sind. Wird intern von den Loesch-Capabilities anderer Module aufgerufen.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": true,
+        "x-internal": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entity_type": {
+                    "type": "string",
+                    "description": "Entitaets-Typ"
+                  },
+                  "entity_id": {
+                    "type": "integer",
+                    "description": "ID der Entitaet"
+                  }
+                },
+                "required": [
+                  "entity_type",
+                  "entity_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.delete": {
+      "post": {
+        "operationId": "notes_delete",
+        "summary": "Loescht eine Notiz endgueltig.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note_id": {
+                    "type": "integer",
+                    "description": "ID der Notiz"
+                  }
+                },
+                "required": [
+                  "note_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.get": {
+      "post": {
+        "operationId": "notes_get",
+        "summary": "Liefert eine konkrete Notiz.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note_id": {
+                    "type": "integer",
+                    "description": "ID der Notiz"
+                  }
+                },
+                "required": [
+                  "note_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.list": {
+      "post": {
+        "operationId": "notes_list",
+        "summary": "Listet Notizen auf. Optional nach Entitaet gefiltert.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entity_type": {
+                    "type": "string",
+                    "description": "Filter auf Entitaet"
+                  },
+                  "entity_id": {
+                    "type": "integer",
+                    "description": "Filter auf konkrete ID"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.list_attachments": {
+      "post": {
+        "operationId": "notes_list_attachments",
+        "summary": "Listet alle Anhaenge einer Notiz auf.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note_id": {
+                    "type": "integer",
+                    "description": "ID der Notiz"
+                  }
+                },
+                "required": [
+                  "note_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/notes.update": {
+      "post": {
+        "operationId": "notes_update",
+        "summary": "Aktualisiert Titel und/oder Inhalt einer Notiz.",
+        "tags": [
+          "notes"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "note_id": {
+                    "type": "integer",
+                    "description": "ID der Notiz"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Neuer Titel (optional)"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Neuer Inhalt (optional)"
+                  }
+                },
+                "required": [
+                  "note_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.add_contact": {
+      "post": {
+        "operationId": "social_add_contact",
+        "summary": "Legt einen Kontakt fuer die soziale Pflege an.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name der Person"
+                  },
+                  "relation": {
+                    "type": "string",
+                    "description": "Beziehung, z.B. Familie, Freund, Kollege"
+                  },
+                  "cadence_days": {
+                    "type": "integer",
+                    "description": "Wunsch-Rhythmus in Tagen (Standard: 30)"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Notizen"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.contacts": {
+      "post": {
+        "operationId": "social_contacts",
+        "summary": "Listet alle Kontakte mit Resttagen bis zum naechsten Melden auf. Optional nach Beziehung (Kategorie) filterbar.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "relation": {
+                    "type": "string",
+                    "description": "Nur Kontakte mit dieser Beziehung (z.B. Familie, Freund)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.delete_contact": {
+      "post": {
+        "operationId": "social_delete_contact",
+        "summary": "Verschiebt einen Kontakt in den Papierkorb. Restore via social.restore_contact; endgueltig erst via social.purge_contact.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contact_id": {
+                    "type": "integer",
+                    "description": "ID des Kontakts"
+                  }
+                },
+                "required": [
+                  "contact_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.draft_message": {
+      "post": {
+        "operationId": "social_draft_message",
+        "summary": "Schlaegt eine kurze Nachricht fuer einen Kontakt vor (Offline-Vorlage; im API-Modus generiert das LLM eine persoenlichere).",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contact_id": {
+                    "type": "integer",
+                    "description": "ID des Kontakts"
+                  },
+                  "template": {
+                    "type": "string",
+                    "description": "kurz, treffen, geburtstag"
+                  },
+                  "anlass": {
+                    "type": "string",
+                    "description": "Optional: konkreter Anlass, den das LLM aufgreifen soll"
+                  }
+                },
+                "required": [
+                  "contact_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.export_vcard": {
+      "post": {
+        "operationId": "social_export_vcard",
+        "summary": "Exportiert alle Kontakte als vCard-Datei (.vcf), importierbar in jedes gaengige Adressbuch.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Zielpfad (sollte auf .vcf enden)"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.import_vcard": {
+      "post": {
+        "operationId": "social_import_vcard",
+        "summary": "Liest eine vCard-Datei (.vcf) und legt die enthaltenen Kontakte an. Bestehende Kontakte bleiben unveraendert - es entstehen neue Eintraege.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": true,
+        "x-internal": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Pfad zur .vcf-Datei"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.list_deleted": {
+      "post": {
+        "operationId": "social_list_deleted",
+        "summary": "Listet Kontakte im Papierkorb.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.mark_contacted": {
+      "post": {
+        "operationId": "social_mark_contacted",
+        "summary": "Markiert einen Kontakt als gerade kontaktiert (setzt last_contacted = heute).",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contact_id": {
+                    "type": "integer",
+                    "description": "ID des Kontakts"
+                  }
+                },
+                "required": [
+                  "contact_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.purge_contact": {
+      "post": {
+        "operationId": "social_purge_contact",
+        "summary": "Loescht einen Kontakt endgueltig.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contact_id": {
+                    "type": "integer",
+                    "description": "ID des Kontakts"
+                  }
+                },
+                "required": [
+                  "contact_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/social.restore_contact": {
+      "post": {
+        "operationId": "social_restore_contact",
+        "summary": "Stellt einen geloeschten Kontakt wieder her.",
+        "tags": [
+          "social"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contact_id": {
+                    "type": "integer",
+                    "description": "ID des Kontakts"
+                  }
+                },
+                "required": [
+                  "contact_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/stats.contracts_overview": {
+      "post": {
+        "operationId": "stats_contracts_overview",
+        "summary": "Liefert Ueberblick ueber Anzahl aktiver Vertraege, monatliche Gesamtsumme und die teuersten 3 Posten.",
+        "tags": [
+          "statistics"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/stats.expenses_per_category": {
+      "post": {
+        "operationId": "stats_expenses_per_category",
+        "summary": "Aggregiert Ausgaben pro Kategorie (Default: aktuelles Jahr).",
+        "tags": [
+          "statistics"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Zieljahr (Default: aktuell)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/stats.expenses_per_month": {
+      "post": {
+        "operationId": "stats_expenses_per_month",
+        "summary": "Summiert Ausgaben pro Monat fuer die letzten N Monate (Default 12) inkl. dem laufenden Monat.",
+        "tags": [
+          "statistics"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "months": {
+                    "type": "integer",
+                    "description": "Anzahl Monate (Default: 12)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/stats.export_yearly_pdf": {
+      "post": {
+        "operationId": "stats_export_yearly_pdf",
+        "summary": "Erzeugt einen druckbaren PDF-Jahresbericht mit Ausgaben-Summe, Top-Kategorien und Vertraege-Uebersicht.",
+        "tags": [
+          "statistics"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Zielpfad (PDF)"
+                  },
+                  "year": {
+                    "type": "integer",
+                    "description": "Zieljahr (Default: aktuell)"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/stats.yearly_summary": {
+      "post": {
+        "operationId": "stats_yearly_summary",
+        "summary": "Gesamtsicht fuer ein Jahr: Summe aller Ausgaben, Top-Kategorien, monatlicher Schnitt.",
+        "tags": [
+          "statistics"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Zieljahr (Default: aktuell)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/system.agenda": {
+      "post": {
+        "operationId": "system_agenda",
+        "summary": "Gruppiert die anstehenden Fristen aller Module nach Kalendertag. Standard: kommende 7 Tage (Wochenuebersicht). Ueberfaellige Eintraege kommen separat zurueck.",
+        "tags": [
+          "overview"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "horizon_days": {
+                    "type": "integer",
+                    "description": "Anzahl Tage ab heute (Standard: 7)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/system.profile_create": {
+      "post": {
+        "operationId": "system_profile_create",
+        "summary": "Legt ein neues Profil an und macht es aktiv (wirkt nach Neustart).",
+        "tags": [
+          "profiles"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Profilname (A-Z a-z 0-9 _-)"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/system.profile_switch": {
+      "post": {
+        "operationId": "system_profile_switch",
+        "summary": "Wechselt das aktive Profil (leer = Standard; wirkt nach Neustart).",
+        "tags": [
+          "profiles"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Zielprofil (leer = Standard)"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/system.profiles": {
+      "post": {
+        "operationId": "system_profiles",
+        "summary": "Listet die Geraete-Profile (getrennte Datenbestaende) auf und markiert das aktive.",
+        "tags": [
+          "profiles"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/system.search": {
+      "post": {
+        "operationId": "system_search",
+        "summary": "Sucht querbeet in Vertraegen, Ausgaben, Terminen, Familienmitgliedern, Kontakten und Vorschlaegen. Eingabe ist ein Stichwort - Treffer kommen vereinheitlicht zurueck. Optional filterbar nach Zeitraum, Status und Kategorie.",
+        "tags": [
+          "search"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Suchbegriff (mindestens 2 Zeichen; entfaellt, wenn ein Filter gesetzt ist)"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "description": "Maximale Treffer (Standard: 50)"
+                  },
+                  "date_from": {
+                    "type": "string",
+                    "description": "Nur Treffer ab diesem Datum (ISO JJJJ-MM-TT)"
+                  },
+                  "date_to": {
+                    "type": "string",
+                    "description": "Nur Treffer bis zu diesem Datum (ISO JJJJ-MM-TT)"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Nur Treffer mit diesem Status (z.B. 'offen', 'active')"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Nur Treffer dieser Kategorie"
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/templates.add": {
+      "post": {
+        "operationId": "templates_add",
+        "summary": "Legt eine neue Aufgaben-Vorlage an.",
+        "tags": [
+          "templates"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Titel der Aufgabe"
+                  },
+                  "interval_days": {
+                    "type": "integer",
+                    "description": "Tages-Intervall (Standard 7)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Notiz zur Vorlage"
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/templates.apply": {
+      "post": {
+        "operationId": "templates_apply",
+        "summary": "Erzeugt aus einer Vorlage eine konkrete Haushaltsaufgabe - die Rotation muss zusaetzlich angegeben werden.",
+        "tags": [
+          "templates"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "template_id": {
+                    "type": "integer",
+                    "description": "ID der Vorlage"
+                  },
+                  "assignees": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Namen der Rotationsmitglieder"
+                  },
+                  "first_due": {
+                    "type": "string",
+                    "description": "Erste Faelligkeit (YYYY-MM-DD); Standard: heute"
+                  }
+                },
+                "required": [
+                  "template_id",
+                  "assignees"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/templates.delete": {
+      "post": {
+        "operationId": "templates_delete",
+        "summary": "Loescht eine Vorlage endgueltig.",
+        "tags": [
+          "templates"
+        ],
+        "x-destructive": true,
+        "x-internal": false,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "template_id": {
+                    "type": "integer",
+                    "description": "ID der Vorlage"
+                  }
+                },
+                "required": [
+                  "template_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    },
+    "/api/templates.list": {
+      "post": {
+        "operationId": "templates_list",
+        "summary": "Listet alle vorhandenen Aufgaben-Vorlagen auf.",
+        "tags": [
+          "templates"
+        ],
+        "x-destructive": false,
+        "x-internal": false,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ergebnis-Dict der Capability.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "tier_locked - Capability im aktuellen Tier gesperrt."
+          },
+          "400": {
+            "description": "Validierungsfehler (error-Feld)."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,246 @@
+// Aus dem SQLite-Schema (database.py) abgeleitetes Prisma-Modell -
+// NAEHERUNG fuer die Cloud-SQL-/Postgres-Abbildung im Build Mode.
+// Beziehungen (@relation) sind bewusst NICHT abgeleitet (SQLite-
+// FKs ueber ON DELETE SET NULL, siehe ARCHITECTURE.md) und vor dem
+// Einsatz manuell zu ergaenzen. Generiert via tools/gen_ai_studio_contracts.py.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AppSettings {
+  key String @id
+  value String?
+  updated_at String?
+
+  @@map("app_settings")
+}
+
+model AssistantLog {
+  id Int @id @default(autoincrement())
+  role String?
+  content String?
+  created_at String?
+
+  @@map("assistant_log")
+}
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+  action String
+  entity_type String?
+  entity_id Int?
+  details String?
+  actor String?
+  created_at String?
+
+  @@map("audit_log")
+}
+
+model CalendarEvents {
+  id Int @id @default(autoincrement())
+  title String
+  due_date String
+  category String?
+  description String?
+  recurrence_days Int?
+  person_id Int?
+  created_at String?
+  deleted_at String?
+
+  @@map("calendar_events")
+}
+
+model Contracts {
+  id Int @id @default(autoincrement())
+  name String
+  category String
+  provider String?
+  customer_number String?
+  start_date String?
+  minimum_term_months Int?
+  notice_period_months Int?
+  auto_renew_months Int?
+  monthly_cost Float?
+  currency String?
+  notes String?
+  status String?
+  owner_id Int?
+  created_at String?
+  updated_at String?
+  deleted_at String?
+
+  @@map("contracts")
+}
+
+model DayEntries {
+  id Int @id @default(autoincrement())
+  day String
+  level Int
+  note String?
+  created_at String?
+
+  @@map("day_entries")
+}
+
+model Expenses {
+  id Int @id @default(autoincrement())
+  description String
+  amount Float
+  category String?
+  spent_on String?
+  owner_id Int?
+  created_at String?
+  deleted_at String?
+
+  @@map("expenses")
+}
+
+model FamilyMembers {
+  id Int @id @default(autoincrement())
+  name String
+  role String?
+  birthday String?
+  created_at String?
+  deleted_at String?
+
+  @@map("family_members")
+}
+
+model HouseholdOrders {
+  id Int @id @default(autoincrement())
+  title String
+  assignee_id Int?
+  due_date String?
+  description String?
+  status String?
+  priority String?
+  category String?
+  created_at String?
+  deleted_at String?
+
+  @@map("household_orders")
+}
+
+model HouseholdTasks {
+  id Int @id @default(autoincrement())
+  title String
+  interval_days Int?
+  next_due String?
+  current_index Int?
+  created_at String?
+
+  @@map("household_tasks")
+}
+
+model ModuleStates {
+  module_id String @id
+  enabled Int
+  updated_at String?
+
+  @@map("module_states")
+}
+
+model NoteAttachments {
+  id Int @id @default(autoincrement())
+  note_id Int
+  entity_type String
+  entity_id Int
+  created_at String?
+
+  @@map("note_attachments")
+}
+
+model Notes {
+  id Int @id @default(autoincrement())
+  title String
+  content String?
+  entity_type String?
+  entity_id Int?
+  created_at String?
+  updated_at String?
+  deleted_at String?
+
+  @@map("notes")
+}
+
+model PriceHistory {
+  id Int @id @default(autoincrement())
+  contract_id Int
+  old_cost Float?
+  new_cost Float?
+  changed_at String?
+
+  @@map("price_history")
+}
+
+model PriceMemory {
+  id Int @id @default(autoincrement())
+  product String
+  last_price Float?
+  last_seen String?
+  category String?
+  created_at String?
+
+  @@map("price_memory")
+}
+
+model Proposals {
+  id Int @id @default(autoincrement())
+  source String?
+  summary String?
+  target_capability String?
+  payload String?
+  status String?
+  created_at String?
+
+  @@map("proposals")
+}
+
+model ShoppingItems {
+  id Int @id @default(autoincrement())
+  name String
+  quantity String?
+  added_by_id Int?
+  bought Int?
+  created_at String?
+
+  @@map("shopping_items")
+}
+
+model SocialContacts {
+  id Int @id @default(autoincrement())
+  name String
+  relation String?
+  cadence_days Int?
+  last_contacted String?
+  notes String?
+  created_at String?
+  deleted_at String?
+
+  @@map("social_contacts")
+}
+
+model TaskRotation {
+  id Int @id @default(autoincrement())
+  task_id Int
+  member_id Int
+  position Int
+
+  @@map("task_rotation")
+}
+
+model TaskTemplates {
+  id Int @id @default(autoincrement())
+  title String
+  interval_days Int
+  description String?
+  created_at String?
+
+  @@map("task_templates")
+}

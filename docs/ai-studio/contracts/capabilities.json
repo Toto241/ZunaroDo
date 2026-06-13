@@ -1,0 +1,1923 @@
+{
+  "capabilities": [
+    {
+      "name": "calendar.add_event",
+      "module": "calendar",
+      "description": "Legt einen Termin an (einmalig oder wiederkehrend).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Bezeichnung des Termins"
+          },
+          "due_date": {
+            "type": "string",
+            "description": "Datum ISO (YYYY-MM-DD)"
+          },
+          "category": {
+            "type": "string",
+            "description": "termin, garantie, tuev, steuer, geburtstag, sonstiges"
+          },
+          "description": {
+            "type": "string",
+            "description": "Details"
+          },
+          "recurrence_days": {
+            "type": "integer",
+            "description": "Wiederholung in Tagen (z.B. 365 = jaehrlich)"
+          },
+          "person_id": {
+            "type": "integer",
+            "description": "Optional: betroffene Person (siehe family.members)"
+          }
+        },
+        "required": [
+          "title",
+          "due_date"
+        ]
+      }
+    },
+    {
+      "name": "calendar.delete_event",
+      "module": "calendar",
+      "description": "Verschiebt einen Termin in den Papierkorb. Restore via calendar.restore_event; endgueltig erst via calendar.purge_event.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "integer",
+            "description": "ID des Termins"
+          }
+        },
+        "required": [
+          "event_id"
+        ]
+      }
+    },
+    {
+      "name": "calendar.export_ical",
+      "module": "calendar",
+      "description": "Exportiert alle Termine als iCalendar-Datei (.ics), die in jeden gaengigen Kalender importiert werden kann.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Zielpfad (sollte auf .ics enden)"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "calendar.import_ical",
+      "module": "calendar",
+      "description": "Liest eine iCalendar-Datei (.ics) und legt die enthaltenen Termine an. Bestehende Termine werden NICHT veraendert - es entstehen neue Eintraege.",
+      "destructive": true,
+      "internal": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Pfad zur .ics-Datei"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "calendar.list_deleted",
+      "module": "calendar",
+      "description": "Listet Termine im Papierkorb.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "calendar.list_events",
+      "module": "calendar",
+      "description": "Listet alle erfassten Termine auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "calendar.purge_event",
+      "module": "calendar",
+      "description": "Loescht einen Termin endgueltig.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "integer",
+            "description": "ID des Termins"
+          }
+        },
+        "required": [
+          "event_id"
+        ]
+      }
+    },
+    {
+      "name": "calendar.restore_event",
+      "module": "calendar",
+      "description": "Stellt einen geloeschten Termin wieder her.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "integer",
+            "description": "ID des Termins"
+          }
+        },
+        "required": [
+          "event_id"
+        ]
+      }
+    },
+    {
+      "name": "calendar.upcoming",
+      "module": "calendar",
+      "description": "Liefert anstehende Termine innerhalb eines Horizonts.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "horizon_days": {
+            "type": "integer",
+            "description": "Bis wie viele Tage in der Zukunft (Standard: 90)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "contracts.add",
+      "module": "contracts",
+      "description": "Legt einen neuen Vertrag an.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name des Vertrags"
+          },
+          "category": {
+            "type": "string",
+            "description": "versicherung, mobilfunk, streaming, strom oder sonstiges"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Anbieter"
+          },
+          "customer_number": {
+            "type": "string",
+            "description": "Kunden- oder Vertragsnummer"
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Startdatum ISO (YYYY-MM-DD)"
+          },
+          "minimum_term_months": {
+            "type": "integer",
+            "description": "Mindestlaufzeit in Monaten"
+          },
+          "notice_period_months": {
+            "type": "integer",
+            "description": "Kuendigungsfrist in Monaten"
+          },
+          "auto_renew_months": {
+            "type": "integer",
+            "description": "Verlaengerung in Monaten, falls nicht gekuendigt wird (z.B. 1 = monatlich kuendbar)"
+          },
+          "monthly_cost": {
+            "type": "number",
+            "description": "Monatliche Kosten in EUR"
+          },
+          "owner_id": {
+            "type": "integer",
+            "description": "Optional: ID des Haushaltsmitglieds, dem der Vertrag gehoert (siehe family.members)"
+          }
+        },
+        "required": [
+          "name",
+          "category"
+        ]
+      }
+    },
+    {
+      "name": "contracts.delete",
+      "module": "contracts",
+      "description": "Verschiebt einen Vertrag in den Papierkorb (Soft-Delete). Mit 'contracts.restore' wiederherstellbar; endgueltig erst durch 'contracts.purge'.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "integer",
+            "description": "ID des Vertrags"
+          }
+        },
+        "required": [
+          "contract_id"
+        ]
+      }
+    },
+    {
+      "name": "contracts.generate_cancellation",
+      "module": "contracts",
+      "description": "Erstellt ein fristgerechtes Kuendigungsschreiben fuer einen Vertrag - als druckbares PDF und/oder Mail-Entwurf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "integer",
+            "description": "ID des zu kuendigenden Vertrags"
+          },
+          "sender_name": {
+            "type": "string",
+            "description": "Name des Absenders"
+          },
+          "sender_address": {
+            "type": "string",
+            "description": "Anschrift des Absenders"
+          },
+          "sender_city": {
+            "type": "string",
+            "description": "Ort fuer die Datumszeile"
+          },
+          "recipient_email": {
+            "type": "string",
+            "description": "Mailadresse des Anbieters (fuer den Mail-Entwurf)"
+          },
+          "channel": {
+            "type": "string",
+            "description": "pdf, email oder both (Standard: both)"
+          }
+        },
+        "required": [
+          "contract_id"
+        ]
+      }
+    },
+    {
+      "name": "contracts.list",
+      "module": "contracts",
+      "description": "Listet alle aktiven Vertraege mit Kosten auf. Optional nach Kategorie filterbar.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Nur Vertraege dieser Kategorie"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "contracts.list_deleted",
+      "module": "contracts",
+      "description": "Listet die im Papierkorb liegenden Vertraege.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "contracts.purge",
+      "module": "contracts",
+      "description": "Endgueltige Loeschung eines Vertrags (kein Restore mehr moeglich).",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "integer",
+            "description": "ID des Vertrags"
+          }
+        },
+        "required": [
+          "contract_id"
+        ]
+      }
+    },
+    {
+      "name": "contracts.report_price_change",
+      "module": "contracts",
+      "description": "Vermerkt eine Preisaenderung fuer einen Vertrag und speichert sie in der Preis-Historie.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "integer",
+            "description": "ID des Vertrags"
+          },
+          "new_cost": {
+            "type": "number",
+            "description": "Neuer Monatspreis in EUR"
+          }
+        },
+        "required": [
+          "contract_id",
+          "new_cost"
+        ]
+      }
+    },
+    {
+      "name": "contracts.restore",
+      "module": "contracts",
+      "description": "Stellt einen geloeschten Vertrag wieder her.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "integer",
+            "description": "ID des Vertrags"
+          }
+        },
+        "required": [
+          "contract_id"
+        ]
+      }
+    },
+    {
+      "name": "contracts.set_owner",
+      "module": "contracts",
+      "description": "Ordnet einen Vertrag einer Person zu (oder loest die Zuordnung mit owner_id=0).",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contract_id": {
+            "type": "integer",
+            "description": "ID des Vertrags"
+          },
+          "owner_id": {
+            "type": "integer",
+            "description": "ID der Person (0 = keine)"
+          }
+        },
+        "required": [
+          "contract_id"
+        ]
+      }
+    },
+    {
+      "name": "contracts.upcoming_deadlines",
+      "module": "contracts",
+      "description": "Liefert anstehende Kuendigungsfristen, optional begrenzt auf die naechsten N Tage.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "within_days": {
+            "type": "integer",
+            "description": "Nur Fristen innerhalb so vieler Tage (Standard: alle)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "day.log_energy",
+      "module": "daystructure",
+      "description": "Bewertet den heutigen Tag (1=ausgelaugt ... 5=top) und legt einen Eintrag an oder ersetzt den heutigen.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "integer",
+            "description": "Skala 1-5"
+          },
+          "note": {
+            "type": "string",
+            "description": "Kurzer Hinweis"
+          }
+        },
+        "required": [
+          "level"
+        ]
+      }
+    },
+    {
+      "name": "day.recent_entries",
+      "module": "daystructure",
+      "description": "Listet die letzten Tageseintraege auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximal so viele (Standard: 30)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "day.recommendation",
+      "module": "daystructure",
+      "description": "Liefert eine einfache Empfehlung auf Basis der letzten Eintraege.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "family.add_member",
+      "module": "family",
+      "description": "Fuegt ein Haushaltsmitglied hinzu, optional mit Geburtstag (Termin landet automatisch im Kalender-Modul).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name der Person"
+          },
+          "role": {
+            "type": "string",
+            "description": "erwachsen, kind oder sonstiges"
+          },
+          "birthday": {
+            "type": "string",
+            "description": "Geburtstag ISO (YYYY-MM-DD), optional"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "family.add_order",
+      "module": "family",
+      "description": "Legt einen einmaligen Auftrag an, gezielt einer Person zugewiesen (mit Termin).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Was ist zu erledigen"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "Name der zustaendigen Person"
+          },
+          "due_date": {
+            "type": "string",
+            "description": "Faelligkeit ISO (YYYY-MM-DD)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Zusatzinfo zum Auftrag"
+          },
+          "priority": {
+            "type": "string",
+            "description": "Prioritaet: hoch | mittel | normal (Standard: normal)"
+          },
+          "category": {
+            "type": "string",
+            "description": "Kategorie zum Filtern"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      }
+    },
+    {
+      "name": "family.add_task",
+      "module": "family",
+      "description": "Legt eine wiederkehrende Haushaltsaufgabe mit Rotation zwischen Mitgliedern an.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Bezeichnung der Aufgabe"
+          },
+          "interval_days": {
+            "type": "integer",
+            "description": "Wiederholung in Tagen (z.B. 7 = woechentlich)"
+          },
+          "assignees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Namen der Mitglieder in Rotationsreihenfolge"
+          },
+          "first_due": {
+            "type": "string",
+            "description": "Erste Faelligkeit ISO (YYYY-MM-DD), Standard: heute"
+          }
+        },
+        "required": [
+          "title",
+          "assignees"
+        ]
+      }
+    },
+    {
+      "name": "family.bulk_complete_overdue",
+      "module": "family",
+      "description": "Hakt alle Aufgaben ab, die heute oder davor faellig sind/waren. Die Rotation rueckt fuer jede Aufgabe um eine Person weiter.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "family.complete_order",
+      "module": "family",
+      "description": "Markiert einen Auftrag als erledigt.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "integer",
+            "description": "ID des Auftrags"
+          }
+        },
+        "required": [
+          "order_id"
+        ]
+      }
+    },
+    {
+      "name": "family.complete_task",
+      "module": "family",
+      "description": "Hakt eine Aufgabe ab: die Rotation rueckt zur naechsten Person, die Aufgabe wird neu terminiert.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer",
+            "description": "ID der Aufgabe"
+          }
+        },
+        "required": [
+          "task_id"
+        ]
+      }
+    },
+    {
+      "name": "family.delete_member",
+      "module": "family",
+      "description": "Verschiebt ein Haushaltsmitglied in den Papierkorb (Soft-Delete). Restore via family.restore_member, endgueltig erst via family.purge_member.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "description": "ID des Mitglieds"
+          }
+        },
+        "required": [
+          "member_id"
+        ]
+      }
+    },
+    {
+      "name": "family.list_deleted_members",
+      "module": "family",
+      "description": "Listet Mitglieder im Papierkorb.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "family.members",
+      "module": "family",
+      "description": "Listet die Haushaltsmitglieder auf. Auch von anderen Modulen nutzbar, um Eintraege einer Person zuzuordnen.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "family.orders",
+      "module": "family",
+      "description": "Listet die einmaligen Auftraege mit Zustaendigkeit und Status auf, sortiert nach Prioritaet. Optional nach Kategorie filterbar.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Nur Auftraege dieser Kategorie"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "family.purge_member",
+      "module": "family",
+      "description": "Loescht ein Mitglied endgueltig. Referenzen werden ueber ON DELETE SET NULL entkoppelt.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "description": "ID des Mitglieds"
+          }
+        },
+        "required": [
+          "member_id"
+        ]
+      }
+    },
+    {
+      "name": "family.restore_member",
+      "module": "family",
+      "description": "Stellt ein geloeschtes Mitglied wieder her.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer",
+            "description": "ID des Mitglieds"
+          }
+        },
+        "required": [
+          "member_id"
+        ]
+      }
+    },
+    {
+      "name": "family.shopping_add",
+      "module": "family",
+      "description": "Setzt einen Eintrag auf die gemeinsame Einkaufsliste.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Was soll gekauft werden"
+          },
+          "quantity": {
+            "type": "string",
+            "description": "Menge / Einheit"
+          },
+          "added_by": {
+            "type": "string",
+            "description": "Name der Person, die den Eintrag setzt"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "family.shopping_list",
+      "module": "family",
+      "description": "Listet die Eintraege der Einkaufsliste.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "include_bought": {
+            "type": "boolean",
+            "description": "Bereits gekaufte Eintraege einbeziehen"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "family.shopping_mark",
+      "module": "family",
+      "description": "Hakt einen Eintrag auf der Einkaufsliste ab (oder setzt ihn zurueck).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "integer",
+            "description": "ID des Eintrags"
+          },
+          "bought": {
+            "type": "boolean",
+            "description": "True = gekauft (Standard), False = wieder offen"
+          }
+        },
+        "required": [
+          "item_id"
+        ]
+      }
+    },
+    {
+      "name": "family.tasks",
+      "module": "family",
+      "description": "Listet die Haushaltsaufgaben mit aktueller Zustaendigkeit und naechster Faelligkeit auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "finance.add_expense",
+      "module": "finance",
+      "description": "Erfasst eine einmalige Ausgabe.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Wofuer wurde Geld ausgegeben"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Betrag in EUR"
+          },
+          "category": {
+            "type": "string",
+            "description": "lebensmittel, freizeit, mobilitaet, sonstiges ..."
+          },
+          "spent_on": {
+            "type": "string",
+            "description": "Datum ISO (YYYY-MM-DD), Standard: heute"
+          },
+          "owner_id": {
+            "type": "integer",
+            "description": "Optional: Person, der die Ausgabe zugeordnet wird (siehe family.members)"
+          }
+        },
+        "required": [
+          "description",
+          "amount"
+        ]
+      }
+    },
+    {
+      "name": "finance.delete_expense",
+      "module": "finance",
+      "description": "Verschiebt eine Ausgabe in den Papierkorb. Restore via 'finance.restore_expense'; endgueltig erst via 'finance.purge_expense'.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "expense_id": {
+            "type": "integer",
+            "description": "ID der Ausgabe"
+          }
+        },
+        "required": [
+          "expense_id"
+        ]
+      }
+    },
+    {
+      "name": "finance.expenses_by_category",
+      "module": "finance",
+      "description": "Aggregiert die Ausgaben pro Kategorie.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "Optional: 'YYYY-MM', sonst alle"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "finance.expenses_by_person",
+      "module": "finance",
+      "description": "Aggregiert die Ausgaben pro Haushaltsmitglied (loest die owner_id ueber family.members auf).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "Optional: 'YYYY-MM', sonst alle"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "finance.list_deleted",
+      "module": "finance",
+      "description": "Listet Ausgaben im Papierkorb.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "finance.list_expenses",
+      "module": "finance",
+      "description": "Listet alle erfassten Ausgaben mit Summe auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "finance.monthly_overview",
+      "module": "finance",
+      "description": "Berechnet die monatliche Belastung: einmalige Ausgaben dieses Monats kombiniert mit den wiederkehrenden Vertragskosten aus Modul A.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "finance.price_memory",
+      "module": "finance",
+      "description": "Listet die gespeicherten Preise wiederkehrender Produkte auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "finance.purge_expense",
+      "module": "finance",
+      "description": "Loescht eine Ausgabe endgueltig.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "expense_id": {
+            "type": "integer",
+            "description": "ID der Ausgabe"
+          }
+        },
+        "required": [
+          "expense_id"
+        ]
+      }
+    },
+    {
+      "name": "finance.remember_price",
+      "module": "finance",
+      "description": "Merkt sich den aktuellen Preis eines Produkts (Preis-Gedaechtnis fuer wiederkehrende Einkaeufe).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "type": "string",
+            "description": "Bezeichnung des Produkts"
+          },
+          "price": {
+            "type": "number",
+            "description": "Aktueller Preis in EUR"
+          },
+          "category": {
+            "type": "string",
+            "description": "Kategorie, z.B. 'lebensmittel'"
+          }
+        },
+        "required": [
+          "product",
+          "price"
+        ]
+      }
+    },
+    {
+      "name": "finance.restore_expense",
+      "module": "finance",
+      "description": "Stellt eine geloeschte Ausgabe wieder her.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "expense_id": {
+            "type": "integer",
+            "description": "ID der Ausgabe"
+          }
+        },
+        "required": [
+          "expense_id"
+        ]
+      }
+    },
+    {
+      "name": "finance.scan_receipt",
+      "module": "finance",
+      "description": "Liest einen Kassenbon per OCR ein und extrahiert Posten und Summe (erfordert pytesseract + Tesseract; ohne Installation gibt es einen klaren Hinweis).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "image_path": {
+            "type": "string",
+            "description": "Pfad zur Bilddatei (jpg / png)"
+          }
+        },
+        "required": [
+          "image_path"
+        ]
+      }
+    },
+    {
+      "name": "inbox.accept_proposal",
+      "module": "inbox",
+      "description": "Uebernimmt einen Vorschlag: ruft die Ziel-Capability auf, das zustaendige Modul traegt die Daten ein.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "integer",
+            "description": "ID des Vorschlags"
+          }
+        },
+        "required": [
+          "proposal_id"
+        ]
+      }
+    },
+    {
+      "name": "inbox.analyze_mail",
+      "module": "inbox",
+      "description": "Analysiert den Text einer eingegangenen Mail und legt passende Vorschlaege in der Ablage an.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mail_text": {
+            "type": "string",
+            "description": "Der vollstaendige Mail-Text"
+          }
+        },
+        "required": [
+          "mail_text"
+        ]
+      }
+    },
+    {
+      "name": "inbox.bulk_delete_archived",
+      "module": "inbox",
+      "description": "Loescht alle Vorschlaege, die bereits uebernommen oder abgelehnt wurden, endgueltig aus der Ablage.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "inbox.bulk_reject_open",
+      "module": "inbox",
+      "description": "Lehnt alle offenen Vorschlaege auf einen Schlag ab. Liefert die Anzahl der abgelehnten Vorschlaege.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "inbox.fetch_imap",
+      "module": "inbox",
+      "description": "Holt ungelesene Mails per IMAP und analysiert sie. Braucht ALLTAGSHELFER_IMAP_HOST/USER/PASS in der Umgebung; ohne diese wird uebersprungen.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string",
+            "description": "IMAP-Ordner (Standard: INBOX)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max. Anzahl Mails"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "inbox.import_eml",
+      "module": "inbox",
+      "description": "Liest eine .eml-Datei ein und analysiert sie.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Pfad zur .eml-Datei"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "inbox.proposals",
+      "module": "inbox",
+      "description": "Listet die offenen Vorschlaege in der Ablage auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "inbox.reject_proposal",
+      "module": "inbox",
+      "description": "Lehnt einen Vorschlag ab (wird nicht uebernommen).",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "integer",
+            "description": "ID des Vorschlags"
+          }
+        },
+        "required": [
+          "proposal_id"
+        ]
+      }
+    },
+    {
+      "name": "inbox.update_proposal",
+      "module": "inbox",
+      "description": "Bearbeitet einen offenen Vorschlag, bevor er uebernommen wird. Beruehrt nur Vorschlaege im Status 'offen'.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "proposal_id": {
+            "type": "integer",
+            "description": "ID des Vorschlags"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Neue Kurzbeschreibung (optional)"
+          },
+          "payload": {
+            "type": "object",
+            "description": "Vollstaendige neue Nutzlast fuer die Ziel-Capability"
+          }
+        },
+        "required": [
+          "proposal_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.add",
+      "module": "notes",
+      "description": "Legt eine neue Notiz an. Optional an eine Entitaet angeheftet (entity_type, entity_id).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Titel der Notiz"
+          },
+          "content": {
+            "type": "string",
+            "description": "Notiz-Text"
+          },
+          "entity_type": {
+            "type": "string",
+            "description": "Optional: contracts, expenses, calendar, social, family, orders"
+          },
+          "entity_id": {
+            "type": "integer",
+            "description": "Optional: ID innerhalb der Entitaet"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      }
+    },
+    {
+      "name": "notes.add_attachment",
+      "module": "notes",
+      "description": "Heftet eine Notiz zusaetzlich an eine weitere Entitaet (n:m). Die primaere Verknuepfung via notes.attach bleibt davon unberuehrt.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "integer",
+            "description": "ID der Notiz"
+          },
+          "entity_type": {
+            "type": "string",
+            "description": "Entitaets-Typ"
+          },
+          "entity_id": {
+            "type": "integer",
+            "description": "ID der Entitaet"
+          }
+        },
+        "required": [
+          "note_id",
+          "entity_type",
+          "entity_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.attach",
+      "module": "notes",
+      "description": "Heftet eine Notiz an eine Entitaet (oder loest sie mit entity_type=null).",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "integer",
+            "description": "ID der Notiz"
+          },
+          "entity_type": {
+            "type": "string",
+            "description": "Entitaets-Typ (leer = nichts anheften)"
+          },
+          "entity_id": {
+            "type": "integer",
+            "description": "ID der Entitaet"
+          }
+        },
+        "required": [
+          "note_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.cleanup_for_entity",
+      "module": "notes",
+      "description": "Loescht alle Notizen, die an die angegebene Entitaet geheftet sind. Wird intern von den Loesch-Capabilities anderer Module aufgerufen.",
+      "destructive": true,
+      "internal": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "description": "Entitaets-Typ"
+          },
+          "entity_id": {
+            "type": "integer",
+            "description": "ID der Entitaet"
+          }
+        },
+        "required": [
+          "entity_type",
+          "entity_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.delete",
+      "module": "notes",
+      "description": "Loescht eine Notiz endgueltig.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "integer",
+            "description": "ID der Notiz"
+          }
+        },
+        "required": [
+          "note_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.get",
+      "module": "notes",
+      "description": "Liefert eine konkrete Notiz.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "integer",
+            "description": "ID der Notiz"
+          }
+        },
+        "required": [
+          "note_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.list",
+      "module": "notes",
+      "description": "Listet Notizen auf. Optional nach Entitaet gefiltert.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "description": "Filter auf Entitaet"
+          },
+          "entity_id": {
+            "type": "integer",
+            "description": "Filter auf konkrete ID"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "notes.list_attachments",
+      "module": "notes",
+      "description": "Listet alle Anhaenge einer Notiz auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "integer",
+            "description": "ID der Notiz"
+          }
+        },
+        "required": [
+          "note_id"
+        ]
+      }
+    },
+    {
+      "name": "notes.update",
+      "module": "notes",
+      "description": "Aktualisiert Titel und/oder Inhalt einer Notiz.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "integer",
+            "description": "ID der Notiz"
+          },
+          "title": {
+            "type": "string",
+            "description": "Neuer Titel (optional)"
+          },
+          "content": {
+            "type": "string",
+            "description": "Neuer Inhalt (optional)"
+          }
+        },
+        "required": [
+          "note_id"
+        ]
+      }
+    },
+    {
+      "name": "social.add_contact",
+      "module": "social",
+      "description": "Legt einen Kontakt fuer die soziale Pflege an.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name der Person"
+          },
+          "relation": {
+            "type": "string",
+            "description": "Beziehung, z.B. Familie, Freund, Kollege"
+          },
+          "cadence_days": {
+            "type": "integer",
+            "description": "Wunsch-Rhythmus in Tagen (Standard: 30)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notizen"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "social.contacts",
+      "module": "social",
+      "description": "Listet alle Kontakte mit Resttagen bis zum naechsten Melden auf. Optional nach Beziehung (Kategorie) filterbar.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relation": {
+            "type": "string",
+            "description": "Nur Kontakte mit dieser Beziehung (z.B. Familie, Freund)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "social.delete_contact",
+      "module": "social",
+      "description": "Verschiebt einen Kontakt in den Papierkorb. Restore via social.restore_contact; endgueltig erst via social.purge_contact.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "integer",
+            "description": "ID des Kontakts"
+          }
+        },
+        "required": [
+          "contact_id"
+        ]
+      }
+    },
+    {
+      "name": "social.draft_message",
+      "module": "social",
+      "description": "Schlaegt eine kurze Nachricht fuer einen Kontakt vor (Offline-Vorlage; im API-Modus generiert das LLM eine persoenlichere).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "integer",
+            "description": "ID des Kontakts"
+          },
+          "template": {
+            "type": "string",
+            "description": "kurz, treffen, geburtstag"
+          },
+          "anlass": {
+            "type": "string",
+            "description": "Optional: konkreter Anlass, den das LLM aufgreifen soll"
+          }
+        },
+        "required": [
+          "contact_id"
+        ]
+      }
+    },
+    {
+      "name": "social.export_vcard",
+      "module": "social",
+      "description": "Exportiert alle Kontakte als vCard-Datei (.vcf), importierbar in jedes gaengige Adressbuch.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Zielpfad (sollte auf .vcf enden)"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "social.import_vcard",
+      "module": "social",
+      "description": "Liest eine vCard-Datei (.vcf) und legt die enthaltenen Kontakte an. Bestehende Kontakte bleiben unveraendert - es entstehen neue Eintraege.",
+      "destructive": true,
+      "internal": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Pfad zur .vcf-Datei"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "social.list_deleted",
+      "module": "social",
+      "description": "Listet Kontakte im Papierkorb.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "social.mark_contacted",
+      "module": "social",
+      "description": "Markiert einen Kontakt als gerade kontaktiert (setzt last_contacted = heute).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "integer",
+            "description": "ID des Kontakts"
+          }
+        },
+        "required": [
+          "contact_id"
+        ]
+      }
+    },
+    {
+      "name": "social.purge_contact",
+      "module": "social",
+      "description": "Loescht einen Kontakt endgueltig.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "integer",
+            "description": "ID des Kontakts"
+          }
+        },
+        "required": [
+          "contact_id"
+        ]
+      }
+    },
+    {
+      "name": "social.restore_contact",
+      "module": "social",
+      "description": "Stellt einen geloeschten Kontakt wieder her.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contact_id": {
+            "type": "integer",
+            "description": "ID des Kontakts"
+          }
+        },
+        "required": [
+          "contact_id"
+        ]
+      }
+    },
+    {
+      "name": "stats.contracts_overview",
+      "module": "statistics",
+      "description": "Liefert Ueberblick ueber Anzahl aktiver Vertraege, monatliche Gesamtsumme und die teuersten 3 Posten.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "stats.expenses_per_category",
+      "module": "statistics",
+      "description": "Aggregiert Ausgaben pro Kategorie (Default: aktuelles Jahr).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Zieljahr (Default: aktuell)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "stats.expenses_per_month",
+      "module": "statistics",
+      "description": "Summiert Ausgaben pro Monat fuer die letzten N Monate (Default 12) inkl. dem laufenden Monat.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "months": {
+            "type": "integer",
+            "description": "Anzahl Monate (Default: 12)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "stats.export_yearly_pdf",
+      "module": "statistics",
+      "description": "Erzeugt einen druckbaren PDF-Jahresbericht mit Ausgaben-Summe, Top-Kategorien und Vertraege-Uebersicht.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Zielpfad (PDF)"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Zieljahr (Default: aktuell)"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "stats.yearly_summary",
+      "module": "statistics",
+      "description": "Gesamtsicht fuer ein Jahr: Summe aller Ausgaben, Top-Kategorien, monatlicher Schnitt.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Zieljahr (Default: aktuell)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "system.agenda",
+      "module": "overview",
+      "description": "Gruppiert die anstehenden Fristen aller Module nach Kalendertag. Standard: kommende 7 Tage (Wochenuebersicht). Ueberfaellige Eintraege kommen separat zurueck.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "horizon_days": {
+            "type": "integer",
+            "description": "Anzahl Tage ab heute (Standard: 7)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "system.profile_create",
+      "module": "profiles",
+      "description": "Legt ein neues Profil an und macht es aktiv (wirkt nach Neustart).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Profilname (A-Z a-z 0-9 _-)"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "system.profile_switch",
+      "module": "profiles",
+      "description": "Wechselt das aktive Profil (leer = Standard; wirkt nach Neustart).",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Zielprofil (leer = Standard)"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "system.profiles",
+      "module": "profiles",
+      "description": "Listet die Geraete-Profile (getrennte Datenbestaende) auf und markiert das aktive.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "system.search",
+      "module": "search",
+      "description": "Sucht querbeet in Vertraegen, Ausgaben, Terminen, Familienmitgliedern, Kontakten und Vorschlaegen. Eingabe ist ein Stichwort - Treffer kommen vereinheitlicht zurueck. Optional filterbar nach Zeitraum, Status und Kategorie.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Suchbegriff (mindestens 2 Zeichen; entfaellt, wenn ein Filter gesetzt ist)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximale Treffer (Standard: 50)"
+          },
+          "date_from": {
+            "type": "string",
+            "description": "Nur Treffer ab diesem Datum (ISO JJJJ-MM-TT)"
+          },
+          "date_to": {
+            "type": "string",
+            "description": "Nur Treffer bis zu diesem Datum (ISO JJJJ-MM-TT)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Nur Treffer mit diesem Status (z.B. 'offen', 'active')"
+          },
+          "category": {
+            "type": "string",
+            "description": "Nur Treffer dieser Kategorie"
+          }
+        },
+        "required": []
+      }
+    },
+    {
+      "name": "templates.add",
+      "module": "templates",
+      "description": "Legt eine neue Aufgaben-Vorlage an.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Titel der Aufgabe"
+          },
+          "interval_days": {
+            "type": "integer",
+            "description": "Tages-Intervall (Standard 7)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Notiz zur Vorlage"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      }
+    },
+    {
+      "name": "templates.apply",
+      "module": "templates",
+      "description": "Erzeugt aus einer Vorlage eine konkrete Haushaltsaufgabe - die Rotation muss zusaetzlich angegeben werden.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "integer",
+            "description": "ID der Vorlage"
+          },
+          "assignees": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Namen der Rotationsmitglieder"
+          },
+          "first_due": {
+            "type": "string",
+            "description": "Erste Faelligkeit (YYYY-MM-DD); Standard: heute"
+          }
+        },
+        "required": [
+          "template_id",
+          "assignees"
+        ]
+      }
+    },
+    {
+      "name": "templates.delete",
+      "module": "templates",
+      "description": "Loescht eine Vorlage endgueltig.",
+      "destructive": true,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "template_id": {
+            "type": "integer",
+            "description": "ID der Vorlage"
+          }
+        },
+        "required": [
+          "template_id"
+        ]
+      }
+    },
+    {
+      "name": "templates.list",
+      "module": "templates",
+      "description": "Listet alle vorhandenen Aufgaben-Vorlagen auf.",
+      "destructive": false,
+      "internal": false,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "count": 92,
+  "destructive": [
+    "calendar.delete_event",
+    "calendar.import_ical",
+    "calendar.purge_event",
+    "calendar.restore_event",
+    "contracts.delete",
+    "contracts.purge",
+    "contracts.report_price_change",
+    "contracts.restore",
+    "contracts.set_owner",
+    "family.bulk_complete_overdue",
+    "family.complete_order",
+    "family.complete_task",
+    "family.delete_member",
+    "family.purge_member",
+    "family.restore_member",
+    "finance.delete_expense",
+    "finance.purge_expense",
+    "finance.restore_expense",
+    "inbox.accept_proposal",
+    "inbox.bulk_delete_archived",
+    "inbox.bulk_reject_open",
+    "inbox.reject_proposal",
+    "inbox.update_proposal",
+    "notes.add_attachment",
+    "notes.attach",
+    "notes.cleanup_for_entity",
+    "notes.delete",
+    "notes.update",
+    "social.delete_contact",
+    "social.import_vcard",
+    "social.purge_contact",
+    "social.restore_contact",
+    "templates.apply",
+    "templates.delete"
+  ],
+  "internal": [
+    "calendar.import_ical",
+    "notes.cleanup_for_entity",
+    "social.import_vcard"
+  ]
+}

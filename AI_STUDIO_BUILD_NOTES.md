@@ -16,7 +16,15 @@ Diese Datei passt den Handoff an die realen Fähigkeiten und Grenzen von Google 
 
 ## Zusätzlich anzuhängende Kontext-Artefakte
 
+- docs/ai-studio/contracts/openapi.json — API-Contract (Endpunkte 1:1 abbilden)
+- docs/ai-studio/contracts/capabilities.json — Capabilities inkl. destructive/internal-Flags
+- docs/ai-studio/contracts/schema.sql — DDL des echten Schemas
+- docs/ai-studio/contracts/schema.prisma — Prisma-Modell (Cloud-SQL-/Postgres-Abbildung)
+- ANFORDERUNGEN.md — Anforderungen/Akzeptanzkriterien (R1–R10)
 - docker-compose.yml — Container-Setup (Laufzeit-/Service-Kontext)
+
+Regenerieren mit `python -m tools.gen_ai_studio_contracts` (Drift-Gate:
+`--check`).
 
 ## Empfohlene AI Chips
 
@@ -24,7 +32,8 @@ Diese Datei passt den Handoff an die realen Fähigkeiten und Grenzen von Google 
 
 ## Design-Referenzen (Sketch-Upload / Annotation Mode)
 
-- keine erkannt
+- UI_CONCEPT.md — vollständiges UI-/UX-Konzept (als Re-Build-Vorlage)
+- assets/store/phone-1.png, phone-2.png, phone-3.png — Screen-Referenzen
 
 ## Verhaltens-Spezifikationen (aus Tests – beim Re-Build erhalten)
 
@@ -57,6 +66,31 @@ Diese Datei passt den Handoff an die realen Fähigkeiten und Grenzen von Google 
 - `GEMINI_API_KEY` wird in Build Mode automatisch als server-seitiges Secret gesetzt – nicht in den Client legen.
 - Secrets werden beim GitHub-Export nicht mitexportiert; nach ZIP-Download `.env` lokal neu setzen.
 - Ein „System Instructions"-Feld ist im Build Mode nicht gesichert vorhanden – die Kernregeln stehen daher zusätzlich im Prompt-Kopf.
+
+## KI-Backend: Google Gemini
+
+Die KI-Funktionen laufen ausschließlich über **Google Gemini** (Projektprinzip
+„Nur Gemini als LLM"). Build Mode integriert Gemini nativ – nutze die
+server-seitige Gemini-Integration bzw. `@google/generative-ai` mit dem
+automatisch gesetzten `GEMINI_API_KEY`.
+
+- **Server-seitig only:** Alle Gemini-Aufrufe laufen über einen API-Endpunkt,
+  nie direkt aus dem Client. Default-Modell `gemini-2.5-flash`, per
+  Settings/Env überschreibbar.
+- **KI-getriebene Endpunkte** (aus `docs/ai-studio/contracts/openapi.json`):
+  Assistent-Chat (Function-Calling über die Capability-Tool-Schemas),
+  `/api/inbox.analyze_mail` (+ `inbox.import_eml` / `inbox.fetch_imap`) und
+  `/api/social.draft_message`. Alle übrigen Endpunkte sind deterministisch
+  (kein LLM).
+- **Tool-Use-Loop:** Gemini-Function-Calling gegen die `parameters`-Schemas der
+  Capabilities; vor destruktiven Tools (`x-destructive: true`) Bestätigung
+  einholen; Token-Verbrauch messen; Netz-/Rate-Limit-Fehler abfangen.
+- **Halluzinations-Schutz (Posteingang):** LLM-Vorschläge nur übernehmen, wenn
+  Ziel-Capability in der Allowlist `{contracts.add,
+  contracts.report_price_change, family.add_order, calendar.add_event}` liegt
+  und die Pflichtparameter erfüllt sind (ANFORDERUNGEN.md FR-F, KI-07).
+- **Offline-Fallback:** Ohne gültigen Key bleiben die Kernfunktionen über den
+  regelbasierten Pfad nutzbar – keine harte LLM-Abhängigkeit (PA-01/PA-02).
 
 ## Datenmodelle / API-Contracts (eingebettet)
 

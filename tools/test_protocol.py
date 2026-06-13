@@ -73,6 +73,7 @@ FILE_REQUIREMENTS = {
     "test_persistence_robustness": ["R1", "R5", "R8"],
     "test_mobile_screen_capabilities": ["R1", "R3", "R4"],
     "test_requirements_coverage": ["R8", "R10"],
+    "test_ai_studio_contracts": ["R8", "R10"],
     "test_gui_boot_smoke":    ["R8"],
     "test_mobile_boot_smoke": ["R8"],
     "test_presenters":        ["R1", "R3", "R4", "R8"],
