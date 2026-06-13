@@ -40,6 +40,32 @@ Das erkannte Frontend (nicht erkannt) wird von Build Mode nicht direkt unterstü
 
 Beachte die Build-Mode-Grenzen in AI_STUDIO_BUILD_NOTES.md (Stack-Support, Persistenz, AI Chips, Secrets).
 
+## KI-Backend: Google Gemini (verbindlich)
+
+Die KI-Funktionen der App MÜSSEN über **Google Gemini** laufen – kein anderer
+LLM-Anbieter (Projektprinzip „Nur Gemini als LLM", siehe ARCHITECTURE.md /
+ANFORDERUNGEN.md §9). Im Build Mode wird `GEMINI_API_KEY` automatisch als
+**server-seitiges** Secret bereitgestellt; nutze es ausschließlich serverseitig,
+nie im Client.
+
+- **Default-Modell:** `gemini-2.5-flash` (über eine Env-/Settings-Variable
+  überschreibbar, vgl. `ALLTAGSHELFER_GEMINI_MODEL`).
+- **KI-getriebene Funktionen** (Rest läuft regelbasiert/offline): der
+  **Assistent-Chat** (Tool-Use-Loop mit Function-Calling über die Capabilities),
+  `inbox.analyze_mail` (+ `inbox.import_eml` / `inbox.fetch_imap`) und
+  `social.draft_message`. Alle anderen Endpunkte aus `openapi.json` sind
+  deterministisch und brauchen kein LLM.
+- **Pflichtverhalten erhalten** (ANFORDERUNGEN.md §9 / FR-F):
+  Function-Calling über das Capability-Schema, Confirm-Callback vor
+  destruktiven Aktionen, gemessener Token-Verbrauch, robuste Fehler-/
+  Rate-Limit-Behandlung und der **Halluzinations-Schutz** im Posteingang
+  (LLM-Vorschläge nur gegen die Allowlist `{contracts.add,
+  contracts.report_price_change, family.add_order, calendar.add_event}` und das
+  Pflichtparameter-Schema validiert übernehmen).
+- **Offline-Fallback** (optional, empfohlen): Ohne gültigen Key bleibt die App
+  über den regelbasierten Pfad nutzbar – keine harte Gemini-Abhängigkeit für
+  Kernfunktionen (Datenschutz-Prinzip, ANFORDERUNGEN.md PA-01/PA-02).
+
 ## Mitzuliefernde Contracts & Referenzen (Attachments)
 
 - docs/ai-studio/contracts/openapi.json — API-Contract (Endpunkte 1:1)

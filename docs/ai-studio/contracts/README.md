@@ -30,6 +30,11 @@ python -m tools.gen_ai_studio_contracts --check  # CI-Gate: exit 1 bei Drift
 3. `x-destructive: true` markiert Endpunkte, die ein Bestätigungs-/Audit-
    Verhalten brauchen (vgl. `ANFORDERUNGEN.md` FR-X-04, PA-06);
    `x-internal: true` sind nicht für das LLM/öffentliche API gedacht.
+4. **KI-Backend = Google Gemini** (server-seitig, `GEMINI_API_KEY`). Nur diese
+   Endpunkte sind LLM-getrieben, der Rest ist deterministisch:
+   `inbox.analyze_mail` (+ `inbox.import_eml` / `inbox.fetch_imap`),
+   `social.draft_message` sowie der Assistent-Chat (Function-Calling über die
+   Tool-Schemas). Details: `ANFORDERUNGEN.md` §9 / Handoff-Dateien.
 
 ## Grenzen
 
