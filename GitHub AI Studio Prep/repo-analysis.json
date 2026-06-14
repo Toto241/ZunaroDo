@@ -69,6 +69,7 @@
     "backendSupported": false,
     "persistence": "relational (auf Cloud SQL abbilden)",
     "starterTierDeployable": false,
+    "recommendedTarget": "antigravity",
     "keyDependencies": [
       {
         "name": "customtkinter",
@@ -84,9 +85,20 @@
         "path": "Dockerfile",
         "kind": "Container-Setup",
         "why": "Laufzeit-/Service-Kontext"
+      },
+      {
+        "path": "docs/ai-studio/contracts/openapi.json",
+        "kind": "API-Contract (OpenAPI)",
+        "why": "API-Contract als Attachment beilegen"
+      },
+      {
+        "path": "docs/ai-studio/contracts/schema.prisma",
+        "kind": "Datenmodell (Prisma)",
+        "why": "Datenmodell als Attachment beilegen"
       }
     ],
     "aiChips": [],
+    "tools": [],
     "designReferences": [],
     "behaviorSpecs": [
       "tests/__init__.py",
@@ -107,34 +119,42 @@
     ],
     "notes": [
       "Kein eindeutiges Frontend erkannt – Build Mode erzeugt standardmäßig React + Vite.",
-      "Desktop-/Nicht-Web-Stack erkannt (CustomTkinter) – Build Mode erzeugt ausschließlich Web-Apps. Dieses Repo ist kein direkter Build-Mode-Kandidat: entweder als Web-App neu konzipieren oder den Handoff an einen code-fähigen Agenten (Claude/Codex/Gemini CLI) geben, der das bestehende Repo bearbeitet.",
+      "Desktop-/Nicht-Web-Stack erkannt (CustomTkinter) – Build Mode erzeugt ausschließlich Web-Apps. Dieses Repo ist kein direkter Build-Mode-Kandidat: entweder als Web-App neu konzipieren oder den Handoff an einen code-fähigen Agenten (Google Antigravity, Claude/Codex/Gemini CLI) geben, der das bestehende Repo bearbeitet.",
       "Build Mode bietet als Server-Runtime nur Node.js – ein Python-Backend müsste in Node neu umgesetzt oder durch client-/serverlose Logik ersetzt werden.",
       "Persistenz erkannt (relational (auf Cloud SQL abbilden)) – auf den Build-Mode-Pfad (Firestore/Cloud SQL) abbilden.",
-      "Zusätzlich als Attachment anhängen: Dockerfile.",
+      "Zusätzlich als Attachment anhängen: Dockerfile, docs/ai-studio/contracts/openapi.json, docs/ai-studio/contracts/schema.prisma.",
       "Vorhandene Tests definieren erwartetes Verhalten – dieses beim Re-Build erhalten.",
+      "Dieses Repo ist nur eingeschränkt ein Build-Mode-Kandidat. Empfohlene Alternative: Google Antigravity (agenten-/repo-zentriert, arbeitet am bestehenden Code; AI Studio kann seit I/O 2026 direkt dorthin exportieren) oder Firebase Studio (kann bestehende Repos importieren).",
       "Build Mode importiert keine bestehenden Repositories – dies ist ein Re-Build-mit-Kontext-Handoff, kein Code-Import."
     ]
   },
   "warnings": [],
   "tokenEstimate": {
-    "totalChars": 102180,
-    "totalTokens": 25550,
+    "totalChars": 117341,
+    "totalTokens": 29341,
+    "totalBytes": 118851,
+    "contextWindowTokens": 1000000,
+    "oversizedDocuments": [],
     "perDocument": [
       {
         "name": "TESTING.md",
         "tokens": 16910
       },
       {
+        "name": "AI_STUDIO_BUILD_NOTES.md",
+        "tokens": 4719
+      },
+      {
         "name": "ARCHITECTURE.md",
         "tokens": 2065
       },
       {
-        "name": "AI_STUDIO_BUILD_NOTES.md",
-        "tokens": 1796
+        "name": "AI_STUDIO_CONTEXT.md",
+        "tokens": 1305
       },
       {
-        "name": "AI_STUDIO_CONTEXT.md",
-        "tokens": 1124
+        "name": "AI_STUDIO_PROMPT.md",
+        "tokens": 1237
       },
       {
         "name": "SECURITY.md",
@@ -145,12 +165,8 @@
         "tokens": 810
       },
       {
-        "name": "AI_STUDIO_PROMPT.md",
-        "tokens": 581
-      },
-      {
         "name": "AI_STUDIO_WEB_UI_STEPS.md",
-        "tokens": 475
+        "tokens": 506
       },
       {
         "name": "AI_STUDIO_AGENTS.md",
@@ -167,6 +183,6 @@
     ]
   },
   "secretFindings": [],
-  "totalFiles": 382,
+  "totalFiles": 392,
   "truncated": false
 }
