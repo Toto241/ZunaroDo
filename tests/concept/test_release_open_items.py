@@ -103,3 +103,9 @@ def test_cli_markdown_and_json_modes(capsys):
     js = capsys.readouterr().out
     assert '"manual_items"' in js
     assert '"automated_checks"' in js
+
+
+def test_committed_release_markdown_matches_generator():
+    doc = REPO / "release" / "OFFENE_MANUELLE_SCHRITTE.md"
+    assert doc.is_file()
+    assert doc.read_text(encoding="utf-8") == roi.to_markdown()

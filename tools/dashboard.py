@@ -7,6 +7,7 @@ eigenstaendige HTML-Datei mit:
 
   * Header inkl. Projekt/Branch/Versions-Code/Generation-Zeit
   * Release-Reifegrad-Card mit Status-Pill (GO/HOLD/BLOCK)
+  * Offene manuelle Release-Punkte inkl. Links auf lokale/offizielle Doku
   * KPI-Karten: Tests, Crash-Free (Platzhalter), Privacy, Security,
     Negative, Members, Release-Gate
   * Bereichstabelle mit allen Markern (passed/failed/error/skipped)
@@ -644,6 +645,25 @@ def _render_companion_docs(source_path: Path) -> dict[str, Path]:
             continue
         html_out.write_text(content, encoding="utf-8")
         out_map[name] = html_out
+
+    # Dynamische Doku aus der zentralen Open-Items-Quelle. Nur rendern,
+    # wenn `repo` wirklich das Projekt-Root ist (bei Unit-Tests mit
+    # synthetischen Pfaden wie Path("synth.json") soll kein Repo-Root
+    # geraten und beschrieben werden).
+    open_items_source = REPO_ROOT / "tools" / "release_open_items.py"
+    if base.resolve() == DEFAULT_JSON.parent.resolve() and open_items_source.is_file():
+        try:
+            from tools.release_open_items import to_markdown
+            manual_html = base / "OFFENE_MANUELLE_SCHRITTE.html"
+            content = render_doc(
+                title="Offene manuelle Release-Schritte",
+                markdown_text=to_markdown(),
+                back_link="dashboard.html",
+                back_label="← zurueck zum Dashboard")
+            manual_html.write_text(content, encoding="utf-8")
+            out_map["OFFENE_MANUELLE_SCHRITTE.md"] = manual_html
+        except Exception:
+            pass
     return out_map
 
 
@@ -671,6 +691,11 @@ def _artifact_card(source_path: Path,
          "PLAYSTORE.md", repo / "PLAYSTORE.md",
          "🚀",
          "Schritt-fuer-Schritt Veroeffentlichung in der Play Console"),
+        ("Offene manuelle Punkte",
+         "OFFENE_MANUELLE_SCHRITTE.md",
+         repo / "release" / "OFFENE_MANUELLE_SCHRITTE.md",
+         "🧩",
+         "Nicht voll automatisierbare Restpunkte mit lokalen/offiziellen Links"),
         ("Audit-Protokoll",
          "protocol.md", base / "protocol.md",
          "📑",
@@ -724,6 +749,68 @@ def _artifact_card(source_path: Path,
       <div class="artifacts-grid">
         {''.join(cells)}
       </div>
+    </div>
+    """
+
+
+def _manual_open_items_card(rendered_docs: dict[str, Path]) -> str:
+    """Kompakte Übersicht der manuellen Release-Restpunkte.
+
+    Die Details liegen in `tools.release_open_items`; das Dashboard zeigt
+    eine schnelle Ampel-/Link-Übersicht und verweist auf die vollständig
+    gerenderte HTML-Fassung.
+    """
+    try:
+        from tools.release_open_items import items
+        open_items = items()
+    except Exception as exc:                              # noqa: BLE001
+        return (f"<div class='card span-3'>"
+                f"<h3>Offene manuelle Release-Punkte</h3>"
+                f"<p class='sub'>Nicht verfuegbar: {_esc(exc)}</p></div>")
+
+    docs_href = "OFFENE_MANUELLE_SCHRITTE.html"
+    doc_path = rendered_docs.get("OFFENE_MANUELLE_SCHRITTE.md")
+    if doc_path is not None:
+        docs_href = doc_path.name
+
+    rows: list[str] = []
+    for item in open_items:
+        state = "block" if item.category == "blocker" else (
+            "hold" if item.category in ("optional", "platform") else "unknown")
+        first_local = item.local_docs[0].target if item.local_docs else ""
+        first_official = item.official_links[0].target if item.official_links else ""
+        links = [f"<a href='{_esc(docs_href)}'>Details</a>"]
+        if first_local:
+            links.append(f"<span class='sub'>{_esc(first_local)}</span>")
+        if first_official:
+            links.append(f"<a href='{_esc(first_official)}'>Offizielle Doku</a>")
+        rows.append(
+            "<tr>"
+            f"<td>{_pill(state, item.category.upper())}</td>"
+            f"<td class='id'>{_esc(item.id)}</td>"
+            f"<td>{_esc(item.title)}</td>"
+            f"<td>{_esc(item.why_manual[:180])}"
+            f"{'…' if len(item.why_manual) > 180 else ''}</td>"
+            f"<td>{' · '.join(links)}</td>"
+            "</tr>"
+        )
+    return f"""
+    <div class="card span-3">
+      <div class="title">
+        <h3>Offene manuelle Release-Punkte</h3>
+        <a href="{_esc(docs_href)}" class="sub">vollständige Liste öffnen</a>
+      </div>
+      <div class="sub">
+        Automatisierte Checks decken Code, Konfiguration und Artefakte ab.
+        Diese Punkte brauchen externe Systeme wie Android-Gerät, Play Console,
+        Keystore-Secrets, macOS/Xcode oder echten Produktions-Traffic.
+      </div>
+      <table>
+        <thead><tr>
+          <th>Status</th><th>ID</th><th>Punkt</th><th>Warum manuell?</th><th>Links</th>
+        </tr></thead>
+        <tbody>{''.join(rows)}</tbody>
+      </table>
     </div>
     """
 
@@ -1009,6 +1096,7 @@ def render_dashboard(data: dict, source_path: Path) -> str:
   <nav class="toc">
     <a href="#uebersicht">Übersicht</a>
     <a href="#artefakte">Artefakte</a>
+    <a href="#offene-punkte">Offene Punkte</a>
     <a href="#build">Build</a>
     <a href="#kpis">KPIs</a>
     <a href="#anforderungen">Anforderungen</a>
@@ -1022,6 +1110,9 @@ def render_dashboard(data: dict, source_path: Path) -> str:
     </section>
     <section id="artefakte" class="row">
       {_artifact_card(source_path, rendered_docs)}
+    </section>
+    <section id="offene-punkte" class="row">
+      {_manual_open_items_card(rendered_docs)}
     </section>
     <section id="build" class="row">
       {_build_center(source_path)}
@@ -1161,6 +1252,9 @@ def _index_landing_html(data: dict, dashboard_rel: str) -> str:
         ("🚀  Play-Store-Anleitung (HTML)",
          "tests/concept/reports/PLAYSTORE.html",
          "Schritt-fuer-Schritt Veroeffentlichung"),
+        ("🧩  Offene manuelle Release-Punkte",
+         "tests/concept/reports/OFFENE_MANUELLE_SCHRITTE.html",
+         "Externe Restpunkte: Gerät, Keystore, Play Console, Closed Testing"),
         ("📑  Audit-Protokoll (HTML)",
          "tests/concept/reports/protocol.html",
          "Vollstaendiger Markdown-Auditbericht aller Tests"),
@@ -1254,6 +1348,9 @@ def _index_landing_html(data: dict, dashboard_rel: str) -> str:
           <a href="tests/concept/reports/UI_CONCEPT.html">UI_CONCEPT</a>
           und
           <a href="tests/concept/reports/PLAYSTORE.html">PLAYSTORE</a>
+          und
+          <a href="tests/concept/reports/OFFENE_MANUELLE_SCHRITTE.html">
+          offene manuelle Release-Punkte</a>
           sind direkt im Browser lesbar gerendert.
         </p>
         <p style="margin:0;font-size:13px;color:var(--text-muted);">
