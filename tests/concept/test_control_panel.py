@@ -115,6 +115,14 @@ def test_actions_release_checks_complete():
     ):
         assert any(module in cmd for cmd in commands), (
             f"Release-Check {module} fehlt")
+    # Die ersten Aktionen sollen in der GUI ohne Scrollen erreichbar und
+    # gefahrlos ausfuehrbar sein.
+    first_labels = [a.label for a in items[:3]]
+    assert first_labels == [
+        "Offene manuelle Punkte als Markdown",
+        "Build-Status für alle Plattformen",
+        "Data-Safety-Antwortbogen anzeigen",
+    ]
 
 
 def test_release_open_items_are_visible_to_control_panel():

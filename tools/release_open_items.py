@@ -77,6 +77,30 @@ def automated_checks() -> list[AutomatedCheck]:
 
     return [
         AutomatedCheck(
+            id="release-open-items-markdown",
+            label="Offene manuelle Punkte als Markdown",
+            module="tools.release_open_items",
+            args=("--markdown",),
+            description="Gibt die unten gezeigte offene-Punkte-Liste im Terminal aus.",
+        ),
+        AutomatedCheck(
+            id="build-status",
+            label="Build-Status für alle Plattformen",
+            module="tools.build_status",
+            args=("--no-emoji",),
+            description="Listet Desktop-, Android- und iOS-Build-Voraussetzungen.",
+        ),
+        AutomatedCheck(
+            id="data-safety-markdown",
+            label="Data-Safety-Antwortbogen anzeigen",
+            module="tools.data_safety",
+            args=("--markdown",),
+            description=(
+                "Rendert die Antworten, die im Play-Console-Formular "
+                "manuell übertragen werden müssen."
+            ),
+        ),
+        AutomatedCheck(
             id="playstore-strict",
             label="Play-Store-Compliance (strict)",
             module="tools.playstore_check",
@@ -97,16 +121,6 @@ def automated_checks() -> list[AutomatedCheck]:
             ),
         ),
         AutomatedCheck(
-            id="data-safety-markdown",
-            label="Data-Safety-Antwortbogen anzeigen",
-            module="tools.data_safety",
-            args=("--markdown",),
-            description=(
-                "Rendert die Antworten, die im Play-Console-Formular "
-                "manuell übertragen werden müssen."
-            ),
-        ),
-        AutomatedCheck(
             id="privacy-policy-check",
             label="Datenschutzerklärung prüfen",
             module="tools.privacy_policy",
@@ -123,13 +137,6 @@ def automated_checks() -> list[AutomatedCheck]:
             description="Zeigt, welche Rechtstexte in welchen Sprachen vorliegen.",
         ),
         AutomatedCheck(
-            id="build-status",
-            label="Build-Status für alle Plattformen",
-            module="tools.build_status",
-            args=("--no-emoji",),
-            description="Listet Desktop-, Android- und iOS-Build-Voraussetzungen.",
-        ),
-        AutomatedCheck(
             id="android-device-skip-ocr",
             label="Android-Gerät prüfen (ohne OCR)",
             module="tools.verify_android_device",
@@ -139,13 +146,6 @@ def automated_checks() -> list[AutomatedCheck]:
                 "und SQLCipher-DB. OCR bleibt für den manuellen Scan separat."
             ),
             requires=("adb", "echtes oder emuliertes Android-Gerät"),
-        ),
-        AutomatedCheck(
-            id="release-open-items-markdown",
-            label="Offene manuelle Punkte als Markdown",
-            module="tools.release_open_items",
-            args=("--markdown",),
-            description="Gibt die unten gezeigte offene-Punkte-Liste im Terminal aus.",
         ),
     ]
 

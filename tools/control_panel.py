@@ -554,6 +554,9 @@ class ControlPanel(ctk.CTk):
         ).grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 12))
 
         row = 1
+        self._manual_summary_card(frame).grid(row=row, column=0,
+                                              sticky="ew", pady=(0, 8))
+        row += 1
         for action in actions_release_checks():
             self._action_card(frame, action).grid(row=row, column=0,
                                                    sticky="ew", pady=5)
@@ -581,6 +584,37 @@ class ControlPanel(ctk.CTk):
                                                      sticky="ew", pady=5)
             row += 1
         return frame
+
+    def _manual_summary_card(self, parent) -> "ctk.CTkFrame":
+        items = release_open_items()
+        blockers = [i for i in items if i.category == "blocker"]
+        card = self._card_shell(parent)
+        card.grid_columnconfigure(0, weight=1)
+        info = ctk.CTkFrame(card, fg_color="transparent")
+        info.grid(row=0, column=0, sticky="ew", padx=14, pady=12)
+        info.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(
+            info, text=(f"{len(blockers)} Blocker · {len(items)} offene "
+                        "manuelle Release-Punkte"),
+            text_color=WIN11["text"], font=self._font(14, "bold"),
+            anchor="w").grid(row=0, column=0, sticky="w")
+        summary = "\n".join(f"• {item.title}" for item in blockers[:4])
+        if len(blockers) > 4:
+            summary += f"\n• … {len(blockers) - 4} weitere Blocker"
+        ctk.CTkLabel(
+            info, text=summary, text_color=WIN11["text_muted"],
+            font=self._font(12), anchor="w", justify="left",
+            wraplength=760).grid(row=1, column=0, sticky="ew", pady=(6, 0))
+        ctk.CTkButton(
+            card, text="Doku oeffnen", width=140, corner_radius=6,
+            font=self._font(13), fg_color="transparent", border_width=1,
+            border_color=WIN11["card_border"], text_color=WIN11["text"],
+            hover_color=WIN11["subtle_hover"],
+            command=lambda: self._open_path_or_url(
+                REPO_ROOT / "release" / "OFFENE_MANUELLE_SCHRITTE.md",
+                "Offene manuelle Release-Schritte")
+        ).grid(row=0, column=1, padx=(8, 14), pady=12)
+        return card
 
     def _card_shell(self, parent) -> "ctk.CTkFrame":
         card = ctk.CTkFrame(
