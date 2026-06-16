@@ -28,13 +28,13 @@ if not exist "logs" mkdir "logs" >nul 2>nul
 
 REM ------------------------------------------------------------
 REM Python 3.10+ robust finden:
-REM   1) Windows Python Launcher (py -3.10), falls vorhanden
+REM   1) Windows Python Launcher (py -3), falls vorhanden
 REM   2) python im PATH
 REM ------------------------------------------------------------
 where py >nul 2>nul
 if not errorlevel 1 (
-    py -3.10 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>nul
-    if not errorlevel 1 set "PYTHON_CMD=py -3.10"
+    py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>nul
+    if not errorlevel 1 set "PYTHON_CMD=py -3"
 )
 
 if not defined PYTHON_CMD (
