@@ -62,30 +62,64 @@ def _find_db_on_device(serial: str) -> str | None:
     return None
 
 
+def _copy_db_from_device(serial: str, db_path: str, local: Path) -> tuple[bool, str]:
+    result = subprocess.run(
+        ["adb", "-s", serial, "exec-out", "run-as", PACKAGE, "cat", db_path],
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode == 0 and result.stdout:
+        local.write_bytes(result.stdout)
+        return True, ""
+    error = result.stderr.decode("utf-8", errors="replace").strip()
+    if not error:
+        error = result.stdout.decode("utf-8", errors="replace").strip()
+    return False, error or "adb exec-out run-as cat lieferte keine Daten"
+
+
 def verify_sqlcipher(serial: str, db_path: str) -> tuple[bool, str]:
     """
-    Prueft verschluesselten DB-Header via adb pull + lokalem sqlcipher3 oder
+    Prueft verschluesselten DB-Header via run-as + lokalem sqlcipher3 oder
     Hex-Header ('SQLite format 3' vs verschluesselt).
     """
     with tempfile.TemporaryDirectory(prefix="ah_verify_") as tmp:
         local = Path(tmp) / DB_FILENAME
-        _run(["adb", "-s", serial, "pull", db_path, str(local)], check=False)
+        copied, copy_error = _copy_db_from_device(serial, db_path, local)
+        if not copied:
+            return False, (
+                "DB konnte nicht via run-as vom Geraet gelesen werden: "
+                f"{copy_error}")
         if not local.is_file() or local.stat().st_size < 16:
-            return False, "DB konnte nicht vom Geraet gelesen werden (adb pull)."
+            return False, "DB konnte nicht vollstaendig vom Geraet gelesen werden."
         header = local.read_bytes()[:16]
         if header.startswith(b"SQLite format 3"):
             return False, "DB-Header ist Klartext-SQLite — SQLCipher aktiv?"
         try:
             import sqlcipher3  # type: ignore
+        except ImportError:
+            return True, (
+                f"Header verschluesselt ({header[:8]!r}...) — "
+                "kein Klartext-SQLite.")
+
+        conn = None
+        database_error = getattr(sqlcipher3, "DatabaseError", Exception)
+        try:
             conn = sqlcipher3.connect(str(local))
             conn.execute("PRAGMA key = 'wrong-key-should-fail';")
             conn.execute("SELECT count(*) FROM sqlite_master;")
-            conn.close()
-        except ImportError:
-            pass
-        except Exception:
-            return True, "Header verschluesselt; falscher Key wird abgewiesen (sqlcipher3)."
-        return True, f"Header verschluesselt ({header[:8]!r}...) — kein Klartext-SQLite."
+        except database_error as exc:
+            msg = str(exc).lower()
+            if "not a database" in msg or "encrypted" in msg:
+                return True, (
+                    "Header verschluesselt; falscher Key wird abgewiesen "
+                    "(sqlcipher3).")
+            return False, f"SQLCipher-Probe schlug unerwartet fehl: {exc}"
+        except Exception as exc:
+            return False, f"SQLCipher-Probe schlug unerwartet fehl: {exc}"
+        finally:
+            if conn is not None:
+                conn.close()
+        return False, "DB ist mit falschem SQLCipher-Key lesbar."
 
 
 def verify_mlkit(serial: str) -> tuple[bool, str]:

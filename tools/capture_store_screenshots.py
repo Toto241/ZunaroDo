@@ -116,13 +116,13 @@ def _seed_demo_data(app) -> None:
         "description": "Supermarkt Wocheneinkauf",
         "amount": 127.45,
         "category": "lebensmittel",
-        "date": today.isoformat(),
+        "spent_on": today.isoformat(),
     })
     app.dispatch("finance.add_expense", {
         "description": "Tankstelle",
         "amount": 68.20,
         "category": "mobilitaet",
-        "date": (today - timedelta(days=2)).isoformat(),
+        "spent_on": (today - timedelta(days=2)).isoformat(),
     })
     app.dispatch("calendar.add_event", {
         "title": "TÜV Faellig",
@@ -144,8 +144,8 @@ def _render_dashboard(app) -> Image.Image:
     _draw_status_bar(d)
     _draw_toolbar(d, "ZunaroDo")
     y = 200
-    active = summary.get("active_contracts", 0)
-    monthly = summary.get("total_monthly_cost", 0.0)
+    active = summary.get("contracts_count", 0)
+    monthly = summary.get("monthly_total", 0.0)
     hero_h = 180
     _rounded_rect(d, [32, y, PHONE_W - 32, y + hero_h], 24, PRIMARY)
     d.text((56, y + 28), f"{active} aktive Vertraege",
@@ -155,13 +155,24 @@ def _render_dashboard(app) -> Image.Image:
     y += hero_h + 32
     d.text((40, y), "Anstehend", font=_load_font(34, bold=True), fill=TEXT)
     y += 52
-    items = (week.get("items") or [])[:4]
+    items = list(week.get("overdue") or [])
+    for day in week.get("days") or []:
+        for event in day.get("events", []):
+            entry = dict(event)
+            entry["when"] = day.get("date", "")
+            items.append(entry)
+    items = items[:4]
     if not items:
         items = [{"title": "Keine Termine", "when": "—", "kind": "info"}]
     for item in items:
         title = str(item.get("title") or item.get("name") or "Eintrag")
-        when = str(item.get("when") or item.get("date") or "")
-        y = _draw_card(d, y, 110, title, when, badge="bald" if "T" in when else "")
+        when = str(item.get("when") or item.get("due_date") or "")
+        try:
+            days = int(item.get("days_remaining", 99))
+        except (TypeError, ValueError):
+            days = 99
+        badge = "bald" if days <= 7 else ""
+        y = _draw_card(d, y, 110, title, when, badge=badge)
     _draw_bottom_nav(d, "dashboard")
     return img
 
