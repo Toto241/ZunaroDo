@@ -4,7 +4,7 @@
 
 ### Overview
 
-ZunaroDo (Alltagshelfer) is a Python 3.10+ privacy-focused personal assistant with 8 domain modules, a CustomTkinter desktop GUI, a CLI, and an optional KivyMD mobile app. All data is stored in SQLite (no external databases required). See `README.md` for full feature list and `DEVELOPING.md` for contributor workflow.
+ZunaroDo (Alltagshelfer) is a Python 3.10+ privacy-focused personal assistant with **13 registered modules** (9 domain + 4 cross-cutting) exposing **92 capabilities**, a CustomTkinter desktop GUI (14 tabs), a CLI, and an optional KivyMD mobile app. All data is stored in SQLite (no external databases required). See `README.md` for full feature list and `DEVELOPING.md` for contributor workflow.
 
 ### Running tests
 
