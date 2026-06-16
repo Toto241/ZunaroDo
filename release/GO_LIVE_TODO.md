@@ -55,16 +55,21 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
       selbst (braucht `tcl`, in den CI-Workflows enthalten) und baut sie
       statisch; auf dem Host validiert (cipher_version 4.6.1, falscher
       Key abgewiesen, Datei-Header verschluesselt).
-- [ ] **SQLCipher auf Geraet verifizieren**: APK-Artefakt installieren,
-      pruefen dass `Database.encryption_mode == "sqlcipher"`.
+- [ ] **SQLCipher auf Geraet verifizieren**: `python -m tools.verify_android_device`
+      (adb + installierte App; prueft verschluesselten DB-Header).
 - [ ] **ML-Kit-OCR verifizieren**: Beleg scannen -> `scan_receipt()` liefert
-      `engine == "mlkit"` (Modell laedt beim 1. Aufruf nach).
+      `engine == "mlkit"` — oder `verify_android_device` ohne `--skip-ocr`.
 - [ ] **Icon/Adaptive-Icon** auf echtem Launcher pruefen (kein weisser Default).
 - [ ] Release-Bundle: Workflow `Android Release (AAB)` dispatchen ->
       Artefakt `dist/*.aab` (braucht die vier Keystore-Secrets aus 1.2).
 
 ### 1.2 Upload-Keystore erstellen & sichern
-- [ ] `pwsh ./release/create_upload_keystore.ps1` ausfuehren.
+> Helfer: `release/create_upload_keystore.ps1` (Windows) und
+> `release/create_upload_keystore.sh` (Linux/macOS). Schritt-fuer-Schritt:
+> `release/PLAY_CONSOLE_SETUP.md`.
+
+- [ ] `pwsh ./release/create_upload_keystore.ps1` **oder**
+      `./release/create_upload_keystore.sh` ausfuehren.
 - [ ] Passwoerter im Passwort-Manager sichern (Verlust = App-Linie verloren).
 - [ ] Lokaler Build: `P4A_RELEASE_*`-Env-Vars setzen (das Skript zeigt sie an).
 - [ ] CI-Build (`.github/workflows/android-release.yml`): vier Repo-Secrets
@@ -73,6 +78,8 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 - [ ] Sicherstellen: `.jks` ist NICHT im Git (ist bereits gitignored).
 
 ### 1.3 Play Console - App anlegen
+> Ausfuehrliche Anleitung: `release/PLAY_CONSOLE_SETUP.md`.
+
 - [ ] Play-Developer-Konto (25 USD einmalig) + Identitaetspruefung
       (2-4 Tage; bei Personenkonten Pflicht).
 - [ ] Neue App: Name "ZunaroDo", Standardsprache de-DE, Kategorie PRODUCTIVITY,
@@ -106,18 +113,17 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 > Alternative: Launch OHNE IAP (nur Free), Billing in 1.1 nachreichen.
 > Dann `in_app_purchases: false` belassen und 1.4 ueberspringen.
 
-### 1.5 Echte Screenshots erstellen (Platzhalter ersetzen)
-> `assets/store/phone-1..3.png` sind aktuell einfarbige Platzhalter. Google
-> verlangt echte In-App-Screenshots; faken ist nicht zulaessig.
-
-- [ ] App auf Geraet/Emulator starten, 3-8 aussagekraeftige Screenshots der
-      echten Module (Vertraege, Finanzen, Kalender, Familie ...) aufnehmen.
-- [ ] Nach `assets/store/` legen; falls mehr als 3, `playstore.yml`
-      (`phone_screenshots`) erweitern.
-- [ ] `python -m tools.gen_assets --check` muss danach gruen sein - der
-      Release-Workflow bricht sonst beim Asset-Gate ab.
+- [x] **Store-Screenshots (Repo):** `python -m tools.capture_store_screenshots`
+      erzeugt 1080x1920-Bilder aus echter HeadlessApp-Demo-Daten;
+      `gen_assets --check` ist gruen. Optional vor Upload durch echte
+      Geraete-Screenshots ersetzen (Google bevorzugt Pixel-perfect In-App).
 
 ### 1.6 Closed Testing (Pflicht-Gate fuer neue Personenkonten)
+> Runbook: `release/CLOSED_TEST_RUNBOOK.md`. Repo-Nachweis-Vorlage liegt in
+> `release/closed-test-2026-05-30.md`; Console-Screenshot nach Upload in
+> `release/assets/`.
+
+- [x] Repo-Vorbereitung: playstore.yml, Nachweis-MD, Runbook, Gate-Test.
 - [ ] Internal Testing: AAB hochladen, Pre-Launch-Report auf Crashes pruefen.
 - [ ] Closed Test: >= 12 Tester, >= 14 Tage (siehe `playstore.yml` tracks.closed,
       `release/closed-test-2026-05-30.md`).
