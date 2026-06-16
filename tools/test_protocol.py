@@ -113,6 +113,7 @@ FILE_REQUIREMENTS = {
     "test_playstore_sync":        ["R9"],
     "test_release_gate":          ["R9"],
     "test_release_gate_extended": ["R9"],
+    "test_release_open_items":    ["R9", "R10"],
     "test_build_status":          ["R9", "R10"],
     "test_control_panel":         ["R10"],
     "test_dashboard_generator":   ["R10"],

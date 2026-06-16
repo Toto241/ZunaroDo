@@ -95,6 +95,46 @@ def test_destructive_actions_have_confirm_prompt():
         "Echter Push braucht confirm")
 
 
+def test_actions_release_checks_complete():
+    from tools.control_panel import actions_release_checks
+    items = actions_release_checks()
+    labels = " | ".join(a.label for a in items)
+    commands = [" ".join(a.command) for a in items]
+    assert "Play-Store-Compliance" in labels
+    assert "Data-Safety" in labels
+    assert "Datenschutzerklärung" in labels
+    assert "Android-Gerät" in labels
+    for module in (
+        "tools.playstore_check",
+        "tools.data_safety",
+        "tools.privacy_policy",
+        "tools.legal_status",
+        "tools.build_status",
+        "tools.verify_android_device",
+        "tools.release_open_items",
+    ):
+        assert any(module in cmd for cmd in commands), (
+            f"Release-Check {module} fehlt")
+    # Die ersten Aktionen sollen in der GUI ohne Scrollen erreichbar und
+    # gefahrlos ausfuehrbar sein.
+    first_labels = [a.label for a in items[:3]]
+    assert first_labels == [
+        "Offene manuelle Punkte als Markdown",
+        "Build-Status für alle Plattformen",
+        "Data-Safety-Antwortbogen anzeigen",
+    ]
+
+
+def test_release_open_items_are_visible_to_control_panel():
+    from tools.release_open_items import items
+    release_items = items()
+    assert release_items
+    text = "\n".join(i.title + "\n" + i.why_manual for i in release_items)
+    assert "Play Console" in text
+    assert "Keystore" in text
+    assert "Closed Testing" in text
+
+
 # ---------------------------------------------------------------------------
 # Doku-Links
 # ---------------------------------------------------------------------------
@@ -106,6 +146,18 @@ def test_links_point_to_known_paths():
     targets = [str(l.target) for l in items]
     assert any("index.html" in t for t in targets)
     assert any("dashboard.html" in t for t in targets)
+
+
+def test_release_item_references_are_repo_paths_or_https_urls():
+    from tools.release_open_items import items
+    for item in items():
+        for ref in [*item.local_docs, *item.official_links]:
+            if ref.is_url:
+                assert ref.target.startswith("https://")
+            else:
+                rel = ref.target.split("#", 1)[0]
+                assert (REPO / rel).exists(), (
+                    f"{item.id}: Link {ref.target} existiert nicht")
 
 
 def test_link_targets_are_known_repo_paths():
@@ -202,8 +254,9 @@ def test_window_can_be_constructed_and_destroyed():
         app.update_idletasks()
         # Sektionen sind gebaut
         assert "Control Panel" in app.title()
+        assert "release" in app._section_frames       # type: ignore[attr-defined]
         # Mindestens ein Button registriert
-        assert len(app._busy_buttons) >= 10            # type: ignore[attr-defined]
+        assert len(app._busy_buttons) >= 18            # type: ignore[attr-defined]
     finally:
         app.destroy()
 
@@ -231,3 +284,22 @@ def test_start_bat_checks_customtkinter():
                                              errors="replace")
     assert "customtkinter" in text, (
         "start.bat sollte customtkinter pruefen / installieren")
+
+
+def test_start_bat_checks_python_version_and_dependencies():
+    text = (REPO / "start.bat").read_text(encoding="utf-8",
+                                             errors="replace")
+    assert "py -3.10" in text or "Python 3.10+" in text
+    assert "sys.version_info >= (3, 10)" in text
+    assert "python.org/downloads/windows" in text
+    assert "-m pip --version" in text
+    assert "import tkinter" in text
+
+
+def test_start_bat_has_debug_mode_and_startup_log():
+    text = (REPO / "start.bat").read_text(encoding="utf-8",
+                                             errors="replace")
+    assert "ZUNARODO_DEBUG_START" in text
+    assert "control-panel-startup.log" in text
+    assert "Control Panel Import OK" in text
+    assert "pythonw.exe" in text

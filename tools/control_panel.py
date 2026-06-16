@@ -17,7 +17,10 @@ Sektionen:
          Android-Build (WSL2 + Buildozer), iOS-Build (Info)
   3. Play-Store-Sync
        - init / validate / push --dry-run / push / pull / diff / export
-  4. Dokumentation
+  4. Release-Check & offene Punkte
+       - lokale Compliance-/Data-Safety-/Privacy-Checks
+       - manuelle Restpunkte mit Doku- und offiziellen Links
+  5. Dokumentation
        - Direkter Sprung zu TESTING.html / UI_CONCEPT.html /
          PLAYSTORE.html / index.html und in den Projekt-Ordner
 
@@ -42,6 +45,9 @@ import webbrowser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
+
+from tools.release_open_items import (OpenItem, Reference, automated_checks,
+                                      items as release_open_items)
 
 # CustomTkinter ist eine Pflicht-Abhaengigkeit der Hauptanwendung.
 # Wenn es trotzdem fehlt (z.B. in einer Slim-CI), liefern wir eine
@@ -111,11 +117,27 @@ class LinkAction:
     description: str = ""
 
 
+def _console_python() -> str:
+    """Liefert einen Konsolen-Python fuer Subprozesse.
+
+    Das Panel selbst kann via ``pythonw.exe`` gestartet werden. Fuer Tools,
+    die stdout/stderr streamen (pytest, Play-Store-Checks, Build-Status),
+    ist ``python.exe`` unter Windows robuster und macht Fehlermeldungen im
+    Live-Log sichtbar.
+    """
+    exe = Path(sys.executable)
+    if exe.name.lower() == "pythonw.exe":
+        console = exe.with_name("python.exe")
+        if console.is_file():
+            return str(console)
+    return sys.executable
+
+
 # Die Aktions-Tabellen sind als Funktionen modelliert (kein
 # Top-Level-Konstrukt), damit Pfade dynamisch sind und Tests sie
 # inspizieren koennen.
 def actions_tests() -> list[Action]:
-    py = sys.executable
+    py = _console_python()
     return [
         Action("Status", [py, "-m", "tools.build_status", "--no-emoji"],
                 "Build-Voraussetzungen und letzte Artefakte anzeigen."),
@@ -139,7 +161,7 @@ _IOS_INFO_SNIPPET = (
 
 
 def actions_build() -> list[Action]:
-    py = sys.executable
+    py = _console_python()
     is_windows = os.name == "nt"
     builds = [
         Action("Build-Status anzeigen",
@@ -186,7 +208,7 @@ def actions_build() -> list[Action]:
 
 
 def actions_playstore() -> list[Action]:
-    py = sys.executable
+    py = _console_python()
     return [
         Action("Init  (YAML aus Repo erzeugen, --force)",
                 [py, "-m", "tools.playstore_sync", "init", "--force"],
@@ -213,6 +235,17 @@ def actions_playstore() -> list[Action]:
                 [py, "-m", "tools.playstore_sync", "export"],
                 "Schreibt Markdown-Snapshot nach release/."),
     ]
+
+
+def actions_release_checks() -> list[Action]:
+    py = _console_python()
+    actions: list[Action] = []
+    for check in automated_checks():
+        desc = check.description
+        if check.requires:
+            desc = f"{desc} Voraussetzung: {', '.join(check.requires)}."
+        actions.append(Action(check.label, check.command(py), desc))
+    return actions
 
 
 def links() -> list[LinkAction]:
@@ -328,6 +361,7 @@ class ControlPanel(ctk.CTk):
         ("tests", "Tests & Cockpit", actions_tests),
         ("build", "Build · Android / iOS / PC", actions_build),
         ("playstore", "Play-Store-Sync", actions_playstore),
+        ("release", "Release-Check & offene Punkte", actions_release_checks),
     ]
 
     def __init__(self) -> None:
@@ -469,7 +503,10 @@ class ControlPanel(ctk.CTk):
         self.content_host.grid_columnconfigure(0, weight=1)
         self.content_host.grid_rowconfigure(0, weight=1)
         for key, _title, factory in self._SECTIONS:
-            self._section_frames[key] = self._build_action_section(factory())
+            if key == "release":
+                self._section_frames[key] = self._build_release_section()
+            else:
+                self._section_frames[key] = self._build_action_section(factory())
         self._section_frames["docs"] = self._build_links_section(links())
 
         self._build_log(main, row=2)
@@ -493,6 +530,91 @@ class ControlPanel(ctk.CTk):
             self._link_card(frame, link).grid(
                 row=i, column=0, sticky="ew", pady=5)
         return frame
+
+    def _build_release_section(self) -> "ctk.CTkFrame":
+        frame = ctk.CTkScrollableFrame(self.content_host, fg_color="transparent")
+        frame.grid(row=0, column=0, sticky="nsew")
+        frame.grid_remove()
+        frame.grid_columnconfigure(0, weight=1)
+
+        intro = self._card_shell(frame)
+        intro.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        ctk.CTkLabel(
+            intro, text="Automatisierbare Checks",
+            text_color=WIN11["text"], font=self._font(15, "bold"),
+            anchor="w").grid(row=0, column=0, sticky="w", padx=14,
+                              pady=(12, 2))
+        ctk.CTkLabel(
+            intro,
+            text=("Diese Prüfungen laufen lokal im Live-Log. Sie ersetzen "
+                  "nicht die darunter gelisteten externen Schritte in "
+                  "Play Console, auf echtem Gerät oder auf macOS/Xcode."),
+            text_color=WIN11["text_muted"], font=self._font(12),
+            anchor="w", justify="left", wraplength=780
+        ).grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 12))
+
+        row = 1
+        self._manual_summary_card(frame).grid(row=row, column=0,
+                                              sticky="ew", pady=(0, 8))
+        row += 1
+        for action in actions_release_checks():
+            self._action_card(frame, action).grid(row=row, column=0,
+                                                   sticky="ew", pady=5)
+            row += 1
+
+        manual_head = self._card_shell(frame)
+        manual_head.grid(row=row, column=0, sticky="ew", pady=(12, 8))
+        row += 1
+        ctk.CTkLabel(
+            manual_head, text="Offene Punkte, die externe Schritte brauchen",
+            text_color=WIN11["text"], font=self._font(15, "bold"),
+            anchor="w").grid(row=0, column=0, sticky="w", padx=14,
+                              pady=(12, 2))
+        ctk.CTkLabel(
+            manual_head,
+            text=("Jede Karte erklärt, warum der Punkt nicht vollständig "
+                  "automatisiert werden kann, was als Nächstes zu tun ist "
+                  "und welche lokalen/offiziellen Links helfen."),
+            text_color=WIN11["text_muted"], font=self._font(12),
+            anchor="w", justify="left", wraplength=780
+        ).grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 12))
+
+        for item in release_open_items():
+            self._manual_item_card(frame, item).grid(row=row, column=0,
+                                                     sticky="ew", pady=5)
+            row += 1
+        return frame
+
+    def _manual_summary_card(self, parent) -> "ctk.CTkFrame":
+        items = release_open_items()
+        blockers = [i for i in items if i.category == "blocker"]
+        card = self._card_shell(parent)
+        card.grid_columnconfigure(0, weight=1)
+        info = ctk.CTkFrame(card, fg_color="transparent")
+        info.grid(row=0, column=0, sticky="ew", padx=14, pady=12)
+        info.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(
+            info, text=(f"{len(blockers)} Blocker · {len(items)} offene "
+                        "manuelle Release-Punkte"),
+            text_color=WIN11["text"], font=self._font(14, "bold"),
+            anchor="w").grid(row=0, column=0, sticky="w")
+        summary = "\n".join(f"• {item.title}" for item in blockers[:4])
+        if len(blockers) > 4:
+            summary += f"\n• … {len(blockers) - 4} weitere Blocker"
+        ctk.CTkLabel(
+            info, text=summary, text_color=WIN11["text_muted"],
+            font=self._font(12), anchor="w", justify="left",
+            wraplength=760).grid(row=1, column=0, sticky="ew", pady=(6, 0))
+        ctk.CTkButton(
+            card, text="Doku oeffnen", width=140, corner_radius=6,
+            font=self._font(13), fg_color="transparent", border_width=1,
+            border_color=WIN11["card_border"], text_color=WIN11["text"],
+            hover_color=WIN11["subtle_hover"],
+            command=lambda: self._open_path_or_url(
+                REPO_ROOT / "release" / "OFFENE_MANUELLE_SCHRITTE.md",
+                "Offene manuelle Release-Schritte")
+        ).grid(row=0, column=1, padx=(8, 14), pady=12)
+        return card
 
     def _card_shell(self, parent) -> "ctk.CTkFrame":
         card = ctk.CTkFrame(
@@ -544,6 +666,62 @@ class ControlPanel(ctk.CTk):
             hover_color=WIN11["subtle_hover"],
             command=lambda l=link: self._open_link(l)
         ).grid(row=0, column=1, padx=(8, 14), pady=12)
+        return card
+
+    def _manual_item_card(self, parent, item: OpenItem) -> "ctk.CTkFrame":
+        card = self._card_shell(parent)
+        card.grid_columnconfigure(0, weight=1)
+        info = ctk.CTkFrame(card, fg_color="transparent")
+        info.grid(row=0, column=0, sticky="ew", padx=14, pady=12)
+        info.grid_columnconfigure(0, weight=1)
+
+        title_row = ctk.CTkFrame(info, fg_color="transparent")
+        title_row.grid(row=0, column=0, sticky="ew")
+        title_row.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(
+            title_row, text=item.title, text_color=WIN11["text"],
+            font=self._font(14, "bold"), anchor="w", justify="left",
+            wraplength=760).grid(row=0, column=0, sticky="w")
+        badge = f"{item.category} · {item.status}"
+        ctk.CTkLabel(
+            title_row, text=badge, text_color=WIN11["warn"],
+            font=self._font(11, "bold")).grid(row=0, column=1, sticky="e",
+                                               padx=(8, 0))
+
+        ctk.CTkLabel(
+            info, text=f"Warum manuell: {item.why_manual}",
+            text_color=WIN11["text_muted"], font=self._font(12),
+            anchor="w", justify="left", wraplength=840
+        ).grid(row=1, column=0, sticky="ew", pady=(6, 0))
+
+        steps = "\n".join(f"• {step}" for step in item.what_to_do)
+        ctk.CTkLabel(
+            info, text=steps, text_color=WIN11["text"],
+            font=self._font(12), anchor="w", justify="left",
+            wraplength=840
+        ).grid(row=2, column=0, sticky="ew", pady=(8, 0))
+
+        if item.related_commands:
+            commands = "\n".join(f"$ {cmd}" for cmd in item.related_commands)
+            ctk.CTkLabel(
+                info, text=commands, text_color=WIN11["text_muted"],
+                font=ctk.CTkFont(family="Cascadia Mono", size=11),
+                anchor="w", justify="left", wraplength=840
+            ).grid(row=3, column=0, sticky="ew", pady=(8, 0))
+
+        refs = ctk.CTkFrame(info, fg_color="transparent")
+        refs.grid(row=4, column=0, sticky="ew", pady=(10, 0))
+        col = 0
+        for ref in [*item.local_docs, *item.official_links]:
+            btn_text = ref.label[:26] + ("…" if len(ref.label) > 26 else "")
+            ctk.CTkButton(
+                refs, text=btn_text, height=28, corner_radius=6,
+                font=self._font(11), fg_color="transparent", border_width=1,
+                border_color=WIN11["card_border"], text_color=WIN11["text"],
+                hover_color=WIN11["subtle_hover"],
+                command=lambda r=ref: self._open_reference(r)
+            ).grid(row=0, column=col, padx=(0, 6), pady=2)
+            col += 1
         return card
 
     def _build_log(self, master, row: int) -> None:
@@ -611,6 +789,7 @@ class ControlPanel(ctk.CTk):
             "tests": "Tests & Cockpit",
             "build": "Build · Android / iOS / PC",
             "playstore": "Play-Store-Sync",
+            "release": "Release-Check & offene Punkte",
             "docs": "Dokumentation & Schnellzugriff",
         }
         self.section_title.configure(text=titles.get(key, key))
@@ -744,11 +923,27 @@ class ControlPanel(ctk.CTk):
 
     # ---- Schnellaktionen ----------------------------------------------
     def _open_link(self, link: LinkAction) -> None:
-        target = link.target
+        self._open_path_or_url(link.target, link.target.name)
+
+    def _open_reference(self, ref: Reference) -> None:
+        if ref.is_url:
+            self._open_path_or_url(ref.target, ref.label)
+            return
+        local = ref.target.split("#", 1)[0]
+        self._open_path_or_url(REPO_ROOT / local, ref.label)
+
+    def _open_path_or_url(self, target, label: str = "") -> None:
+        if isinstance(target, str) and target.startswith(("https://", "http://")):
+            try:
+                webbrowser.open(target)
+            except Exception as exc:                    # noqa: BLE001
+                messagebox.showerror("Oeffnen fehlgeschlagen", str(exc))
+            return
+        target = Path(target)
         if not target.exists():
             messagebox.showinfo(
                 "Nicht gefunden",
-                f"{target.name} existiert noch nicht.\n\n"
+                f"{label or target.name} existiert noch nicht.\n\n"
                 "Tipp: 'Volle Test-Suite' erzeugt die Doku-HTMLs und "
                 "das Dashboard.")
             return

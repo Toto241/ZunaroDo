@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offene manuelle Release-Schritte</title>
+  <style>
+:root {
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-muted: #f1f3f7;
+  --border: #e1e4ea;
+  --text: #131720;
+  --text-muted: #54607a;
+  --primary: #0b5fff;
+  --go: #1b873b;
+  --hold: #b54708;
+  --block: #b42318;
+  --unknown: #6b7280;
+  --go-bg: #e7f5ec;
+  --hold-bg: #fdf2e3;
+  --block-bg: #fdecea;
+  --unknown-bg: #eef0f4;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06),
+            0 1px 3px rgba(16, 24, 40, 0.08);
+  --radius: 12px;
+  --mono: 'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #161a23;
+    --surface-muted: #1d2230;
+    --border: #2a3041;
+    --text: #e9edf6;
+    --text-muted: #98a2b8;
+    --primary: #79a6ff;
+    --go: #34a853;
+    --hold: #f9a825;
+    --block: #f87171;
+    --unknown: #9ca3af;
+    --go-bg: #0e2818;
+    --hold-bg: #2a1c08;
+    --block-bg: #2a0f0f;
+    --unknown-bg: #1d2230;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px; line-height: 1.5; margin: 0; padding: 0;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 24px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+header .logo { font-weight: 700; font-size: 16px; }
+header .meta { color: var(--text-muted); font-size: 13px; font-family: var(--mono); }
+main {
+  max-width: 1440px; margin: 0 auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+.row { display: flex; gap: 18px; flex-wrap: wrap; }
+.col { flex: 1 1 240px; min-width: 240px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.card .title {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.card .title h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.card .value   { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.card .sub     { font-size: 12px; color: var(--text-muted); }
+.card.span-2   { flex: 2 1 520px; }
+.card.span-3   { flex: 3 1 780px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+}
+.pill::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+}
+.pill.go      { color: var(--go);      background: var(--go-bg); }
+.pill.hold    { color: var(--hold);    background: var(--hold-bg); }
+.pill.block   { color: var(--block);   background: var(--block-bg); }
+.pill.unknown { color: var(--unknown); background: var(--unknown-bg); }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.bar { height: 6px; border-radius: 3px; background: var(--surface-muted); overflow: hidden; }
+.bar > div { height: 100%; background: var(--go); }
+.bar.hold > div { background: var(--hold); }
+.bar.block > div { background: var(--block); }
+
+table {
+  width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+th, td {
+  text-align: left; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); font-size: 13px;
+}
+th { background: var(--surface-muted); color: var(--text-muted);
+     font-weight: 600; text-transform: uppercase; font-size: 11px;
+     letter-spacing: 0.04em; }
+tr:last-child td { border-bottom: none; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.id  { font-family: var(--mono); font-size: 12px; color: var(--text-muted); word-break: break-all; }
+
+.searchbar {
+  display: flex; gap: 8px; align-items: center;
+}
+.searchbar input {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--text);
+  font-size: 13px;
+}
+
+.list { display: flex; flex-direction: column; gap: 0; }
+.list > .row-item {
+  display: grid; grid-template-columns: 100px 1fr 80px;
+  align-items: center; gap: 12px;
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 12px;
+}
+.list > .row-item:last-child { border-bottom: none; }
+.list .col-status { display: flex; }
+.list .col-name { color: var(--text); word-break: break-all; }
+.list .col-time { color: var(--text-muted); text-align: right;
+                  font-variant-numeric: tabular-nums; }
+
+details.failure {
+  background: var(--block-bg); border-left: 4px solid var(--block);
+  border-radius: 6px; padding: 10px 14px;
+}
+details.failure summary { cursor: pointer; font-weight: 600; color: var(--block); }
+details.failure pre {
+  margin: 8px 0 0 0; padding: 10px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+footer {
+  color: var(--text-muted); font-size: 12px; padding: 20px 24px;
+  text-align: center;
+}
+
+nav.toc {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 10px 24px; background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 500;
+  position: sticky; top: 0; z-index: 10;
+}
+
+/* ---- Build-Center ---- */
+.build-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+.build-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface);
+}
+.build-card.ready  { border-color: var(--go); }
+.build-card.notyet { border-color: var(--hold); }
+.build-card .head {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.build-card .head .icon { font-size: 24px; }
+.build-card .head h4 {
+  margin: 0; font-size: 16px; font-weight: 600;
+  flex: 1; padding: 0 8px;
+}
+.build-card .tool { font-size: 12px; color: var(--text-muted); }
+.build-card .cmdbox {
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface-muted); overflow: hidden;
+}
+.build-card .cmdbox code {
+  flex: 1; padding: 8px 10px; background: transparent;
+  border: none; font-family: var(--mono); font-size: 12px;
+  color: var(--text); overflow-x: auto; white-space: nowrap;
+}
+.build-card .cmdbox button {
+  border: none; border-left: 1px solid var(--border);
+  background: var(--surface); color: var(--primary); font-weight: 600;
+  padding: 0 14px; cursor: pointer; font-size: 12px;
+}
+.build-card .cmdbox button:hover { background: var(--bg); }
+.build-card .actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.build-card .actions a, .build-card .actions button {
+  display: inline-block; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--primary);
+  text-decoration: none; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+}
+.build-card .actions a.primary, .build-card .actions button.primary {
+  background: var(--primary); color: #ffffff; border-color: var(--primary);
+}
+.build-card .actions a:hover { background: var(--surface-muted); }
+.build-card details { font-size: 12px; }
+.build-card details summary { cursor: pointer; color: var(--text-muted); }
+.build-card details ul { padding-left: 18px; margin: 6px 0; }
+.build-card .artifact {
+  font-size: 12px; padding: 8px 10px; border-radius: 6px;
+  background: var(--surface-muted); border: 1px dashed var(--border);
+}
+.build-card .artifact.none { color: var(--text-muted); }
+.build-card .artifact .meta {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); color: var(--text-muted);
+}
+nav.toc a {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 6px;
+  color: var(--text-muted); text-decoration: none;
+  border: 1px solid transparent;
+}
+nav.toc a:hover { color: var(--primary); background: var(--surface);
+                  border-color: var(--border); }
+
+.artifacts-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.artifact-link {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface);
+  color: var(--text); text-decoration: none;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+.artifact-link:hover { transform: translateY(-1px);
+                        border-color: var(--primary); }
+.artifact-link .icon { font-size: 18px; line-height: 1; }
+.artifact-link .name { font-weight: 600; font-size: 14px; }
+.artifact-link .desc { font-size: 12px; color: var(--text-muted); }
+.artifact-link.missing { opacity: 0.55; pointer-events: none; }
+.artifact-link.missing .desc::after {
+  content: " (nicht gefunden)"; color: var(--block);
+}
+
+/* ---- Aufklappbare Testzeilen ---- */
+details.test-item { border-bottom: 1px solid var(--border); }
+details.test-item:last-child { border-bottom: none; }
+details.test-item > summary {
+  display: grid; grid-template-columns: 92px 1fr auto 70px;
+  align-items: center; gap: 12px; padding: 8px 12px;
+  cursor: pointer; list-style: none; font-family: var(--mono);
+  font-size: 12px;
+}
+details.test-item > summary::-webkit-details-marker { display: none; }
+details.test-item > summary:hover { background: var(--surface-muted); }
+details.test-item[open] > summary { background: var(--surface-muted); }
+.test-item .t-id { color: var(--text); word-break: break-all; }
+.test-item .t-time { color: var(--text-muted); text-align: right;
+                     font-variant-numeric: tabular-nums; }
+.test-item .t-reqs { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.req-tag {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 5px; background: var(--surface-muted);
+  color: var(--text-muted); border: 1px solid var(--border);
+}
+.test-body {
+  padding: 4px 14px 14px 14px; background: var(--bg);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.test-body .t-meta {
+  font-family: var(--mono); font-size: 12px; color: var(--text-muted);
+  display: flex; gap: 14px; flex-wrap: wrap;
+}
+.test-body .t-doc {
+  font-size: 13px; line-height: 1.5; color: var(--text);
+  border-left: 3px solid var(--primary); padding: 4px 0 4px 10px;
+  white-space: pre-wrap;
+}
+.test-body .t-fail {
+  background: var(--block-bg); border: 1px solid var(--block);
+  border-radius: 6px; padding: 8px 10px; color: var(--block);
+  font-family: var(--mono); font-size: 12px; white-space: pre-wrap;
+  overflow-x: auto;
+}
+.test-body pre.t-src {
+  margin: 0; padding: 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.45;
+  overflow-x: auto; white-space: pre; color: var(--text);
+}
+.test-body .t-src-missing { font-size: 12px; color: var(--text-muted); }
+
+/* ---- Anforderungs-Abdeckungsmatrix ---- */
+.req-row td.req-id { font-family: var(--mono); font-weight: 700; }
+.req-row td.req-label { color: var(--text); }
+.req-row.gap td { background: var(--block-bg); }
+.req-row.thin td { background: var(--hold-bg); }
+
+.doc {
+  max-width: 880px; margin: 0 auto; padding: 32px 24px 64px;
+  background: var(--surface); color: var(--text);
+  border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.doc h1, .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+  color: var(--text); line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+}
+.doc h1 { font-size: 28px; border-bottom: 1px solid var(--border);
+          padding-bottom: 8px; }
+.doc h2 { font-size: 22px; border-bottom: 1px solid var(--border);
+          padding-bottom: 6px; }
+.doc h3 { font-size: 18px; }
+.doc h4 { font-size: 16px; color: var(--text-muted); }
+.doc p  { margin: 0.7em 0; line-height: 1.6; }
+.doc a  { color: var(--primary); text-decoration: none; }
+.doc a:hover { text-decoration: underline; }
+.doc ul, .doc ol { padding-left: 24px; line-height: 1.6; }
+.doc li { margin: 0.2em 0; }
+.doc hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.doc code {
+  font-family: var(--mono); font-size: 12.5px;
+  background: var(--surface-muted); padding: 2px 6px;
+  border-radius: 4px; border: 1px solid var(--border);
+}
+.doc pre {
+  background: var(--surface-muted); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+}
+.doc pre code { background: transparent; border: none; padding: 0; }
+.doc blockquote {
+  margin: 0.7em 0; padding: 8px 14px;
+  border-left: 3px solid var(--primary);
+  background: var(--surface-muted); color: var(--text);
+  border-radius: 0 8px 8px 0;
+}
+.doc table {
+  width: 100%; border-collapse: collapse; margin: 1em 0;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  background: var(--surface);
+}
+.doc th, .doc td {
+  text-align: left; padding: 8px 12px; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.doc th { background: var(--surface-muted); color: var(--text-muted);
+          font-weight: 600; text-transform: uppercase;
+          font-size: 11px; letter-spacing: 0.04em; }
+.doc tr:last-child td { border-bottom: none; }
+.doc img { max-width: 100%; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <div style="max-width:880px;margin:16px auto 0;padding:0 24px;"><a href="dashboard.html" style="color:var(--primary);text-decoration:none;">← zurueck zum Dashboard</a></div>
+  <main style="padding:24px;">
+    <article class="doc">
+      <h1 id="offene-manuelle-release-schritte"><a href="#offene-manuelle-release-schritte" style="color:inherit;text-decoration:none">Offene manuelle Release-Schritte</a></h1>
+<p>Diese Liste enthält Punkte, die das Repository vorbereiten und prüfen, aber nicht vollständig selbst erledigen kann. Sie wird aus <code>tools/release_open_items.py</code> generiert und ist dieselbe Quelle, die das Control Panel verwendet.</p>
+<p>Legende: <code>[ ]</code> offen · <code>blocker</code> vor Production-Go zwingend · <code>optional</code> nur bei entsprechendem Launch-Umfang · <code>post_release</code> nach Rollout prüfen.</p>
+<h2 id="sqlcipher-ml-kit-ocr-und-app-icon-auf-echtem-android-gerät-prüfen"><a href="#sqlcipher-ml-kit-ocr-und-app-icon-auf-echtem-android-gerät-prüfen" style="color:inherit;text-decoration:none">[ ] SQLCipher, ML-Kit-OCR und App-Icon auf echtem Android-Gerät prüfen</a></h2>
+<ul><li>ID: <code>android-device-verification</code></li><li>Kategorie: <code>blocker</code></li><li>Status: <code>external_device_required</code></li><li>Warum nicht voll automatisierbar: Die Verschlüsselung im App-Sandbox-Pfad, ML-Kit-Kamera/OCR und Launcher-Darstellung hängen von einem realen Android-Gerät bzw. Emulator mit installierter App ab. Das Repo kann nur den Prüfbefehl bereitstellen, nicht das Gerät selbst.</li><li>Lokale Doku: <a href="release/GO_LIVE_TODO.md#11-android-build-erzeugen-basis-fuer-alles-weitere">Go-Live-TODO §1.1</a>, <a href="tools/verify_android_device.py">Android-Geräteprüfer</a>, <a href="docs/android/09_RELEASE_CHECKLIST.md#e-funktionaler-smoke-manuell-auf-echtem-gerat">Android-Release-Checkliste</a></li><li>Offizielle Links: <a href="https://developer.android.com/tools/adb">Android Debug Bridge (adb)</a>, <a href="https://developers.google.com/ml-kit/vision/text-recognition/v2">ML Kit Text Recognition</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>Debug- oder Release-Build installieren.</li><li><code>python -m tools.verify_android_device</code> ausführen; für einen schnellen SQLCipher-Check zunächst <code>--skip-ocr</code> verwenden.</li><li>Für OCR einen Beleg in der App scannen und den Check ohne <code>--skip-ocr</code> wiederholen.</li><li>Launcher öffnen und prüfen, dass kein weißes Default-Icon angezeigt wird.</li></ol>
+<p>Prüf-/Hilfsbefehle:</p>
+<ul><li><code>python -m tools.verify_android_device --skip-ocr</code></li><li><code>python -m tools.verify_android_device</code></li></ul>
+<h2 id="closed-testing-mit-mindestens-12-testern-über-14-tage-nachweisen"><a href="#closed-testing-mit-mindestens-12-testern-über-14-tage-nachweisen" style="color:inherit;text-decoration:none">[ ] Closed Testing mit mindestens 12 Testern über 14 Tage nachweisen</a></h2>
+<ul><li>ID: <code>closed-testing</code></li><li>Kategorie: <code>blocker</code></li><li>Status: <code>calendar_and_people_required</code></li><li>Warum nicht voll automatisierbar: Google verlangt bei neuen persönlichen Developer-Konten echte Tester, einen zusammenhängenden Zeitraum und Play-Console-Nachweise. Diese Signale können lokal nicht erzeugt oder simuliert werden.</li><li>Lokale Doku: <a href="release/CLOSED_TEST_RUNBOOK.md">Closed-Test-Runbook</a>, <a href="release/CLOSED_TEST_EVIDENCE_TEMPLATE.md">Evidenz-Vorlage</a>, <a href="release/closed-test-2026-05-30.md">Vorbereiteter Nachweis</a></li><li>Offizielle Links: <a href="https://support.google.com/googleplay/android-developer/answer/14151465">Closed testing requirements</a>, <a href="https://support.google.com/googleplay/android-developer/answer/9845334">Tracks einrichten</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>AAB in Internal/Closed Testing hochladen.</li><li>Testergruppe mit mindestens 12 aktiven Testern betreiben.</li><li>Mindestens 14 zusammenhängende Tage warten und Feedback/Crashes prüfen.</li><li>Nachweise in <code>release/closed-test-*.md</code> und <code>release/assets/</code> ablegen.</li></ol>
+<h2 id="data-safety--und-content-ratingiarc-formulare-ausfüllen"><a href="#data-safety--und-content-ratingiarc-formulare-ausfüllen" style="color:inherit;text-decoration:none">[ ] Data-Safety- und Content-Rating/IARC-Formulare ausfüllen</a></h2>
+<ul><li>ID: <code>data-safety-iarc</code></li><li>Kategorie: <code>blocker</code></li><li>Status: <code>console_form_required</code></li><li>Warum nicht voll automatisierbar: Das Repo kann die Antworten generieren und gegen den Code prüfen, aber die Play-Console-Formulare müssen im Google-UI durch einen berechtigten Account bestätigt werden.</li><li>Lokale Doku: <a href="release/DATA_SAFETY_CONSOLE_ANSWERS.md">Data-Safety-Antworten</a>, <a href="tools/data_safety.py">Data-Safety-Tool</a>, <a href="docs/android/04_PRIVACY_PERMISSIONS.md">Privacy-/Permissions-Doku</a></li><li>Offizielle Links: <a href="https://support.google.com/googleplay/android-developer/answer/10787469">Play Data Safety</a>, <a href="https://support.google.com/googleplay/android-developer/answer/188189">Content Ratings</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li><code>python -m tools.data_safety --markdown</code> ausführen.</li><li>Antworten in der Play Console übertragen und mit <code>release/DATA_SAFETY_CONSOLE_ANSWERS.md</code> gegenprüfen.</li><li>IARC-/Content-Rating-Fragebogen ausfüllen und Ergebnis speichern.</li></ol>
+<p>Prüf-/Hilfsbefehle:</p>
+<ul><li><code>python -m tools.data_safety --check</code></li><li><code>python -m tools.data_safety --markdown</code></li></ul>
+<h2 id="ios-build-auf-macosxcode-verifizieren"><a href="#ios-build-auf-macosxcode-verifizieren" style="color:inherit;text-decoration:none">[ ] iOS-Build auf macOS/Xcode verifizieren</a></h2>
+<ul><li>ID: <code>ios-build</code></li><li>Kategorie: <code>platform</code></li><li>Status: <code>macos_required</code></li><li>Warum nicht voll automatisierbar: Apple erlaubt iOS-Builds und Code-Signing nur mit macOS, Xcode und Apple-Developer-Zugang. Eine Linux/Windows-VM kann das Xcode-Projekt höchstens dokumentieren, nicht final bauen.</li><li>Lokale Doku: <a href="scripts/build-ios.sh">iOS-Build-Skript</a>, <a href="MOBILE.md">Mobile-Dokumentation</a>, <a href="tools/build_status.py">Build-Status-Tool</a></li><li>Offizielle Links: <a href="https://developer.apple.com/xcode/">Xcode</a>, <a href="https://github.com/kivy/kivy-ios">kivy-ios</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>Auf macOS <code>scripts/build-ios.sh</code> ausführen.</li><li>Xcode-Projekt öffnen, Bundle-ID und Signing-Team setzen.</li><li>Run auf Gerät/Simulator ausführen und IPA-Export separat prüfen.</li></ol>
+<p>Prüf-/Hilfsbefehle:</p>
+<ul><li><code>bash scripts/build-ios.sh</code></li></ul>
+<h2 id="optionalen-play-billing-kaufflow-mit-lizenztester-prüfen"><a href="#optionalen-play-billing-kaufflow-mit-lizenztester-prüfen" style="color:inherit;text-decoration:none">[ ] Optionalen Play-Billing-Kaufflow mit Lizenztester prüfen</a></h2>
+<ul><li>ID: <code>play-billing</code></li><li>Kategorie: <code>optional</code></li><li>Status: <code>conditional_if_iap_launches</code></li><li>Warum nicht voll automatisierbar: Echte Käufe, Lizenztester, Subscription-Produkte und Server-Verifikation laufen über Play Console, Google-Konten und einen deployten Payment-Server.</li><li>Lokale Doku: <a href="PAYMENT.md">Payment-Dokumentation</a>, <a href="release/deploy-payment-server.md">Payment-Server-Deploy</a>, <a href="services/play_billing_android.py">Billing-Implementierung</a></li><li>Offizielle Links: <a href="https://developer.android.com/google/play/billing">Google Play Billing</a>, <a href="https://developer.android.com/google/play/billing/subscriptions">Subscriptions</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>Nur nötig, wenn Pro/Abos bereits zum Launch verkauft werden.</li><li>Abo-IDs exakt wie in <code>services/play_billing_android.py</code> anlegen.</li><li>Payment-Server deployen und <code>/verify/play</code> mit Service-Account testen.</li><li>Echten Testkauf durchführen und signiertes Lizenz-Token prüfen.</li></ol>
+<h2 id="play-developer-konto-verifizieren-und-app-in-der-play-console-anlegen"><a href="#play-developer-konto-verifizieren-und-app-in-der-play-console-anlegen" style="color:inherit;text-decoration:none">[ ] Play-Developer-Konto verifizieren und App in der Play Console anlegen</a></h2>
+<ul><li>ID: <code>play-console-app</code></li><li>Kategorie: <code>blocker</code></li><li>Status: <code>external_account_required</code></li><li>Warum nicht voll automatisierbar: Kontoerstellung, Identitätsprüfung, Zahlungsprofil und das finale Anlegen der App passieren ausschließlich in Googles Play Console und erfordern persönliche bzw. Organisationsdaten.</li><li>Lokale Doku: <a href="PLAYSTORE.md#5-play-console-einrichten">Play-Store-Anleitung</a>, <a href="release/PLAY_CONSOLE_SETUP.md">Play-Console-Setup</a>, <a href="playstore.yml">Playstore-Konfiguration</a></li><li>Offizielle Links: <a href="https://play.google.com/console/signup">Play Console Signup</a>, <a href="https://support.google.com/googleplay/android-developer/answer/9859152">App erstellen und einrichten</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>Developer Account anlegen bzw. verifizieren.</li><li>Neue App mit Name <code>ZunaroDo</code>, Standardsprache <code>de-DE</code>, Kategorie <code>PRODUCTIVITY</code> und Package <code>de.alltagshelfer.alltagshelfer</code> anlegen.</li><li>Support-, Marketing- und Datenschutz-URLs aus <code>playstore.yml</code> übertragen.</li></ol>
+<h2 id="produktionsrollout-überwachen-und-nach-48-stunden-bewerten"><a href="#produktionsrollout-überwachen-und-nach-48-stunden-bewerten" style="color:inherit;text-decoration:none">[ ] Produktionsrollout überwachen und nach 48 Stunden bewerten</a></h2>
+<ul><li>ID: <code>production-monitoring</code></li><li>Kategorie: <code>post_release</code></li><li>Status: <code>live_traffic_required</code></li><li>Warum nicht voll automatisierbar: Crash-/ANR-Raten, Reviews und Support-Tickets entstehen erst durch echten Rollout mit echten Nutzern. Lokale Tests können nur die Schwellen und Checklisten vorbereiten.</li><li>Lokale Doku: <a href="docs/android/09_RELEASE_CHECKLIST.md#m-post-release">Release-Checkliste M/Post-Release</a>, <a href="release/GO_LIVE_TODO.md#3-finaler-pre-submit-check-vor-jedem-upload">Go-Live-TODO §3</a>, <a href="playstore.yml">Playstore-Konfiguration Monitoring</a></li><li>Offizielle Links: <a href="https://developer.android.com/topic/performance/vitals">Android Vitals</a>, <a href="https://play.google.com/console/about/vitals/">Play Console Vitals</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>Gestaffelten Rollout starten (z. B. 5 % → 20 % → 50 % → 100 %).</li><li>Android Vitals, Reviews und Support-Tickets in den ersten 48 h prüfen.</li><li>Bei P0/P1-Problemen Rollout pausieren und Incident-Doku anlegen.</li></ol>
+<h2 id="signiertes-release-aab-bauen-und-als-play-artefakt-prüfen"><a href="#signiertes-release-aab-bauen-und-als-play-artefakt-prüfen" style="color:inherit;text-decoration:none">[ ] Signiertes Release-AAB bauen und als Play-Artefakt prüfen</a></h2>
+<ul><li>ID: <code>release-aab</code></li><li>Kategorie: <code>blocker</code></li><li>Status: <code>ci_or_build_host_required</code></li><li>Warum nicht voll automatisierbar: Google Play akzeptiert für neue Apps ein signiertes Android App Bundle. Der Build benötigt Linux/WSL2 oder CI sowie die nicht im Repo liegenden Keystore-Secrets.</li><li>Lokale Doku: <a href="buildozer.spec">Buildozer-Konfiguration</a>, <a href="MOBILE.md#build-schritt-fuer-schritt">Mobile-Build-Anleitung</a>, <a href="docs/android/09_RELEASE_CHECKLIST.md#a-code--build">Release-Checkliste</a></li><li>Offizielle Links: <a href="https://developer.android.com/guide/app-bundle">Android App Bundles</a>, <a href="https://buildozer.readthedocs.io/">Buildozer</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li>Release-Workflow <code>Android Release (AAB)</code> dispatchen oder unter Linux/WSL2 <code>buildozer android release</code> ausführen.</li><li>Artefakt <code>dist/*.aab</code> herunterladen und Version/Signatur prüfen.</li><li>Bei jedem Upload <code>android.numeric_version</code> und <code>playstore.yml identity.version_code</code> gemeinsam erhöhen.</li></ol>
+<p>Prüf-/Hilfsbefehle:</p>
+<ul><li><code>python -m tools.playstore_check --strict</code></li><li><code>buildozer android release</code></li></ul>
+<h2 id="upload-keystore-erzeugen-sichern-und-secrets-setzen"><a href="#upload-keystore-erzeugen-sichern-und-secrets-setzen" style="color:inherit;text-decoration:none">[ ] Upload-Keystore erzeugen, sichern und Secrets setzen</a></h2>
+<ul><li>ID: <code>upload-keystore</code></li><li>Kategorie: <code>blocker</code></li><li>Status: <code>secret_material_required</code></li><li>Warum nicht voll automatisierbar: Der Upload-Key ist geheimes, langlebiges Signiermaterial. Er darf nicht im Repository erzeugt oder gespeichert werden und muss in einem Passwort-Manager sowie als CI-Secret außerhalb des Codes gesichert werden.</li><li>Lokale Doku: <a href="release/PLAY_CONSOLE_SETUP.md">Play-Console-Setup</a>, <a href="release/create_upload_keystore.ps1">Windows-Keystore-Helfer</a>, <a href="release/create_upload_keystore.sh">Linux/macOS-Keystore-Helfer</a></li><li>Offizielle Links: <a href="https://support.google.com/googleplay/android-developer/answer/9842756">Play App Signing</a>, <a href="https://developer.android.com/studio/publish/app-signing">App signieren</a></li></ul>
+<p>Nächste Schritte:</p>
+<ol><li><code>release/create_upload_keystore.ps1</code> oder <code>release/create_upload_keystore.sh</code> lokal ausführen.</li><li>Keystore-Datei und Passwörter sicher außerhalb des Repos sichern.</li><li>CI-Secrets <code>ANDROID_KEYSTORE_BASE64</code>, <code>ANDROID_KEYSTORE_PASSWORD</code>, <code>ANDROID_KEY_ALIAS</code>, <code>ANDROID_KEY_ALIAS_PASSWORD</code> setzen.</li><li>Vor dem ersten Production-Upload Play App Signing aktivieren.</li></ol>
+    </article>
+  </main>
+</body>
+</html>

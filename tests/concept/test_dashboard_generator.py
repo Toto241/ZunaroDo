@@ -125,8 +125,8 @@ def test_html_has_navigation(synth_html):
     """Die TOC oben verlinkt auf die Hauptbereiche - das macht
     dashboard.html erst zu einer richtigen Uebersicht."""
     assert "<nav class=\"toc\">" in synth_html
-    for anchor in ("uebersicht", "artefakte", "kpis", "bereiche",
-                    "fehler", "tests"):
+    for anchor in ("uebersicht", "artefakte", "offene-punkte", "kpis",
+                    "bereiche", "fehler", "tests"):
         assert f'href="#{anchor}"' in synth_html, (
             f"TOC-Link auf #{anchor} fehlt")
         assert f'id="{anchor}"' in synth_html, (
@@ -140,12 +140,20 @@ def test_html_links_to_companion_artifacts(synth_html):
     # Die HTML-Versionen sind das eigentliche Ziel - so wird das
     # Markdown im Browser nicht als roher Text angezeigt.
     for href in ("TESTING.html", "UI_CONCEPT.html", "PLAYSTORE.html",
-                  "protocol.html", "protocol.json", "junit.xml",
-                  "pairwise-matrix.tsv"):
+                  "OFFENE_MANUELLE_SCHRITTE.html", "protocol.html",
+                  "protocol.json", "junit.xml", "pairwise-matrix.tsv"):
         assert href in synth_html, (
             f"Artefakt-Link {href} fehlt im Dashboard")
     assert "artifact-link" in synth_html
-    assert synth_html.count("artifact-link") >= 9
+    assert synth_html.count("artifact-link") >= 10
+
+
+def test_html_shows_manual_open_release_points(synth_html):
+    assert "Offene manuelle Release-Punkte" in synth_html
+    assert "android-device-verification" in synth_html
+    assert "upload-keystore" in synth_html
+    assert "closed-testing" in synth_html
+    assert "https://developer.android.com/tools/adb" in synth_html
 
 
 def test_html_does_not_contain_nested_anchors(synth_html):
