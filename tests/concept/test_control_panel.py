@@ -276,3 +276,22 @@ def test_start_bat_checks_customtkinter():
                                              errors="replace")
     assert "customtkinter" in text, (
         "start.bat sollte customtkinter pruefen / installieren")
+
+
+def test_start_bat_checks_python_version_and_dependencies():
+    text = (REPO / "start.bat").read_text(encoding="utf-8",
+                                             errors="replace")
+    assert "py -3.10" in text or "Python 3.10+" in text
+    assert "sys.version_info >= (3, 10)" in text
+    assert "python.org/downloads/windows" in text
+    assert "-m pip --version" in text
+    assert "import tkinter" in text
+
+
+def test_start_bat_has_debug_mode_and_startup_log():
+    text = (REPO / "start.bat").read_text(encoding="utf-8",
+                                             errors="replace")
+    assert "ZUNARODO_DEBUG_START" in text
+    assert "control-panel-startup.log" in text
+    assert "Control Panel Import OK" in text
+    assert "pythonw.exe" in text
