@@ -95,6 +95,38 @@ def test_destructive_actions_have_confirm_prompt():
         "Echter Push braucht confirm")
 
 
+def test_actions_release_checks_complete():
+    from tools.control_panel import actions_release_checks
+    items = actions_release_checks()
+    labels = " | ".join(a.label for a in items)
+    commands = [" ".join(a.command) for a in items]
+    assert "Play-Store-Compliance" in labels
+    assert "Data-Safety" in labels
+    assert "Datenschutzerklärung" in labels
+    assert "Android-Gerät" in labels
+    for module in (
+        "tools.playstore_check",
+        "tools.data_safety",
+        "tools.privacy_policy",
+        "tools.legal_status",
+        "tools.build_status",
+        "tools.verify_android_device",
+        "tools.release_open_items",
+    ):
+        assert any(module in cmd for cmd in commands), (
+            f"Release-Check {module} fehlt")
+
+
+def test_release_open_items_are_visible_to_control_panel():
+    from tools.release_open_items import items
+    release_items = items()
+    assert release_items
+    text = "\n".join(i.title + "\n" + i.why_manual for i in release_items)
+    assert "Play Console" in text
+    assert "Keystore" in text
+    assert "Closed Testing" in text
+
+
 # ---------------------------------------------------------------------------
 # Doku-Links
 # ---------------------------------------------------------------------------
@@ -106,6 +138,18 @@ def test_links_point_to_known_paths():
     targets = [str(l.target) for l in items]
     assert any("index.html" in t for t in targets)
     assert any("dashboard.html" in t for t in targets)
+
+
+def test_release_item_references_are_repo_paths_or_https_urls():
+    from tools.release_open_items import items
+    for item in items():
+        for ref in [*item.local_docs, *item.official_links]:
+            if ref.is_url:
+                assert ref.target.startswith("https://")
+            else:
+                rel = ref.target.split("#", 1)[0]
+                assert (REPO / rel).exists(), (
+                    f"{item.id}: Link {ref.target} existiert nicht")
 
 
 def test_link_targets_are_known_repo_paths():
@@ -202,8 +246,9 @@ def test_window_can_be_constructed_and_destroyed():
         app.update_idletasks()
         # Sektionen sind gebaut
         assert "Control Panel" in app.title()
+        assert "release" in app._section_frames       # type: ignore[attr-defined]
         # Mindestens ein Button registriert
-        assert len(app._busy_buttons) >= 10            # type: ignore[attr-defined]
+        assert len(app._busy_buttons) >= 18            # type: ignore[attr-defined]
     finally:
         app.destroy()
 
