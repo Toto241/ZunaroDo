@@ -835,11 +835,75 @@ class FamilyRepository:
         Endgueltige Loeschung. Referenzen (assignee_id in Auftraegen,
         owner_id in Vertraegen/Ausgaben, person_id in Terminen) werden
         ueber ON DELETE SET NULL automatisch entkoppelt.
+
+        Aufgaben-Rotationen (`task_rotation`) haengen per ON DELETE CASCADE
+        am Mitglied: beim Loeschen verschwinden dessen Rotationszeilen. Damit
+        der gespeicherte `current_index` der betroffenen Aufgaben nicht auf
+        eine falsche Person zeigt (und keine Positions-Luecken entstehen),
+        werden diese Aufgaben nach dem Loeschen renormalisiert - der bisher
+        aktuelle Verantwortliche bleibt aktuell, sofern er nicht selbst das
+        geloeschte Mitglied war.
         """
+        # Betroffene Aufgaben + bisher aktuellen Verantwortlichen merken,
+        # SOLANGE die Rotationszeilen noch existieren (vor dem CASCADE).
+        affected: list[tuple[int, Optional[int]]] = []
+        for r in self.db.conn.execute(
+                "SELECT DISTINCT task_id FROM task_rotation WHERE member_id=?",
+                (member_id,)).fetchall():
+            task_id = r["task_id"]
+            rotation = [x["member_id"] for x in self.db.conn.execute(
+                "SELECT member_id FROM task_rotation WHERE task_id=?"
+                " ORDER BY position", (task_id,))]
+            trow = self.db.conn.execute(
+                "SELECT current_index FROM household_tasks WHERE id=?",
+                (task_id,)).fetchone()
+            current_member = None
+            if rotation and trow is not None:
+                current_member = rotation[trow["current_index"] % len(rotation)]
+            affected.append((task_id, current_member))
+
         cur = self.db.conn.execute(
             "DELETE FROM family_members WHERE id=?", (member_id,))
+        deleted = cur.rowcount > 0
+        if deleted:
+            for task_id, current_member in affected:
+                self._renormalize_rotation(task_id, current_member)
         self.db.conn.commit()
-        return cur.rowcount > 0
+        return deleted
+
+    def _renormalize_rotation(self, task_id: int,
+                               keep_current_member: Optional[int] = None) -> None:
+        """Positionen luecklos neu vergeben und `current_index` an die
+        (ggf. geschrumpfte) Rotation anpassen.
+
+        - `keep_current_member` (falls noch vorhanden) bleibt der aktuelle
+          Verantwortliche.
+        - War der bisherige Verantwortliche selbst das geloeschte Mitglied,
+          uebernimmt der naechste in der neuen Reihenfolge (alter Index
+          modulo neuer Laenge).
+        """
+        members = [r["member_id"] for r in self.db.conn.execute(
+            "SELECT member_id FROM task_rotation WHERE task_id=?"
+            " ORDER BY position", (task_id,))]
+        for new_pos, member_id in enumerate(members):
+            self.db.conn.execute(
+                "UPDATE task_rotation SET position=?"
+                " WHERE task_id=? AND member_id=?",
+                (new_pos, task_id, member_id))
+        n = len(members)
+        if (keep_current_member is not None
+                and keep_current_member in members):
+            new_index = members.index(keep_current_member)
+        elif n:
+            trow = self.db.conn.execute(
+                "SELECT current_index FROM household_tasks WHERE id=?",
+                (task_id,)).fetchone()
+            new_index = (trow["current_index"] % n) if trow else 0
+        else:
+            new_index = 0
+        self.db.conn.execute(
+            "UPDATE household_tasks SET current_index=? WHERE id=?",
+            (new_index, task_id))
 
     def soft_delete_member(self, member_id: int) -> bool:
         cur = self.db.conn.execute(
