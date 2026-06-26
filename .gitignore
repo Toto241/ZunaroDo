@@ -108,3 +108,6 @@ release/playstore-snapshot-*.md
 
 # Lokale Publisher-Daten fuer setup-github-pages.ps1 (nicht committen)
 config/legal-publisher.json
+
+# AI-Studio-Handoff-/Repo-Analyse-Output (lokal generiert, nicht Teil des Repos)
+Analysed_Repo/
