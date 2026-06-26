@@ -35,6 +35,7 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 - **HttpSync: Thread-Safety** — `unseen_events` zieht einen Snapshot von `_seen` unter Lock (analog `FileSyncProvider`); verhindert „set changed size during iteration“ im Worker-Thread (`services/sync.py`).
 - **Backup-Verifikation: kein os.environ-Mutieren** — `verify_backup` reicht den Schluessel explizit durch statt `ALLTAGSHELFER_DB_KEY` global zu poppen/restoren; schliesst ein TOCTOU, bei dem ein paralleles Database-Handle faelschlich den Plaintext-Pfad waehlte (`services/backup.py`).
 - **Gemini: leere Antworten abfangen** — Non-Streaming-Pfad und `analyze_text` stuerzen bei geblockten/leeren Candidates nicht mehr ab (`response.candidates[0]`/`response.text`-Property); Verhalten jetzt symmetrisch zum Streaming-Pfad und zum REST-Client (`services/gemini.py`).
+- **Familien-Rotation nach Mitglied-Loeschung** — Wird ein Rotationsmitglied endgueltig geloescht (CASCADE auf `task_rotation`), renormalisiert `delete_member` jetzt die betroffenen Aufgaben: Positionen werden luecklos neu vergeben und `current_index` angepasst, sodass der angezeigte Verantwortliche korrekt bleibt (bisher konnte bis zum naechsten `complete_task` die falsche Person erscheinen) (`database.py`).
 
 ## [1.0.0] - 2026-05-29
 
