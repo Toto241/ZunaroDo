@@ -145,7 +145,14 @@ class GeminiClient:
                     message_for_next_turn,
                     generation_config={"max_output_tokens": max_output_tokens},
                 )
-                for part in response.candidates[0].content.parts:
+                # Wie im Streaming-Zweig oben gegen leere candidates absichern:
+                # bei Safety-/RECITATION-/MAX_TOKENS-Blockaden liefert Gemini
+                # eine Antwort ohne candidates -> [0] wuerde IndexError werfen.
+                try:
+                    parts = response.candidates[0].content.parts
+                except (IndexError, AttributeError):
+                    parts = []
+                for part in parts:
                     if (hasattr(part, "function_call")
                             and part.function_call.name):
                         function_calls.append(part.function_call)
@@ -214,7 +221,15 @@ class GeminiClient:
             generation_config={"max_output_tokens": max_output_tokens},
         )
         usage = self._extract_usage(response)
-        text_out = getattr(response, "text", "") or ""
+        # response.text ist eine Property, die bei geblocktem/teilweisem
+        # Inhalt ValueError WIRFT - getattr(..., "") faengt das NICHT ab
+        # (der Default greift nur bei fehlendem Attribut). Direkt ueber die
+        # Parts aggregieren, analog zum REST-Client (gemini_rest.py).
+        try:
+            candidate_parts = response.candidates[0].content.parts
+        except (IndexError, AttributeError):
+            candidate_parts = []
+        text_out = "".join(getattr(p, "text", "") or "" for p in candidate_parts)
         return text_out.strip(), usage
 
     # ------------------------------------------------------------------

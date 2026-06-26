@@ -520,8 +520,14 @@ class HttpSyncProvider:
 
     def unseen_events(self) -> list[SyncEvent]:
         events = self._fetch()
+        # _seen wird unter Lock von append()/mark_seen() mutiert (auch aus
+        # dem PeriodicSyncWorker-Thread). Snapshot unter Lock ziehen, sonst
+        # kann das Membership-Set waehrend der Iteration die Groesse aendern
+        # (RuntimeError) - analog zu FileSyncProvider.unseen_events.
+        with self._lock:
+            seen = set(self._seen)
         events = [e for e in events
-                   if e.event_id not in self._seen
+                   if e.event_id not in seen
                    and e.device_id != self.device_id]
         events.sort(key=lambda ev: ev.order_key())
         return events

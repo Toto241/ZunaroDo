@@ -29,6 +29,7 @@ und im Client:
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
 import os
 import threading
@@ -71,6 +72,16 @@ class _State:
         now = _time.time()
         cutoff = now - self.rate_window_sec
         with self.lock:
+            # Verwaiste IPs aufraeumen: ein oeffentlich gebundener Server
+            # (siehe main(): Bind auf 0.0.0.0 moeglich) wuerde sonst pro
+            # einmaliger Quell-IP dauerhaft einen Dict-Eintrag halten -
+            # genau der unbegrenzte Speicher-/DoS-Vektor, den das Rate-
+            # Limit verhindern soll. Eintraege, deren juengster Timestamp
+            # ausserhalb des Fensters liegt, werden verworfen.
+            stale = [ip for ip, ts in self._request_log.items()
+                     if ip != client_ip and (not ts or ts[-1] < cutoff)]
+            for ip in stale:
+                del self._request_log[ip]
             timestamps = self._request_log.setdefault(client_ip, [])
             # Alte Eintraege wegwerfen
             while timestamps and timestamps[0] < cutoff:
@@ -106,7 +117,10 @@ class _Handler(BaseHTTPRequestHandler):
         if not self.state.token:
             return True
         provided = self.headers.get("X-Sync-Token", "")
-        return provided == self.state.token
+        # Konstantzeit-Vergleich: verhindert ein Byte-fuer-Byte-Timing-
+        # Orakel auf das Sync-Token (gleiche Haertung wie die Payment-
+        # Webhook-Adapter mit hmac.compare_digest).
+        return hmac.compare_digest(provided, self.state.token)
 
     def _send_json(self, status: int, payload) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
