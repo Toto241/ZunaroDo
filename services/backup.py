@@ -127,19 +127,20 @@ def verify_backup(path: Path,
     # Datei. Mit Schluessel: SQLCipher-Pfad; sonst Plain.
     try:
         from database import Database     # spaeter Import (Zykel-Vermeidung)
-        env_key_backup = os.environ.pop("ALLTAGSHELFER_DB_KEY", None)
+        # Den Schluessel explizit durchreichen statt os.environ zu mutieren:
+        # Database.__init__ priorisiert das encryption_key-Argument ohnehin
+        # vor der Env-Variable. Ein globales os.environ.pop()/-restore lief
+        # frueher auf dem AutoBackupWorker-Thread und konnte einem PARALLEL
+        # geoeffneten Database-Handle (ohne expliziten Key) faelschlich den
+        # Plaintext-Pfad statt SQLCipher unterschieben (TOCTOU).
+        db = Database(str(path), encryption_key=encryption_key)
         try:
-            db = Database(str(path), encryption_key=encryption_key)
-            try:
-                # Mindest-Plausibilitaet: Versions-Tabelle muss lesbar sein
-                row = db.conn.execute(
-                    "SELECT count(*) AS n FROM sqlite_master").fetchone()
-                return row is not None and row["n"] >= 0
-            finally:
-                db.close()
+            # Mindest-Plausibilitaet: Versions-Tabelle muss lesbar sein
+            row = db.conn.execute(
+                "SELECT count(*) AS n FROM sqlite_master").fetchone()
+            return row is not None and row["n"] >= 0
         finally:
-            if env_key_backup is not None:
-                os.environ["ALLTAGSHELFER_DB_KEY"] = env_key_backup
+            db.close()
     except Exception:
         return False
 
