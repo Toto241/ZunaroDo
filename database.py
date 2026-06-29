@@ -519,25 +519,31 @@ class Database:
             tables.remove("app_settings")
 
         report: dict[str, int] = {}
-        # PRAGMA foreign_keys laesst sich nur ausserhalb einer Transaktion
-        # umschalten -> vorher sicher committen.
-        self.conn.commit()
-        self.conn.execute("PRAGMA foreign_keys = OFF")
-        try:
-            for table in tables:
-                # Tabellennamen stammen aus sqlite_master (vertrauenswuerdig),
-                # zusaetzlich defensiv auf Bezeichner-Form pruefen.
-                if not table.replace("_", "").isalnum():
-                    continue
-                before = self.conn.execute(
-                    f"SELECT COUNT(*) AS n FROM \"{table}\"").fetchone()["n"]
-                self.conn.execute(f"DELETE FROM \"{table}\"")
-                report[table] = before
+        # 'PRAGMA foreign_keys' ist verbindungsweit (eine geteilte Connection
+        # ueber alle Threads). Waehrend des Wipes FKs auszuschalten, darf sich
+        # nicht mit Schreibzugriffen anderer Threads ueberschneiden - sonst
+        # koennten diese FK-verletzende Zeilen einschleusen. Deshalb haelt der
+        # gesamte Wipe (inkl. VACUUM) die Sperre.
+        with self.lock:
+            # PRAGMA foreign_keys laesst sich nur ausserhalb einer Transaktion
+            # umschalten -> vorher sicher committen.
             self.conn.commit()
-        finally:
-            self.conn.execute("PRAGMA foreign_keys = ON")
-        # VACUUM ausserhalb jeder Transaktion - reclaimt + ueberschreibt Seiten.
-        self.conn.execute("VACUUM")
+            self.conn.execute("PRAGMA foreign_keys = OFF")
+            try:
+                for table in tables:
+                    # Tabellennamen stammen aus sqlite_master (vertrauenswuerdig),
+                    # zusaetzlich defensiv auf Bezeichner-Form pruefen.
+                    if not table.replace("_", "").isalnum():
+                        continue
+                    before = self.conn.execute(
+                        f"SELECT COUNT(*) AS n FROM \"{table}\"").fetchone()["n"]
+                    self.conn.execute(f"DELETE FROM \"{table}\"")
+                    report[table] = before
+                self.conn.commit()
+            finally:
+                self.conn.execute("PRAGMA foreign_keys = ON")
+            # VACUUM ausserhalb jeder Transaktion - reclaimt + ueberschreibt Seiten.
+            self.conn.execute("VACUUM")
         return report
 
     def close(self) -> None:
@@ -576,16 +582,21 @@ class ContractRepository:
         if old is None:
             raise ValueError(f"Vertrag {contract_id} existiert nicht")
         now = _now_utc_iso()
-        self.db.conn.execute(
-            "INSERT INTO price_history (contract_id, old_cost, new_cost, changed_at)"
-            " VALUES (?,?,?,?)",
-            (contract_id, old.monthly_cost, new_cost, now),
-        )
-        self.db.conn.execute(
-            "UPDATE contracts SET monthly_cost=?, updated_at=? WHERE id=?",
-            (new_cost, now, contract_id),
-        )
-        self.db.conn.commit()
+        # Preis-Historie + Kostenaktualisierung gehoeren zusammen: unter
+        # db.lock geklammert, damit kein Fremd-Thread mit eigenem commit()
+        # den History-Eintrag ohne die Kostenaktualisierung (oder umgekehrt)
+        # persistiert.
+        with self.db.lock:
+            self.db.conn.execute(
+                "INSERT INTO price_history (contract_id, old_cost, new_cost, changed_at)"
+                " VALUES (?,?,?,?)",
+                (contract_id, old.monthly_cost, new_cost, now),
+            )
+            self.db.conn.execute(
+                "UPDATE contracts SET monthly_cost=?, updated_at=? WHERE id=?",
+                (new_cost, now, contract_id),
+            )
+            self.db.conn.commit()
 
     def set_status(self, contract_id: int, status: str) -> None:
         self.db.conn.execute(
@@ -862,13 +873,18 @@ class FamilyRepository:
                 current_member = rotation[trow["current_index"] % len(rotation)]
             affected.append((task_id, current_member))
 
-        cur = self.db.conn.execute(
-            "DELETE FROM family_members WHERE id=?", (member_id,))
-        deleted = cur.rowcount > 0
-        if deleted:
-            for task_id, current_member in affected:
-                self._renormalize_rotation(task_id, current_member)
-        self.db.conn.commit()
+        # Loeschung + Renormalisierung der betroffenen Rotationen sind eine
+        # logische Einheit: unter db.lock geklammert, damit kein Fremd-Thread
+        # mit eigenem commit() den Zwischenstand (Mitglied weg, current_index
+        # noch nicht angepasst) persistiert.
+        with self.db.lock:
+            cur = self.db.conn.execute(
+                "DELETE FROM family_members WHERE id=?", (member_id,))
+            deleted = cur.rowcount > 0
+            if deleted:
+                for task_id, current_member in affected:
+                    self._renormalize_rotation(task_id, current_member)
+            self.db.conn.commit()
         return deleted
 
     def _renormalize_rotation(self, task_id: int,
@@ -942,21 +958,26 @@ class FamilyRepository:
     # ---- Wiederkehrende Aufgaben --------------------------------------
     def add_task(self, t: HouseholdTask) -> HouseholdTask:
         now = _now_utc_iso()
-        cur = self.db.conn.execute(
-            "INSERT INTO household_tasks (title, interval_days, next_due,"
-            " current_index, created_at) VALUES (?,?,?,?,?)",
-            (t.title, t.interval_days,
-             t.next_due.isoformat() if t.next_due else None,
-             t.current_index, now),
-        )
-        task_id = cur.lastrowid
-        for position, member_id in enumerate(t.rotation):
-            self.db.conn.execute(
-                "INSERT INTO task_rotation (task_id, member_id, position)"
-                " VALUES (?,?,?)",
-                (task_id, member_id, position),
+        # Aufgabe + Rotationszeilen sind eine logische Einheit. Unter
+        # db.lock geklammert, damit kein Fremd-Thread mit eigenem commit()
+        # zwischen den INSERTs eine Aufgabe ohne (vollstaendige) Rotation
+        # persistiert (RLock -> verschachtelte execute()-Aufrufe sind ok).
+        with self.db.lock:
+            cur = self.db.conn.execute(
+                "INSERT INTO household_tasks (title, interval_days, next_due,"
+                " current_index, created_at) VALUES (?,?,?,?,?)",
+                (t.title, t.interval_days,
+                 t.next_due.isoformat() if t.next_due else None,
+                 t.current_index, now),
             )
-        self.db.conn.commit()
+            task_id = cur.lastrowid
+            for position, member_id in enumerate(t.rotation):
+                self.db.conn.execute(
+                    "INSERT INTO task_rotation (task_id, member_id, position)"
+                    " VALUES (?,?,?)",
+                    (task_id, member_id, position),
+                )
+            self.db.conn.commit()
         t.id = task_id
         return t
 
@@ -1000,7 +1021,12 @@ class FamilyRepository:
         rotation = [r["member_id"] for r in self.db.conn.execute(
             "SELECT member_id FROM task_rotation WHERE task_id=? ORDER BY position",
             (task_id,))]
-        interval = row["interval_days"]
+        # interval_days wird an den Eingabepunkten (modules/family,
+        # modules/templates) auf >=1 validiert. Ein aus Sync, einer
+        # manuellen DB-Bearbeitung oder einer Migration stammender Wert
+        # <=0 wuerde die Catch-up-Schleife unten nie verlassen und den
+        # aufrufenden Thread einfrieren - defensiv auf >=1 klemmen.
+        interval = max(1, int(row["interval_days"] or 1))
         current_due = (date.fromisoformat(row["next_due"])
                        if row["next_due"] else date.today())
         # Mindestens ein Zyklus weiter; wenn die Aufgabe ueberfaellig

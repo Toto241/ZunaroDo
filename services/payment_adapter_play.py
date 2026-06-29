@@ -109,11 +109,14 @@ def parse_play_purchase(
     if not verification.valid:
         return None
 
-    # Tier-Escalation verhindern: wenn Play eine konkrete Produkt-ID zum
-    # Token meldet, MUSS sie der vom Client behaupteten SKU entsprechen.
-    # Sonst koennte ein gueltiger Monthly-Token als Family eingereicht
-    # werden. Bei Abweichung kein Token ausstellen.
-    if verification.product_id and verification.product_id != product_id:
+    # Tier-Escalation verhindern: Play MUSS dieselbe Produkt-ID zum Token
+    # melden wie die vom Client behauptete SKU. Eine leere ODER abweichende
+    # Produkt-ID wird abgewiesen (fail closed) - sonst koennte ein gueltiger
+    # Monthly-Token als Family eingereicht werden, indem die Verifikation in
+    # einen Zustand ohne lineItems faellt (verified_product == "") und der
+    # Abweichungs-Check uebersprungen wird. Im Zweifel lieber kein Token und
+    # der Nutzer wendet sich an den Support, als eine eskalierte Lizenz.
+    if verification.product_id != product_id:
         return None
 
     expires_at = verification.expiry_at or _default_expiry(tier)

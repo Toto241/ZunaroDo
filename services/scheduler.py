@@ -49,6 +49,12 @@ class ProactiveScheduler:
         # System-/Zeitzonen-Sprung (DST) keine erneute Meldung aus.
         self.state_path = Path(state_path) if state_path else None
         self._seen: set[tuple[str, str]] = self._load_seen()
+        # check_now() laeuft sowohl aus dem APScheduler-/Fallback-Thread als
+        # auch manuell aus dem UI ("jetzt pruefen"). Ohne Sperre koennten zwei
+        # ueberlappende Laeufe dieselbe Erinnerung doppelt melden (beide sehen
+        # key noch nicht in _seen) und _persist_seen koennte ueber _seen
+        # iterieren waehrend ein anderer Thread es mutiert ("set changed size").
+        self._seen_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._aps = None                              # APScheduler-Instanz
@@ -87,9 +93,10 @@ class ProactiveScheduler:
                 continue
         for ev in events:
             key = (ev.module_id, ev.title)
-            if key in self._seen:
-                continue
-            self._seen.add(key)
+            with self._seen_lock:
+                if key in self._seen:
+                    continue
+                self._seen.add(key)
             d = ev.days_remaining
             when = (f"in {d} Tagen" if d > 0
                     else "heute faellig" if d == 0
@@ -119,7 +126,8 @@ class ProactiveScheduler:
             return
         try:
             self.state_path.parent.mkdir(parents=True, exist_ok=True)
-            payload = sorted([m, t] for m, t in self._seen)
+            with self._seen_lock:
+                payload = sorted([m, t] for m, t in self._seen)
             tmp = self.state_path.with_name(self.state_path.name + ".tmp")
             tmp.write_text(json.dumps(payload), encoding="utf-8")
             tmp.replace(self.state_path)

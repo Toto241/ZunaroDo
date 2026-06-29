@@ -127,9 +127,11 @@ class _Handler(BaseHTTPRequestHandler):
         except WebhookError as exc:
             log.warning("Webhook %s parse error: %s", self.path, exc)
             return self._send_json(400, {"error": str(exc)})
-        except Exception as exc:                        # noqa: BLE001
+        except Exception:                               # noqa: BLE001
+            # Details nur serverseitig loggen - nicht an den (oeffentlichen)
+            # Webhook-Aufrufer zuruecklecken.
             log.exception("Webhook %s unhandled error", self.path)
-            return self._send_json(500, {"error": "internal", "detail": str(exc)})
+            return self._send_json(500, {"error": "internal"})
 
         if event is None:
             # Uninteressantes Event - 200, damit Provider nicht retried.
@@ -137,7 +139,10 @@ class _Handler(BaseHTTPRequestHandler):
 
         result = handle_event(event, self.state.issuer)
         if not result.success:
-            return self._send_json(500, {"error": result.message})
+            # Grund nur serverseitig loggen (kann z.B. Signaturfehler-Text
+            # enthalten) - nach aussen generisch bleiben.
+            log.warning("Webhook %s issue failed: %s", self.path, result.message)
+            return self._send_json(500, {"error": "internal"})
         return self._send_json(201,
                                  {"status": "ok",
                                   "message": result.message,
@@ -169,17 +174,22 @@ class _Handler(BaseHTTPRequestHandler):
             return self._send_json(400, {"error": str(exc)})
         except WebhookError as exc:
             return self._send_json(400, {"error": str(exc)})
-        except Exception as exc:                          # noqa: BLE001
+        except Exception:                                 # noqa: BLE001
+            # Details nur serverseitig loggen - nicht zuruecklecken.
             log.exception("/verify/play unhandled error")
-            return self._send_json(500, {"error": "internal", "detail": str(exc)})
+            return self._send_json(500, {"error": "internal"})
 
         if event is None:
             # Token ungueltig/abgelaufen - kein false-positive ausstellen.
             return self._send_json(402, {"error": "purchase not valid"})
 
-        result = handle_event(event, cfg.issuer)
+        # Synchroner Pfad: das Token IST die Antwort -> KEIN De-Dup-Kurz-
+        # schluss (sonst 201-Erfolg ohne Token). Jeder Aufruf hat den Kauf
+        # zuvor frisch gegen Google verifiziert, erneutes Ausstellen ist ok.
+        result = handle_event(event, cfg.issuer, dedupe=False)
         if not result.success:
-            return self._send_json(500, {"error": result.message})
+            log.warning("/verify/play issue failed: %s", result.message)
+            return self._send_json(500, {"error": "internal"})
         return self._send_json(201, {"status": "ok", "token": result.token_str})
 
     # Default-Logger ist sehr gespraechig; auf Python-Logger umlenken

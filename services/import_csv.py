@@ -26,12 +26,31 @@ from models import (CalendarEvent, Contract, Expense, FamilyMember,
                     SocialContact)
 
 
+def _unsanitize_cell(value):
+    """Kehrt services.export._sanitize_cell um (verlustfreier Roundtrip).
+
+    Der Export stellt Zellen, die mit einem Formel-Lead-Zeichen
+    (= + - @ Tab CR) beginnen, ein Hochkomma voran (Schutz vor CSV-Formel-
+    Injection in Tabellenkalkulationen). Beim Re-Import in die App MUSS
+    dieses Hochkomma wieder entfernt werden - sonst wuerde z.B. ein
+    negativer Betrag '-5.00' als "'-5.00" gelesen und beim Parsen auf den
+    Default 0.0 fallen. Es wird GENAU ein Hochkomma entfernt und nur dann,
+    wenn das Folgezeichen ein Lead-Zeichen ist (so bleibt ein echter Wert
+    wie "'tis" unangetastet).
+    """
+    if (isinstance(value, str) and len(value) >= 2
+            and value[0] == "'" and value[1] in "=+-@\t\r"):
+        return value[1:]
+    return value
+
+
 def _read_rows(path: Path) -> list[dict]:
     if not path.exists():
         raise FileNotFoundError(f"CSV-Datei '{path}' nicht gefunden")
     with path.open("r", encoding="utf-8-sig", newline="") as fh:
         reader = csv.DictReader(fh, delimiter=";")
-        return [dict(row) for row in reader]
+        return [{k: _unsanitize_cell(v) for k, v in row.items()}
+                for row in reader]
 
 
 def _safe_date(value: Optional[str]) -> Optional[date]:

@@ -21,6 +21,23 @@ from database import (CalendarRepository, ContractRepository,
                       ProposalRepository, SocialRepository)
 
 
+def _sanitize_cell(value: Any) -> Any:
+    """Neutralisiert CSV-Formel-Injection.
+
+    Excel/LibreOffice/Google Sheets interpretieren Zellen, die mit
+    = + - @ (oder einem fuehrenden Tab/CR) beginnen, beim Oeffnen als
+    Formel. Ein Nutzer, der z.B. einen Vertragsnamen wie
+    '=HYPERLINK(<url>,...)' eingibt, koennte so beim Oeffnen des
+    Exports Netzwerkzugriffe/Code ausloesen. Solchen String-Werten wird
+    ein Hochkomma vorangestellt (uebliche Schutzpraxis) - die Tabellen-
+    kalkulation behandelt die Zelle dann als Text. Nicht-Strings (Zahlen,
+    Datumsobjekte) bleiben unveraendert.
+    """
+    if isinstance(value, str) and value and value[0] in "=+-@\t\r":
+        return "'" + value
+    return value
+
+
 def _write(path: Path, headers: list[str],
             rows: Iterable[list]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,7 +46,7 @@ def _write(path: Path, headers: list[str],
         writer = csv.writer(fh, delimiter=";")
         writer.writerow(headers)
         for row in rows:
-            writer.writerow(row)
+            writer.writerow([_sanitize_cell(c) for c in row])
             count += 1
     return count
 
