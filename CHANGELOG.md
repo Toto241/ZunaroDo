@@ -28,6 +28,48 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 
 ### Behoben
 
+#### Phase 2 (Audit-Befunde, Sicherheit/Robustheit/Korrektheit)
+
+- **Familienaufgabe: Endlosschleife bei interval_days <= 0** — `complete_task`
+  klemmt das Intervall defensiv auf >= 1. Ein aus Sync oder manueller
+  DB-Bearbeitung stammender Wert <= 0 liess die Catch-Up-Schleife nie enden
+  und fror den aufrufenden Thread ein (`database.py`).
+- **Datenbank: atomare Mehrfach-Schreibvorgaenge** — `add_task`,
+  `delete_member`, `update_cost` und `wipe_all_data` halten jetzt `db.lock`
+  ueber ihre gesamte Statement-Folge, damit ein paralleler `commit()` aus
+  einem anderen Thread keinen inkonsistenten Zwischenstand persistiert
+  (`database.py`).
+- **Play-Billing: Tier-Escalation geschlossen** — `parse_play_purchase` weist
+  einen Kauf jetzt auch dann ab, wenn die Play-Verifikation keine Produkt-ID
+  liefert (leere `product_id`). Bisher wurde der Abgleich uebersprungen, sodass
+  ein gueltiger Monthly-Token als Family eingereicht werden konnte
+  (`services/payment_adapter_play.py`).
+- **Lizenz-Token: Personenzahl validiert** — `verify_token` weist ein (korrekt
+  signiertes) Token mit `persons < 1` ab, statt den Defektwert in die
+  Sitzplatz-Logik durchzureichen (`services/license_token.py`).
+- **Token-Issuer: Idempotenz fail-closed + parallelsicher** — bei nicht
+  lesbarem Audit-Log wird KEIN Token ausgestellt (vorher fail-open), und ein
+  zweiter, paralleler Webhook-Retry derselben `transaction_id`
+  (ThreadingHTTPServer) stellt dank In-Flight-Claim nicht mehr doppelt aus
+  (`services/payment_issuer.py`).
+- **Payment-Server: keine Fehler-Details nach aussen** — unbehandelte
+  Ausnahmen werden nur noch serverseitig geloggt; die 500-Antwort enthaelt
+  keine `detail`-Klartextmeldung mehr (`services/payment_server.py`).
+- **CSV-Export: Formel-Injection neutralisiert** — Zellen, die mit `= + - @`
+  (oder Tab/CR) beginnen, erhalten beim Export ein fuehrendes Hochkomma, damit
+  Excel/LibreOffice/Sheets sie als Text statt als Formel behandeln
+  (`services/export.py`).
+- **Posteingang: Betragserkennung mit Tausender-Trenner** — `_extract_euro`
+  liest `1.299,99 EUR` korrekt als `1299.99` (vorher `299.99`); betrifft
+  Preisaenderungs-/Neuvertrags-Vorschlaege aus der Mail-Analyse
+  (`modules/inbox.py`).
+- **Scheduler: Doppel-Erinnerungen unter Parallelitaet** — der `_seen`-Merker
+  wird per Lock geschuetzt; ueberlappende `check_now()`-Laeufe (APScheduler +
+  manuell) melden eine Erinnerung nicht mehr doppelt und koennen kein „set
+  changed size during iteration" mehr ausloesen (`services/scheduler.py`).
+- **Regressionstests** — `tests/test_audit_phase2.py` deckt die obigen
+  Befunde ab (13 Tests).
+
 - **main.py Demo** — Mail-Analyse crasht nicht mehr bei Free-Tier (`tier_locked`).
 - **CustomTkinter-Theme** — `CTkTabview`-Patch nur wenn Theme-Key existiert.
 - **Sync-Server: Konstantzeit-Token** — `X-Sync-Token` wird via `hmac.compare_digest` geprueft (vorher `==`), schliesst ein Timing-Orakel auf das Token (`services/sync_server.py`).

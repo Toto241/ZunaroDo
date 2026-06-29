@@ -42,14 +42,40 @@ _CATEGORY_HINTS = {
 }
 
 
+def _normalize_amount(raw: str) -> float | None:
+    """Wandelt einen Betrags-String in einen float.
+
+    Robust gegen Tausender-Trenner: das LETZTE Trennzeichen (`,` oder `.`),
+    sofern ihm 1-2 Ziffern folgen, gilt als Dezimaltrenner; alle uebrigen
+    `,`/`.` sind Tausender und werden entfernt. Damit liefern sowohl das
+    deutsche `1.299,99` als auch `1,299.99` und `12,99`/`12.99`/`1299`
+    den korrekten Wert (vorher las das Muster nur die Ziffern direkt vor
+    dem Dezimaltrenner und machte aus `1.299,99` faelschlich `299,99`).
+    """
+    s = raw.strip()
+    if not s:
+        return None
+    dec_pos = max(s.rfind(","), s.rfind("."))
+    if dec_pos != -1:
+        tail = s[dec_pos + 1:]
+        if tail.isdigit() and len(tail) in (1, 2):
+            int_part = re.sub(r"[.,]", "", s[:dec_pos])
+            if int_part.isdigit() or int_part == "":
+                return float(f"{int_part or '0'}.{tail}")
+    digits = re.sub(r"[.,]", "", s)
+    return float(digits) if digits.isdigit() else None
+
+
 def _extract_euro(text: str) -> float | None:
-    """Sucht einen Euro-Betrag wie '12,99 EUR' oder 'EUR 12,99'."""
-    patterns = [r"(\d+[.,]\d{2})\s*(?:eur|euro|\u20ac)",
-                r"(?:eur|euro|\u20ac)\s*(\d+[.,]\d{2})"]
+    """Sucht einen Euro-Betrag wie '12,99 EUR', 'EUR 12,99' oder
+    '1.299,99 EUR' (mit Tausender-Trenner)."""
+    amount = r"(\d[\d.,]*\d|\d)"
+    patterns = [rf"{amount}\s*(?:eur|euro|\u20ac)",
+                rf"(?:eur|euro|\u20ac)\s*{amount}"]
     for pat in patterns:
         m = re.search(pat, text, re.IGNORECASE)
         if m:
-            return float(m.group(1).replace(",", "."))
+            return _normalize_amount(m.group(1))
     return None
 
 

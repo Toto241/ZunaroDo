@@ -232,6 +232,14 @@ def verify_token(token_str: str,
     except (ValueError, KeyError) as exc:
         raise TokenError(f"Payload kaputt: {exc}")
 
+    # Semantische Plausibilitaet: ein korrekt signiertes Token mit
+    # persons < 1 ist defekt (Anbieter-/Issuer-Bug) und darf nicht
+    # ungeprueft in die Familien-/Sitzplatz-Logik durchgereicht werden.
+    # Geprueft NACH der Signatur (kein Oracle ueber Payload-Inhalte).
+    if token.persons < 1:
+        raise TokenError(
+            f"Ungueltige Personenzahl im Token: {token.persons}")
+
     # Revocation: kompromittierte oder zurueckerstattete Tokens werden
     # zentral abgewiesen. Geprueft NACH Signatur (sonst gibt's einen
     # Oracle, ob token_id existiert) und VOR Expiry-Check (revoked
