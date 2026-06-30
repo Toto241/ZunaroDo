@@ -68,4 +68,12 @@ mit Abzug für die fehlende Zusammenführung und die Null-Discoverability aus de
   - `.env-Status prüfen` (`--check`, zeigt gesetzt/leer je Variable, **Werte maskiert**).
 - ✅ **#6 `.ps1` im Control Panel verdrahtet** (Discoverability null → nutzbar) → `setup-play-console.ps1` und `setup-github-pages.ps1` (Letztere mit Bestätigungsdialog) als Buttons in der Konfig-Sektion (nur Windows). Bewusst **nicht** verdrahtet: `create_upload_keystore.ps1` — `keytool` fragt interaktiv per stdin nach Passwörtern und würde den Capture-Runner blockieren; bleibt manueller Schritt.
 
-**Offen (eigene Phasen):** #5 (echte Hover-Tooltip-Klasse statt Dauer-Labels) sowie die Mittel/Niedrig-Restpunkte (Keystore-Env-Vars optional setzen, `.sh`-Äquivalente, SMTP/IMAP-Verbindungstest). Die verbleibenden „durch das Raster fallenden" Konfig-Punkte aus §3 (`checkout.*`, Play-Service-Account-Credentials) sind release-/zahlungsspezifisch und bewusst nicht im Endnutzer-Settings-Tab.
+## 7. Umgesetzt (Phase 3)
+
+- ✅ **#5 Echte Hover-Tooltip-Klasse** → `core/tooltip.py` (`Tooltip` / `attach_tooltip`, stdlib-only, defensiv). **Additiv** eingesetzt (statische Labels bleiben):
+  - `gui.py` — Settings-Eingabefelder zeigen ihren Hilfetext zusätzlich beim Hover.
+  - `tools/control_panel.py` — Hover-Tooltips an Aktions-/Link-Buttons und v. a. an den auf 26 Zeichen **gekürzten** Referenz-Buttons der Release-Sektion (voller Label + Ziel). Der irreführende Kommentar (`description` = „Tooltip") ist jetzt korrekt.
+
+**Offen (Mittel/Niedrig-Restpunkte):** Keystore-Env-Vars optional setzen statt nur drucken, `.sh`-Äquivalente für die Play/Pages-Skripte, optionaler SMTP/IMAP-Verbindungstest. Die verbleibenden „durch das Raster fallenden" Konfig-Punkte aus §3 (`checkout.*`, Play-Service-Account-Credentials) sind release-/zahlungsspezifisch und bewusst nicht im Endnutzer-Settings-Tab.
+
+> **Ergebnis:** Alle vier Säulen (Wizard, PowerShell, Tooltips, Erklärung) sind nun strukturell abgedeckt; die im Audit identifizierten Hoch-Lücken sind geschlossen.
