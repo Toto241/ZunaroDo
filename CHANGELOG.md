@@ -25,8 +25,24 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 - **i18n** — Lizenz-/Export-Keys in allen Vollsprachen (de/en/fr/es/it/nl/pl/pt).
 - **AGENTS.md** — 13 Module / 92 Capabilities (statt veralteter „8 domain modules“).
 - **GO_LIVE_TODO.md** — Screenshots, Keystore-Helfer, Verifikations-Skript und Closed-Test-Runbook verdrahtet.
+- **Einstellungen-Tab erweitert** — `i18n.language` sowie `backup.auto_enabled/directory/retention_count/interval_hours` sind jetzt in den App-Einstellungen editierbar; bisher leere Feld-Hilfetexte (Gemini-Tokens, IMAP-/SMTP-Felder, Sync-Intervall, Notify-Tage) gefuellt (`gui.py`).
+- **Control-Panel-Doku** — Schnellzugriff auf `README.md`, `.env.example` und `SECURITY.md` in der Dokumentations-Sektion (`tools/control_panel.py`).
+- **Konfig-Audit dokumentiert** — `docs/KONFIG_AUDIT.md`: Vollstaendigkeits-Analyse der einfachen Konfiguration (Wizard/PowerShell/Tooltips/Erklaerung) mit Luecken-Matrix und priorisierten Massnahmen.
 
 ### Behoben
+
+#### Phase 3 (Konfig-Audit: einfache Konfiguration)
+
+- **smtp.pass war nirgends setzbar** — Das SMTP-Passwort ist ein `SECRET_KEY`
+  (bewusst nicht in der DB) und hatte kein Env-Mapping; dadurch blieb es immer
+  leer und der Mailversand konnte sich nie authentifizieren. `ENV_MAP` um
+  `smtp.pass -> ALLTAGSHELFER_SMTP_PASS` ergaenzt (analog `imap.pass`, konform
+  zu ANFORDERUNGEN CFG-02) und in `.env.example` dokumentiert
+  (`services/config.py`, `.env.example`).
+- **create_upload_keystore.ps1 unter Windows PowerShell 5.1** — Der nur in
+  pwsh 7+ verfuegbare `?.`-Operator brach unter Windows PowerShell 5.1
+  (Win11-Default); durch eine 5.1-kompatible Pruefung ersetzt und
+  `#Requires -Version 5.1` ergaenzt (`release/create_upload_keystore.ps1`).
 
 #### Phase 2 (Audit-Befunde, Sicherheit/Robustheit/Korrektheit)
 

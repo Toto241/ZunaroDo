@@ -1,3 +1,4 @@
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Erstellt den Upload-Keystore fuer die Play-Store-Signierung von ZunaroDo.
@@ -28,8 +29,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# keytool finden (JAVA_HOME oder PATH).
-$keytool = (Get-Command keytool -ErrorAction SilentlyContinue)?.Source
+# keytool finden (JAVA_HOME oder PATH). Kein ?.-Operator, damit das Skript
+# auch unter Windows PowerShell 5.1 (Win11-Default) laeuft, nicht nur pwsh 7+.
+$keytoolCmd = Get-Command keytool -ErrorAction SilentlyContinue
+$keytool = if ($keytoolCmd) { $keytoolCmd.Source } else { $null }
 if (-not $keytool -and $env:JAVA_HOME) {
     $cand = Join-Path $env:JAVA_HOME "bin/keytool.exe"
     if (Test-Path $cand) { $keytool = $cand }

@@ -79,6 +79,11 @@ ENV_MAP: dict[str, str] = {
     "imap.user": "ALLTAGSHELFER_IMAP_USER",
     "imap.pass": "ALLTAGSHELFER_IMAP_PASS",
     "imap.folder": "ALLTAGSHELFER_IMAP_FOLDER",
+    # SMTP-Verbindungsdaten kommen bewusst aus der DB (Einstellungen); nur das
+    # Passwort ist ein SECRET_KEY und kommt - wie imap.pass - aus der Umgebung
+    # (siehe ANFORDERUNGEN CFG-02). Ohne dieses Mapping waere smtp.pass nirgends
+    # setzbar (nicht in DB, weil Secret; nicht aus Env, weil kein Mapping).
+    "smtp.pass": "ALLTAGSHELFER_SMTP_PASS",
     "sync.dir": "ALLTAGSHELFER_SYNC_DIR",
     "db.key": "ALLTAGSHELFER_DB_KEY",
     "backup.key": "ALLTAGSHELFER_BACKUP_KEY",
