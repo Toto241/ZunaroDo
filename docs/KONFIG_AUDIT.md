@@ -61,4 +61,11 @@ mit Abzug für die fehlende Zusammenführung und die Null-Discoverability aus de
 - ✅ **#3 Konfig-Doku-Links** in der Control-Panel-Doku-Sektion (`tools/control_panel.py`).
 - ✅ **#7 PS-5.1-Kompatibilität** von `release/create_upload_keystore.ps1` (`?.`-Operator entfernt, `#Requires -Version 5.1`).
 
-**Offen (eigene Phasen):** #2 (Konfig-Sektion + `.env`-Wizard im Control Panel), #5 (echte Hover-Tooltip-Klasse), #6 (`.ps1` im Control Panel verdrahten) sowie die Mittel/Niedrig-Restpunkte.
+## 6. Umgesetzt (Phase 2)
+
+- ✅ **#2 Konfig-Sektion im Control Panel** → neue Sektion „Konfiguration" mit geführter `.env`-Erzeugung. Dünne GUI-Buttons rufen das neue, getestete CLI-Tool `tools/env_setup.py`:
+  - `.env initialisieren` (`--init`, kopiert `.env.example` → `.env`, überschreibt nie),
+  - `.env-Status prüfen` (`--check`, zeigt gesetzt/leer je Variable, **Werte maskiert**).
+- ✅ **#6 `.ps1` im Control Panel verdrahtet** (Discoverability null → nutzbar) → `setup-play-console.ps1` und `setup-github-pages.ps1` (Letztere mit Bestätigungsdialog) als Buttons in der Konfig-Sektion (nur Windows). Bewusst **nicht** verdrahtet: `create_upload_keystore.ps1` — `keytool` fragt interaktiv per stdin nach Passwörtern und würde den Capture-Runner blockieren; bleibt manueller Schritt.
+
+**Offen (eigene Phasen):** #5 (echte Hover-Tooltip-Klasse statt Dauer-Labels) sowie die Mittel/Niedrig-Restpunkte (Keystore-Env-Vars optional setzen, `.sh`-Äquivalente, SMTP/IMAP-Verbindungstest). Die verbleibenden „durch das Raster fallenden" Konfig-Punkte aus §3 (`checkout.*`, Play-Service-Account-Credentials) sind release-/zahlungsspezifisch und bewusst nicht im Endnutzer-Settings-Tab.

@@ -15,6 +15,7 @@ Alle relevanten Aenderungen am Projekt - chronologisch absteigend.
 - **Store-Screenshots aus App-Daten** — `tools/capture_store_screenshots.py` rendert Play-Store-Phone-Screenshots (1080x1920) aus HeadlessApp-Demo-Daten; `gen_assets --check` gruen.
 - **Play-Console-Runbooks** — `release/PLAY_CONSOLE_SETUP.md`, `release/CLOSED_TEST_RUNBOOK.md`, `release/create_upload_keystore.sh` (Linux/macOS).
 - **Geraete-Verifikation** — `tools/verify_android_device.py` (SQLCipher-Header + ML-Kit via adb).
+- **Konfig-Sektion im Control Panel** — neue Sektion „Konfiguration" mit gefuehrter `.env`-Erzeugung. Duenne Buttons rufen das neue, getestete CLI-Tool `tools/env_setup.py` (`--init` kopiert `.env.example` → `.env` ohne je zu ueberschreiben; `--check` zeigt je Variable gesetzt/leer, Werte maskiert). Zusaetzlich sind die nicht-interaktiven PowerShell-Setups (`setup-play-console.ps1`, `setup-github-pages.ps1`) als Buttons verdrahtet (Discoverability null → nutzbar; Windows). Schliesst die Hauptluecke aus `docs/KONFIG_AUDIT.md`.
 
 ### Geändert
 

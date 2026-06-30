@@ -85,6 +85,37 @@ def test_actions_playstore_complete():
         f"Gefunden: {subcommands}")
 
 
+def test_actions_config_present_and_use_env_setup():
+    """Die Konfig-Sektion bietet gefuehrte .env-Erzeugung/-Pruefung via das
+    getestete CLI-Tool tools.env_setup."""
+    from tools.control_panel import actions_config
+    items = actions_config()
+    labels = " | ".join(a.label for a in items)
+    assert ".env" in labels
+    env_cmds = [a for a in items if "tools.env_setup" in a.command]
+    assert len(env_cmds) >= 2, "Init + Status erwartet"
+    for a in env_cmds:
+        assert a.command[0] == sys.executable
+        idx = a.command.index("tools.env_setup")
+        assert a.command[idx + 1] in ("--init", "--check")
+
+
+def test_actions_config_powershell_scripts_exist():
+    """Verdrahtete .ps1 muessen existieren (nur unter Windows beigesteuert)."""
+    from tools.control_panel import actions_config
+    for a in actions_config():
+        for arg in a.command:
+            if str(arg).endswith(".ps1"):
+                assert Path(arg).is_file(), (
+                    f"Aktion {a.label!r} verweist auf fehlendes Skript {arg}")
+
+
+def test_config_section_registered_in_sidebar():
+    from tools.control_panel import ControlPanel
+    keys = [k for k, _t, _f in ControlPanel._SECTIONS]
+    assert "config" in keys, "Konfig-Sektion fehlt in der Sidebar-Navigation"
+
+
 def test_destructive_actions_have_confirm_prompt():
     """Init (--force) und Push muessen eine Bestaetigung verlangen."""
     from tools.control_panel import actions_playstore
