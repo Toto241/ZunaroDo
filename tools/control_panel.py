@@ -46,6 +46,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
+from core.tooltip import attach_tooltip
 from tools.release_open_items import (OpenItem, Reference, automated_checks,
                                       items as release_open_items)
 
@@ -105,7 +106,7 @@ _FONT_CANDIDATES = ("Segoe UI Variable Text", "Segoe UI", "Segoe UI Emoji")
 class Action:
     label: str                          # Knopf-Beschriftung
     command: list[str]                  # subprocess-Argumente
-    description: str = ""               # Tooltip / Status-Bar-Text
+    description: str = ""               # sichtbares Label + Hover-Tooltip
     confirm: Optional[str] = None       # wenn gesetzt -> Bestaetigungsdialog
     needs_wsl: bool = False             # nur sinnvoll, wenn 'wsl' verfuegbar
 
@@ -693,6 +694,7 @@ class ControlPanel(ctk.CTk):
             hover_color=WIN11["accent_hover"], text_color="#FFFFFF",
             command=lambda a=action: self._run_action(a))
         btn.grid(row=0, column=1, padx=(8, 14), pady=12)
+        attach_tooltip(btn, action.description)
         self._busy_buttons.append(btn)
         return card
 
@@ -709,13 +711,17 @@ class ControlPanel(ctk.CTk):
                           text_color=WIN11["text_muted"], font=self._font(12),
                           anchor="w", justify="left", wraplength=620
                           ).grid(row=1, column=0, sticky="w", pady=(2, 0))
-        ctk.CTkButton(
+        open_btn = ctk.CTkButton(
             card, text="Oeffnen", width=140, corner_radius=6,
             font=self._font(13), fg_color="transparent", border_width=1,
             border_color=WIN11["card_border"], text_color=WIN11["text"],
             hover_color=WIN11["subtle_hover"],
-            command=lambda l=link: self._open_link(l)
-        ).grid(row=0, column=1, padx=(8, 14), pady=12)
+            command=lambda l=link: self._open_link(l))
+        open_btn.grid(row=0, column=1, padx=(8, 14), pady=12)
+        tip = link.description
+        if str(link.target) not in tip:
+            tip = f"{tip}\n{link.target}" if tip else str(link.target)
+        attach_tooltip(open_btn, tip)
         return card
 
     def _manual_item_card(self, parent, item: OpenItem) -> "ctk.CTkFrame":
@@ -763,14 +769,18 @@ class ControlPanel(ctk.CTk):
         refs.grid(row=4, column=0, sticky="ew", pady=(10, 0))
         col = 0
         for ref in [*item.local_docs, *item.official_links]:
-            btn_text = ref.label[:26] + ("…" if len(ref.label) > 26 else "")
-            ctk.CTkButton(
+            truncated = len(ref.label) > 26
+            btn_text = ref.label[:26] + ("…" if truncated else "")
+            ref_btn = ctk.CTkButton(
                 refs, text=btn_text, height=28, corner_radius=6,
                 font=self._font(11), fg_color="transparent", border_width=1,
                 border_color=WIN11["card_border"], text_color=WIN11["text"],
                 hover_color=WIN11["subtle_hover"],
-                command=lambda r=ref: self._open_reference(r)
-            ).grid(row=0, column=col, padx=(0, 6), pady=2)
+                command=lambda r=ref: self._open_reference(r))
+            ref_btn.grid(row=0, column=col, padx=(0, 6), pady=2)
+            # Vollen Label + Ziel zeigen - der Knopf-Text ist auf 26 Zeichen
+            # gekuerzt, der Tooltip macht das Ziel wieder lesbar.
+            attach_tooltip(ref_btn, f"{ref.label}\n{ref.target}")
             col += 1
         return card
 

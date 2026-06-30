@@ -31,6 +31,7 @@ from app_core.presenters import (DashboardPresenter, OrdersPresenter,
 from app_core.profiles import ProfilesManager
 from assistant import Assistant
 from core.interface import ModuleRegistry
+from core.tooltip import attach_tooltip
 from database import (AssistantLogRepository, AuditLogRepository, Database,
                       ModuleStateRepository, SettingsRepository)
 from main import (apply_persisted_module_states, build_registry,
@@ -2800,6 +2801,9 @@ class AlltagshelferGUI(ctk.CTk):
                 ctk.CTkLabel(row, text=helptext, text_color="gray",
                              font=ctk.CTkFont(size=10)
                              ).pack(side="left", fill="x", expand=True)
+                # Zusaetzlich als Hover-Tooltip am Eingabefeld - bleibt auch
+                # erreichbar, wenn das Feld fokussiert/abgeschnitten ist.
+                attach_tooltip(entry, helptext)
 
         # Datenverzeichnis: kein DB-Setting, sondern der OS-Zeiger aus
         # services.datadir. Anzeige des aktuellen Pfads + Aendern-Knopf.
