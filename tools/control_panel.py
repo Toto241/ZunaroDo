@@ -237,6 +237,46 @@ def actions_playstore() -> list[Action]:
     ]
 
 
+def actions_config() -> list[Action]:
+    """Einfache Konfiguration (App/Laufzeit-Ebene): gefuehrte .env-Erzeugung
+    und Status, plus die nicht-interaktiven PowerShell-Setups.
+
+    Bewusst NICHT verdrahtet: release/create_upload_keystore.ps1 - keytool
+    fragt interaktiv per stdin nach Passwoertern und wuerde den Capture-Runner
+    blockieren. Dieser Schritt bleibt manuell (siehe Release-Sektion).
+    """
+    py = _console_python()
+    actions = [
+        Action(".env initialisieren  (aus .env.example)",
+                [py, "-m", "tools.env_setup", "--init"],
+                "Kopiert .env.example -> .env (ueberschreibt nie eine "
+                "bestehende). Danach die [SECRET]-Werte eintragen; ZunaroDo "
+                "laeuft auch ganz ohne .env offline."),
+        Action(".env-Status pruefen",
+                [py, "-m", "tools.env_setup", "--check"],
+                "Zeigt, welche Umgebungsvariablen/Secrets gesetzt sind - "
+                "Werte werden maskiert (nur gesetzt/leer + Quelle)."),
+    ]
+    if os.name == "nt":
+        scripts = REPO_ROOT / "scripts"
+        ps = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+              "-File"]
+        actions.extend([
+            Action("Play-Console-Paket erzeugen  (PowerShell)",
+                    [*ps, str(scripts / "setup-play-console.ps1")],
+                    "Erzeugt Data-Safety-Antworten + Checkliste lokal in "
+                    "release/. Nicht-interaktiv, schreibt nichts extern."),
+            Action("GitHub Pages einrichten & Privacy deployen  (PowerShell)",
+                    [*ps, str(scripts / "setup-github-pages.ps1")],
+                    "Aktiviert GitHub Pages und deployt die Datenschutz-Seite "
+                    "via 'gh'. Voraussetzung: 'gh' installiert und eingeloggt.",
+                    confirm="Aktiviert GitHub Pages und deployt die "
+                            "Privacy-Policy in das echte Repo (via gh). "
+                            "Fortfahren?"),
+        ])
+    return actions
+
+
 def actions_release_checks() -> list[Action]:
     py = _console_python()
     actions: list[Action] = []
@@ -368,6 +408,7 @@ class ControlPanel(ctk.CTk):
     # (key, Sidebar-Titel, Aktions-Factory)
     _SECTIONS = [
         ("tests", "Tests & Cockpit", actions_tests),
+        ("config", "Konfiguration", actions_config),
         ("build", "Build · Android / iOS / PC", actions_build),
         ("playstore", "Play-Store-Sync", actions_playstore),
         ("release", "Release-Check & offene Punkte", actions_release_checks),
@@ -796,6 +837,7 @@ class ControlPanel(ctk.CTk):
                 text_color=WIN11["accent"] if active else WIN11["text"])
         titles = {
             "tests": "Tests & Cockpit",
+            "config": "Konfiguration · .env & Setup",
             "build": "Build · Android / iOS / PC",
             "playstore": "Play-Store-Sync",
             "release": "Release-Check & offene Punkte",
