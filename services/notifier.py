@@ -21,7 +21,7 @@ def _try_plyer() -> Callable[[str, str], None] | None:
 
     def _send(title: str, message: str) -> None:
         notification.notify(title=title, message=message,
-                            app_name="Alltagshelfer", timeout=10)
+                            app_name="ZunaroDo", timeout=10)
     return _send
 
 

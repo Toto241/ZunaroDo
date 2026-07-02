@@ -68,10 +68,11 @@ OkHttpClient.Builder().certificatePinner(pinner).build()
 
 **Python (`requests` + `httpx`):**
 
-Pinning ist in `requests` nicht nativ. Workaround: eigener
+Pinning ist in `requests` nicht nativ. Workaround bei Bedarf: eigener
 `HTTPAdapter`-Subclass, der nach Handshake den SPKI-SHA256 prüft.
-Implementierungs-Stub bereitgestellt in `services/sync.py` über einen
-optionalen `expected_pin`-Parameter (TODO bei Native-Bedarf einbauen).
+Bewusst noch nicht implementiert — der Sync-Client verifiziert TLS über
+das konfigurierte CA-Bundle (`services/sync.py`); Pinning würde bei
+Native-Bedarf nachgerüstet.
 
 ### API-Kommunikation - Hardening
 
@@ -93,9 +94,10 @@ optionalen `expected_pin`-Parameter (TODO bei Native-Bedarf einbauen).
   - Passphrase aus Android Keystore ableiten (Native:
     `EncryptedSharedPreferences`; Kivy: `pyjnius` -> Keystore,
     `DbKeyProvider.java` + `services/db_key.py`).
-  - **Noch offen:** Recipe-Build auf WSL2 verifizieren und auf Gerät prüfen,
-    dass `Database.encryption_mode == "sqlcipher"` ist
-    (siehe `release/GO_LIVE_TODO.md` Pkt. 1.1).
+  - Recipe-Build via CI verifiziert (Robo-Workflow, grüner Lauf
+    2026-06-10; Host-Validierung cipher_version 4.6.1). **Noch offen:**
+    auf Gerät prüfen, dass `Database.encryption_mode == "sqlcipher"` ist
+    (`python -m tools.verify_android_device --skip-ocr`).
 
 ### Settings
 

@@ -418,7 +418,7 @@ Pro-Feature). Pro Profil eigene DB-Datei + eigenes State-Verzeichnis.
 | CO-02 | **Recht auf Löschung & Portabilität**: In-App-Vollöschung (`delete_all_user_data` / `Database.wipe_all_data`), aus dem Mobile-„Mehr"-Screen erreichbar; Komplett-Export (`export_all` / `export_all_json`); in [legal/DATENSCHUTZ.md](legal/DATENSCHUTZ.md) dokumentiert. **Vor erstem Release zwingend.** | M | R7 |
 | CO-03 | **Data-Safety-Form** (Play Console) = „keine Daten erhoben" (solange kein Crash-/Analytics-SDK), `encrypted_in_transit: true`, `user_can_request_deletion: true`; konsistent zum SDK-Inventar in [docs/android/04_PRIVACY_PERMISSIONS.md](docs/android/04_PRIVACY_PERMISSIONS.md); maschinell geprüft (`tools/data_safety.py`). Inkonsistenz Form↔Policy ist häufiger Ablehnungsgrund. | M | R7, R9 |
 | CO-04 | **Permission-Whitelist** (siehe Tabelle unten): nur `INTERNET`, `POST_NOTIFICATIONS`, optional `ACCESS_NETWORK_STATE`; keine sensiblen/verbotenen Permissions; Laufzeit-`POST_NOTIFICATIONS` (Android 13+), App bleibt bei Verweigerung nutzbar (degradiert). | M | R7, R9 |
-| CO-05 | **Pflicht-Rechtstexte** vorhanden: Impressum (**§5 DDG**, löst seit Mai 2024 §5 TMG ab / §18 Abs. 2 MStV — in [legal/](legal/) auf DDG aktualisiert), Datenschutzerklärung (Art. 13 DSGVO, URL öffentlich/HTTP 200), AGB, Widerrufsbelehrung (DE+EN), mit `[PLATZHALTER]`; In-App in ≤2 Taps erreichbar; vor Veröffentlichung anwaltlich prüfen. | M | R9 |
+| CO-05 | **Pflicht-Rechtstexte** vorhanden: Impressum (**§5 DDG**, löst seit Mai 2024 §5 TMG ab / §18 Abs. 2 MStV — in [legal/](legal/) auf DDG aktualisiert), Datenschutzerklärung (Art. 13 DSGVO, URL öffentlich/HTTP 200), AGB, Widerrufsbelehrung (DE+EN), Platzhalter vollständig ausgefüllt (maschinell geprüft: `tools.privacy_policy --list-placeholders` leer); In-App in ≤2 Taps erreichbar; vor Veröffentlichung anwaltlich prüfen. | M | R9 |
 | CO-06 | **Keine Klartext-Kommunikation**: `usesCleartextTraffic` false (HTTP nur localhost), keine `http://`-URLs in Release-Pfaden; keine hardcodierten Secrets im Repo (Gitleaks/Secret-Scan); exportierte Komponenten nur mit `permission`-Attribut/`exported`-Pflicht. | M | R7 |
 | CO-07 | **Automatisierter Compliance-Check** `tools/playstore_check.py --strict` MUSS 0 FAIL liefern (SDK-Level, Manifest, verbotene APIs, Versionscode-Konsistenz, SDK-Inventar-Sync); CI-Gate `android-compliance.yml`, jeder PR grün. | M | R9 |
 | CO-08 | **Content-Rating/Zielgruppe**: IARC USK 0/PEGI 3, „Mixed audiences" ab 13 J., keine Werbung, keine In-App-Käufe in der App (Lizenz extern via Browser-Redirect). | M | R9 |
@@ -628,8 +628,9 @@ maßgeblichen Test-/Code-Quelle (Coverage-Status laut [tests/TESTGAPS.md](tests/
 - **A1 — Single-User-Zeitzone:** Kalendarische Datumsfelder sind bewusst
   zeitzonenlos; ein Multi-Timezone-Szenario ist als zukünftige Erweiterung in
   [docs/TIMEZONE_AUDIT.md](docs/TIMEZONE_AUDIT.md) beschrieben.
-- **A2 — Rechtstexte:** `legal/`-Vorlagen enthalten `[PLATZHALTER]` und sind vor
-  Veröffentlichung anwaltlich zu prüfen (CO-05).
+- **A2 — Rechtstexte:** `legal/`-Dokumente sind über `legal/provider.yml`
+  finalisiert (keine Platzhalter mehr); die anwaltliche Prüfung vor
+  Veröffentlichung bleibt ein offener externer Schritt (CO-05).
 - **A3 — Compliance-Detailwerte:** Die in §11/§12 genannten SDK-Level
   (target/compile 35, min/ndk 24), die Permission-Whitelist und die
   Vitals-Schwellen sind aus dem aktuellen Stand abgeleitet; die laufend

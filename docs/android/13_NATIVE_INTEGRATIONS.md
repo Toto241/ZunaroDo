@@ -47,10 +47,10 @@ python main.py   # Assistent muss antworten, ohne google-generativeai
 **Aktivieren:** in `buildozer.spec` `sqlcipher3` an `requirements`
 anhaengen. `p4a.local_recipes = ./recipes` ist bereits gesetzt.
 
-**! Verifizieren (WSL2):** `buildozer android debug` — die `sqlcipher3`-
-Recipe ist noch nicht auf einem realen Build getestet; ggf. `version`/
-`url`/Compile-Defines in der Recipe anpassen. Danach: App starten und
-pruefen, dass `Database.encryption_mode == "sqlcipher"`.
+**Verifiziert (CI):** Der Robo-Workflow baut das Debug-APK inklusive
+`sqlcipher3`-Recipe auf einem Linux-Runner (grüner Lauf 2026-06-10);
+Host-Validierung: cipher_version 4.6.1, falscher Key abgewiesen. Offen
+bleibt der Gerätecheck `Database.encryption_mode == "sqlcipher"`.
 
 ---
 
@@ -80,9 +80,9 @@ android.gradle_dependencies = com.android.billingclient:billing:6.2.1, androidx.
 p4a.local_recipes = ./recipes
 ```
 
-**Offene Verifikation (nur auf WSL2/Linux + Geraet moeglich):**
-- [ ] `buildozer android debug` baut mit `pyjnius` + AndroidX durch
-- [ ] `sqlcipher3`-Recipe baut (nach Aktivieren in `requirements`)
-- [ ] DB ist auf dem Geraet tatsaechlich verschluesselt
+**Verifikationsstand:**
+- [x] `buildozer android debug` baut mit `pyjnius` + AndroidX durch (CI, 2026-06-10)
+- [x] `sqlcipher3`-Recipe baut (in `requirements` aktiv; CI + Host-Validierung)
+- [ ] DB ist auf dem Geraet tatsaechlich verschluesselt (adb + `tools.verify_android_device`)
 - [ ] ML-Kit-OCR liefert Text auf dem Geraet
 - [ ] Gemini-REST antwortet im gebauten APK

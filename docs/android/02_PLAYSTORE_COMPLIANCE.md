@@ -53,7 +53,7 @@ für jede Permission in [04_PRIVACY_PERMISSIONS.md](04_PRIVACY_PERMISSIONS.md).
 | ---------- | -------------- | ---- | ---------- |
 | `INTERNET` | deklariert | bleibt | Sync-Server, optional Gemini-Client |
 | `ACCESS_NETWORK_STATE` | nicht deklariert | nur wenn benötigt | Connectivity-Check vor Sync |
-| `POST_NOTIFICATIONS` | nicht deklariert | wenn Termin-Erinnerungen geplant | Android 13+ Pflicht |
+| `POST_NOTIFICATIONS` | deklariert + Laufzeitanfrage | bleibt | Android 13+ Pflicht; `buildozer.spec` + `services/android_permissions.py` |
 | `READ_MEDIA_IMAGES` | nicht deklariert | **NICHT** hinzufügen | OCR/Beleg-Import nutzt Photo-Picker (keine Permission nötig) |
 | `READ_EXTERNAL_STORAGE` | nicht deklariert | **verboten** auf API >= 33 | durch Scoped Storage ersetzt |
 | `WRITE_EXTERNAL_STORAGE` | nicht deklariert | **verboten** | nutze App-Sandbox |

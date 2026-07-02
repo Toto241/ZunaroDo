@@ -99,7 +99,7 @@ def _atomic_write_text(target: Path, content: str) -> None:
 
 
 def export_events(events: Iterable[CalendarEvent], target: Path,
-                   calendar_name: str = "Alltagshelfer") -> int:
+                   calendar_name: str = "ZunaroDo") -> int:
     """
     Schreibt iCal-Datei mit allen Events. Liefert Anzahl Eintraege.
     Atomar: ein Crash mittendrin laesst eine bereits vorhandene Datei
@@ -108,7 +108,7 @@ def export_events(events: Iterable[CalendarEvent], target: Path,
     lines: list[str] = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Alltagshelfer//Calendar Export//DE",
+        "PRODID:-//ZunaroDo//Calendar Export//DE",
         f"X-WR-CALNAME:{_escape(calendar_name)}",
     ]
     stamp = _utc_stamp()

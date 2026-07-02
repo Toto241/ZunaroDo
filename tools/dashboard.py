@@ -8,7 +8,7 @@ eigenstaendige HTML-Datei mit:
   * Header inkl. Projekt/Branch/Versions-Code/Generation-Zeit
   * Release-Reifegrad-Card mit Status-Pill (GO/HOLD/BLOCK)
   * Offene manuelle Release-Punkte inkl. Links auf lokale/offizielle Doku
-  * KPI-Karten: Tests, Crash-Free (Platzhalter), Privacy, Security,
+  * KPI-Karten: Tests, Privacy, Security,
     Negative, Members, Release-Gate
   * Bereichstabelle mit allen Markern (passed/failed/error/skipped)
   * Fehlerbericht-Liste (sofern vorhanden)

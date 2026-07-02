@@ -15,9 +15,9 @@ Ziel-Capability (z.B. "contracts.add"). Beim Uebernehmen wird genau diese
 ueber den ModuleContext aufgerufen - das jeweilige Modul entscheidet
 selbst, ob die Daten gueltig sind. Nichts wird ungeprueft eingetragen.
 
-Hinweis: Dieser Prototyp analysiert eingefuegten Mail-Text bzw. .eml-
-Dateien. Ein echter IMAP-Postfachzugriff waere ein spaeterer,
-separater Schritt.
+Hinweis: Analysiert eingefuegten Mail-Text bzw. .eml-Dateien; echter
+IMAP-Postfachzugriff ist als Capability inbox.fetch_imap umgesetzt
+(Consent-gated ueber ALLTAGSHELFER_IMAP_*-Umgebungsvariablen).
 """
 from __future__ import annotations
 

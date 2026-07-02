@@ -125,7 +125,7 @@ nur per Env-Var oder Keyring entgegengenommen.
 
 ## Tests
 
-- `tests/test_smoke.py` - Hauptregressionssuite (147 Tests),
+- `tests/test_smoke.py` - Hauptregressionssuite (214 Tests),
   jedes Modul + Capability mindestens einmal abgedeckt.
 - `tests/test_integration.py` - mockt SMTP/IMAP/OCR/Print sowie TLS.
 - `tests/test_property.py` - optionale Hypothesis-Tests fuer Invarianten.
