@@ -122,7 +122,7 @@ EXPORTERS: dict[str, str] = {
 def _json_default(obj: Any) -> Any:
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
-    if is_dataclass(obj):
+    if is_dataclass(obj) and not isinstance(obj, type):
         return asdict(obj)
     raise TypeError(f"Nicht serialisierbar: {type(obj)!r}")
 

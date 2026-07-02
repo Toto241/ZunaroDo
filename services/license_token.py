@@ -44,9 +44,9 @@ try:
     CRYPTO_AVAILABLE = True
 except ImportError:                                    # pragma: no cover
     CRYPTO_AVAILABLE = False
-    InvalidSignature = Exception
-    Ed25519PrivateKey = None
-    Ed25519PublicKey = None
+    InvalidSignature = Exception  # type: ignore[assignment,misc]
+    Ed25519PrivateKey = None  # type: ignore[assignment,misc]
+    Ed25519PublicKey = None  # type: ignore[assignment,misc]
 
 from services.licensing import Platform, Tier
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 
 _PRICE_PATTERN = re.compile(r"(\d+[.,]\d{2})\s*$")
@@ -68,7 +68,7 @@ def _try_easyocr():
         return None
 
 
-def _select_engine() -> Optional[tuple[str, object]]:
+def _select_engine() -> Optional[tuple[str, Any]]:
     """Liefert (Name, Aufruf) der ersten verfuegbaren OCR-Engine."""
     engine = _try_mlkit()
     if engine is not None:

@@ -36,6 +36,12 @@ jobs:
       - name: Byte-compile
         run: python -m compileall -q .
 
+      # Ein Matrix-Slot genuegt: mypy-Ergebnis haengt nicht von OS/
+      # Python-Patchlevel ab. Scope = die typisierten Kernpakete.
+      - name: Typecheck (mypy)
+        if: runner.os == 'Linux' && matrix.python-version == '3.11'
+        run: python -m mypy core modules services
+
       - name: Smoke-Tests
         run: python -m unittest discover -s tests
 

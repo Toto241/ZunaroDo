@@ -33,10 +33,11 @@ import ssl
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
-from services.payment import (PriceMapping, SignatureError, UnknownPriceError,
-                                WebhookContext, WebhookError)
+from services.payment import (PaymentEvent, PriceMapping, SignatureError,
+                               UnknownPriceError, WebhookContext,
+                               WebhookError)
 from services.payment_adapter_play import (PlaySkuMapping, PlayVerifier,
                                            parse_play_purchase)
 from services.payment_issuer import IssuerConfig, handle_event
@@ -50,7 +51,7 @@ class WebhookServerConfig:
 
     secret: str               # Webhook-Signing-Secret beim Anbieter
     price_mapping: PriceMapping  # variant_id/price_id -> (tier, persons)
-    parser: callable           # services.payment_adapter_*.parse_event
+    parser: Callable[..., "PaymentEvent"]  # services.payment_adapter_*.parse_event
 
 
 @dataclass
