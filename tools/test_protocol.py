@@ -96,6 +96,20 @@ FILE_REQUIREMENTS = {
     "test_store_listing":     ["R9"],
     "test_pairing":           ["R5", "R7"],
     "test_pairing_handshake": ["R5", "R7"],
+    "test_android_permissions": ["R2", "R9"],
+    "test_mobile_legal":      ["R7", "R9"],
+    "test_audit_fixes":       ["R7", "R8"],
+    "test_audit_phase2":      ["R7", "R8"],
+    "test_capture_store_screenshots": ["R9"],
+    "test_datadir":           ["R5", "R7"],
+    "test_export_json":       ["R6"],
+    "test_gemini_rest":       ["R7", "R8"],
+    "test_mobile_native_bridges": ["R8", "R9"],
+    "test_payment_adapter_play": ["R9"],
+    "test_payment_provider":  ["R9"],
+    "test_play_billing_android": ["R9"],
+    "test_sync_reliability":  ["R5"],
+    "test_sync_runtime":      ["R5"],
     # --- tests/concept/ (Konzept-, Negativ-, Compliance-Ebene) ---
     "test_members_scenarios":     ["R1", "R5"],
     "test_roles_permissions":     ["R1", "R7"],
@@ -119,6 +133,8 @@ FILE_REQUIREMENTS = {
     "test_dashboard_generator":   ["R10"],
     "test_protocol_generator":    ["R10"],
     "test_md_to_html":            ["R10"],
+    "test_env_setup":             ["R10"],
+    "test_tooltip":               ["R8", "R10"],
 }
 
 
