@@ -111,3 +111,13 @@ config/legal-publisher.json
 
 # AI-Studio-Handoff-/Repo-Analyse-Output (lokal generiert, nicht Teil des Repos)
 Analysed_Repo/
+
+# Eingefrorene AI-Studio-Handoff-Kopie (Originale liegen im Root/docs/);
+# bei Bedarf lokal neu zusammenstellen, nicht committen.
+GitHub AI Studio Prep/
+
+# Lokale md_to_html-Regenerate der Root-Dokus - kanonische Kopien liegen
+# unter tests/concept/reports/ (dorthin verlinken Dashboard & Panel).
+/TESTING.html
+/UI_CONCEPT.html
+/PLAYSTORE.html

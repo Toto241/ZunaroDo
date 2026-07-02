@@ -1,6 +1,6 @@
 # ZunaroDo - Go-Live-TODO (Play Store)
 
-Stand: 2026-06-09. Konsolidierte, abhakbare Liste der **verbleibenden** Schritte
+Stand: 2026-07-02. Konsolidierte, abhakbare Liste der **verbleibenden** Schritte
 bis zur Produktions-Veroeffentlichung. Code- und Compliance-Stand sind weit;
 die offenen Punkte sind ueberwiegend **operativ/extern** (Build auf WSL2,
 Play Console, Schluessel, Gerätetests) und koennen nicht im Windows-Repo erledigt
@@ -88,9 +88,8 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 - [ ] Data-Safety-Formular gemaess `release/DATA_SAFETY_CONSOLE_ANSWERS.md`
       und `playstore.yml` ausfuellen.
 - [ ] Datenschutz-URL eintragen (siehe `playstore.yml` privacy_policy_url).
-      Pages-Deploy lief bereits erfolgreich (Actions-Workflow
-      "Privacy-Policy Pages", zuletzt 2026-06-03) - nur noch kurz im
-      Browser gegenpruefen, dass die URL HTTP 200 liefert.
+      Pages-Deploy laeuft, URL liefert verifiziert HTTP 200
+      (geprueft 2026-07-02) - nur noch in der Console eintragen.
 - [ ] IARC-Fragebogen (Content Rating) ausfuellen.
 
 ### 1.4 Play Billing scharf schalten (nur wenn Pro/Abos zum Launch verkauft werden)
@@ -112,6 +111,8 @@ Legende: [x] erledigt im Repo · [ ] offen (Du/extern)
 
 > Alternative: Launch OHNE IAP (nur Free), Billing in 1.1 nachreichen.
 > Dann `in_app_purchases: false` belassen und 1.4 ueberspringen.
+
+### 1.5 Store-Assets
 
 - [x] **Store-Screenshots (Repo):** `python -m tools.capture_store_screenshots`
       erzeugt 1080x1920-Bilder aus echter HeadlessApp-Demo-Daten;

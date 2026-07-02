@@ -33,7 +33,7 @@ def make_yearly_report(target: Path, year: int,
 
     # Titel
     pdf.set_font("Helvetica", style="B", size=18)
-    pdf.cell(0, 12, f"Alltagshelfer - Jahresbericht {year}",
+    pdf.cell(0, 12, f"ZunaroDo - Jahresbericht {year}",
               new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2)
     pdf.set_font("Helvetica", style="I", size=9)
@@ -102,7 +102,7 @@ def make_yearly_report(target: Path, year: int,
     pdf.ln(10)
     pdf.set_font("Helvetica", style="I", size=8)
     pdf.cell(0, 6,
-              "Dieses Dokument wurde lokal aus deinem Alltagshelfer "
+              "Dieses Dokument wurde lokal von ZunaroDo "
               "erzeugt - keine Cloud-Uebertragung.",
               new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 

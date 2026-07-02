@@ -2877,7 +2877,7 @@ class AlltagshelferGUI(ctk.CTk):
         messagebox.showinfo(
             "Datenverzeichnis geaendert",
             f"Neues Verzeichnis:\n{resolved}\n\n"
-            f"{len(copied)} Eintrag(e) kopiert. Bitte den Alltagshelfer neu "
+            f"{len(copied)} Eintrag(e) kopiert. Bitte ZunaroDo neu "
             f"starten, damit die Aenderung wirksam wird.")
 
     # ----------------------------------------------------------------
@@ -3154,7 +3154,7 @@ def _ensure_data_dir() -> None:
     if chosen is None:
         default = datadir.default_data_dir()
         picked = _ask_data_directory(
-            title="Datenverzeichnis fuer den Alltagshelfer waehlen",
+            title="Datenverzeichnis fuer ZunaroDo waehlen",
             initialdir=str(default.parent))
         old_cwd = Path.cwd()
         resolved, _copied = datadir.prepare_data_dir(

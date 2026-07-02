@@ -16,8 +16,8 @@ Coverage-Ziel: **>= 80 %** auf Domain + Repos, **>= 60 %** auf
 ViewModels/Helpers, **>= 30 %** auf reine UI.
 
 Aktueller Stand (Python):
-- `tests/test_smoke.py` mit 147 Regressionstests
-- `tests/test_mobile_helpers.py` (28 Tests für reine Logik)
+- `tests/test_smoke.py` mit 214 Regressionstests
+- `tests/test_mobile_helpers.py` (48 Tests für reine Logik)
 - `tests/test_integration.py`, `test_property.py`, `test_performance.py`
 
 Diese Suite bleibt **autoritativ**. Native-Tests kommen erst mit
@@ -155,7 +155,8 @@ Nicht jeder PR braucht alles, aber jeder UI-PR mindestens:
 
 ## 7. Testdaten
 
-- Repo enthält Demo-DB (`alltagshelfer_demo.db`) - **nicht in Release**.
+- Demo-Daten werden zur Laufzeit erzeugt (HeadlessApp-Demo-Seed,
+  z.B. fuer Store-Screenshots); es ist keine `.db`-Datei eingecheckt.
 - Buildozer-Spec sollte `source.exclude_exts = db,sqlite` enthalten
   (ist bereits gesetzt). Aktueller Check: ✓
 - Fixture-Generator: `tests/conftest.py` (anlegen, falls noch nicht

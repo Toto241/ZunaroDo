@@ -1,11 +1,12 @@
 # Legal-Templates
 
-**Hinweis:** Diese Vorlagen sind **kein Ersatz fuer Rechtsberatung.**
-Sie sind generische Geruestdokumente mit eckigen Platzhaltern
-`[ANBIETER]`, `[ADRESSE]` usw., die vor der ersten Veroeffentlichung
-zwingend von einer Anwaltskanzlei mit Schwerpunkt IT-/E-Commerce-Recht
-geprueft und an den konkreten Vertrieb (Direkt, Stripe/Paddle, App-Store)
-angepasst werden muessen.
+**Hinweis:** Diese Dokumente sind **kein Ersatz fuer Rechtsberatung.**
+Sie sind ueber die Stammdaten in `provider.yml` finalisiert (keine
+eckigen Platzhalter mehr; maschinell geprueft via
+`python -m tools.privacy_policy --list-placeholders`), muessen aber vor
+der ersten Veroeffentlichung von einer Anwaltskanzlei mit Schwerpunkt
+IT-/E-Commerce-Recht geprueft und an den konkreten Vertrieb (Direkt,
+Stripe/Paddle, App-Store) angepasst werden.
 
 ## Welches Dokument wofuer
 

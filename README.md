@@ -81,7 +81,7 @@ pip install pytesseract Pillow
 pip install easyocr
 ```
 
-Tests: `python -m unittest discover tests` — über 500 Tests grün (Smoke-Suite: 147).
+Tests: `python -m unittest discover tests` — 1663 Tests grün, Entscheidung GO (Smoke-Suite: 214; Details in [tests/concept/reports/protocol.md](tests/concept/reports/protocol.md)).
 
 > 📋 **Vollständige Anforderungsspezifikation** (konsolidiertes Lasten- &
 > Pflichtenheft mit allen funktionalen und nicht-funktionalen Anforderungen,
@@ -196,8 +196,8 @@ python __main__.py [keine Args]   Konsolen-Demo (main.py)
 
 Pro Profil eine eigene DB-Datei + eigenes State-Verzeichnis ([services/profile.py](services/profile.py)). Familienmitglieder können auf demselben Rechner getrennte Daten halten.
 
-- Default: alle bisherigen Dateinamen bleiben (`alltagshelfer_demo.db`, `.alltagshelfer-state/`)
-- Profil `anna`: `alltagshelfer_demo_anna.db`, `.alltagshelfer-state-anna/`
+- Default: alle bisherigen Dateinamen bleiben (`alltagshelfer.db`, `.alltagshelfer-state/`)
+- Profil `anna`: `alltagshelfer_anna.db`, `.alltagshelfer-state-anna/`
 - Aktivierung per Umgebungsvariable (`ALLTAGSHELFER_PROFILE=anna`) oder CLI-Flag (`--profile anna`)
 - GUI zeigt das aktive Profil in der Sidebar an
 - `--list-profiles` listet erkennbare Profile (anhand vorhandener State-Verzeichnisse)
@@ -287,9 +287,11 @@ vorzeitige Erlöschen des 14-Tage-Widerrufsrechts nötig sind.
 
 ### Legal-Templates
 
-[legal/](legal/) enthält Vorlagen für Impressum, Datenschutz, AGB und
-Widerrufsbelehrung mit `[PLATZHALTER]`. **Vor Veröffentlichung anwaltlich
-prüfen lassen.**
+[legal/](legal/) enthält Impressum, Datenschutz, AGB und
+Widerrufsbelehrung — über [legal/provider.yml](legal/provider.yml)
+finalisiert, keine Platzhalter mehr (maschinell geprüft via
+`python -m tools.privacy_policy --list-placeholders`). **Vor
+Veröffentlichung anwaltlich prüfen lassen.**
 
 ```python
 from services.licensing import Tier, calculate_price, format_quote_de
@@ -327,8 +329,9 @@ Vorher wurden Demo-Daten ungefragt automatisch eingespielt.
 
 [services/i18n.py](services/i18n.py) lädt Sprachdateien aus [locales/](locales/):
 
-- `de.json` — Standardsprache mit ~80 Keys
-- `en.json` — Englisch-Fallback mit denselben Keys
+- 24 EU-Amtssprachen als `<code>.json` — vollständig übersetzt: de, en,
+  fr, es, it, nl, pl, pt; die übrigen 16 decken den Pflicht-Kernsatz ab
+  (`python -m tools.i18n_sync --check` erzwingt Parität + CORE_KEYS)
 
 Spracheinstellung über `i18n.language` in den App-Settings (Default `de`). Fallback-Kette: angeforderte Sprache → DE → Key selbst. Unbekannte Sprachen fallen auf DE zurück.
 
@@ -373,7 +376,7 @@ Bemerkenswerte Features:
 ├── models.py
 ├── database.py                 SQLite (+ optional SQLCipher) + Thread-Safety
 ├── core/interface.py           Drei Schnittstellen + Enable/Disable + get_capability
-├── modules/                    Acht Fachmodule
+├── modules/                    Dreizehn Fachmodule
 ├── services/
 │   ├── llm.py                  Provider-Vertrag (provider-agnostisch)
 │   ├── gemini.py               Gemini-Client
@@ -391,13 +394,13 @@ Bemerkenswerte Features:
 │   ├── reports.py              PDF-Jahresbericht (fpdf2)
 │   ├── config.py               Konfigurations-System
 │   └── i18n.py                 Lokalisierung
-├── locales/                    de.json, en.json (~100 Keys)
+├── locales/                    24 EU-Sprachen (8 vollständig)
 ├── assistant.py                LLM-agnostisch
 ├── gui.py                      CustomTkinter-GUI mit vierzehn Tabs
 ├── main.py                     Konsolen-Demo
 ├── __main__.py                 CLI-Subcommands
 ├── diagnose.py                 Status-Bericht
-├── tests/test_smoke.py         147 Tests (Gesamtsuite über 500)
+├── tests/test_smoke.py         214 Tests (Gesamtsuite: 1663, GO)
 └── requirements.txt
 ```
 
