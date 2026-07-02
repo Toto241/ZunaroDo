@@ -75,6 +75,19 @@ class TestRequirementsCoverage(unittest.TestCase):
         self.assertEqual(set(REQUIREMENTS), expected,
                          "REQUIREMENTS-Katalog ist nicht R1..R10")
 
+    def test_every_test_file_is_mapped(self) -> None:
+        # Rueckrichtung: jede vorhandene Testdatei steht im Mapping -
+        # sonst fehlt sie stillschweigend in der Dashboard-Matrix
+        # (requirements=[]). Genau so blieben 2026-06 vierzehn Dateien
+        # (87 Tests) unbemerkt unzugeordnet.
+        stems = {p.stem for root in _ROOTS
+                 for p in root.glob("test_*.py")}
+        unmapped = sorted(stems - set(FILE_REQUIREMENTS))
+        self.assertEqual(unmapped, [],
+                         "Testdateien ohne Anforderungs-Zuordnung in "
+                         "tools/test_protocol.py FILE_REQUIREMENTS: "
+                         f"{unmapped}")
+
 
 if __name__ == "__main__":
     unittest.main()
