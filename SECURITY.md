@@ -10,7 +10,7 @@ unter [`legal/`](legal/); die technische Datenfluss-Beschreibung in
 ## Schwachstellen melden
 
 Bitte **keine** Sicherheitsluecken ueber oeffentliche GitHub-Issues melden.
-Stattdessen vertraulich per E-Mail an **alltagshelfer@zunarodo.github.io**
+Stattdessen vertraulich per E-Mail an **torsteneppmann@googlemail.com**
 (siehe `legal/IMPRESSUM.md`). Hilfreich sind: betroffene Version/Commit,
 Reproduktionsschritte und – falls vorhanden – ein minimaler Nachweis.
 Wir bestaetigen den Eingang und koordinieren eine verantwortungsvolle

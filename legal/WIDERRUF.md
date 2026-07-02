@@ -18,7 +18,7 @@ Um Ihr Widerrufsrecht auszuueben, muessen Sie uns
 
 **ZunaroDo**
 Kontakt ausschliesslich digital, Deutschland
-E-Mail: alltagshelfer@zunarodo.github.io
+E-Mail: torsteneppmann@googlemail.com
 
 mittels einer eindeutigen Erklaerung (z.B. ein mit der Post versandter
 Brief oder E-Mail) ueber Ihren Entschluss, diesen Vertrag zu widerrufen,
@@ -70,7 +70,7 @@ Pro-Abo aktiviert wird** (siehe Dialog beim ersten Pro-Kauf).
 Formular aus und senden Sie es zurueck.)
 
 > An ZunaroDo, Kontakt ausschliesslich digital, Deutschland,
-> E-Mail: alltagshelfer@zunarodo.github.io
+> E-Mail: torsteneppmann@googlemail.com
 >
 > Hiermit widerrufe(n) ich/wir den von mir/uns abgeschlossenen Vertrag
 > ueber die Bereitstellung der folgenden digitalen Inhalte: Pro-Lizenz

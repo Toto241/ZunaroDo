@@ -229,7 +229,7 @@ SAMPLE_CONFIG: dict[str, Any] = {
         "version_code": 1,
     },
     "contact": {
-        "support_email": "125914298+Toto241@users.noreply.github.com",
+        "support_email": "torsteneppmann@googlemail.com",
         "support_url": "https://github.com/Toto241/ZunaroDo/issues",
         "marketing_url": "https://github.com/Toto241/ZunaroDo",
         "privacy_policy_url": "https://toto241.github.io/ZunaroDo/privacy/",

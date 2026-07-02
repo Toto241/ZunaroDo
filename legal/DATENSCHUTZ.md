@@ -11,8 +11,8 @@ gegen das konkrete Anbieter- und Payment-Setup geprueft werden.
 Verantwortlicher fuer die Datenverarbeitung im Sinne der DSGVO ist:
 
 **ZunaroDo**
-Open-Source-Projekt: <https://github.com/zunarodo/alltagshelfer>
-E-Mail: alltagshelfer@zunarodo.github.io
+Open-Source-Projekt: <https://github.com/Toto241/ZunaroDo>
+E-Mail: torsteneppmann@googlemail.com
 
 ## 2. Grundsatz - Lokale Datenhaltung
 
