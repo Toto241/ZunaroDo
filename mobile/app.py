@@ -151,6 +151,17 @@ if HAS_KIVYMD:
             self._license = load_license(self.settings)
             return _RootShell(self._registry, self.i18n)
 
+        def on_start(self):
+            # Android 13+ verlangt eine Laufzeitanfrage fuer
+            # POST_NOTIFICATIONS - ohne sie bleiben Erinnerungen stumm.
+            # Desktop/Emulator ohne p4a: No-Op, wirft nie.
+            try:
+                from services.android_permissions import (
+                    ensure_post_notifications)
+                ensure_post_notifications()
+            except Exception:
+                pass
+
         def on_stop(self):
             try:
                 self._db.close()

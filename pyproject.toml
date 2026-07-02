@@ -61,7 +61,7 @@ alltagshelfer-gui = "gui:main"
 alltagshelfer-sync-server = "services.sync_server:main"
 
 [project.urls]
-Repository = "https://github.com/zunarodo/alltagshelfer"
+Repository = "https://github.com/Toto241/ZunaroDo"
 
 [tool.setuptools]
 py-modules = ["models", "database", "assistant", "main", "gui"]
