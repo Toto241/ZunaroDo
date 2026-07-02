@@ -1,0 +1,188 @@
+{
+  "repository": {
+    "owner": "Toto241",
+    "name": "ZunaroDo",
+    "branch": "main",
+    "url": "https://github.com/Toto241/ZunaroDo",
+    "isPrivate": true
+  },
+  "techStack": [
+    "Python",
+    "Docker",
+    "Source structure",
+    "Automated tests"
+  ],
+  "importantFiles": [
+    "README.md",
+    "requirements.txt",
+    "pyproject.toml",
+    "Dockerfile",
+    "docker-compose.yml",
+    ".env.example"
+  ],
+  "missingFiles": [],
+  "commands": {
+    "install": "python -m pip install -r requirements.txt",
+    "dev": "python main.py",
+    "build": "nicht erkannt",
+    "test": "pytest"
+  },
+  "envVariables": [
+    "GOOGLE_API_KEY",
+    "ALLTAGSHELFER_GEMINI_MODEL",
+    "ALLTAGSHELFER_FORCE_GEMINI_REST",
+    "ALLTAGSHELFER_DB_KEY",
+    "ALLTAGSHELFER_BACKUP_KEY",
+    "ALLTAGSHELFER_IMAP_HOST",
+    "ALLTAGSHELFER_IMAP_USER",
+    "ALLTAGSHELFER_IMAP_PASS",
+    "ALLTAGSHELFER_IMAP_FOLDER",
+    "ALLTAGSHELFER_SYNC_DIR",
+    "ALLTAGSHELFER_SYNC_URL",
+    "ALLTAGSHELFER_SYNC_TOKEN",
+    "ALLTAGSHELFER_DEVICE_ID",
+    "ALLTAGSHELFER_SYNC_LOG",
+    "ALLTAGSHELFER_PROFILE",
+    "ALLTAGSHELFER_DATA_DIR",
+    "ALLTAGSHELFER_CONFIG_DIR",
+    "ALLTAGSHELFER_LOG_LEVEL",
+    "ALLTAGSHELFER_PAIRING_BACKEND",
+    "ALLTAGSHELFER_PLATFORM",
+    "ZUNARODO_PLAY_VERIFY_URL"
+  ],
+  "score": {
+    "value": 100,
+    "level": "green",
+    "label": "bereit für AI Studio"
+  },
+  "deployment": {
+    "starterTierSuitable": false,
+    "needsDatabase": true,
+    "needsFirebase": false,
+    "needsExternalApis": false,
+    "likelyNeedsBilling": true
+  },
+  "buildMode": {
+    "frontend": "nicht erkannt",
+    "frontendSupport": "unknown",
+    "backend": "Python",
+    "backendSupported": false,
+    "persistence": "relational (auf Cloud SQL abbilden)",
+    "starterTierDeployable": false,
+    "recommendedTarget": "antigravity",
+    "keyDependencies": [
+      {
+        "name": "customtkinter",
+        "version": "5.2.0"
+      },
+      {
+        "name": "cryptography",
+        "version": "42.0.0"
+      }
+    ],
+    "contextArtifacts": [
+      {
+        "path": "Dockerfile",
+        "kind": "Container-Setup",
+        "why": "Laufzeit-/Service-Kontext"
+      },
+      {
+        "path": "docs/ai-studio/contracts/openapi.json",
+        "kind": "API-Contract (OpenAPI)",
+        "why": "API-Contract als Attachment beilegen"
+      },
+      {
+        "path": "docs/ai-studio/contracts/schema.prisma",
+        "kind": "Datenmodell (Prisma)",
+        "why": "Datenmodell als Attachment beilegen"
+      }
+    ],
+    "aiChips": [],
+    "tools": [],
+    "designReferences": [],
+    "behaviorSpecs": [
+      "tests/__init__.py",
+      "tests/concept/__init__.py",
+      "tests/concept/matrix.py",
+      "tests/concept/pairwise.py",
+      "tests/concept/roles.py",
+      "tests/concept/test_build_status.py",
+      "tests/concept/test_control_panel.py",
+      "tests/concept/test_dashboard_generator.py",
+      "tests/concept/test_gitignore_completeness.py",
+      "tests/concept/test_gui_free_tier_boot.py",
+      "tests/concept/test_gui_refresh_guards.py",
+      "tests/concept/test_gui_widget_guards.py",
+      "tests/concept/test_md_to_html.py",
+      "tests/concept/test_members_scenarios.py",
+      "tests/concept/test_negative_inputs.py"
+    ],
+    "notes": [
+      "Kein eindeutiges Frontend erkannt – Build Mode erzeugt standardmäßig React + Vite.",
+      "Desktop-/Nicht-Web-Stack erkannt (CustomTkinter) – Build Mode erzeugt ausschließlich Web-Apps. Dieses Repo ist kein direkter Build-Mode-Kandidat: entweder als Web-App neu konzipieren oder den Handoff an einen code-fähigen Agenten (Google Antigravity, Claude/Codex/Gemini CLI) geben, der das bestehende Repo bearbeitet.",
+      "Build Mode bietet als Server-Runtime nur Node.js – ein Python-Backend müsste in Node neu umgesetzt oder durch client-/serverlose Logik ersetzt werden.",
+      "Persistenz erkannt (relational (auf Cloud SQL abbilden)) – auf den Build-Mode-Pfad (Firestore/Cloud SQL) abbilden.",
+      "Zusätzlich als Attachment anhängen: Dockerfile, docs/ai-studio/contracts/openapi.json, docs/ai-studio/contracts/schema.prisma.",
+      "Vorhandene Tests definieren erwartetes Verhalten – dieses beim Re-Build erhalten.",
+      "Dieses Repo ist nur eingeschränkt ein Build-Mode-Kandidat. Empfohlene Alternative: Google Antigravity (agenten-/repo-zentriert, arbeitet am bestehenden Code; AI Studio kann seit I/O 2026 direkt dorthin exportieren) oder Firebase Studio (kann bestehende Repos importieren).",
+      "Build Mode importiert keine bestehenden Repositories – dies ist ein Re-Build-mit-Kontext-Handoff, kein Code-Import."
+    ]
+  },
+  "warnings": [],
+  "tokenEstimate": {
+    "totalChars": 117341,
+    "totalTokens": 29341,
+    "totalBytes": 118851,
+    "contextWindowTokens": 1000000,
+    "oversizedDocuments": [],
+    "perDocument": [
+      {
+        "name": "TESTING.md",
+        "tokens": 16910
+      },
+      {
+        "name": "AI_STUDIO_BUILD_NOTES.md",
+        "tokens": 4719
+      },
+      {
+        "name": "ARCHITECTURE.md",
+        "tokens": 2065
+      },
+      {
+        "name": "AI_STUDIO_CONTEXT.md",
+        "tokens": 1305
+      },
+      {
+        "name": "AI_STUDIO_PROMPT.md",
+        "tokens": 1237
+      },
+      {
+        "name": "SECURITY.md",
+        "tokens": 978
+      },
+      {
+        "name": "PRIVACY.md",
+        "tokens": 810
+      },
+      {
+        "name": "AI_STUDIO_WEB_UI_STEPS.md",
+        "tokens": 506
+      },
+      {
+        "name": "AI_STUDIO_AGENTS.md",
+        "tokens": 451
+      },
+      {
+        "name": "AI_STUDIO_SYSTEM_INSTRUCTIONS.md",
+        "tokens": 290
+      },
+      {
+        "name": "REPO_SUMMARY.md",
+        "tokens": 70
+      }
+    ]
+  },
+  "secretFindings": [],
+  "totalFiles": 392,
+  "truncated": false
+}
