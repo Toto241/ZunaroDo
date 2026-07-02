@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
-from typing import Optional
+from typing import Callable, Optional
 
 from services.license_token import LicenseToken, sign_token
 from services.licensing import Tier
@@ -49,7 +49,7 @@ class IssuerConfig:
     audit_log_path: Path              # JSONL mit allen Ausstellungen
     # SMTP-Versender: Funktion(to_addr, subject, body) -> dict
     # Erlaubt Test ohne echten SMTP-Server.
-    send_mail: Optional[callable] = None
+    send_mail: Optional[Callable[..., dict]] = None
     mail_subject_template: str = "Ihre Pro-Lizenz fuer ZunaroDo"
     app_name: str = "ZunaroDo"
 

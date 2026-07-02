@@ -17,6 +17,7 @@ paths = [
     '''services/license_ui\.py''',    # Token-Paste-UI-Texte
     '''tests/test_pairing.*\.py''',   # Test-Daten + Allowlist-Strings
     '''tests/test_smoke\.py''',       # Test-Fixtures mit Beispiel-Keys
+    '''tests/test_integration\.py''', # SQLCipher-Fixture ("my-secret-12345")
     '''tools/gen_license\.py''',      # CLI-Argumente mit "--private-key"-Flag
     '''docs/''',                       # Doku zitiert Pattern in Beispielen
     '''PAYMENT\.md''',                 # Operations-Doku mit "PRIV_HEX"-Beispielen

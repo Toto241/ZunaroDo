@@ -10,3 +10,7 @@ pytest>=7.0
 # store_listing, privacy_policy). Bewusst NICHT in requirements.txt, damit
 # der Android-/SDK-Inventar-Check keine ungenutzte Runtime-Lib meldet.
 PyYAML>=6.0
+
+# Typecheck-Gate der CI (Workflow "CI" -> Step "Typecheck (mypy)").
+# Scope: core/, modules/, services/ - Konfig in pyproject.toml [tool.mypy].
+mypy>=1.5

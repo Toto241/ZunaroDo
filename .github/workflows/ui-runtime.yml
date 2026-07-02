@@ -4,14 +4,13 @@ name: UI Runtime Smoke
 # Boot-/Render-Crashes zu fangen - die Klasse von Fehlern, die Googles
 # Pre-Launch-Report auf echten Geraeten findet.
 #
-# Beide Jobs sind zunaechst BERATEND (continue-on-error: true): sie wurden
-# ohne lokale Ausfuehrungs-Umgebung erstellt. Der Release-Owner beobachtet
-# den ersten gruenen Lauf und entfernt dann 'continue-on-error', um sie
-# verpflichtend zu machen.
+# Seit 2026-07: VERPFLICHTEND. Die Jobs liefen wochenlang gruen
+# (beratende Phase laut urspruenglichem Plan abgeschlossen), daher ist
+# 'continue-on-error' entfernt - ein Boot-Crash macht die CI rot.
 
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -22,7 +21,6 @@ jobs:
   desktop-gui-smoke:
     name: Desktop-GUI-Boot (customtkinter, Xvfb)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,7 +39,6 @@ jobs:
   mobile-kivy-smoke:
     name: Mobile-Boot (KivyMD, Mock-Window)
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       KIVY_GL_BACKEND: mock
       KIVY_NO_ARGS: "1"

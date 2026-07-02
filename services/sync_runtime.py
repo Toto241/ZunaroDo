@@ -15,7 +15,7 @@ from services.licensing import load_license
 if TYPE_CHECKING:
     from database import SettingsRepository
     from services.config import AppConfig
-    from services.sync import SyncProvider
+    from services.sync import SyncProviderProtocol
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ def sync_allowed(config: "AppConfig", settings: "SettingsRepository") -> bool:
     return load_license(settings).allows_sync()
 
 
-def make_sync_provider(local_state_dir: Path) -> Optional["SyncProvider"]:
+def make_sync_provider(local_state_dir: Path) -> Optional["SyncProviderProtocol"]:
     """Waehlt HTTP- vor FileSync, beide optional (ohne Lizenz-Check)."""
     from services.sync import FileSyncProvider, HttpSyncProvider
 
@@ -41,7 +41,7 @@ def resolve_sync_provider(
     config: "AppConfig",
     settings: "SettingsRepository",
     local_state_dir: Path,
-) -> Optional["SyncProvider"]:
+) -> Optional["SyncProviderProtocol"]:
     """
     Liefert einen Sync-Provider nur bei Pro-Lizenz und aktivem Sync.
 
